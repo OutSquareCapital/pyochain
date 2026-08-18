@@ -42,45 +42,13 @@ The stub packages follow the public Rust module hierarchy, but the mapping is no
 - [ruff.toml](ruff.toml) — Ruff linting and formatting configuration.
 - [zensical.toml](zensical.toml) — documentation site configuration.
 
-## Coding and documentation guidelines
-
-### Python code
-
-#### Public API
-
-All public API functions and methods must include clear docstrings, full type hints, and overloads/generics where appropriate.
-
-Type checkers/python typing limitations means we need sometimes to do things that are very "dumb" (see the signature of `Iter::flatten` for yourself).
-
-#### Performance-critical code
-
-Internal implementations must prioritize performance and don't need docstrings.
-
-We prefer "vanilla" Python code instead of our own API to maximize performance, i.e using for loops, comprehensions and built-in functions.
-
-We do it here so we don't have to do it anymore anywhere we use pyochain :-).
-
-We want to use each trick possible, for example `fn = object.method` and then `fn()` instead of `object.method()`, to avoid attribute lookups.
-
-#### Where should a method live?
-
-pyochain provides ABCs and concrete types. We always want to add methods to ABCs whenever possible, but this can be do only in some cases:
-
-- In any case, it must not depend on anything else than what is already available in the dunders.
-- If it's an aggregate, or it returns `None` because of mutation. e.g `Pyoiterable::sum` or `PyoMutableSequence::retain`.
-- If it goes from collection -> iterator or the other way around. e.g `PyoIterable::iter` or `PyoIterator::{sort, tail, try_collect}`.
-
-The general idea being that if a method return an object from the same family (e.g a `PyoMutableSequence` that need to do operations to ultimately return a `Vec`), then it should be in the concrete class, because this would entail confusion: We have two similar data structures, why are we swapping from one to the other here? Especially an abstract one to a concrete one.
-
-On the other hand, if we go from a `PyoSequence` to an `Iter`, then it makes more sense to have it in the ABC, because it's a common operation that doesn't depend on the internal implementation of the collection, and goes from one structure to another.
-
-#### Docstrings
+## Stubs Docstrings
 
 docstrings should follow the format below.
 
-Note that blank line between the example result and the end of the code block.
+The code in the `examples` section will be automatically part of the test suite.
 
-Doctest will fail otherwise, because it will consider the "```" as part of the output.
+We use code blocks instead of doctests, so write them just like you would in a classic pytest file, i.e assertions.
 
 ```python
 def my_function(param1: int, param2: str) -> bool:
@@ -165,19 +133,18 @@ Before committing, ensure all checks pass.
 
 ### type checking/linting/formatting
 
+If `uv run -m scripts.check_docstrings` fails, don't worry.
+
+`sdsort` will re-order the python stubs depending on various rules, so don't be surprised if your code moves around a bit.
+
 ```bash
+uv run sdsort . --stubs;
 uv run ruff check . --fix --unsafe-fixes;
 uv run ruff format . --preview;
 uv run basedpyright src/pyochain;
 uv run -m scripts.check_docstrings;
 uv run pydoclint pyochain/**/*.pyi
 ```
-
-Unfortunately, `Ruff` doesn't work well when doctests are mixed with backticks sections in docstrings to format code examples.
-
-The workaround is to temporarily remove them, run `Ruff` and then put them back.
-
-For multiple sections, you can use your IDE to replace both of them by dummy text, run `Ruff` and then replace the dummy text by the original backticks.
 
 ### tests
 
