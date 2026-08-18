@@ -105,7 +105,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def __iter__(self) -> Iterator[T]: ...
     @classmethod
     def from_count(cls, start: int = 0, step: int = 1) -> PyoIterator[int]:
-        """Create an `Iterator` of evenly spaced values.
+        """Create an `Iterator` of evenly spaced values, beginning with *start*.
+
+        Can be used with `map()` to generate consecutive data points or with `zip()` to add sequence numbers.
 
         Warning:
             The `Iterator` returned is **infinite**, meaning it will never stop yielding elements.
@@ -123,14 +125,15 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter.from_count(10, 2).take(3).collect(Seq)
-            Seq(10, 12, 14)
-            >>> Iter.from_count(-5, 5).take(4).collect(Seq)
-            Seq(-5, 0, 5, 10)
-            >>> Iter.from_count(0, -1).take(5).collect(Seq)
-            Seq(0, -1, -2, -3, -4)
+            from pyochain import Iter, Seq
 
+            assert Iter.from_count(10, 2).take(3).collect(Seq) == Seq((10, 12, 14))
+            assert Iter.from_count(-5, 5).take(4).collect(Seq) == Seq((-5, 0, 5, 10))
+            assert Iter.from_count(0, -1).take(5).collect(Seq) == (0, -1, -2, -3, -4)
+            x = Iter.from_count(0, 5).map(lambda x: x**2).take(4).collect(tuple)
+            assert x == (0, 25, 100, 225)
+            y = Iter.from_count(0, 5).zip([1, 2, 3]).collect(tuple)
+            assert y == ((0, 1), (5, 2), (10, 3))
             ```
         """
 
@@ -1104,25 +1107,30 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def cycle(self) -> PyoIterator[T]:
-        """Repeat the `Iterator` indefinitely.
+        """Yield elements from the `Iterator` endlessly, saving a copy of each call to `next()`.
 
-        Warning:
-            This creates an infinite `Iterator`.
+        When the iterable is exhausted, return elements from the saved copy.
 
-            Be sure to use [`PyoIterator::take`][take] or [`PyoIterator::slice`][slice] to limit the number of items taken.
+        Thus, instead of stopping once all the elements have been yielded, the iterator will instead start again, from the beginning.
+
+        After iterating again, it will start at the beginning again. And again. And again. Forever.
+
+        Note that in case the original iterator is empty, the resulting iterator will also be empty.
+
+        You can use [`PyoIterator::take`][take] or [`PyoIterator::slice`][slice] to limit the number of items taken.
 
         See Also:
-            [`PyoIterator::repeat`][repeat] to repeat *self* as elements (`PyoIterator[PyoIterator[T]]`).
+            [`PyoIterator::repeat`][repeat] to create an `Iterator` from a single element repeatedly.
 
         Returns:
             PyoIterator[T]: A new `Iterator` that cycles through the elements indefinitely.
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2)).cycle().take(5).collect(Seq)
-            Seq(1, 2, 1, 2, 1)
+            from pyochain import Seq
 
+            assert Seq((1, 2)).iter().cycle().take(5).collect(Seq) == (1, 2, 1, 2, 1)
+            assert Seq("ABC").iter().cycle().take(5).join("") == "ABCAB"
             ```
         """
 
