@@ -105,7 +105,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def __iter__(self) -> Iterator[T]: ...
     @classmethod
     def from_count(cls, start: int = 0, step: int = 1) -> PyoIterator[int]:
-        """Create an `Iterator` of evenly spaced values.
+        """Create an `Iterator` of evenly spaced values, beginning with *start*.
+
+        Can be used with `map()` to generate consecutive data points or with `zip()` to add sequence numbers.
 
         Warning:
             The `Iterator` returned is **infinite**, meaning it will never stop yielding elements.
@@ -123,14 +125,15 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter.from_count(10, 2).take(3).collect(Seq)
-            Seq(10, 12, 14)
-            >>> Iter.from_count(-5, 5).take(4).collect(Seq)
-            Seq(-5, 0, 5, 10)
-            >>> Iter.from_count(0, -1).take(5).collect(Seq)
-            Seq(0, -1, -2, -3, -4)
+            from pyochain import Iter, Seq
 
+            assert Iter.from_count(10, 2).take(3).collect(Seq) == Seq((10, 12, 14))
+            assert Iter.from_count(-5, 5).take(4).collect(Seq) == Seq((-5, 0, 5, 10))
+            assert Iter.from_count(0, -1).take(5).collect(Seq) == (0, -1, -2, -3, -4)
+            x = Iter.from_count(0, 5).map(lambda x: x**2).take(4).collect(tuple)
+            assert x == (0, 25, 100, 225)
+            y = Iter.from_count(0, 5).zip([1, 2, 3]).collect(tuple)
+            assert y == ((0, 1), (5, 2), (10, 3))
             ```
         """
 
@@ -275,30 +278,32 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq, Iter
-            >>> Iter.repeat(1, 3).collect(Seq)
-            Seq(1, 1, 1)
-            >>> Iter.repeat(("a", "b"), 2).collect(Seq)
-            Seq(('a', 'b'), ('a', 'b'))
+            from pyochain import Seq, Iter
 
+            assert Iter.repeat(1, 3).collect(Seq) == (1, 1, 1)
+            assert Iter.repeat(("a", "b"), 2).collect(Seq) == (("a", "b"), ("a", "b"))
             ```
+            A common use for repeat is to supply a stream of constant values to map or zip:
+            ```python
+            from pyochain import Range
+
+            out = Range(0, 10).iter().map_with(pow, Iter.repeat(2)).collect(Seq)
+            assert out == (0, 1, 4, 9, 16, 25, 36, 49, 64, 81)
+            ```
+
             Shared reference behavior:
             ```python
-            >>> from pyochain import Vec
-            >>>
-            >>> base = ["Alice", "Bob", "Charlie"]
-            >>>
-            >>> first, second = Iter.repeat(base).take(2).collect(tuple)
-            >>> first.append("Joe")
-            >>> first
-            ['Alice', 'Bob', 'Charlie', 'Joe']
-            >>> base
-            ['Alice', 'Bob', 'Charlie', 'Joe']
-            >>> second
-            ['Alice', 'Bob', 'Charlie', 'Joe']
-            >>> first is second and first is base and second is base
-            True
+            from pyochain import Vec
 
+            base = ["Alice", "Bob", "Charlie"]
+
+            first, second = Iter.repeat(base).take(2).collect(tuple)
+            first.append("Joe")
+
+            assert first == ["Alice", "Bob", "Charlie", "Joe"]
+            assert base == ["Alice", "Bob", "Charlie", "Joe"]
+            assert second == ["Alice", "Bob", "Charlie", "Joe"]
+            assert first is second and first is base and second is base
             ```
         """
 
@@ -1104,25 +1109,30 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def cycle(self) -> PyoIterator[T]:
-        """Repeat the `Iterator` indefinitely.
+        """Yield elements from the `Iterator` endlessly, saving a copy of each call to `next()`.
 
-        Warning:
-            This creates an infinite `Iterator`.
+        When the iterable is exhausted, return elements from the saved copy.
 
-            Be sure to use [`PyoIterator::take`][take] or [`PyoIterator::slice`][slice] to limit the number of items taken.
+        Thus, instead of stopping once all the elements have been yielded, the iterator will instead start again, from the beginning.
+
+        After iterating again, it will start at the beginning again. And again. And again. Forever.
+
+        Note that in case the original iterator is empty, the resulting iterator will also be empty.
+
+        You can use [`PyoIterator::take`][take] or [`PyoIterator::slice`][slice] to limit the number of items taken.
 
         See Also:
-            [`PyoIterator::repeat`][repeat] to repeat *self* as elements (`PyoIterator[PyoIterator[T]]`).
+            [`PyoIterator::repeat`][repeat] to create an `Iterator` from a single element repeatedly.
 
         Returns:
             PyoIterator[T]: A new `Iterator` that cycles through the elements indefinitely.
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2)).cycle().take(5).collect(Seq)
-            Seq(1, 2, 1, 2, 1)
+            from pyochain import Seq
 
+            assert Seq((1, 2)).iter().cycle().take(5).collect(Seq) == (1, 2, 1, 2, 1)
+            assert Seq("ABC").iter().cycle().take(5).join("") == "ABCAB"
             ```
         """
 
@@ -1265,11 +1275,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def filter_false[U](
         self, func: FilterFn[T, U] = None
     ) -> PyoIterator[T] | PyoIterator[U]:
-        """Return elements for which **func** is `False`.
+        """Return elements for which **func** predicate is `False`.
 
-        The **func** can return a `TypeIs` to narrow the type of the returned `Iterator`.
-
-        This won't have any runtime effect, but allows for better type inference.
+        If no closure is provided, returns the elements who return `False` when calling `__bool__` on them.
 
         Args:
             func (FilterFn[T, U]): Function to evaluate each item.
@@ -1279,10 +1287,14 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).filter_false(lambda x: x > 1).collect(Seq)
-            Seq(1,)
+            from pyochain import Seq, Range
 
+            a = Range(0, 5).iter().filter_false(lambda x: x > 1).collect(Seq)
+            assert a == (0, 1)
+            b = Seq([1, 4, 6, 3, 8]).iter().filter_false(lambda x: x < 5).collect(Seq)
+            assert b == Seq((6, 8))
+            # Count number of none values
+            assert Seq((1, None, 2, None, 3)).iter().filter_false().count() == 2
             ```
         """
 
@@ -1515,19 +1527,18 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> data = Seq(("apple", "banana", "cherry", "date"))
-            >>> output = (
-            ...     data
-            ...     .iter()
-            ...     .enumerate()
-            ...     .filter_star(lambda index, _: index % 2 == 0)
-            ...     .map_star(lambda _, fruit: fruit.title())
-            ...     .collect(Seq)
-            ... )
-            >>> output
-            Seq('Apple', 'Cherry')
+            from pyochain import Seq
 
+            data = Seq(("apple", "banana", "cherry", "date"))
+            output = (
+                data
+                .iter()
+                .enumerate()
+                .filter_star(lambda index, _: index % 2 == 0)
+                .map_star(lambda _, fruit: fruit.title())
+                .collect(Seq)
+            )
+            assert output == ("Apple", "Cherry")
             ```
         """
 
@@ -2007,82 +2018,104 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             PyoIterator[tuple[Any | T, PyoIterator[T]]]: An `Iterator` of `(key, value)` tuples.
 
         Example:
+            Simple usage:
+            ```python
+            from pyochain import Seq
+
+            out = (
+                Seq("AAAABBBCCDAABBB")
+                .iter()
+                .group_by()
+                .map_star(lambda k, _: k)
+                .collect(tuple)
+            )
+            assert out == ("A", "B", "C", "D", "A", "B")
+            out = (
+                Seq("AAAABBBCCD")
+                .iter()
+                .group_by()
+                .map_star(lambda _, g: g.collect(list))
+                .collect(tuple)
+            )
+            assert out == (
+                ["A", "A", "A", "A"],
+                ["B", "B", "B"],
+                ["C", "C"],
+                ["D"],
+            )
+            ```
             `group_by` can let you compute complex operations very easily and efficiently.
 
             For example, if we want to group even and odd numbers, we can do it like this:
             ```python
-            >>> from pyochain import Iter, Dict, Seq
-            >>> from operator import itemgetter
-            >>> # Example 1: Group even and odd numbers
-            >>> res = (
-            ...     Iter
-            ...     .from_count()  # create an infinite iterator of integers
-            ...     .take(8)  # take the first 8
-            ...     .map(lambda x: (x % 2 == 0, x))  # map to (is_even, value)
-            ...     .sort_by(itemgetter(0))  # sort by is_even
-            ...     .iter()  # Since sort collect to a Vec, we need to convert back to Iter
-            ...     .group_by(itemgetter(0))  # group by is_even
-            ...     # extract values from groups, discarding keys, and materializing them
-            ...     .map_star(
-            ...         lambda g, vals: (g, vals.map_star(lambda _, y: y).collect(Seq))
-            ...     )
-            ...     .collect(Dict)
-            ... )
-            >>> res
-            Dict(False: Seq(1, 3, 5, 7), True: Seq(0, 2, 4, 6))
+            from pyochain import Iter, Dict, Seq
+            from operator import itemgetter
 
+            # Example 1: Group even and odd numbers
+            res = (
+                Iter
+                .from_count()  # create an infinite iterator of integers
+                .take(8)  # take the first 8
+                .map(lambda x: (x % 2 == 0, x))  # map to (is_even, value)
+                .sort_by(itemgetter(0))  # sort by is_even
+                .iter()  # Since sort collect to a Vec, we need to convert back to Iter
+                .group_by(itemgetter(0))  # group by is_even
+                # extract values from groups, discarding keys, and materializing them
+                .map_star(
+                    lambda g, vals: (g, vals.map_star(lambda _, y: y).collect(Seq))
+                )
+                .collect(Dict)
+            )
+            assert res == Dict({False: Seq((1, 3, 5, 7)), True: Seq((0, 2, 4, 6))})
             ```
             If we have a dataset who's items have a common key and who's already sorted by that key, we can easily perform grouped operations on it, like this:
             ```python
-            >>> from pyochain import Seq
-            >>> data = Seq((
-            ...     {"name": "Alice", "gender": "F"},
-            ...     {"name": "Bob", "gender": "M"},
-            ...     {"name": "Charlie", "gender": "M"},
-            ...     {"name": "Dan", "gender": "M"},
-            ... ))
-            >>> # group by the gender key, and count the number of people in each group
-            >>> output = (
-            ...     data
-            ...     .iter()
-            ...     .group_by(lambda x: x["gender"])
-            ...     .map_star(lambda g, vals: (g, vals.count()))
-            ...     .collect(Seq)
-            ... )
-            >>> output
-            Seq(('F', 1), ('M', 3))
+            from pyochain import Seq
 
+            data = Seq((
+                {"name": "Alice", "gender": "F"},
+                {"name": "Bob", "gender": "M"},
+                {"name": "Charlie", "gender": "M"},
+                {"name": "Dan", "gender": "M"},
+            ))
+            # group by the gender key, and count the number of people in each group
+            output = (
+                data
+                .iter()
+                .group_by(lambda x: x["gender"])
+                .map_star(lambda g, vals: (g, vals.count()))
+                .collect(Seq)
+            )
+            assert output == (("F", 1), ("M", 3))
             ```
             However, you must be careful to materialize the group values immediately when iterating over groups, see below how the values of the groups are empty::
             ```python
-            >>> from pyochain import Seq
-            >>> groups = (
-            ...     Seq(("a1", "a2", "b1"))
-            ...     .iter()
-            ...     .group_by(lambda x: x[0])
-            ...     .collect(Seq)
-            ...     .iter()
-            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
-            ...     .collect(Seq)
-            ... )
-            >>> groups
-            Seq(('a', Seq()), ('b', Seq()))
+            from pyochain import Seq
 
+            groups = (
+                Seq(("a1", "a2", "b1"))
+                .iter()
+                .group_by(lambda x: x[0])
+                .collect(Seq)
+                .iter()
+                .map_star(lambda g, vals: (g, vals.collect(Seq)))
+                .collect(Seq)
+            )
+            assert groups == (("a", Seq(())), ("b", Seq(())))
             ```
             As such, the correct pattern is the following:
             ```python
-            >>> from pyochain import Seq
-            >>> groups = (
-            ...     Seq(("a1", "a2", "b1", "b2"))
-            ...     .iter()
-            ...     .group_by(lambda x: x[0])
-            ...     # ✅ Materialize NOW
-            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
-            ...     .collect(Seq)
-            ... )
-            >>> groups
-            Seq(('a', Seq('a1', 'a2')), ('b', Seq('b1', 'b2')))
+            from pyochain import Seq
 
+            groups = (
+                Seq(("a1", "a2", "b1", "b2"))
+                .iter()
+                .group_by(lambda x: x[0])
+                # ✅ Materialize NOW
+                .map_star(lambda g, vals: (g, vals.collect(Seq)))
+                .collect(Seq)
+            )
+            assert groups == (("a", Seq(["a1", "a2"])), ("b", Seq(["b1", "b2"])))
             ```
         """
 
@@ -2592,9 +2625,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> PyoIterator[R]:
         """Applies a function to each element.where each element is an iterable.
 
-        Unlike `.map()`, which passes each element as a single argument, `.starmap()` unpacks each element into positional arguments for the function.
+        Unlike `.map()`, which passes each element as a single argument, `.map_star()` unpacks each element into positional arguments for the function.
 
         In short, for each element in the `Iterator`, it computes `func(*element)`.
+
+        This is strictly equivalent to `itertools::starmap(func, self)`.
 
         Note:
             Always prefer using `.map_star()` over `.map()` when working with `Iterator` of `tuple` elements.
@@ -2605,20 +2640,21 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             func (Callable[..., R]): Function to apply to unpacked elements.
 
         Returns:
-            PyoIterator[R]: An iterable of results from applying the function to unpacked elements.
+            PyoIterator[R]: An `Iterator` of results from applying the function to unpacked elements.
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> def make_sku(color: str, size: str) -> str:
-            ...     return f"{color}-{size}"
-            >>> data = Seq(("blue", "red"))
-            >>> data.iter().product(["S", "M"]).map_star(make_sku).collect(Seq)
-            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
-            >>> # This is equivalent to:
-            >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect(Seq)
-            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
+            from pyochain import Seq
 
+            def make_sku(color: str, size: str) -> str:
+                return f"{color}-{size}"
+
+            data = Seq(("blue", "red"))
+            a = data.iter().product(["S", "M"]).map_star(make_sku).collect(Seq)
+            assert a == ("blue-S", "blue-M", "red-S", "red-M")
+            # This is equivalent to:
+            b = data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect(Seq)
+            assert b == ("blue-S", "blue-M", "red-S", "red-M")
             ```
         """
 
@@ -3113,17 +3149,28 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def pairwise(self) -> PyoIterator[tuple[T, T]]:
-        """Return an iterator over pairs of consecutive elements.
+        """Return successive overlapping pairs from the `Iterator`.
+
+        The number of 2-tuples in the resulting `Iterator` will be one fewer than the number of inputs.
+
+        It will be empty if the current `Iterator` has fewer than two values.
 
         Returns:
-            PyoIterator[tuple[T, T]]: An iterable of pairs of consecutive elements.
+            PyoIterator[tuple[T, T]]: An `Iterator` of pairs of consecutive elements.
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).iter().pairwise().collect(Seq)
-            Seq((1, 2), (2, 3))
+            from pyochain import Seq
 
+            assert Seq((1, 2, 3)).iter().pairwise().collect(Seq) == ((1, 2), (2, 3))
+            assert Seq("ABCDEFG").iter().pairwise().collect(Seq) == (
+                ("A", "B"),
+                ("B", "C"),
+                ("C", "D"),
+                ("D", "E"),
+                ("E", "F"),
+                ("F", "G"),
+            )
             ```
         """
 
@@ -3201,20 +3248,44 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     @overload
     def permutations(self, r: Literal[5]) -> PyoIterator[tuple[T, T, T, T, T]]: ...
     def permutations(self, r: int | None = None) -> PyoIterator[tuple[T, ...]]:
-        """Return all permutations of length r.
+        """Return successive *r* length permutations of elements from the `Iterator`.
+
+        The output is a subsequence of `product()` where entries with repeated elements have been filtered out.
+
+        The length of the output is given by `math.perm()` which computes:
+
+        `n! / (n - r)! when 0 ≤ r ≤ n or zero when r > n.`
+
+        The permutation tuples are emitted in lexicographic order according to the order of the current `Iterator`, i.e `Self`.
+
+        If `Self` is sorted, the output tuples will be produced in sorted order.
+
+        Elements are treated as unique based on their position, not on their value.
+
+        If `Self` elements are unique, there will be no repeated values within a permutation.
 
         Args:
-            r (int | None): Length of each permutation. Defaults to the length of the iterable.
+            r (int | None): Length of each permutation. If not specified or `None`, defaults to the length of `Self`, and all possible full-length permutations are generated.
 
         Returns:
-            PyoIterator[tuple[T, ...]]: An iterable of permutations.
+            PyoIterator[tuple[T, ...]]: An `Iterator` of permutations.
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).permutations(2).collect(Seq)
-            Seq((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2))
+            from pyochain import Seq, Range
 
+            a = Seq((1, 2, 3)).iter().permutations(2).collect(Seq)
+            assert a == ((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2))
+
+            b = Range(0, 3).iter().permutations().collect(Seq)
+            assert b == (
+                (0, 1, 2),
+                (0, 2, 1),
+                (1, 0, 2),
+                (1, 2, 0),
+                (2, 0, 1),
+                (2, 1, 0),
+            )
             ```
         """
 
@@ -3306,12 +3377,35 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def product(
         self, *iterables: Iterable[Any], repeat: int = 1
     ) -> PyoIterator[tuple[Any, ...]]:
-        """Computes the Cartesian product with other iterables.
+        """Computes the Cartesian product with other `Iterable`.
 
-        This is the declarative equivalent of nested for-loops.
+        Roughly equivalent to nested for-loops as an `Iterator` method.
 
-        It pairs every element from the source iterable with every element from the
-        other iterables.
+        ```python
+        from pyochain import Iter
+
+        assert Iter.once("A").iter().product("B").collect(tuple) == tuple(
+            (x, y) for x in "A" for y in "B"
+        )
+        ```
+
+        The nested loops cycle like an odometer with the rightmost element advancing on every iteration.
+
+        This pattern creates a lexicographic ordering so that if the input iterables are sorted, the product tuples are emitted in sorted order.
+
+        To compute the product of the current `Iterator` with itself, specify the number of repetitions with the optional repeat keyword argument.
+
+        ```python
+        from pyochain import Seq
+
+        x = Seq(["A"])
+        a = x.iter().product(repeat=4).collect(Seq)
+        b = x.iter().product(x, x, x).collect(Seq)
+        assert a == b
+        ```
+        Before `product()` runs, it completely consumes the input iterables, keeping pools of values in memory to generate the products.
+
+        Accordingly, it is only useful with finite inputs.
 
         Args:
             *iterables (Iterable[Any]): Other iterables to compute the Cartesian product with.
@@ -3322,48 +3416,50 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq, Range, Iter
-            >>>
-            >>> colors = Seq(("blue", "red"))
-            >>> sizes = Seq(("S", "M"))
-            >>> colors.iter().product(sizes).collect(Seq)
-            Seq(('blue', 'S'), ('blue', 'M'), ('red', 'S'), ('red', 'M'))
-            >>> res = (
-            ...     colors
-            ...     .iter()
-            ...     .product(sizes)
-            ...     .map_star(lambda color, size: f"{color}-{size}")
-            ...     .collect(Seq)
-            ... )
-            >>> res
-            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
-            >>> res = (
-            ...     Range(1, 4)
-            ...     .iter()
-            ...     .product((10, 20))
-            ...     .filter_star(lambda a, b: a * b >= 40)
-            ...     .collect(Seq)
-            ... )
-            >>> res
-            Seq((2, 20), (3, 20))
-            >>> res = (
-            ...     Seq((26, 33))
-            ...     .iter()
-            ...     .product(("Michael", "Sophie"), ["Engineer"])
-            ...     .map_star(lambda age, name, profession: f"{name} is {age} and is {profession}")
-            ...     .collect(tuple)
-            ... )
-            >>> res
-            ('Michael is 26 and is Engineer', 'Sophie is 26 and is Engineer', 'Michael is 33 and is Engineer', 'Sophie is 33 and is Engineer')
+            from pyochain import Seq, Range, Iter
 
-            ```
-            If repeat is specified, the Cartesian product is repeated that many times.
-            ```python
-            >>> from pyochain import Seq
-            >>> colors = Seq(("blue", "red"))
-            >>> colors.iter().product(repeat=2).collect(Seq)
-            Seq(('blue', 'blue'), ('blue', 'red'), ('red', 'blue'), ('red', 'red'))
-
+            colors = Seq(("blue", "red"))
+            sizes = Seq(("S", "M"))
+            a = colors.iter().product(sizes).collect(Seq)
+            assert a == (("blue", "S"), ("blue", "M"), ("red", "S"), ("red", "M"))
+            b = (
+                colors
+                .iter()
+                .product(sizes)
+                .map_star(lambda color, size: f"{color}-{size}")
+                .collect(Seq)
+            )
+            assert b == ("blue-S", "blue-M", "red-S", "red-M")
+            c = (
+                Range(1, 4)
+                .iter()
+                .product((10, 20))
+                .filter_star(lambda a, b: a * b >= 40)
+                .collect(Seq)
+            )
+            assert c == ((2, 20), (3, 20))
+            d = (
+                Seq((26, 33))
+                .iter()
+                .product(("Michael", "Sophie"), ["Engineer"])
+                .map_star(
+                    lambda age, name, profession: f"{name} is {age} and is {profession}"
+                )
+                .collect(tuple)
+            )
+            assert d == (
+                "Michael is 26 and is Engineer",
+                "Sophie is 26 and is Engineer",
+                "Michael is 33 and is Engineer",
+                "Sophie is 33 and is Engineer",
+            )
+            e = Seq(("blue", "red")).iter().product(repeat=2).collect(Seq)
+            assert e == (
+                ("blue", "blue"),
+                ("blue", "red"),
+                ("red", "blue"),
+                ("red", "red"),
+            )
             ```
         """
 
@@ -3462,22 +3558,28 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def skip_while(self, predicate: Callable[[T], bool]) -> PyoIterator[T]:
-        """Drop items while predicate holds.
+    def skip_while(self, predicate: Callable[[T], object]) -> PyoIterator[T]:
+        """Skip elements from the `Iterator` while the *predicate* is `True`.
+
+        Afterwards, returns every element.
+
+        Note this does not produce any output until the predicate first becomes false, so this `Iterator` may have a lengthy start-up time.
+
+        Note:
+            This is strictly equivalent to `itertools::dropwhile(predicate, iterable)`.
 
         Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
+            predicate (Callable[[T], object]): Function to evaluate each item.
 
         Returns:
             PyoIterator[T]: An `Iterator` of the items after skipping those for which the predicate is true.
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> out = Seq((1, 2, 0, -1)).iter().skip_while(lambda x: x > 0).collect(Seq)
-            >>> out
-            Seq(0, -1)
+            from pyochain import Seq
 
+            out = Seq((1, 2, 0, -1)).iter().skip_while(lambda x: x > 0).collect(Seq)
+            assert out == Seq((0, -1))
             ```
         """
 
@@ -3487,27 +3589,36 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         stop: int | None = None,
         step: int | None = None,
     ) -> PyoIterator[T]:
-        """Return a slice of the `Iterator`.
+        """Make an `Iterator` that returns selected elements from the iterable.
+
+        Works like sequence slicing but does not support negative values for *start*, *stop*, or *step*.
+
+        Elements are returned consecutively unless step is set higher than one which results in items being skipped.
 
         Args:
-            start (int | None): Starting index of the slice.
-            stop (int | None): Ending index of the slice.
-            step (int | None): Step size for the slice.
+            start (int | None): Starting index. If zero or `None`, iteration starts at zero. Otherwise, elements from the `Iterator` are skipped until start is reached
+            stop (int | None): Ending index. If `None`, iteration continues until the input is exhausted, if at all. Otherwise, it stops at the specified position.
+            step (int | None): Step size for the slice. Defaults to one.
 
         Returns:
             PyoIterator[T]: An `Iterator` of the sliced items.
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> data = Seq((1, 2, 3, 4, 5))
-            >>> data.iter().slice(1, 4).collect(Seq)
-            Seq(2, 3, 4)
-            >>> data.iter().slice(step=2).collect(Seq)
-            Seq(1, 3, 5)
-            >>> data.iter().slice().collect(Seq)
-            Seq(1, 2, 3, 4, 5)
+            from pyochain import Seq, Range
 
+            txt = Seq("ABCDEFG")
+
+            assert txt.iter().slice(stop=2).join("") == "AB"
+            assert txt.iter().slice(2, 4).join("") == "CD"
+            assert txt.iter().slice(2, None).join("") == "CDEFG"
+            assert txt.iter().slice(0, None, 2).join("") == "ACEG"
+
+            data = Range(1, 6)
+
+            assert data.iter().slice(1, 4).collect(Seq) == (2, 3, 4)
+            assert data.iter().slice(step=2).collect(Seq) == (1, 3, 5)
+            assert data.iter().slice().collect(Seq) == (1, 2, 3, 4, 5)
             ```
         """
 
@@ -3697,28 +3808,39 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def take_while(self, predicate: Callable[[T], bool]) -> PyoIterator[T]:
-        """Take items while predicate holds.
+    def take_while(self, predicate: Callable[[T], object]) -> PyoIterator[T]:
+        """Yield elements from the `Iterator` as long as the predicate evaluates to `True`.
 
         Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
+            predicate (Callable[[T], object]): Function to evaluate each item.
 
         Returns:
             PyoIterator[T]: An `Iterator` of the items taken while the predicate is true.
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 0)).take_while(lambda x: x > 0).collect(Seq)
-            Seq(1, 2)
+            from pyochain import Seq
 
+            a = Seq((1, 2, 0)).iter().take_while(lambda x: x > 0).collect(Seq)
+            assert a == (1, 2)
+
+            b = Seq([1, 4, 6, 3, 8]).iter().take_while(lambda x: x < 5).collect(Seq)
+            assert b == (1, 4)
             ```
         """
 
     def tee(self, n: int = 2) -> tuple[PyoIterator[T], ...]:
-        """Split the `Iterator` into `n` new independants `Iterators`.
+        """Split `Self` into `n` new independants `Iterators`.
 
-        This method may require significant auxiliary storage (depending on how much temporary data needs to be stored).
+        When the input iterable is already a tee iterator object, all members of the return tuple are constructed as if they had been produced by the upstream tee() call.
+
+        This “flattening step” allows nested tee() calls to share the same underlying data chain and to have a single update step rather than a chain of calls.
+
+        tee iterators are not threadsafe.
+
+        A `RuntimeError` may be raised when simultaneously using iterators returned by the same `tee()` call, even if the original `Iterator` is threadsafe.
+
+        This `Iterator` may require significant auxiliary storage (depending on how much temporary data needs to be stored).
 
         In general, if one `Iterator` uses most or all of the data before another `Iterator` starts, it is faster to use `collect()` instead of `tee()`.
 
@@ -3730,14 +3852,34 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> data = Seq((1, 2, 3))
-            >>> it1, it2 = data.iter().tee()
-            >>> it1.collect(Seq)
-            Seq(1, 2, 3)
-            >>> it2.collect(Seq)
-            Seq(1, 2, 3)
+            from pyochain import Seq, Some
 
+            data = Seq((1, 2, 3))
+            it1, it2 = data.iter().tee()
+
+            assert it1.collect(Seq) == data
+            assert it2.collect(Seq) == data
+            ```
+
+            The flattening property makes tee iterators efficiently peekable:
+            ```python
+            from pyochain import Iter
+            from pyochain.abc import PyoIterator
+
+            def lookahead[T](tee_iterator: PyoIterator[T]) -> Option[T]:
+                '''Return the next value without moving the input forward'''
+                [forked_iterator] = tee_iterator.tee(1)
+                return forked_iterator.next()
+
+            iterator = Iter("abcdef")
+            # Make the input peekable
+            [iterator] = iterator.tee(1)
+            # Move the iterator forward
+            assert iterator.next() == Some("a")
+            # Check next value
+            assert lookahead(iterator) == Some("b")
+            # Continue moving forward
+            assert iterator.next() == Some("b")
             ```
         """
 
@@ -4146,13 +4288,16 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         tuple[Option[T], Option[T2], Option[T3], Option[T4], Option[T5]]
     ]: ...
     def zip_longest(self, *others: Iterable[Any]) -> ZippedLongest[T]:
-        """Return a zip `Iterator` who yield a `tuple` where the i-th element comes from the i-th `Iterable` argument.
+        """Make an `Iterator` that aggregates elements from each of `Self` and input `Iterable`s.
 
-        Yield values until the longest `Iterable` in the argument sequence is exhausted, and then it raises `StopIteration`.
+        If the iterables are of uneven length, missing values are filled-in with `Null`.
 
-        The longest `Iterable` determines the length of the returned `Iterator`, and will return `Some[T]` until exhaustion.
+        Otherwise, wrap elements in `Some` when they are present.
 
-        When the shorter iterables are exhausted, they yield `NONE`.
+        Iteration continues until the longest iterable is exhausted.
+        If one of the iterables is potentially infinite, then the zip_longest() function should be wrapped with something that limits the number of calls.
+
+        For example, `PyoIterator::islice` or `PyoIterator::take_while`.
 
         Args:
             *others (Iterable[Any]): Other iterables to zip with.
@@ -4162,15 +4307,13 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Some, NONE, Vec, Seq
-            >>> data = Seq((1, 2))
-            >>> out = data.iter().zip_longest([10]).collect(Vec)
-            >>> out
-            Vec((Some(1), Some(10)), (Some(2), NONE))
-            >>> # Can be combined with try collect to filter out the NONE:
-            >>> zipped = out.iter().map(lambda x: Iter(x).try_collect()).collect(Vec)
-            >>> zipped
-            Vec(Some(Vec(1, 10)), NONE)
+            from pyochain import Iter, Some, NONE, Vec, Seq
 
+            out = Seq((1, 2)).iter().zip_longest([10]).collect(Vec)
+            assert out == [(Some(1), Some(10)), (Some(2), NONE)]
+
+            # Can be combined with try collect to filter out the NONE:
+            zipped = out.iter().map(lambda x: Iter(x).try_collect()).collect(Vec)
+            assert zipped == [Some(Vec((1, 10))), NONE]
             ```
         """

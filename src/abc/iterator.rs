@@ -840,6 +840,7 @@ impl PyoIterator {
         slf.try_iter()
             .and_then(|x| pylibs::functools::reduce(func, &x, Some(init)))
     }
+    #[pyo3(signature = (key=None))]
     fn group_by<'py>(
         slf: &Bound<'py, Self>,
         key: Option<Bound<'py, PyAny>>,
