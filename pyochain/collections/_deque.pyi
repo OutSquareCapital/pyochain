@@ -52,38 +52,6 @@ class Deque[T](PyoMutableSequence[T]):
             Self: A new `Deque` instance.
         """
 
-    @staticmethod
-    def from_ref[T1](data: deque[T1]) -> Deque[T1]:
-        """Create a `Deque` from a reference to an existing `deque`.
-
-        This method wraps the provided `deque` without copying it, allowing for efficient object instanciation.
-
-        This is the recommended way to create a `Deque` from foreign functions that return `deque` objects.
-
-        Warning:
-            Since the `Deque` directly references the original `deque`, any modifications made to the `Deque` will also affect the original `deque`, and vice versa.
-
-        Args:
-            data (deque[T1]): The `deque` to wrap.
-
-        Returns:
-            Deque[T1]: A new `Deque` instance.
-
-        Example:
-            ```python
-            from pyochain.collections import Deque
-            from collections import deque
-
-            original = deque([1, 2, 3])
-            deque_obj = Deque.from_ref(original)
-
-            assert deque_obj == Deque([1, 2, 3])
-            original.append(4)
-
-            assert deque_obj == Deque([1, 2, 3, 4])
-            ```
-        """
-
     @override
     def __iter__(self) -> Iterator[T]:
         """Return an iterator over the elements in the deque."""
@@ -127,8 +95,10 @@ class Deque[T](PyoMutableSequence[T]):
 
     def __add__(self, value: IntoDeque[T], /) -> Deque[T]:
         """Return self+value."""
+
     def __mul__(self, value: int, /) -> Deque[T]:
         """Return self*value."""
+
     def __rmul__(self, value: int, /) -> Deque[T]: ...
     def __imul__(self, value: int, /) -> Deque[T]:
         """Implement self*=value.
@@ -148,12 +118,45 @@ class Deque[T](PyoMutableSequence[T]):
 
     def __gt__(self, value: IntoDeque[T], /) -> bool:
         """Return self>value."""
+
     def __ge__(self, value: IntoDeque[T], /) -> bool:
         """Return self>=value."""
 
     @override
     def __eq__(self, value: object, /) -> bool:
         """Return self==value."""
+
+    @staticmethod
+    def from_ref[T1](data: deque[T1]) -> Deque[T1]:
+        """Create a `Deque` from a reference to an existing `deque`.
+
+        This method wraps the provided `deque` without copying it, allowing for efficient object instanciation.
+
+        This is the recommended way to create a `Deque` from foreign functions that return `deque` objects.
+
+        Warning:
+            Since the `Deque` directly references the original `deque`, any modifications made to the `Deque` will also affect the original `deque`, and vice versa.
+
+        Args:
+            data (deque[T1]): The `deque` to wrap.
+
+        Returns:
+            Deque[T1]: A new `Deque` instance.
+
+        Example:
+            ```python
+            from pyochain.collections import Deque
+            from collections import deque
+
+            original = deque([1, 2, 3])
+            deque_obj = Deque.from_ref(original)
+
+            assert deque_obj == Deque([1, 2, 3])
+            original.append(4)
+
+            assert deque_obj == Deque([1, 2, 3, 4])
+            ```
+        """
 
     @override
     def append(self, x: T, /) -> None: ...
@@ -231,6 +234,7 @@ class Deque[T](PyoMutableSequence[T]):
             assert d == Deque([2, 3])
             ```
         """
+
     def rotate(self, n: int = 1, /) -> Self:
         """Rotate the deque n steps.
 
@@ -254,6 +258,7 @@ class Deque[T](PyoMutableSequence[T]):
     @override
     def insert(self, index: int, value: T) -> None:
         """Insert value before index."""
+
     @override
     def count(self, x: T, /) -> int: ...
     @override

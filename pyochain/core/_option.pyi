@@ -77,6 +77,33 @@ class OptionType[T](Pipe):
             ```
         """
 
+    @override
+    def __eq__(self, other: object) -> bool:
+        """Checks if this `Option` and *other* are equal.
+
+        A plain Python `None` is considered equal to a `pyochain.Null` instance.
+
+        Args:
+            other (object): The other object to compare with.
+
+        Returns:
+            bool: `True` if both instances are equal, `False` otherwise.
+
+        See Also:
+            [`Option::eq`][eq] for a type-safe, performant version that only accepts `Option[T]` instances.
+
+        Example:
+            ```python
+            from pyochain import Some, NONE
+
+            assert Some(42) == Some(42)
+            assert Some(42) != Some(21)
+            assert Some(42) != NONE
+            assert NONE == NONE
+            assert Some(42) != 42
+            ```
+        """
+
     def flatten[U](self: OptionType[Option[U]]) -> Option[U]:
         """Flattens a nested `Option`.
 
@@ -257,33 +284,6 @@ class OptionType[T](Pipe):
             assert not Some(42).ne(Some(42))
             assert Some(42).ne(NONE)
             assert not NONE.ne(NONE)
-            ```
-        """
-
-    @override
-    def __eq__(self, other: object) -> bool:
-        """Checks if this `Option` and *other* are equal.
-
-        A plain Python `None` is considered equal to a `pyochain.Null` instance.
-
-        Args:
-            other (object): The other object to compare with.
-
-        Returns:
-            bool: `True` if both instances are equal, `False` otherwise.
-
-        See Also:
-            [`Option::eq`][eq] for a type-safe, performant version that only accepts `Option[T]` instances.
-
-        Example:
-            ```python
-            from pyochain import Some, NONE
-
-            assert Some(42) == Some(42)
-            assert Some(42) != Some(21)
-            assert Some(42) != NONE
-            assert NONE == NONE
-            assert Some(42) != 42
             ```
         """
 
@@ -532,6 +532,7 @@ class OptionType[T](Pipe):
             assert NONE.and_(NONE).is_none()
             ```
         """
+
     def or_[S](self, optb: Option[S]) -> Option[T | S]:
         """Returns the option if it contains a value, otherwise returns optb.
 
@@ -745,6 +746,7 @@ class OptionType[T](Pipe):
             assert NONE.iter().next().is_none()
             ```
         """
+
     def inspect[**P](
         self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Option[T]:
@@ -927,6 +929,7 @@ class OptionType[T](Pipe):
             assert Some("hello").xor(Some(1)).is_none()
             ```
         """
+
     def unwrap_or_none(self) -> T | None:
         """Returns the contained `Some` value or `None`.
 

@@ -1,5 +1,7 @@
 [lint]
-    external = ["DOC"]
+    external = [
+        "DOC",
+    ]
     ignore = [
         "assert",
         "docstring-in-stub",
@@ -46,6 +48,15 @@
     [lint.pydocstyle]
         convention = "google"
     [lint.per-file-ignores]
+        "benchmarks/*" = [
+            "D",                                     # We don't want to document tests
+            "DOC",                                   # We don't want to document tests
+            "boolean-type-hint-positional-argument",
+            "call-datetime-without-tzinfo",
+            "comparison-with-itself",
+            "docstring-missing-returns",
+            "unnecessary-dunder-call",               # Dunders calls are more convenients in tests
+        ]
         "t.py" = [
             "missing-return-type-undocumented-public-function",
             "undocumented-magic-method",
