@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A modern Python library for functional programming with chainable operations">
+        <meta name="description" content="A fast, memory-efficient Python library for fluent iterators, monadic result and option types, and data structures.">
       
       
         <meta name="author" content="Thibaud Wilson Stettler">
@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.53">
+      <meta name="generator" content="zensical-0.0.56">
     
     
       
@@ -238,7 +238,7 @@
   <span class="md-ellipsis">
     
   
-  API Reference
+  API reference
 
     
   </span>
@@ -253,7 +253,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-  API Reference
+  API reference
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
@@ -285,7 +285,7 @@
   <span class="md-ellipsis">
     
   
-  ABCs
+  ABC
 
     
   </span>
@@ -300,10 +300,171 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-  ABCs
+  ABC
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_1_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_1_1" id="__nav_1_1_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Mixins
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Mixins
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../checkable/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Checkable
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fluent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fluent
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pipe
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Tap
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
             
               
                 
@@ -533,7 +694,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping" class="md-nav__link">
+  <a href="#pyochain.abc.PyoMutableMapping" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoMutableMapping
@@ -544,18 +705,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping.get_item" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        get_item
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping.insert" class="md-nav__link">
+  <a href="#pyochain.abc.PyoMutableMapping.insert" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         insert
@@ -566,7 +716,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping.remove" class="md-nav__link">
+  <a href="#pyochain.abc.PyoMutableMapping.popitem" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        popitem
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.PyoMutableMapping.remove" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         remove
@@ -577,7 +738,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping.remove_entry" class="md-nav__link">
+  <a href="#pyochain.abc.PyoMutableMapping.remove_entry" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         remove_entry
@@ -588,10 +749,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping.try_insert" class="md-nav__link">
+  <a href="#pyochain.abc.PyoMutableMapping.try_insert" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         try_insert
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.PyoMutableMapping.update" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        update
       </span>
     </span>
   </a>
@@ -802,7 +974,7 @@
   <span class="md-ellipsis">
     
   
-  Core API
+  Collections
 
     
   </span>
@@ -817,7 +989,465 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-  Core API
+  Collections
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deque/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Deque
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../heap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Heap
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../heapmax/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  HeapMax
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../heapmin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  HeapMin
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyocounter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoCounter
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sorteddict/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedDict
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sorteditemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeydict/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeyDict
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeylist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeyList
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeyset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeySet
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedlist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedList
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedSet
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedvaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stableset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  StableSet
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Core
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Core
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
@@ -837,10 +1467,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_1" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_1" id="__nav_1_2_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_1" id="__nav_1_3_1_label" tabindex="0">
             
   
   
@@ -857,8 +1487,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_1">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_1">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1160,10 +1790,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_2" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_2" id="__nav_1_2_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_2" id="__nav_1_3_2_label" tabindex="0">
             
   
   
@@ -1180,8 +1810,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_2">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1348,10 +1978,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_3" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_3" id="__nav_1_2_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_3" id="__nav_1_3_3_label" tabindex="0">
             
   
   
@@ -1368,8 +1998,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_3">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1405,59 +2035,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_1_2_4" id="__nav_1_2_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Miscellaneous
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  Miscellaneous
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
               
                 
   
@@ -1465,14 +2042,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../position/" class="md-nav__link">
+      <a href="../peekable/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-  Position
+  Peekable
 
     
   </span>
@@ -1508,171 +2085,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_4" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_5" id="__nav_1_2_5_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Mixins
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_5">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  Mixins
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../checkable/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Checkable
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../fluent/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Fluent
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pipe/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Pipe
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tap/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Tap
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_1_2_6" id="__nav_1_2_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_4" id="__nav_1_3_4_label" tabindex="0">
             
   
   
@@ -1689,8 +2105,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_6">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1877,113 +2293,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  collections
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  collections
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../deque/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Deque
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../stableset/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  StableSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2084,7 +2393,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping" class="md-nav__link">
+  <a href="#pyochain.abc.PyoMutableMapping" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoMutableMapping
@@ -2095,18 +2404,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping.get_item" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        get_item
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping.insert" class="md-nav__link">
+  <a href="#pyochain.abc.PyoMutableMapping.insert" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         insert
@@ -2117,7 +2415,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping.remove" class="md-nav__link">
+  <a href="#pyochain.abc.PyoMutableMapping.popitem" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        popitem
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.PyoMutableMapping.remove" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         remove
@@ -2128,7 +2437,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping.remove_entry" class="md-nav__link">
+  <a href="#pyochain.abc.PyoMutableMapping.remove_entry" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         remove_entry
@@ -2139,10 +2448,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._mappings.PyoMutableMapping.try_insert" class="md-nav__link">
+  <a href="#pyochain.abc.PyoMutableMapping.try_insert" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         try_insert
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.PyoMutableMapping.update" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        update
       </span>
     </span>
   </a>
@@ -2171,69 +2491,73 @@
 
 
 
-<a id="pyochain.abc._mappings.PyoMutableMapping"></a>
+<a id="pyochain.abc.PyoMutableMapping"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.abc._mappings.PyoMapping" href="../pyomapping/#pyochain.abc._mappings.PyoMapping">PyoMapping</a>[<span title="pyochain.abc._mappings.PyoMutableMapping[K]">K</span>, <span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]</code>, <code><span title="collections.abc.MutableMapping">MutableMapping</span>[<span title="pyochain.abc._mappings.PyoMutableMapping[K]">K</span>, <span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]</code>, <code><span title="abc.ABC">ABC</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.abc._mappings.PyoMapping" href="../pyomapping/#pyochain.abc.PyoMapping">PyoMapping</a>[<span title="pyochain.abc._mappings.PyoMutableMapping[K]">K</span>, <span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]</code>, <code><span title="collections.abc.MutableMapping">MutableMapping</span>[<span title="pyochain.abc._mappings.PyoMutableMapping[K]">K</span>, <span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]</code></p>
 
             <div style="display: none">
-              <a class="autorefs autorefs-internal" title="pyochain.abc._mappings.PyoMutableMapping" href="./#pyochain.abc._mappings.PyoMutableMapping" id="mermaid-link-pyochain.abc._mappings.PyoMutableMapping"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._mappings.PyoMapping" href="../pyomapping/#pyochain.abc._mappings.PyoMapping" id="mermaid-link-pyochain.abc._mappings.PyoMapping"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoCollection" href="../pyocollection/#pyochain.abc._collection.PyoCollection" id="mermaid-link-pyochain.abc._collection.PyoCollection"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoIterable" href="../pyoiterable/#pyochain.abc._iterable.PyoIterable" id="mermaid-link-pyochain.abc._iterable.PyoIterable"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.rs.Fluent" href="../fluent/#pyochain.rs.Fluent" id="mermaid-link-pyochain.rs.Fluent"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.rs.Pipe" href="../pipe/#pyochain.rs.Pipe" id="mermaid-link-pyochain.rs.Pipe"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.rs.Tap" href="../tap/#pyochain.rs.Tap" id="mermaid-link-pyochain.rs.Tap"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.rs.Checkable" href="../checkable/#pyochain.rs.Checkable" id="mermaid-link-pyochain.rs.Checkable"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoContainer" href="../pyocontainer/#pyochain.abc._collection.PyoContainer" id="mermaid-link-pyochain.abc._collection.PyoContainer"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoSized" href="../pyosized/#pyochain.abc._collection.PyoSized" id="mermaid-link-pyochain.abc._collection.PyoSized"></a>
+              <a class="autorefs autorefs-internal" title="pyochain.abc.PyoMutableMapping" href="./#pyochain.abc.PyoMutableMapping" id="mermaid-link-pyochain.abc.PyoMutableMapping"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mappings.PyoMapping" href="../pyomapping/#pyochain.abc.PyoMapping" id="mermaid-link-pyochain.abc._mappings.PyoMapping"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoCollection" href="../pyocollection/#pyochain.abc.PyoCollection" id="mermaid-link-pyochain.abc._collection.PyoCollection"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoIterable" href="../pyoiterable/#pyochain.abc.PyoIterable" id="mermaid-link-pyochain.abc._iterable.PyoIterable"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoContainer" href="../pyocontainer/#pyochain.abc.PyoContainer" id="mermaid-link-pyochain.abc._collection.PyoContainer"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoSized" href="../pyosized/#pyochain.abc.PyoSized" id="mermaid-link-pyochain.abc._collection.PyoSized"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Checkable" href="../checkable/#pyochain.abc.Checkable" id="mermaid-link-pyochain.abc._mixins.Checkable"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Fluent" href="../fluent/#pyochain.abc.Fluent" id="mermaid-link-pyochain.abc._mixins.Fluent"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Pipe" href="../pipe/#pyochain.abc.Pipe" id="mermaid-link-pyochain.abc._mixins.Pipe"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Tap" href="../tap/#pyochain.abc.Tap" id="mermaid-link-pyochain.abc._mixins.Tap"></a>
             </div>
-            <pre class="mermaid"><code id="mermaid-diagram-pyochain.abc._mappings.PyoMutableMapping">
+            <pre class="mermaid"><code id="mermaid-diagram-pyochain.abc.PyoMutableMapping">
               flowchart TD
-              pyochain.abc._mappings.PyoMutableMapping[PyoMutableMapping]
+              pyochain.abc.PyoMutableMapping[PyoMutableMapping]
               pyochain.abc._mappings.PyoMapping[PyoMapping]
               pyochain.abc._collection.PyoCollection[PyoCollection]
               pyochain.abc._iterable.PyoIterable[PyoIterable]
-              pyochain.rs.Fluent[Fluent]
-              pyochain.rs.Pipe[Pipe]
-              pyochain.rs.Tap[Tap]
-              pyochain.rs.Checkable[Checkable]
               pyochain.abc._collection.PyoContainer[PyoContainer]
               pyochain.abc._collection.PyoSized[PyoSized]
+              pyochain.abc._mixins.Checkable[Checkable]
+              pyochain.abc._mixins.Fluent[Fluent]
+              pyochain.abc._mixins.Pipe[Pipe]
+              pyochain.abc._mixins.Tap[Tap]
 
-                              pyochain.abc._mappings.PyoMapping --> pyochain.abc._mappings.PyoMutableMapping
+                              pyochain.abc._mappings.PyoMapping --> pyochain.abc.PyoMutableMapping
                                 pyochain.abc._collection.PyoCollection --> pyochain.abc._mappings.PyoMapping
                                 pyochain.abc._iterable.PyoIterable --> pyochain.abc._collection.PyoCollection
-                                pyochain.rs.Fluent --> pyochain.abc._iterable.PyoIterable
-                                pyochain.rs.Pipe --> pyochain.rs.Fluent
+                                pyochain.abc._mixins.Checkable --> pyochain.abc._iterable.PyoIterable
                 
-                pyochain.rs.Tap --> pyochain.rs.Fluent
+                pyochain.abc._mixins.Fluent --> pyochain.abc._iterable.PyoIterable
+                                pyochain.abc._mixins.Pipe --> pyochain.abc._mixins.Fluent
+                
+                pyochain.abc._mixins.Tap --> pyochain.abc._mixins.Fluent
                 
 
-                pyochain.rs.Checkable --> pyochain.abc._iterable.PyoIterable
-                
 
                 pyochain.abc._collection.PyoContainer --> pyochain.abc._collection.PyoCollection
+                                pyochain.abc._mixins.Checkable --> pyochain.abc._collection.PyoContainer
                 
+
                 pyochain.abc._collection.PyoSized --> pyochain.abc._collection.PyoCollection
+                                pyochain.abc._mixins.Checkable --> pyochain.abc._collection.PyoSized
                 
 
 
 
 
-              click pyochain.abc._mappings.PyoMutableMapping href "" "pyochain.abc._mappings.PyoMutableMapping"
+
+              click pyochain.abc.PyoMutableMapping href "" "pyochain.abc.PyoMutableMapping"
               click pyochain.abc._mappings.PyoMapping href "" "pyochain.abc._mappings.PyoMapping"
               click pyochain.abc._collection.PyoCollection href "" "pyochain.abc._collection.PyoCollection"
               click pyochain.abc._iterable.PyoIterable href "" "pyochain.abc._iterable.PyoIterable"
-              click pyochain.rs.Fluent href "" "pyochain.rs.Fluent"
-              click pyochain.rs.Pipe href "" "pyochain.rs.Pipe"
-              click pyochain.rs.Tap href "" "pyochain.rs.Tap"
-              click pyochain.rs.Checkable href "" "pyochain.rs.Checkable"
               click pyochain.abc._collection.PyoContainer href "" "pyochain.abc._collection.PyoContainer"
               click pyochain.abc._collection.PyoSized href "" "pyochain.abc._collection.PyoSized"
+              click pyochain.abc._mixins.Checkable href "" "pyochain.abc._mixins.Checkable"
+              click pyochain.abc._mixins.Fluent href "" "pyochain.abc._mixins.Fluent"
+              click pyochain.abc._mixins.Pipe href "" "pyochain.abc._mixins.Pipe"
+              click pyochain.abc._mixins.Tap href "" "pyochain.abc._mixins.Tap"
             </code></pre>
             <script>
-              var diagram = document.getElementById('mermaid-diagram-pyochain.abc._mappings.PyoMutableMapping');
+              var diagram = document.getElementById('mermaid-diagram-pyochain.abc.PyoMutableMapping');
               diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
                 try {
                   const link = document.getElementById("mermaid-link-" + nodeID).href;
@@ -2264,39 +2588,8 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">105</span>
-<span class="normal">106</span>
-<span class="normal">107</span>
-<span class="normal">108</span>
-<span class="normal">109</span>
-<span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span>
-<span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
-<span class="normal">136</span>
+                <summary>Source code in <code>pyochain/abc/_mappings.pyi</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">136</span>
 <span class="normal">137</span>
 <span class="normal">138</span>
 <span class="normal">139</span>
@@ -2419,8 +2712,122 @@
 <span class="normal">256</span>
 <span class="normal">257</span>
 <span class="normal">258</span>
-<span class="normal">259</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">MutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends `PyoMapping[K, V]` and `collections.abc.MutableMapping[K, V]`.</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">MutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportImplicitAbstractClass]</span>
+<span class="w">    </span><span class="sd">"""Extends `PyoMapping[K, V]` and `collections.abc.MutableMapping[K, V]`.</span>
 
 <span class="sd">    Serves as a base class for pyochain mutable mappings, such as `Dict`.</span>
 
@@ -2432,13 +2839,134 @@
 <span class="sd">    - `__iter__`</span>
 <span class="sd">    - `__len__`</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="c1"># pyrefly: ignore [implicit-any-attribute]</span>
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>  <span class="c1"># pyright: ignore[reportUnannotatedClassAttribute]</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">V</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">V</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">V</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pop</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">V</span> <span class="o">|</span> <span class="n">T</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pop</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">T</span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">V</span> <span class="o">|</span> <span class="n">T</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">popitem</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Remove and return a (key, value) pair from the `PyoMutableMapping`.</span>
 
+<span class="sd">        Pairs are returned in LIFO order in the default implementation.</span>
+
+<span class="sd">        It can be useful to destructively iterate over *self*, as often used in set algorithms.</span>
+
+<span class="sd">        Raises `KeyError` if the `PyoMutableMapping` is empty.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[K, V]: The removed (key, value) pair.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Dict, Ok, Err</span>
+
+<span class="sd">            d = Dict({1: "a", 2: "b"})</span>
+<span class="sd">            popped = d.popitem()</span>
+<span class="sd">            assert popped == (2, "b")</span>
+<span class="sd">            popped = d.popitem()</span>
+<span class="sd">            assert popped == (1, "a")</span>
+<span class="sd">            try:</span>
+<span class="sd">                res = Ok(d.popitem())</span>
+<span class="sd">            except KeyError as e:</span>
+<span class="sd">                res = Err(e)</span>
+<span class="sd">            assert repr(res) == '''Err(KeyError('popitem(): dictionary is empty'))'''</span>
+<span class="sd">            # LIFO order is preserved</span>
+<span class="sd">            d = Dict({1: "a", 2: "b", 3: "c"})</span>
+<span class="sd">            assert d.popitem() == (3, "c")</span>
+<span class="sd">            assert d.popitem() == (2, "b")</span>
+<span class="sd">            assert d.popitem() == (1, "a")</span>
+<span class="sd">            assert d.is_empty()</span>
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="n">SupportsKeysAndGetItem</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">SupportsGetItem</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">m</span><span class="p">:</span> <span class="n">SupportsKeysAndGetItem</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="o">/</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">V</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">SupportsGetItem</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">m</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">V</span><span class="p">]],</span> <span class="o">/</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">V</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">SupportsGetItem</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="o">/</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pyright: ignore[reportIncompatibleMethodOverride]</span>
+<span class="w">        </span><span class="sd">"""In-place update of *self*, with key-value pairs from another `Mapping` or `Iterable`.</span>
+
+<span class="sd">        Keywords will be applied after the *m* argument, allowing for additional updates.</span>
+
+
+<span class="sd">        If a key already exists in *self*, its value will be overwritten.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">        If a given key is present in both *m* and *kwargs*, the value from the latter will be the one effectively present in the resulting `Dict`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            m (object): The `Mapping` or `Iterable` to update *self* from.</span>
+<span class="sd">            **kwargs (V): Additional key-value pairs to update *self* with.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Dict</span>
+
+<span class="sd">            d = Dict({1: "a", 2: "b"})</span>
+<span class="sd">            d.update({2: "c", 3: "d"})</span>
+<span class="sd">            assert d == Dict({1: "a", 2: "c", 3: "d"})</span>
+<span class="sd">            d.update([(3, "e"), (4, "f")])</span>
+<span class="sd">            assert d == Dict({1: "a", 2: "c", 3: "e", 4: "f"})</span>
+<span class="sd">            d1 = Dict({"John": 30, "Jane": 25})</span>
+<span class="sd">            d1.update({"John": 26, "Doe": 22}, John=31, Mary=28)</span>
+<span class="sd">            assert d1 == Dict({"John": 31, "Jane": 25, "Doe": 22, "Mary": 28})</span>
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setdefault</span><span class="p">[</span><span class="n">T</span><span class="p">](</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">MutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">V</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">V</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setdefault</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">V</span><span class="p">:</span> <span class="o">...</span>
+<span class="w">    </span><span class="sd">"""Return the value for `key` if it is in *self*, else insert `key` with a value of `default` into *self* and return `default`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key (K): The key to look for in *self*.</span>
+<span class="sd">            default (object): The value to insert if `key` is not found. Defaults to `None`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            V | T | None: The value associated with `key`, or `default` if `key` was not found.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Dict</span>
+<span class="sd">            d = Dict({1: "a", 2: "b"})</span>
+<span class="sd">            assert d.setdefault(2, "c") == "b"</span>
+<span class="sd">            assert d.setdefault(3, "d") == "d"</span>
+<span class="sd">            assert d == Dict({1: "a", 2: "b", 3: "d"})</span>
+<span class="sd">            assert d.setdefault(4) is None</span>
+<span class="sd">            assert d == Dict({1: "a", 2: "b", 3: "d", 4: None})</span>
+
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Insert a key-value pair into the `MutableMapping`.</span>
+<span class="w">        </span><span class="sd">"""Insert a key-value pair into the `MutableMapping`.</span>
 
 <span class="sd">        If the `MutableMapping` did not have this **key** present, `NONE` is returned.</span>
 
@@ -2455,28 +2983,19 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
-<span class="sd">            &gt;&gt;&gt; from pyochain import Dict</span>
-<span class="sd">            &gt;&gt;&gt; data = Dict(())</span>
-<span class="sd">            &gt;&gt;&gt; data.insert(37, &quot;a&quot;)</span>
-<span class="sd">            NONE</span>
-<span class="sd">            &gt;&gt;&gt; data.is_empty()</span>
-<span class="sd">            False</span>
+<span class="sd">            from pyochain import Dict, Some</span>
 
-<span class="sd">            &gt;&gt;&gt; data.insert(37, &quot;b&quot;)</span>
-<span class="sd">            Some(&#39;a&#39;)</span>
-<span class="sd">            &gt;&gt;&gt; data.insert(37, &quot;c&quot;)</span>
-<span class="sd">            Some(&#39;b&#39;)</span>
-<span class="sd">            &gt;&gt;&gt; data[37]</span>
-<span class="sd">            &#39;c&#39;</span>
+<span class="sd">            data = Dict(())</span>
+<span class="sd">            assert data.insert(37, "a").is_none()</span>
+<span class="sd">            assert not data.is_empty()</span>
 
+<span class="sd">            assert data.insert(37, "b") == Some("a")</span>
+<span class="sd">            assert data.insert(37, "c") == Some("b")</span>
+<span class="sd">            assert data[37] == "c"</span>
 <span class="sd">            ```</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">previous</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">return</span> <span class="n">option</span><span class="p">(</span><span class="n">previous</span><span class="p">)</span>
-
+<span class="sd">        """</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">try_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">V</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tries to insert a key-value pair into the `MutableMapping`, and returns a `Result[V, KeyError]` containing the value in the entry (if successful).</span>
+<span class="w">        </span><span class="sd">"""Tries to insert a key-value pair into the `MutableMapping`, and returns a `Result[V, KeyError]` containing the value in the entry (if successful).</span>
 
 <span class="sd">        If the `MutableMapping` already had this **key** present, nothing is updated, and an error containing the occupied entry and the value is returned.</span>
 
@@ -2489,22 +3008,23 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
-<span class="sd">            &gt;&gt;&gt; from pyochain import Dict</span>
-<span class="sd">            &gt;&gt;&gt; d = Dict(())</span>
-<span class="sd">            &gt;&gt;&gt; d.try_insert(37, &quot;a&quot;).unwrap()</span>
-<span class="sd">            &#39;a&#39;</span>
-<span class="sd">            &gt;&gt;&gt; d.try_insert(37, &quot;b&quot;)</span>
-<span class="sd">            Err(KeyError(&#39;Key 37 already exists with value a.&#39;))</span>
+<span class="sd">            from pyochain import Dict, Err</span>
 
+<span class="sd">            d = Dict(())</span>
+<span class="sd">            assert d.try_insert(37, "a").unwrap() == "a"</span>
+
+<span class="sd">            x = d.try_insert(37, "b")</span>
+<span class="sd">            assert x.is_err()</span>
+<span class="sd">            unwrapped = x.unwrap_err()</span>
+<span class="sd">            assert isinstance(unwrapped, KeyError)</span>
+<span class="sd">            assert repr(unwrapped) == "KeyError('Key 37 already exists with value a.')"</span>
+
+<span class="sd">            assert d == Dict({37: "a"})</span>
 <span class="sd">            ```</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Err</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> already exists with value </span><span class="si">{</span><span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">))</span>
-        <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<span class="sd">        """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove a **key** from the `MutableMapping` and return its value if it existed.</span>
+<span class="w">        </span><span class="sd">"""Remove a **key** from the `MutableMapping` and return its value if it existed.</span>
 
 <span class="sd">        Equivalent to `dict.pop(key, None)`, with an `Option` return type.</span>
 
@@ -2516,19 +3036,16 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
-<span class="sd">            &gt;&gt;&gt; from pyochain import Dict</span>
-<span class="sd">            &gt;&gt;&gt; data = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
-<span class="sd">            &gt;&gt;&gt; data.remove(1)</span>
-<span class="sd">            Some(&#39;a&#39;)</span>
-<span class="sd">            &gt;&gt;&gt; data.remove(3)</span>
-<span class="sd">            NONE</span>
+<span class="sd">            from pyochain import Dict, Some</span>
 
+<span class="sd">            data = Dict({1: "a", 2: "b"})</span>
+<span class="sd">            assert data.remove(1) == Some("a")</span>
+<span class="sd">            assert data.remove(3).is_none()</span>
 <span class="sd">            ```</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">option</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+<span class="sd">        """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">remove_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove a key from the `MutableMapping` and return the item if it existed.</span>
+<span class="w">        </span><span class="sd">"""Remove a key from the `MutableMapping` and return the item if it existed.</span>
 
 <span class="sd">        Return an `Option[tuple[K, V]]` containing the (key, value) pair if the key was present.</span>
 
@@ -2540,40 +3057,13 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
-<span class="sd">            &gt;&gt;&gt; from pyochain import Dict</span>
-<span class="sd">            &gt;&gt;&gt; data = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
-<span class="sd">            &gt;&gt;&gt; data.remove_entry(1)</span>
-<span class="sd">            Some((1, &#39;a&#39;))</span>
-<span class="sd">            &gt;&gt;&gt; data.remove_entry(3)</span>
-<span class="sd">            NONE</span>
+<span class="sd">            from pyochain import Dict, Some</span>
 
+<span class="sd">            data = Dict({1: "a", 2: "b"})</span>
+<span class="sd">            assert data.remove_entry(1) == Some((1, "a"))</span>
+<span class="sd">            assert data.remove_entry(3).is_none()</span>
 <span class="sd">            ```</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Some</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span> <span class="k">else</span> <span class="n">NONE</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve a value from the `MutableMapping`.</span>
-
-<span class="sd">        Returns `Some(value)` if the **key** exists, or `None` if it does not.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            key (K): The key to look up.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Option[V]: `Some(value)` that is associated with the **key**, or `None` if not found.</span>
-
-<span class="sd">        Example:</span>
-<span class="sd">            ```python</span>
-<span class="sd">            &gt;&gt;&gt; from pyochain import Dict</span>
-<span class="sd">            &gt;&gt;&gt; data = Dict.from_ref({&quot;a&quot;: 1})</span>
-<span class="sd">            &gt;&gt;&gt; data.get_item(&quot;a&quot;)</span>
-<span class="sd">            Some(1)</span>
-<span class="sd">            &gt;&gt;&gt; data.get_item(&quot;x&quot;).unwrap_or(&quot;Not Found&quot;)</span>
-<span class="sd">            &#39;Not Found&#39;</span>
-
-<span class="sd">            ```</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">option</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+<span class="sd">        """</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2593,140 +3083,7 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.abc._mappings.PyoMutableMapping.get_item" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_item</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></code>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Retrieve a value from the <code>MutableMapping</code>.</p>
-<p>Returns <code>Some(value)</code> if the <strong>key</strong> exists, or <code>None</code> if it does not.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>key</code>
-            </td>
-            <td>
-                  <code><span title="pyochain.abc._mappings.PyoMutableMapping[K]">K</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The key to look up.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Option[V]: <code>Some(value)</code> that is associated with the <strong>key</strong>, or <code>None</code> if not found.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<details class="example" open>
-  <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="o">.</span><span class="n">from_ref</span><span class="p">({</span><span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">get_item</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span>
-<span class="n">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">get_item</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="s2">&quot;Not Found&quot;</span><span class="p">)</span>
-<span class="s1">&#39;Not Found&#39;</span>
-</code></pre></div>
-</details>
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span>
-<span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve a value from the `MutableMapping`.</span>
-
-<span class="sd">    Returns `Some(value)` if the **key** exists, or `None` if it does not.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        key (K): The key to look up.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Option[V]: `Some(value)` that is associated with the **key**, or `None` if not found.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
-<span class="sd">        &gt;&gt;&gt; data = Dict.from_ref({&quot;a&quot;: 1})</span>
-<span class="sd">        &gt;&gt;&gt; data.get_item(&quot;a&quot;)</span>
-<span class="sd">        Some(1)</span>
-<span class="sd">        &gt;&gt;&gt; data.get_item(&quot;x&quot;).unwrap_or(&quot;Not Found&quot;)</span>
-<span class="sd">        &#39;Not Found&#39;</span>
-
-<span class="sd">        ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">option</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h2 id="pyochain.abc._mappings.PyoMutableMapping.insert" class="doc doc-heading">
+<h2 id="pyochain.abc.PyoMutableMapping.insert" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">insert</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></code>
 
 </h2>
@@ -2798,7 +3155,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Option" href="../option/#pyochain.core.Option">Option</a>[<span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2812,62 +3169,50 @@
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">(())</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">37</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
-<span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">is_empty</span><span class="p">()</span>
-<span class="kc">False</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Some</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">37</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">)</span>
-<span class="n">Some</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">37</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">)</span>
-<span class="n">Some</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="p">[</span><span class="mi">37</span><span class="p">]</span>
-<span class="s1">&#39;c&#39;</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">(())</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">37</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">)</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
+<span class="k">assert</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">is_empty</span><span class="p">()</span>
+
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">37</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">)</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="s2">"a"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">37</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">)</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="s2">"b"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="mi">37</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"c"</span>
 </code></pre></div>
 </details>
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Insert a key-value pair into the `MutableMapping`.</span>
+              <summary>Source code in <code>pyochain/abc/_mappings.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Insert a key-value pair into the `MutableMapping`.</span>
 
 <span class="sd">    If the `MutableMapping` did not have this **key** present, `NONE` is returned.</span>
 
@@ -2884,25 +3229,17 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
-<span class="sd">        &gt;&gt;&gt; data = Dict(())</span>
-<span class="sd">        &gt;&gt;&gt; data.insert(37, &quot;a&quot;)</span>
-<span class="sd">        NONE</span>
-<span class="sd">        &gt;&gt;&gt; data.is_empty()</span>
-<span class="sd">        False</span>
+<span class="sd">        from pyochain import Dict, Some</span>
 
-<span class="sd">        &gt;&gt;&gt; data.insert(37, &quot;b&quot;)</span>
-<span class="sd">        Some(&#39;a&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; data.insert(37, &quot;c&quot;)</span>
-<span class="sd">        Some(&#39;b&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; data[37]</span>
-<span class="sd">        &#39;c&#39;</span>
+<span class="sd">        data = Dict(())</span>
+<span class="sd">        assert data.insert(37, "a").is_none()</span>
+<span class="sd">        assert not data.is_empty()</span>
 
+<span class="sd">        assert data.insert(37, "b") == Some("a")</span>
+<span class="sd">        assert data.insert(37, "c") == Some("b")</span>
+<span class="sd">        assert data[37] == "c"</span>
 <span class="sd">        ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">previous</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-    <span class="k">return</span> <span class="n">option</span><span class="p">(</span><span class="n">previous</span><span class="p">)</span>
+<span class="sd">    """</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2912,7 +3249,147 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.abc._mappings.PyoMutableMapping.remove" class="doc doc-heading">
+<h2 id="pyochain.abc.PyoMutableMapping.popitem" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">popitem</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Remove and return a (key, value) pair from the <code>PyoMutableMapping</code>.</p>
+<p>Pairs are returned in LIFO order in the default implementation.</p>
+<p>It can be useful to destructively iterate over <em>self</em>, as often used in set algorithms.</p>
+<p>Raises <code>KeyError</code> if the <code>PyoMutableMapping</code> is empty.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="pyochain.abc._mappings.PyoMutableMapping[K]">K</span>, <span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>tuple[K, V]: The removed (key, value) pair.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"b"</span><span class="p">})</span>
+<span class="n">popped</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">popitem</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">popped</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">)</span>
+<span class="n">popped</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">popitem</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">popped</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">Ok</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">popitem</span><span class="p">())</span>
+<span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+<span class="k">assert</span> <span class="nb">repr</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'''Err(KeyError('popitem(): dictionary is empty'))'''</span>
+<span class="c1"># LIFO order is preserved</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"b"</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">"c"</span><span class="p">})</span>
+<span class="k">assert</span> <span class="n">d</span><span class="o">.</span><span class="n">popitem</span><span class="p">()</span> <span class="o">==</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">d</span><span class="o">.</span><span class="n">popitem</span><span class="p">()</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">d</span><span class="o">.</span><span class="n">popitem</span><span class="p">()</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">d</span><span class="o">.</span><span class="n">is_empty</span><span class="p">()</span>
+</code></pre></div>
+</details>
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>pyochain/abc/_mappings.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">popitem</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Remove and return a (key, value) pair from the `PyoMutableMapping`.</span>
+
+<span class="sd">    Pairs are returned in LIFO order in the default implementation.</span>
+
+<span class="sd">    It can be useful to destructively iterate over *self*, as often used in set algorithms.</span>
+
+<span class="sd">    Raises `KeyError` if the `PyoMutableMapping` is empty.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple[K, V]: The removed (key, value) pair.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Dict, Ok, Err</span>
+
+<span class="sd">        d = Dict({1: "a", 2: "b"})</span>
+<span class="sd">        popped = d.popitem()</span>
+<span class="sd">        assert popped == (2, "b")</span>
+<span class="sd">        popped = d.popitem()</span>
+<span class="sd">        assert popped == (1, "a")</span>
+<span class="sd">        try:</span>
+<span class="sd">            res = Ok(d.popitem())</span>
+<span class="sd">        except KeyError as e:</span>
+<span class="sd">            res = Err(e)</span>
+<span class="sd">        assert repr(res) == '''Err(KeyError('popitem(): dictionary is empty'))'''</span>
+<span class="sd">        # LIFO order is preserved</span>
+<span class="sd">        d = Dict({1: "a", 2: "b", 3: "c"})</span>
+<span class="sd">        assert d.popitem() == (3, "c")</span>
+<span class="sd">        assert d.popitem() == (2, "b")</span>
+<span class="sd">        assert d.popitem() == (1, "a")</span>
+<span class="sd">        assert d.is_empty()</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyochain.abc.PyoMutableMapping.remove" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></code>
 
 </h2>
@@ -2966,7 +3443,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Option" href="../option/#pyochain.core.Option">Option</a>[<span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2980,41 +3457,37 @@
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">Some</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">NONE</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Some</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"b"</span><span class="p">})</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="s2">"a"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 </code></pre></div>
 </details>
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
-<span class="normal">195</span>
-<span class="normal">196</span>
-<span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove a **key** from the `MutableMapping` and return its value if it existed.</span>
+              <summary>Source code in <code>pyochain/abc/_mappings.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Remove a **key** from the `MutableMapping` and return its value if it existed.</span>
 
 <span class="sd">    Equivalent to `dict.pop(key, None)`, with an `Option` return type.</span>
 
@@ -3026,16 +3499,13 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
-<span class="sd">        &gt;&gt;&gt; data = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
-<span class="sd">        &gt;&gt;&gt; data.remove(1)</span>
-<span class="sd">        Some(&#39;a&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; data.remove(3)</span>
-<span class="sd">        NONE</span>
+<span class="sd">        from pyochain import Dict, Some</span>
 
+<span class="sd">        data = Dict({1: "a", 2: "b"})</span>
+<span class="sd">        assert data.remove(1) == Some("a")</span>
+<span class="sd">        assert data.remove(3).is_none()</span>
 <span class="sd">        ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">option</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+<span class="sd">    """</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3045,7 +3515,7 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.abc._mappings.PyoMutableMapping.remove_entry" class="doc doc-heading">
+<h2 id="pyochain.abc.PyoMutableMapping.remove_entry" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">remove_entry</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></code>
 
 </h2>
@@ -3099,7 +3569,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="tuple">tuple</span>[<span title="pyochain.abc._mappings.PyoMutableMapping[K]">K</span>, <span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Option" href="../option/#pyochain.core.Option">Option</a>[<span title="tuple">tuple</span>[<span title="pyochain.abc._mappings.PyoMutableMapping[K]">K</span>, <span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3113,41 +3583,37 @@
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">remove_entry</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">Some</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">remove_entry</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">NONE</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Some</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"b"</span><span class="p">})</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">remove_entry</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">Some</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">))</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">remove_entry</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 </code></pre></div>
 </details>
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
-<span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span>
-<span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
-<span class="normal">233</span>
-<span class="normal">234</span>
-<span class="normal">235</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove a key from the `MutableMapping` and return the item if it existed.</span>
+              <summary>Source code in <code>pyochain/abc/_mappings.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Remove a key from the `MutableMapping` and return the item if it existed.</span>
 
 <span class="sd">    Return an `Option[tuple[K, V]]` containing the (key, value) pair if the key was present.</span>
 
@@ -3159,16 +3625,13 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
-<span class="sd">        &gt;&gt;&gt; data = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
-<span class="sd">        &gt;&gt;&gt; data.remove_entry(1)</span>
-<span class="sd">        Some((1, &#39;a&#39;))</span>
-<span class="sd">        &gt;&gt;&gt; data.remove_entry(3)</span>
-<span class="sd">        NONE</span>
+<span class="sd">        from pyochain import Dict, Some</span>
 
+<span class="sd">        data = Dict({1: "a", 2: "b"})</span>
+<span class="sd">        assert data.remove_entry(1) == Some((1, "a"))</span>
+<span class="sd">        assert data.remove_entry(3).is_none()</span>
 <span class="sd">        ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Some</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span> <span class="k">else</span> <span class="n">NONE</span>
+<span class="sd">    """</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3178,7 +3641,7 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.abc._mappings.PyoMutableMapping.try_insert" class="doc doc-heading">
+<h2 id="pyochain.abc.PyoMutableMapping.try_insert" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">try_insert</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></code>
 
 </h2>
@@ -3248,7 +3711,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[<span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>, <span title="KeyError">KeyError</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Result" href="../result/#pyochain.core.Result">Result</a>[<span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span>, <span title="KeyError">KeyError</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3262,45 +3725,52 @@
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">d</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">(())</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">d</span><span class="o">.</span><span class="n">try_insert</span><span class="p">(</span><span class="mi">37</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span>
-<span class="s1">&#39;a&#39;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">d</span><span class="o">.</span><span class="n">try_insert</span><span class="p">(</span><span class="mi">37</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">)</span>
-<span class="n">Err</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Key 37 already exists with value a.&#39;</span><span class="p">))</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Err</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">(())</span>
+<span class="k">assert</span> <span class="n">d</span><span class="o">.</span><span class="n">try_insert</span><span class="p">(</span><span class="mi">37</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"a"</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">try_insert</span><span class="p">(</span><span class="mi">37</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">is_err</span><span class="p">()</span>
+<span class="n">unwrapped</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">unwrap_err</span><span class="p">()</span>
+<span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">unwrapped</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span>
+<span class="k">assert</span> <span class="nb">repr</span><span class="p">(</span><span class="n">unwrapped</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"KeyError('Key 37 already exists with value a.')"</span>
+
+<span class="k">assert</span> <span class="n">d</span> <span class="o">==</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">37</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">})</span>
 </code></pre></div>
 </details>
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
-<span class="normal">177</span>
-<span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span>
-<span class="normal">182</span>
-<span class="normal">183</span>
-<span class="normal">184</span>
-<span class="normal">185</span>
-<span class="normal">186</span>
-<span class="normal">187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">try_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">V</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tries to insert a key-value pair into the `MutableMapping`, and returns a `Result[V, KeyError]` containing the value in the entry (if successful).</span>
+              <summary>Source code in <code>pyochain/abc/_mappings.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">try_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">V</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Tries to insert a key-value pair into the `MutableMapping`, and returns a `Result[V, KeyError]` containing the value in the entry (if successful).</span>
 
 <span class="sd">    If the `MutableMapping` already had this **key** present, nothing is updated, and an error containing the occupied entry and the value is returned.</span>
 
@@ -3313,19 +3783,176 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
-<span class="sd">        &gt;&gt;&gt; d = Dict(())</span>
-<span class="sd">        &gt;&gt;&gt; d.try_insert(37, &quot;a&quot;).unwrap()</span>
-<span class="sd">        &#39;a&#39;</span>
-<span class="sd">        &gt;&gt;&gt; d.try_insert(37, &quot;b&quot;)</span>
-<span class="sd">        Err(KeyError(&#39;Key 37 already exists with value a.&#39;))</span>
+<span class="sd">        from pyochain import Dict, Err</span>
 
+<span class="sd">        d = Dict(())</span>
+<span class="sd">        assert d.try_insert(37, "a").unwrap() == "a"</span>
+
+<span class="sd">        x = d.try_insert(37, "b")</span>
+<span class="sd">        assert x.is_err()</span>
+<span class="sd">        unwrapped = x.unwrap_err()</span>
+<span class="sd">        assert isinstance(unwrapped, KeyError)</span>
+<span class="sd">        assert repr(unwrapped) == "KeyError('Key 37 already exists with value a.')"</span>
+
+<span class="sd">        assert d == Dict({37: "a"})</span>
 <span class="sd">        ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Err</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> already exists with value </span><span class="si">{</span><span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">))</span>
-    <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-    <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyochain.abc.PyoMutableMapping.update" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">update</span><span class="p">(</span><span class="n">m</span><span class="o">=...</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h2>
+          <div class="doc-overloads">
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">update</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">SupportsKeysAndGetItem</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">update</span><span class="p">(</span>
+    <span class="n">m</span><span class="p">:</span> <span class="n">SupportsKeysAndGetItem</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="o">/</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">V</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">update</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">update</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">V</span><span class="p">]],</span> <span class="o">/</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>          </div>
+
+
+    <div class="doc doc-contents ">
+
+        <p>In-place update of <em>self</em>, with key-value pairs from another <code>Mapping</code> or <code>Iterable</code>.</p>
+<p>Keywords will be applied after the <em>m</em> argument, allowing for additional updates.</p>
+<p>If a key already exists in <em>self</em>, its value will be overwritten.</p>
+<p>Note:
+If a given key is present in both <em>m</em> and <em>kwargs</em>, the value from the latter will be the one effectively present in the resulting <code>Dict</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>m</code>
+            </td>
+            <td>
+                  <code><span title="object">object</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The <code>Mapping</code> or <code>Iterable</code> to update <em>self</em> from.</p>
+              </div>
+            </td>
+            <td>
+                  <code>...</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+                  <code><span title="pyochain.abc._mappings.PyoMutableMapping[V]">V</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional key-value pairs to update <em>self</em> with.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"b"</span><span class="p">})</span>
+<span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="mi">2</span><span class="p">:</span> <span class="s2">"c"</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">"d"</span><span class="p">})</span>
+<span class="k">assert</span> <span class="n">d</span> <span class="o">==</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"c"</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">"d"</span><span class="p">})</span>
+<span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="mi">3</span><span class="p">,</span> <span class="s2">"e"</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"f"</span><span class="p">)])</span>
+<span class="k">assert</span> <span class="n">d</span> <span class="o">==</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"c"</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">"e"</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="s2">"f"</span><span class="p">})</span>
+<span class="n">d1</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="s2">"John"</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span> <span class="s2">"Jane"</span><span class="p">:</span> <span class="mi">25</span><span class="p">})</span>
+<span class="n">d1</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"John"</span><span class="p">:</span> <span class="mi">26</span><span class="p">,</span> <span class="s2">"Doe"</span><span class="p">:</span> <span class="mi">22</span><span class="p">},</span> <span class="n">John</span><span class="o">=</span><span class="mi">31</span><span class="p">,</span> <span class="n">Mary</span><span class="o">=</span><span class="mi">28</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">d1</span> <span class="o">==</span> <span class="n">Dict</span><span class="p">({</span><span class="s2">"John"</span><span class="p">:</span> <span class="mi">31</span><span class="p">,</span> <span class="s2">"Jane"</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span> <span class="s2">"Doe"</span><span class="p">:</span> <span class="mi">22</span><span class="p">,</span> <span class="s2">"Mary"</span><span class="p">:</span> <span class="mi">28</span><span class="p">})</span>
+</code></pre></div>
+</details>
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>pyochain/abc/_mappings.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pyright: ignore[reportIncompatibleMethodOverride]</span>
+<span class="w">    </span><span class="sd">"""In-place update of *self*, with key-value pairs from another `Mapping` or `Iterable`.</span>
+
+<span class="sd">    Keywords will be applied after the *m* argument, allowing for additional updates.</span>
+
+
+<span class="sd">    If a key already exists in *self*, its value will be overwritten.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">    If a given key is present in both *m* and *kwargs*, the value from the latter will be the one effectively present in the resulting `Dict`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        m (object): The `Mapping` or `Iterable` to update *self* from.</span>
+<span class="sd">        **kwargs (V): Additional key-value pairs to update *self* with.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Dict</span>
+
+<span class="sd">        d = Dict({1: "a", 2: "b"})</span>
+<span class="sd">        d.update({2: "c", 3: "d"})</span>
+<span class="sd">        assert d == Dict({1: "a", 2: "c", 3: "d"})</span>
+<span class="sd">        d.update([(3, "e"), (4, "f")])</span>
+<span class="sd">        assert d == Dict({1: "a", 2: "c", 3: "e", 4: "f"})</span>
+<span class="sd">        d1 = Dict({"John": 30, "Jane": 25})</span>
+<span class="sd">        d1.update({"John": 26, "Doe": 22}, John=31, Mary=28)</span>
+<span class="sd">        assert d1 == Dict({"John": 31, "Jane": 25, "Doe": 22, "Mary": 28})</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3393,7 +4020,7 @@
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.69c251d7.min.js"></script>
+      <script src="../../assets/javascripts/bundle.e886cdf1.min.js"></script>
       
         <script src="../../javascripts/mermaid.mjs" type="module"></script>
       

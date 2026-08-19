@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A modern Python library for functional programming with chainable operations">
+        <meta name="description" content="A fast, memory-efficient Python library for fluent iterators, monadic result and option types, and data structures.">
       
       
         <meta name="author" content="Thibaud Wilson Stettler">
@@ -14,8 +14,6 @@
       
         <link rel="canonical" href="https://outsquarecapital.github.io/pyochain/reference/checkable/">
       
-      
-        <link rel="prev" href="../position/">
       
       
         <link rel="next" href="../fluent/">
@@ -25,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.53">
+      <meta name="generator" content="zensical-0.0.56">
     
     
       
@@ -238,7 +236,7 @@
   <span class="md-ellipsis">
     
   
-  API Reference
+  API reference
 
     
   </span>
@@ -253,7 +251,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-  API Reference
+  API reference
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
@@ -262,18 +260,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_1" checked>
         
           
           <label class="md-nav__link" for="__nav_1_1" id="__nav_1_1_label" tabindex="0">
@@ -283,7 +283,7 @@
   <span class="md-ellipsis">
     
   
-  ABCs
+  ABC
 
     
   </span>
@@ -293,15 +293,302 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_1_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_1_1">
             <span class="md-nav__icon md-icon"></span>
             
   
-  ABCs
+  ABC
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_1_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1_1_1" id="__nav_1_1_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Mixins
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_1_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Mixins
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Checkable
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Checkable
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.Checkable" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Checkable
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.Checkable.err_or" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        err_or
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.Checkable.err_or_else" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        err_or_else
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.Checkable.ok_or" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ok_or
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.Checkable.ok_or_else" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ok_or_else
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.Checkable.then" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        then
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.Checkable.then_some" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        then_some
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fluent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fluent
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pipe
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Tap
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
             
               
                 
@@ -666,20 +953,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2" >
         
           
           <label class="md-nav__link" for="__nav_1_2" id="__nav_1_2_label" tabindex="0">
@@ -689,7 +974,7 @@
   <span class="md-ellipsis">
     
   
-  Core API
+  Collections
 
     
   </span>
@@ -699,12 +984,470 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_1_2">
             <span class="md-nav__icon md-icon"></span>
             
   
-  Core API
+  Collections
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deque/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Deque
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../heap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Heap
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../heapmax/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  HeapMax
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../heapmin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  HeapMin
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyocounter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoCounter
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sorteddict/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedDict
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sorteditemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeydict/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeyDict
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeylist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeyList
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeyset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeySet
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedlist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedList
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedSet
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedvaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stableset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  StableSet
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Core
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Core
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
@@ -724,10 +1467,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_1" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_1" id="__nav_1_2_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_1" id="__nav_1_3_1_label" tabindex="0">
             
   
   
@@ -744,8 +1487,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_1">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_1">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1047,10 +1790,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_2" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_2" id="__nav_1_2_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_2" id="__nav_1_3_2_label" tabindex="0">
             
   
   
@@ -1067,8 +1810,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_2">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1235,10 +1978,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_3" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_3" id="__nav_1_2_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_3" id="__nav_1_3_3_label" tabindex="0">
             
   
   
@@ -1255,8 +1998,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_3">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1292,59 +2035,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_1_2_4" id="__nav_1_2_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Miscellaneous
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  Miscellaneous
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
               
                 
   
@@ -1352,301 +2042,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../position/" class="md-nav__link">
+      <a href="../peekable/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-  Position
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_5" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_1_2_5" id="__nav_1_2_5_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Mixins
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_1_2_5">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  Mixins
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Checkable
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="././" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Checkable
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="On this page">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      On this page
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Checkable
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.err_or" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        err_or
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.err_or_else" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        err_or_else
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.ok_or" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        ok_or
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.ok_or_else" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        ok_or_else
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.then" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        then
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.then_some" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        then_some
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../fluent/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Fluent
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pipe/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Pipe
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tap/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Tap
+  Peekable
 
     
   </span>
@@ -1682,10 +2085,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_4" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_6" id="__nav_1_2_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_4" id="__nav_1_3_4_label" tabindex="0">
             
   
   
@@ -1702,8 +2105,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_6">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1890,113 +2293,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  collections
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  collections
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../deque/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Deque
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../stableset/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  StableSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2097,7 +2393,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable" class="md-nav__link">
+  <a href="#pyochain.abc.Checkable" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         Checkable
@@ -2108,7 +2404,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.err_or" class="md-nav__link">
+  <a href="#pyochain.abc.Checkable.err_or" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         err_or
@@ -2119,7 +2415,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.err_or_else" class="md-nav__link">
+  <a href="#pyochain.abc.Checkable.err_or_else" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         err_or_else
@@ -2130,7 +2426,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.ok_or" class="md-nav__link">
+  <a href="#pyochain.abc.Checkable.ok_or" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         ok_or
@@ -2141,7 +2437,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.ok_or_else" class="md-nav__link">
+  <a href="#pyochain.abc.Checkable.ok_or_else" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         ok_or_else
@@ -2152,7 +2448,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.then" class="md-nav__link">
+  <a href="#pyochain.abc.Checkable.then" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         then
@@ -2163,7 +2459,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.rs.Checkable.then_some" class="md-nav__link">
+  <a href="#pyochain.abc.Checkable.then_some" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         then_some
@@ -2195,24 +2491,24 @@
 
 
 
-<a id="pyochain.rs.Checkable"></a>
+<a id="pyochain.abc.Checkable"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
               Bases: <code><span title="typing.Protocol">Protocol</span></code></p>
 
             <div style="display: none">
-              <a class="autorefs autorefs-internal" title="pyochain.rs.Checkable" href="./#pyochain.rs.Checkable" id="mermaid-link-pyochain.rs.Checkable"></a>
+              <a class="autorefs autorefs-internal" title="pyochain.abc.Checkable" href="./#pyochain.abc.Checkable" id="mermaid-link-pyochain.abc.Checkable"></a>
             </div>
-            <pre class="mermaid"><code id="mermaid-diagram-pyochain.rs.Checkable">
+            <pre class="mermaid"><code id="mermaid-diagram-pyochain.abc.Checkable">
               flowchart TD
-              pyochain.rs.Checkable[Checkable]
+              pyochain.abc.Checkable[Checkable]
 
               
 
-              click pyochain.rs.Checkable href "" "pyochain.rs.Checkable"
+              click pyochain.abc.Checkable href "" "pyochain.abc.Checkable"
             </code></pre>
             <script>
-              var diagram = document.getElementById('mermaid-diagram-pyochain.rs.Checkable');
+              var diagram = document.getElementById('mermaid-diagram-pyochain.abc.Checkable');
               diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
                 try {
                   const link = document.getElementById("mermaid-link-" + nodeID).href;
@@ -2247,45 +2543,46 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
 <details class="example" open>
   <summary>Example</summary>
   <p>Pyochain collections can efficiently check for emptiness and execute code conditionally natively.
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
-<span class="n">Some</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
-<span class="n">NONE</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Some</span>
+
+<span class="k">assert</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 </code></pre></div>
 This can also be extended to any type, not just collections.
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Checkable</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">class</span><span class="w"> </span><span class="nc">MyString</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Checkable</span><span class="p">):</span>
-<span class="o">...</span>     <span class="k">pass</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">MyString</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
-<span class="n">Some</span><span class="p">(</span><span class="s1">&#39;HELLO&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">MyString</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
-<span class="n">NONE</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Checkable</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyString</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Checkable</span><span class="p">):</span> <span class="o">...</span>
+
+<span class="k">assert</span> <span class="n">MyString</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="s2">"HELLO"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">MyString</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 </code></pre></div>
 This means that you can handle complex business logic in the same way.
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="o">...</span> <span class="k">class</span><span class="w"> </span><span class="nc">User</span><span class="p">(</span><span class="n">Checkable</span><span class="p">):</span>
-<span class="o">...</span>     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<span class="o">...</span>     <span class="n">is_active</span><span class="p">:</span> <span class="nb">bool</span>
-<span class="o">...</span>     <span class="n">age</span><span class="p">:</span> <span class="nb">int</span>
-<span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="o">...</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_active</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">age</span> <span class="o">&gt;=</span> <span class="mi">18</span>
-<span class="o">...</span>
-<span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="o">...</span>         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> is an active adult&quot;</span>
-<span class="o">&gt;&gt;&gt;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">alice</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">describe</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">bob</span> <span class="o">=</span> <span class="p">(</span>
-<span class="o">...</span>     <span class="n">User</span><span class="p">(</span><span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
-<span class="o">...</span>     <span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">describe</span><span class="p">)</span>
-<span class="o">...</span>     <span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;Expected an active adult user&quot;</span><span class="p">)</span>
-<span class="o">...</span>     <span class="o">.</span><span class="n">map_err</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">)</span>
-<span class="o">...</span> <span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">alice</span>
-<span class="n">Some</span><span class="p">(</span><span class="s1">&#39;Alice is an active adult&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">bob</span>
-<span class="n">Err</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected an active adult user&#39;</span><span class="p">))</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">User</span><span class="p">(</span><span class="n">Checkable</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">is_active</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">age</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_active</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">age</span> <span class="o">&gt;=</span> <span class="mi">18</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> is an active adult"</span>
+
+<span class="n">alice</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="s2">"Alice"</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">describe</span><span class="p">)</span>
+<span class="n">bob</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">User</span><span class="p">(</span><span class="s2">"Bob"</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">describe</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">"Expected an active adult user"</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">map_err</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="k">assert</span> <span class="n">alice</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="s2">"Alice is an active adult"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="p">(</span>
+    <span class="n">bob</span><span class="o">.</span><span class="n">map_err</span><span class="p">(</span><span class="nb">repr</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_err</span><span class="p">()</span>
+    <span class="o">==</span> <span class="s2">"ValueError('Expected an active adult user')"</span>
+<span class="p">)</span>
 </code></pre></div></p>
 </details>
 
@@ -2295,6 +2592,459 @@ This means that you can handle complex business logic in the same way.
 
 
 
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>pyochain/abc/_mixins.pyi</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Checkable</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mixin class providing conditional chaining methods based on truthiness.</span>
+
+<span class="sd">    This class provides methods inspired by Rust's `bool` type for conditional</span>
+<span class="sd">    execution and wrapping in `Option` or `Result` types.</span>
+
+<span class="sd">    All methods evaluate the instance's truthiness to determine their behavior.</span>
+
+<span class="sd">    Truthiness being determined by:</span>
+
+<span class="sd">    - `__bool__()` if defined</span>
+<span class="sd">    - otherwise by `__len__()` if defined (returning `False` if length is 0)</span>
+<span class="sd">    - otherwise all instances are truthy (Python's default behavior).</span>
+
+<span class="sd">    This can be very handy to cover the common pattern of checking if a collection is empty or not.</span>
+
+<span class="sd">    You can then explicitly handle each situation with `Option` or `Result` types, without breaking the fluent method chaining.</span>
+
+<span class="sd">    Tip:</span>
+<span class="sd">        This class is compiled in Rust with Pyo3 bindings.</span>
+
+<span class="sd">        This means that even pure Python classes inheriting from `Checkable` can call these methods with builtin-like performance.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        Pyochain collections can efficiently check for emptiness and execute code conditionally natively.</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Seq, Some</span>
+
+<span class="sd">        assert Seq((1, 2, 3)).then(sum) == Some(6)</span>
+<span class="sd">        assert Seq(()).then(sum).is_none()</span>
+<span class="sd">        ```</span>
+<span class="sd">        This can also be extended to any type, not just collections.</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain.abc import Checkable</span>
+
+<span class="sd">        class MyString(str, Checkable): ...</span>
+
+<span class="sd">        assert MyString("hello").then(lambda s: s.upper()) == Some("HELLO")</span>
+<span class="sd">        assert MyString("").then(lambda s: s.upper()).is_none()</span>
+<span class="sd">        ```</span>
+<span class="sd">        This means that you can handle complex business logic in the same way.</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Err</span>
+<span class="sd">        from dataclasses import dataclass</span>
+
+<span class="sd">        @dataclass(slots=True)</span>
+<span class="sd">        class User(Checkable):</span>
+<span class="sd">            name: str</span>
+<span class="sd">            is_active: bool</span>
+<span class="sd">            age: int</span>
+<span class="sd">            def __bool__(self) -&gt; bool:</span>
+<span class="sd">                return self.is_active and self.age &gt;= 18</span>
+
+<span class="sd">            def describe(self) -&gt; str:</span>
+<span class="sd">                return f"{self.name} is an active adult"</span>
+
+<span class="sd">        alice = User("Alice", is_active=True, age=30).then(User.describe)</span>
+<span class="sd">        bob = (</span>
+<span class="sd">            User("Bob", is_active=False, age=24)</span>
+<span class="sd">            .then(User.describe)</span>
+<span class="sd">            .ok_or("Expected an active adult user")</span>
+<span class="sd">            .map_err(ValueError)</span>
+<span class="sd">        )</span>
+<span class="sd">        assert alice == Some("Alice is an active adult")</span>
+<span class="sd">        assert (</span>
+<span class="sd">            bob.map_err(repr).unwrap_err()</span>
+<span class="sd">            == "ValueError('Expected an active adult user')"</span>
+<span class="sd">        )</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">then</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">](</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">R</span><span class="p">],</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Wrap `Self` in an `Option[R]` based on its truthiness.</span>
+
+<span class="sd">        `R` being the return type of **func**.</span>
+
+<span class="sd">        The function is only called if `Self` evaluates to `True` (lazy evaluation).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            func (Callable[Concatenate[Self, P], R]): A callable that returns the value to wrap in Some.</span>
+<span class="sd">            *args (P.args): Positional arguments to pass to **func**.</span>
+<span class="sd">            **kwargs (P.kwargs): Keyword arguments to pass to **func**.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Option[R]: `Some(R)` if self is truthy, `NONE` otherwise.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Seq, Some</span>
+
+<span class="sd">            assert Seq((1, 2, 3)).then(lambda s: s.iter().sum()) == Some(6)</span>
+<span class="sd">            assert Seq(()).then(lambda s: s.iter().sum()).is_none()</span>
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">then_some</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Wraps `Self` in an `Option[Self]` based on its truthiness.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Option[Self]: `Some(self)` if self is truthy, `NONE` otherwise.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Seq, Some</span>
+
+<span class="sd">            data = Seq((1, 2, 3))</span>
+
+<span class="sd">            assert data.then_some() == Some(data)</span>
+<span class="sd">            assert Seq(()).then_some().is_none()</span>
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ok_or</span><span class="p">[</span><span class="n">E</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span> <span class="n">E</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">E</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Wrap `Self` in a `Result[Self, E]` based on its truthiness.</span>
+
+<span class="sd">        This method is the inverse of `err_or`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            err (E): The error value to wrap in Err if self is falsy.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Result[Self, E]: `Ok(self)` if self is truthy, `Err(err)` otherwise.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Seq</span>
+
+<span class="sd">            data = Seq((1, 2, 3))</span>
+<span class="sd">            msg = "empty"</span>
+
+<span class="sd">            assert data.ok_or(msg).unwrap() == data</span>
+<span class="sd">            assert Seq(()).ok_or(msg).unwrap_err() == msg</span>
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">err_or</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">ok</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">Self</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Wrap `Self` in a `Result[T, Self]` based on its truthiness.</span>
+
+<span class="sd">        This method is the inverse of `ok_or`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ok (T): The ok value to wrap in Ok if self is falsy.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Result[T, Self]: `Ok(ok)` if self is truthy, `Err(self)` otherwise.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Seq</span>
+
+<span class="sd">            msg = "should be empty"</span>
+<span class="sd">            data = Seq((1, 2, 3))</span>
+
+<span class="sd">            assert data.err_or(msg).unwrap_err() == data</span>
+<span class="sd">            assert Seq(()).err_or(msg).unwrap() == msg</span>
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">ok_or_else</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">E</span><span class="p">](</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">E</span><span class="p">],</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">E</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Wrap `Self` in a `Result[Self, E]` based on its truthiness.</span>
+
+<span class="sd">        `E` being the return type of **func**.</span>
+
+<span class="sd">        The function is only called if self evaluates to False.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            func (Callable[Concatenate[Self, P], E]): A callable that returns the error value to wrap in Err.</span>
+<span class="sd">            *args (P.args): Positional arguments to pass to the function.</span>
+<span class="sd">            **kwargs (P.kwargs): Keyword arguments to pass to the function.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Result[Self, E]: Ok(self) if self is truthy, Err(f(...)) otherwise.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Seq</span>
+
+<span class="sd">            data = Seq((1, 2, 3))</span>
+<span class="sd">            msg = "empty seq"</span>
+
+<span class="sd">            assert data.ok_or_else(lambda s: msg).unwrap() == data</span>
+<span class="sd">            assert Seq(()).ok_or_else(lambda s: msg).unwrap_err() == msg</span>
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">err_or_else</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">](</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">T</span><span class="p">],</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">Self</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Wrap `Self` in a `Result[T, Self]` based on its truthiness.</span>
+
+<span class="sd">        `T` being the return type of **func**.</span>
+
+<span class="sd">        The function is only called if self evaluates to False.</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            func (Callable[Concatenate[Self, P], T]): A callable that returns the error value to wrap in Err.</span>
+<span class="sd">            *args (P.args): Positional arguments to pass to the function.</span>
+<span class="sd">            **kwargs (P.kwargs): Keyword arguments to pass to the function.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Result[T, Self]: Ok(f(...)) if self is falsy, Err(self) otherwise.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Seq</span>
+
+<span class="sd">            msg = "should be empty"</span>
+
+<span class="sd">            data = Seq((1, 2, 3))</span>
+
+<span class="sd">            assert data.err_or_else(lambda s: msg).unwrap_err() == data</span>
+<span class="sd">            assert Seq(()).err_or_else(lambda s: msg).unwrap() == msg</span>
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
+</code></pre></div></td></tr></table></div>
+              </details>
 
 
 
@@ -2312,7 +3062,7 @@ This means that you can handle complex business logic in the same way.
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.rs.Checkable.err_or" class="doc doc-heading">
+<h2 id="pyochain.abc.Checkable.err_or" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">err_or</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span></code>
 
 </h2>
@@ -2340,7 +3090,7 @@ This means that you can handle complex business logic in the same way.
                 <code>ok</code>
             </td>
             <td>
-                  <code><span title="pyochain.rs.Checkable.err_or[T]">T</span></code>
+                  <code><span title="pyochain.abc._mixins.Checkable.err_or[T]">T</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2366,7 +3116,7 @@ This means that you can handle complex business logic in the same way.
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[<span title="pyochain.rs.Checkable.err_or[T]">T</span>, <span title="typing.Self">Self</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Result" href="../result/#pyochain.core.Result">Result</a>[<span title="pyochain.abc._mixins.Checkable.err_or[T]">T</span>, <span title="typing.Self">Self</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2380,14 +3130,63 @@ This means that you can handle complex business logic in the same way.
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">err_or</span><span class="p">(</span><span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
-<span class="n">Err</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">err_or</span><span class="p">(</span><span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
-<span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;should be empty&#39;</span><span class="p">)</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+<span class="n">msg</span> <span class="o">=</span> <span class="s2">"should be empty"</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">err_or</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_err</span><span class="p">()</span> <span class="o">==</span> <span class="n">data</span>
+<span class="k">assert</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">err_or</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span> <span class="o">==</span> <span class="n">msg</span>
 </code></pre></div>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>pyochain/abc/_mixins.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">err_or</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">ok</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">Self</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Wrap `Self` in a `Result[T, Self]` based on its truthiness.</span>
+
+<span class="sd">    This method is the inverse of `ok_or`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ok (T): The ok value to wrap in Ok if self is falsy.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Result[T, Self]: `Ok(ok)` if self is truthy, `Err(self)` otherwise.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Seq</span>
+
+<span class="sd">        msg = "should be empty"</span>
+<span class="sd">        data = Seq((1, 2, 3))</span>
+
+<span class="sd">        assert data.err_or(msg).unwrap_err() == data</span>
+<span class="sd">        assert Seq(()).err_or(msg).unwrap() == msg</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2395,7 +3194,7 @@ This means that you can handle complex business logic in the same way.
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.rs.Checkable.err_or_else" class="doc doc-heading">
+<h2 id="pyochain.abc.Checkable.err_or_else" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">err_or_else</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
@@ -2403,8 +3202,8 @@ This means that you can handle complex business logic in the same way.
 
     <div class="doc doc-contents ">
 
-        <p>Wrap <code>Self</code> in a <code>Result[Self, E]</code> based on its truthiness.</p>
-<p><code>E</code> being the return type of <strong>func</strong>.</p>
+        <p>Wrap <code>Self</code> in a <code>Result[T, Self]</code> based on its truthiness.</p>
+<p><code>T</code> being the return type of <strong>func</strong>.</p>
 <p>The function is only called if self evaluates to False.</p>
 
 
@@ -2424,7 +3223,7 @@ This means that you can handle complex business logic in the same way.
                 <code>func</code>
             </td>
             <td>
-                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <span title="pyochain.rs.Checkable.err_or_else[**P]">P</span>], <span title="E">E</span>]</code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <span title="pyochain.abc._mixins.Checkable.err_or_else[**P]">P</span>], <span title="pyochain.abc._mixins.Checkable.err_or_else[T]">T</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2440,7 +3239,7 @@ This means that you can handle complex business logic in the same way.
                 <code>*args</code>
             </td>
             <td>
-                  <code><span title="pyochain.rs.Checkable.err_or_else[**P]">P</span>.<span title="pyochain.rs.Checkable.err_or_else[**P].args">args</span></code>
+                  <code><span title="pyochain.abc._mixins.Checkable.err_or_else[**P]">P</span>.<span title="pyochain.abc._mixins.Checkable.err_or_else[**P].args">args</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2456,7 +3255,7 @@ This means that you can handle complex business logic in the same way.
                 <code>**kwargs</code>
             </td>
             <td>
-                  <code><span title="pyochain.rs.Checkable.err_or_else[**P]">P</span>.<span title="pyochain.rs.Checkable.err_or_else[**P].kwargs">kwargs</span></code>
+                  <code><span title="pyochain.abc._mixins.Checkable.err_or_else[**P]">P</span>.<span title="pyochain.abc._mixins.Checkable.err_or_else[**P].kwargs">kwargs</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2482,11 +3281,11 @@ This means that you can handle complex business logic in the same way.
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[<span title="pyochain.rs.Checkable.err_or_else[T]">T</span>, <span title="typing.Self">Self</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Result" href="../result/#pyochain.core.Result">Result</a>[<span title="pyochain.abc._mixins.Checkable.err_or_else[T]">T</span>, <span title="typing.Self">Self</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Result[Self, E]: Ok(self) if self is truthy, Err(f(...)) otherwise.</p>
+                <p>Result[T, Self]: Ok(f(...)) if self is falsy, Err(self) otherwise.</p>
               </div>
             </td>
           </tr>
@@ -2496,14 +3295,86 @@ This means that you can handle complex business logic in the same way.
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">err_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
-<span class="n">Err</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">err_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
-<span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;should be empty&#39;</span><span class="p">)</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+<span class="n">msg</span> <span class="o">=</span> <span class="s2">"should be empty"</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">err_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_err</span><span class="p">()</span> <span class="o">==</span> <span class="n">data</span>
+<span class="k">assert</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">err_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span> <span class="o">==</span> <span class="n">msg</span>
 </code></pre></div>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>pyochain/abc/_mixins.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">err_or_else</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">](</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">T</span><span class="p">],</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">Self</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Wrap `Self` in a `Result[T, Self]` based on its truthiness.</span>
+
+<span class="sd">    `T` being the return type of **func**.</span>
+
+<span class="sd">    The function is only called if self evaluates to False.</span>
+
+
+<span class="sd">    Args:</span>
+<span class="sd">        func (Callable[Concatenate[Self, P], T]): A callable that returns the error value to wrap in Err.</span>
+<span class="sd">        *args (P.args): Positional arguments to pass to the function.</span>
+<span class="sd">        **kwargs (P.kwargs): Keyword arguments to pass to the function.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Result[T, Self]: Ok(f(...)) if self is falsy, Err(self) otherwise.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Seq</span>
+
+<span class="sd">        msg = "should be empty"</span>
+
+<span class="sd">        data = Seq((1, 2, 3))</span>
+
+<span class="sd">        assert data.err_or_else(lambda s: msg).unwrap_err() == data</span>
+<span class="sd">        assert Seq(()).err_or_else(lambda s: msg).unwrap() == msg</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2511,7 +3382,7 @@ This means that you can handle complex business logic in the same way.
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.rs.Checkable.ok_or" class="doc doc-heading">
+<h2 id="pyochain.abc.Checkable.ok_or" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">ok_or</span><span class="p">(</span><span class="n">err</span><span class="p">)</span></code>
 
 </h2>
@@ -2539,7 +3410,7 @@ This means that you can handle complex business logic in the same way.
                 <code>err</code>
             </td>
             <td>
-                  <code><span title="pyochain.rs.Checkable.ok_or[E]">E</span></code>
+                  <code><span title="pyochain.abc._mixins.Checkable.ok_or[E]">E</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2565,7 +3436,7 @@ This means that you can handle complex business logic in the same way.
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[<span title="typing.Self">Self</span>, <span title="pyochain.rs.Checkable.ok_or[E]">E</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Result" href="../result/#pyochain.core.Result">Result</a>[<span title="typing.Self">Self</span>, <span title="pyochain.abc._mixins.Checkable.ok_or[E]">E</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2579,14 +3450,63 @@ This means that you can handle complex business logic in the same way.
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
-<span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
-<span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty&#39;</span><span class="p">)</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">msg</span> <span class="o">=</span> <span class="s2">"empty"</span>
+
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span> <span class="o">==</span> <span class="n">data</span>
+<span class="k">assert</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_err</span><span class="p">()</span> <span class="o">==</span> <span class="n">msg</span>
 </code></pre></div>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>pyochain/abc/_mixins.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ok_or</span><span class="p">[</span><span class="n">E</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span> <span class="n">E</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">E</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Wrap `Self` in a `Result[Self, E]` based on its truthiness.</span>
+
+<span class="sd">    This method is the inverse of `err_or`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        err (E): The error value to wrap in Err if self is falsy.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Result[Self, E]: `Ok(self)` if self is truthy, `Err(err)` otherwise.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Seq</span>
+
+<span class="sd">        data = Seq((1, 2, 3))</span>
+<span class="sd">        msg = "empty"</span>
+
+<span class="sd">        assert data.ok_or(msg).unwrap() == data</span>
+<span class="sd">        assert Seq(()).ok_or(msg).unwrap_err() == msg</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2594,7 +3514,7 @@ This means that you can handle complex business logic in the same way.
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.rs.Checkable.ok_or_else" class="doc doc-heading">
+<h2 id="pyochain.abc.Checkable.ok_or_else" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">ok_or_else</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
@@ -2623,7 +3543,7 @@ This means that you can handle complex business logic in the same way.
                 <code>func</code>
             </td>
             <td>
-                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <span title="pyochain.rs.Checkable.ok_or_else[**P]">P</span>], <span title="pyochain.rs.Checkable.ok_or_else[E]">E</span>]</code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <span title="pyochain.abc._mixins.Checkable.ok_or_else[**P]">P</span>], <span title="pyochain.abc._mixins.Checkable.ok_or_else[E]">E</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2639,7 +3559,7 @@ This means that you can handle complex business logic in the same way.
                 <code>*args</code>
             </td>
             <td>
-                  <code><span title="pyochain.rs.Checkable.ok_or_else[**P]">P</span>.<span title="pyochain.rs.Checkable.ok_or_else[**P].args">args</span></code>
+                  <code><span title="pyochain.abc._mixins.Checkable.ok_or_else[**P]">P</span>.<span title="pyochain.abc._mixins.Checkable.ok_or_else[**P].args">args</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2655,7 +3575,7 @@ This means that you can handle complex business logic in the same way.
                 <code>**kwargs</code>
             </td>
             <td>
-                  <code><span title="pyochain.rs.Checkable.ok_or_else[**P]">P</span>.<span title="pyochain.rs.Checkable.ok_or_else[**P].kwargs">kwargs</span></code>
+                  <code><span title="pyochain.abc._mixins.Checkable.ok_or_else[**P]">P</span>.<span title="pyochain.abc._mixins.Checkable.ok_or_else[**P].kwargs">kwargs</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2681,7 +3601,7 @@ This means that you can handle complex business logic in the same way.
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[<span title="typing.Self">Self</span>, <span title="pyochain.rs.Checkable.ok_or_else[E]">E</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Result" href="../result/#pyochain.core.Result">Result</a>[<span title="typing.Self">Self</span>, <span title="pyochain.abc._mixins.Checkable.ok_or_else[E]">E</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2695,14 +3615,81 @@ This means that you can handle complex business logic in the same way.
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;empty seq&quot;</span><span class="p">)</span>
-<span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;empty seq&quot;</span><span class="p">)</span>
-<span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty seq&#39;</span><span class="p">)</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">msg</span> <span class="o">=</span> <span class="s2">"empty seq"</span>
+
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span> <span class="o">==</span> <span class="n">data</span>
+<span class="k">assert</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_err</span><span class="p">()</span> <span class="o">==</span> <span class="n">msg</span>
 </code></pre></div>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>pyochain/abc/_mixins.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ok_or_else</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">E</span><span class="p">](</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">E</span><span class="p">],</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">E</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Wrap `Self` in a `Result[Self, E]` based on its truthiness.</span>
+
+<span class="sd">    `E` being the return type of **func**.</span>
+
+<span class="sd">    The function is only called if self evaluates to False.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        func (Callable[Concatenate[Self, P], E]): A callable that returns the error value to wrap in Err.</span>
+<span class="sd">        *args (P.args): Positional arguments to pass to the function.</span>
+<span class="sd">        **kwargs (P.kwargs): Keyword arguments to pass to the function.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Result[Self, E]: Ok(self) if self is truthy, Err(f(...)) otherwise.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Seq</span>
+
+<span class="sd">        data = Seq((1, 2, 3))</span>
+<span class="sd">        msg = "empty seq"</span>
+
+<span class="sd">        assert data.ok_or_else(lambda s: msg).unwrap() == data</span>
+<span class="sd">        assert Seq(()).ok_or_else(lambda s: msg).unwrap_err() == msg</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2710,7 +3697,7 @@ This means that you can handle complex business logic in the same way.
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.rs.Checkable.then" class="doc doc-heading">
+<h2 id="pyochain.abc.Checkable.then" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">then</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
@@ -2739,7 +3726,7 @@ This means that you can handle complex business logic in the same way.
                 <code>func</code>
             </td>
             <td>
-                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <span title="pyochain.rs.Checkable.then[**P]">P</span>], <span title="pyochain.rs.Checkable.then[R]">R</span>]</code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <span title="pyochain.abc._mixins.Checkable.then[**P]">P</span>], <span title="pyochain.abc._mixins.Checkable.then[R]">R</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2755,7 +3742,7 @@ This means that you can handle complex business logic in the same way.
                 <code>*args</code>
             </td>
             <td>
-                  <code><span title="pyochain.rs.Checkable.then[**P]">P</span>.<span title="pyochain.rs.Checkable.then[**P].args">args</span></code>
+                  <code><span title="pyochain.abc._mixins.Checkable.then[**P]">P</span>.<span title="pyochain.abc._mixins.Checkable.then[**P].args">args</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2771,7 +3758,7 @@ This means that you can handle complex business logic in the same way.
                 <code>**kwargs</code>
             </td>
             <td>
-                  <code><span title="pyochain.rs.Checkable.then[**P]">P</span>.<span title="pyochain.rs.Checkable.then[**P].kwargs">kwargs</span></code>
+                  <code><span title="pyochain.abc._mixins.Checkable.then[**P]">P</span>.<span title="pyochain.abc._mixins.Checkable.then[**P].kwargs">kwargs</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2797,7 +3784,7 @@ This means that you can handle complex business logic in the same way.
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="pyochain.rs.Checkable.then[R]">R</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Option" href="../option/#pyochain.core.Option">Option</a>[<span title="pyochain.abc._mixins.Checkable.then[R]">R</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2811,14 +3798,72 @@ This means that you can handle complex business logic in the same way.
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-<span class="n">Some</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-<span class="n">NONE</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Some</span>
+
+<span class="k">assert</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 </code></pre></div>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>pyochain/abc/_mixins.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">then</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">](</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">R</span><span class="p">],</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Wrap `Self` in an `Option[R]` based on its truthiness.</span>
+
+<span class="sd">    `R` being the return type of **func**.</span>
+
+<span class="sd">    The function is only called if `Self` evaluates to `True` (lazy evaluation).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        func (Callable[Concatenate[Self, P], R]): A callable that returns the value to wrap in Some.</span>
+<span class="sd">        *args (P.args): Positional arguments to pass to **func**.</span>
+<span class="sd">        **kwargs (P.kwargs): Keyword arguments to pass to **func**.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Option[R]: `Some(R)` if self is truthy, `NONE` otherwise.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Seq, Some</span>
+
+<span class="sd">        assert Seq((1, 2, 3)).then(lambda s: s.iter().sum()) == Some(6)</span>
+<span class="sd">        assert Seq(()).then(lambda s: s.iter().sum()).is_none()</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2826,7 +3871,7 @@ This means that you can handle complex business logic in the same way.
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.rs.Checkable.then_some" class="doc doc-heading">
+<h2 id="pyochain.abc.Checkable.then_some" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">then_some</span><span class="p">()</span></code>
 
 </h2>
@@ -2848,7 +3893,7 @@ This means that you can handle complex business logic in the same way.
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="typing.Self">Self</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Option" href="../option/#pyochain.core.Option">Option</a>[<span title="typing.Self">Self</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2862,14 +3907,50 @@ This means that you can handle complex business logic in the same way.
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
-<span class="n">Some</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
-<span class="n">NONE</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Some</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 </code></pre></div>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>pyochain/abc/_mixins.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">then_some</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Wraps `Self` in an `Option[Self]` based on its truthiness.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Option[Self]: `Some(self)` if self is truthy, `NONE` otherwise.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Seq, Some</span>
+
+<span class="sd">        data = Seq((1, 2, 3))</span>
+
+<span class="sd">        assert data.then_some() == Some(data)</span>
+<span class="sd">        assert Seq(()).then_some().is_none()</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2935,7 +4016,7 @@ This means that you can handle complex business logic in the same way.
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.69c251d7.min.js"></script>
+      <script src="../../assets/javascripts/bundle.e886cdf1.min.js"></script>
       
         <script src="../../javascripts/mermaid.mjs" type="module"></script>
       

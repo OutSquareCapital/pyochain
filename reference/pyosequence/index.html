@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A modern Python library for functional programming with chainable operations">
+        <meta name="description" content="A fast, memory-efficient Python library for fluent iterators, monadic result and option types, and data structures.">
       
       
         <meta name="author" content="Thibaud Wilson Stettler">
@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.53">
+      <meta name="generator" content="zensical-0.0.56">
     
     
       
@@ -238,7 +238,7 @@
   <span class="md-ellipsis">
     
   
-  API Reference
+  API reference
 
     
   </span>
@@ -253,7 +253,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-  API Reference
+  API reference
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
@@ -285,7 +285,7 @@
   <span class="md-ellipsis">
     
   
-  ABCs
+  ABC
 
     
   </span>
@@ -300,10 +300,171 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-  ABCs
+  ABC
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_1_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_1_1" id="__nav_1_1_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Mixins
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Mixins
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../checkable/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Checkable
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fluent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fluent
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pipe
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Tap
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
             
               
                 
@@ -641,7 +802,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._sequences.PyoSequence" class="md-nav__link">
+  <a href="#pyochain.abc.PyoSequence" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoSequence
@@ -652,10 +813,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._sequences.PyoSequence.get" class="md-nav__link">
+  <a href="#pyochain.abc.PyoSequence.first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.PyoSequence.get" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         get
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.PyoSequence.last" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        last
       </span>
     </span>
   </a>
@@ -758,7 +941,7 @@
   <span class="md-ellipsis">
     
   
-  Core API
+  Collections
 
     
   </span>
@@ -773,7 +956,465 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-  Core API
+  Collections
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deque/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Deque
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../heap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Heap
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../heapmax/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  HeapMax
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../heapmin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  HeapMin
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyocounter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoCounter
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sorteddict/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedDict
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sorteditemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeydict/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeyDict
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeylist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeyList
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeyset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeySet
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedkeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedlist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedList
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedSet
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sortedvaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  SortedValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stableset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  StableSet
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Core
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Core
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
@@ -793,10 +1434,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_1" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_1" id="__nav_1_2_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_1" id="__nav_1_3_1_label" tabindex="0">
             
   
   
@@ -813,8 +1454,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_1">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_1">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1116,10 +1757,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_2" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_2" id="__nav_1_2_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_2" id="__nav_1_3_2_label" tabindex="0">
             
   
   
@@ -1136,8 +1777,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_2">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1304,10 +1945,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_3" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_3" id="__nav_1_2_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_3" id="__nav_1_3_3_label" tabindex="0">
             
   
   
@@ -1324,8 +1965,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_3">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1361,59 +2002,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_1_2_4" id="__nav_1_2_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Miscellaneous
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  Miscellaneous
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
               
                 
   
@@ -1421,14 +2009,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../position/" class="md-nav__link">
+      <a href="../peekable/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-  Position
+  Peekable
 
     
   </span>
@@ -1464,171 +2052,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_4" >
         
           
-          <label class="md-nav__link" for="__nav_1_2_5" id="__nav_1_2_5_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Mixins
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_5">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  Mixins
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../checkable/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Checkable
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../fluent/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Fluent
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pipe/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Pipe
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tap/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Tap
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_1_2_6" id="__nav_1_2_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_3_4" id="__nav_1_3_4_label" tabindex="0">
             
   
   
@@ -1645,8 +2072,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_2_6">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1833,113 +2260,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  collections
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  collections
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../deque/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Deque
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../stableset/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  StableSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2040,7 +2360,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._sequences.PyoSequence" class="md-nav__link">
+  <a href="#pyochain.abc.PyoSequence" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoSequence
@@ -2051,10 +2371,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._sequences.PyoSequence.get" class="md-nav__link">
+  <a href="#pyochain.abc.PyoSequence.first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.PyoSequence.get" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         get
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.abc.PyoSequence.last" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        last
       </span>
     </span>
   </a>
@@ -2083,69 +2425,83 @@
 
 
 
-<a id="pyochain.abc._sequences.PyoSequence"></a>
+<a id="pyochain.abc.PyoSequence"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoCollection" href="../pyocollection/#pyochain.abc._collection.PyoCollection">PyoCollection</a>[<span title="pyochain.abc._sequences.PyoSequence[T]">T</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc._sequences.PyoReversible" href="../pyoreversible/#pyochain.abc._sequences.PyoReversible">PyoReversible</a>[<span title="pyochain.abc._sequences.PyoSequence[T]">T</span>]</code>, <code><span title="collections.abc.Sequence">Sequence</span>[<span title="pyochain.abc._sequences.PyoSequence[T]">T</span>]</code>, <code><span title="abc.ABC">ABC</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.abc._sequences.PyoReversible" href="../pyoreversible/#pyochain.abc.PyoReversible">PyoReversible</a>[<span title="pyochain.abc._sequences.PyoSequence[T]">T</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc.PyoCollection" href="../pyocollection/#pyochain.abc.PyoCollection">PyoCollection</a>[<span title="pyochain.abc._sequences.PyoSequence[T]">T</span>]</code>, <code><span title="collections.abc.Sequence">Sequence</span>[<span title="pyochain.abc._sequences.PyoSequence[T]">T</span>]</code></p>
 
             <div style="display: none">
-              <a class="autorefs autorefs-internal" title="pyochain.abc._sequences.PyoSequence" href="./#pyochain.abc._sequences.PyoSequence" id="mermaid-link-pyochain.abc._sequences.PyoSequence"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoCollection" href="../pyocollection/#pyochain.abc._collection.PyoCollection" id="mermaid-link-pyochain.abc._collection.PyoCollection"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoIterable" href="../pyoiterable/#pyochain.abc._iterable.PyoIterable" id="mermaid-link-pyochain.abc._iterable.PyoIterable"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.rs.Fluent" href="../fluent/#pyochain.rs.Fluent" id="mermaid-link-pyochain.rs.Fluent"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.rs.Pipe" href="../pipe/#pyochain.rs.Pipe" id="mermaid-link-pyochain.rs.Pipe"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.rs.Tap" href="../tap/#pyochain.rs.Tap" id="mermaid-link-pyochain.rs.Tap"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.rs.Checkable" href="../checkable/#pyochain.rs.Checkable" id="mermaid-link-pyochain.rs.Checkable"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoContainer" href="../pyocontainer/#pyochain.abc._collection.PyoContainer" id="mermaid-link-pyochain.abc._collection.PyoContainer"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoSized" href="../pyosized/#pyochain.abc._collection.PyoSized" id="mermaid-link-pyochain.abc._collection.PyoSized"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._sequences.PyoReversible" href="../pyoreversible/#pyochain.abc._sequences.PyoReversible" id="mermaid-link-pyochain.abc._sequences.PyoReversible"></a>
+              <a class="autorefs autorefs-internal" title="pyochain.abc.PyoSequence" href="./#pyochain.abc.PyoSequence" id="mermaid-link-pyochain.abc.PyoSequence"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._sequences.PyoReversible" href="../pyoreversible/#pyochain.abc.PyoReversible" id="mermaid-link-pyochain.abc._sequences.PyoReversible"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoCollection" href="../pyocollection/#pyochain.abc.PyoCollection" id="mermaid-link-pyochain.abc._collection.PyoCollection"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoIterable" href="../pyoiterable/#pyochain.abc.PyoIterable" id="mermaid-link-pyochain.abc._iterable.PyoIterable"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoContainer" href="../pyocontainer/#pyochain.abc.PyoContainer" id="mermaid-link-pyochain.abc._collection.PyoContainer"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoSized" href="../pyosized/#pyochain.abc.PyoSized" id="mermaid-link-pyochain.abc._collection.PyoSized"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Checkable" href="../checkable/#pyochain.abc.Checkable" id="mermaid-link-pyochain.abc._mixins.Checkable"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Fluent" href="../fluent/#pyochain.abc.Fluent" id="mermaid-link-pyochain.abc._mixins.Fluent"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Pipe" href="../pipe/#pyochain.abc.Pipe" id="mermaid-link-pyochain.abc._mixins.Pipe"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Tap" href="../tap/#pyochain.abc.Tap" id="mermaid-link-pyochain.abc._mixins.Tap"></a>
             </div>
-            <pre class="mermaid"><code id="mermaid-diagram-pyochain.abc._sequences.PyoSequence">
+            <pre class="mermaid"><code id="mermaid-diagram-pyochain.abc.PyoSequence">
               flowchart TD
-              pyochain.abc._sequences.PyoSequence[PyoSequence]
+              pyochain.abc.PyoSequence[PyoSequence]
+              pyochain.abc._sequences.PyoReversible[PyoReversible]
               pyochain.abc._collection.PyoCollection[PyoCollection]
               pyochain.abc._iterable.PyoIterable[PyoIterable]
-              pyochain.rs.Fluent[Fluent]
-              pyochain.rs.Pipe[Pipe]
-              pyochain.rs.Tap[Tap]
-              pyochain.rs.Checkable[Checkable]
               pyochain.abc._collection.PyoContainer[PyoContainer]
               pyochain.abc._collection.PyoSized[PyoSized]
-              pyochain.abc._sequences.PyoReversible[PyoReversible]
+              pyochain.abc._mixins.Checkable[Checkable]
+              pyochain.abc._mixins.Fluent[Fluent]
+              pyochain.abc._mixins.Pipe[Pipe]
+              pyochain.abc._mixins.Tap[Tap]
 
-                              pyochain.abc._collection.PyoCollection --> pyochain.abc._sequences.PyoSequence
+                              pyochain.abc._sequences.PyoReversible --> pyochain.abc.PyoSequence
+                                pyochain.abc._iterable.PyoIterable --> pyochain.abc._sequences.PyoReversible
+                                pyochain.abc._mixins.Checkable --> pyochain.abc._iterable.PyoIterable
+                
+                pyochain.abc._mixins.Fluent --> pyochain.abc._iterable.PyoIterable
+                                pyochain.abc._mixins.Pipe --> pyochain.abc._mixins.Fluent
+                
+                pyochain.abc._mixins.Tap --> pyochain.abc._mixins.Fluent
+                
+
+
+
+                pyochain.abc._collection.PyoCollection --> pyochain.abc.PyoSequence
                                 pyochain.abc._iterable.PyoIterable --> pyochain.abc._collection.PyoCollection
-                                pyochain.rs.Fluent --> pyochain.abc._iterable.PyoIterable
-                                pyochain.rs.Pipe --> pyochain.rs.Fluent
+                                pyochain.abc._mixins.Checkable --> pyochain.abc._iterable.PyoIterable
                 
-                pyochain.rs.Tap --> pyochain.rs.Fluent
+                pyochain.abc._mixins.Fluent --> pyochain.abc._iterable.PyoIterable
+                                pyochain.abc._mixins.Pipe --> pyochain.abc._mixins.Fluent
+                
+                pyochain.abc._mixins.Tap --> pyochain.abc._mixins.Fluent
                 
 
-                pyochain.rs.Checkable --> pyochain.abc._iterable.PyoIterable
-                
 
                 pyochain.abc._collection.PyoContainer --> pyochain.abc._collection.PyoCollection
+                                pyochain.abc._mixins.Checkable --> pyochain.abc._collection.PyoContainer
                 
+
                 pyochain.abc._collection.PyoSized --> pyochain.abc._collection.PyoCollection
+                                pyochain.abc._mixins.Checkable --> pyochain.abc._collection.PyoSized
                 
 
-                pyochain.abc._sequences.PyoReversible --> pyochain.abc._sequences.PyoSequence
-                
 
 
-              click pyochain.abc._sequences.PyoSequence href "" "pyochain.abc._sequences.PyoSequence"
+
+              click pyochain.abc.PyoSequence href "" "pyochain.abc.PyoSequence"
+              click pyochain.abc._sequences.PyoReversible href "" "pyochain.abc._sequences.PyoReversible"
               click pyochain.abc._collection.PyoCollection href "" "pyochain.abc._collection.PyoCollection"
               click pyochain.abc._iterable.PyoIterable href "" "pyochain.abc._iterable.PyoIterable"
-              click pyochain.rs.Fluent href "" "pyochain.rs.Fluent"
-              click pyochain.rs.Pipe href "" "pyochain.rs.Pipe"
-              click pyochain.rs.Tap href "" "pyochain.rs.Tap"
-              click pyochain.rs.Checkable href "" "pyochain.rs.Checkable"
               click pyochain.abc._collection.PyoContainer href "" "pyochain.abc._collection.PyoContainer"
               click pyochain.abc._collection.PyoSized href "" "pyochain.abc._collection.PyoSized"
-              click pyochain.abc._sequences.PyoReversible href "" "pyochain.abc._sequences.PyoReversible"
+              click pyochain.abc._mixins.Checkable href "" "pyochain.abc._mixins.Checkable"
+              click pyochain.abc._mixins.Fluent href "" "pyochain.abc._mixins.Fluent"
+              click pyochain.abc._mixins.Pipe href "" "pyochain.abc._mixins.Pipe"
+              click pyochain.abc._mixins.Tap href "" "pyochain.abc._mixins.Tap"
             </code></pre>
             <script>
-              var diagram = document.getElementById('mermaid-diagram-pyochain.abc._sequences.PyoSequence');
+              var diagram = document.getElementById('mermaid-diagram-pyochain.abc.PyoSequence');
               diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
                 try {
                   const link = document.getElementById("mermaid-link-" + nodeID).href;
@@ -2170,30 +2526,28 @@
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyoSequence</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">class</span><span class="w"> </span><span class="nc">MySeq</span><span class="p">(</span><span class="n">PyoSequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
-<span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
-<span class="o">...</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span>
-<span class="o">...</span>
-<span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="o">...</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-<span class="o">...</span>
-<span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="o">...</span>         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
-<span class="o">...</span>
-<span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="o">...</span>         <span class="k">return</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
-<span class="o">...</span>
-<span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="o">...</span>         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">my_seq</span> <span class="o">=</span> <span class="n">MySeq</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">])</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">my_seq</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
-<span class="mi">10</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">my_seq</span><span class="o">.</span><span class="n">rev</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">Seq</span><span class="p">)</span>
-<span class="n">Seq</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyoSequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Some</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MySeq</span><span class="p">(</span><span class="n">PyoSequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
+
+<span class="n">my_seq</span> <span class="o">=</span> <span class="n">MySeq</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">my_seq</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="o">==</span> <span class="mi">10</span>
+<span class="k">assert</span> <span class="n">my_seq</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>
 </code></pre></div>
 </details>
 
@@ -2204,8 +2558,19 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/abc/_sequences.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 40</span>
+                <summary>Source code in <code>pyochain/abc/_sequences.pyi</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
 <span class="normal"> 41</span>
 <span class="normal"> 42</span>
 <span class="normal"> 43</span>
@@ -2286,8 +2651,25 @@
 <span class="normal">118</span>
 <span class="normal">119</span>
 <span class="normal">120</span>
-<span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">PyoReversible</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoReversible</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportImplicitAbstractClass]</span>
+<span class="w">    </span><span class="sd">"""Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.</span>
 
 <span class="sd">    Is the shared ABC for concrete sequences: `Seq`, `Range` and `Vec`.</span>
 
@@ -2300,74 +2682,102 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain.abc import PyoSequence</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt;</span>
-<span class="sd">        &gt;&gt;&gt; class MySeq(PyoSequence[int]):</span>
-<span class="sd">        ...     def __init__(self, data: list[int]):</span>
-<span class="sd">        ...         self._data = data</span>
-<span class="sd">        ...</span>
-<span class="sd">        ...     def __getitem__(self, index: int) -&gt; int:</span>
-<span class="sd">        ...         return self._data[index]</span>
-<span class="sd">        ...</span>
-<span class="sd">        ...     def __len__(self) -&gt; int:</span>
-<span class="sd">        ...         return len(self._data)</span>
-<span class="sd">        ...</span>
-<span class="sd">        ...     def __contains__(self, item: int) -&gt; bool:</span>
-<span class="sd">        ...         return item in self._data</span>
-<span class="sd">        ...</span>
-<span class="sd">        ...     def __iter__(self) -&gt; Iterator[int]:</span>
-<span class="sd">        ...         return iter(self._data)</span>
-<span class="sd">        &gt;&gt;&gt;</span>
-<span class="sd">        &gt;&gt;&gt; my_seq = MySeq([10, 20, 30])</span>
-<span class="sd">        &gt;&gt;&gt; my_seq.first()</span>
-<span class="sd">        10</span>
-<span class="sd">        &gt;&gt;&gt; my_seq.rev().collect(Seq)</span>
-<span class="sd">        Seq(30, 20, 10)</span>
+<span class="sd">        from collections.abc import Iterator</span>
+<span class="sd">        from pyochain.abc import PyoSequence</span>
+<span class="sd">        from pyochain import Seq, Some</span>
 
+<span class="sd">        class MySeq(PyoSequence[int]):</span>
+<span class="sd">            def __init__(self, data: list[int]):</span>
+<span class="sd">                self._data = data</span>
+<span class="sd">            def __getitem__(self, index: int) -&gt; int:</span>
+<span class="sd">                return self._data[index]</span>
+
+<span class="sd">            def __len__(self) -&gt; int:</span>
+<span class="sd">                return len(self._data)</span>
+
+<span class="sd">            def __contains__(self, item: int) -&gt; bool:</span>
+<span class="sd">                return item in self._data</span>
+
+<span class="sd">            def __iter__(self) -&gt; Iterator[int]:</span>
+<span class="sd">                return iter(self._data)</span>
+
+<span class="sd">        my_seq = MySeq([10, 20, 30])</span>
+<span class="sd">        assert my_seq.first() == 10</span>
+<span class="sd">        assert my_seq.get(2) == Some(30)</span>
 <span class="sd">        ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># pyrefly: ignore [implicit-any-attribute]</span>
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>  <span class="c1"># pyright: ignore[reportUnannotatedClassAttribute]</span>
-
+<span class="sd">    """</span>
+    <span class="nd">@overload</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">slice</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
     <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__reversed__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># pyright: ignore[reportAny]</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># pyright: ignore[reportAny]</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">first</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Return the first element of the `Sequence`.</span>
 
-    <span class="nd">@override</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            T: The first element of the `Sequence`.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Seq</span>
+<span class="sd">            from pyochain.collections import StableSet</span>
+
+<span class="sd">            data = Seq((1, 2))</span>
+<span class="sd">            assert data.first() == 1</span>
+<span class="sd">            # With an Iterator, the equivalent would be:</span>
+<span class="sd">            assert data.iter().next().unwrap() == 1</span>
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">last</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Return the last element of the `Sequence`.</span>
+
+<span class="sd">        This is similar to `my_sequence[-1]`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            T: The last element of the `Sequence`.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ```python</span>
+<span class="sd">            from pyochain import Seq</span>
+
+<span class="sd">            assert Seq((1, 2, 3)).last() == 3</span>
+<span class="sd">            ```</span>
+<span class="sd">        """</span>
 
     <span class="nd">@overload</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
     <span class="nd">@overload</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span> <span class="o">...</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">slice</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            index (int | slice): The index or slice of the element to retrieve.</span>
+<span class="sd">            index (int | slice[int | None]): The index or slice of the element to retrieve.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Option[T] | Option[Sequence[T]]: `Some(value)` if the index is valid, otherwise `None`.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
-<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">            &gt;&gt;&gt; data = Seq((10, 20, 30))</span>
-<span class="sd">            &gt;&gt;&gt; data.get(1)</span>
-<span class="sd">            Some(20)</span>
-<span class="sd">            &gt;&gt;&gt; data.get(5)</span>
-<span class="sd">            NONE</span>
+<span class="sd">            from pyochain import Seq, Some</span>
 
+<span class="sd">            data = Seq((10, 20, 30))</span>
+<span class="sd">            assert data.get(1) == Some(20)</span>
+<span class="sd">            assert data.get(5).is_none()</span>
 <span class="sd">            ```</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># pyrefly: ignore [bad-return]</span>
-            <span class="k">return</span> <span class="n">Some</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>  <span class="c1"># pyright: ignore[reportReturnType]</span>
-        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">NONE</span>
+<span class="sd">        """</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2387,13 +2797,103 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.abc._sequences.PyoSequence.get" class="doc doc-heading">
+<h2 id="pyochain.abc.PyoSequence.first" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">first</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the first element of the <code>Sequence</code>.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>T</code></td>            <td>
+                  <code><span title="pyochain.abc._sequences.PyoSequence[T]">T</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The first element of the <code>Sequence</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">StableSet</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+<span class="c1"># With an Iterator, the equivalent would be:</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">next</span><span class="p">()</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+</code></pre></div>
+</details>
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>pyochain/abc/_sequences.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span>
+<span class="normal">94</span>
+<span class="normal">95</span>
+<span class="normal">96</span>
+<span class="normal">97</span>
+<span class="normal">98</span>
+<span class="normal">99</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">first</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the first element of the `Sequence`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        T: The first element of the `Sequence`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Seq</span>
+<span class="sd">        from pyochain.collections import StableSet</span>
+
+<span class="sd">        data = Seq((1, 2))</span>
+<span class="sd">        assert data.first() == 1</span>
+<span class="sd">        # With an Iterator, the equivalent would be:</span>
+<span class="sd">        assert data.iter().next().unwrap() == 1</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyochain.abc.PyoSequence.get" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">get</span><span class="p">(</span><span class="n">index</span><span class="p">)</span></code>
 
 </h2>
           <div class="doc-overloads">
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
-</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">get</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">get</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="nb">slice</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span>
 </code></pre></div>          </div>
 
 
@@ -2418,7 +2918,7 @@
                 <code>index</code>
             </td>
             <td>
-                  <code><span title="int">int</span> | <span title="slice">slice</span></code>
+                  <code><span title="int">int</span> | <span title="slice">slice</span>[<span title="int">int</span> | None]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2444,7 +2944,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="pyochain.abc._sequences.PyoSequence[T]">T</span>] | <a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="collections.abc.Sequence">Sequence</span>[<span title="pyochain.abc._sequences.PyoSequence[T]">T</span>]]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.Option" href="../option/#pyochain.core.Option">Option</a>[<span title="pyochain.abc._sequences.PyoSequence[T]">T</span>] | <a class="autorefs autorefs-internal" title="pyochain.Option" href="../option/#pyochain.core.Option">Option</a>[<span title="collections.abc.Sequence">Sequence</span>[<span title="pyochain.abc._sequences.PyoSequence[T]">T</span>]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2458,22 +2958,106 @@
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">Some</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-<span class="n">NONE</span>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Some</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 </code></pre></div>
 </details>
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/abc/_sequences.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
+              <summary>Source code in <code>pyochain/abc/_sequences.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        index (int | slice[int | None]): The index or slice of the element to retrieve.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Option[T] | Option[Sequence[T]]: `Some(value)` if the index is valid, otherwise `None`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Seq, Some</span>
+
+<span class="sd">        data = Seq((10, 20, 30))</span>
+<span class="sd">        assert data.get(1) == Some(20)</span>
+<span class="sd">        assert data.get(5).is_none()</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyochain.abc.PyoSequence.last" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">last</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the last element of the <code>Sequence</code>.</p>
+<p>This is similar to <code>my_sequence[-1]</code>.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>T</code></td>            <td>
+                  <code><span title="pyochain.abc._sequences.PyoSequence[T]">T</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The last element of the <code>Sequence</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+<span class="k">assert</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">last</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span>
+</code></pre></div>
+</details>
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>pyochain/abc/_sequences.pyi</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
 <span class="normal">104</span>
@@ -2487,37 +3071,21 @@
 <span class="normal">112</span>
 <span class="normal">113</span>
 <span class="normal">114</span>
-<span class="normal">115</span>
-<span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.</span>
+<span class="normal">115</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">last</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the last element of the `Sequence`.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        index (int | slice): The index or slice of the element to retrieve.</span>
+<span class="sd">    This is similar to `my_sequence[-1]`.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Option[T] | Option[Sequence[T]]: `Some(value)` if the index is valid, otherwise `None`.</span>
+<span class="sd">        T: The last element of the `Sequence`.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; data = Seq((10, 20, 30))</span>
-<span class="sd">        &gt;&gt;&gt; data.get(1)</span>
-<span class="sd">        Some(20)</span>
-<span class="sd">        &gt;&gt;&gt; data.get(5)</span>
-<span class="sd">        NONE</span>
+<span class="sd">        from pyochain import Seq</span>
 
+<span class="sd">        assert Seq((1, 2, 3)).last() == 3</span>
 <span class="sd">        ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="c1"># pyrefly: ignore [bad-return]</span>
-        <span class="k">return</span> <span class="n">Some</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>  <span class="c1"># pyright: ignore[reportReturnType]</span>
-    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">NONE</span>
+<span class="sd">    """</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2585,7 +3153,7 @@
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.69c251d7.min.js"></script>
+      <script src="../../assets/javascripts/bundle.e886cdf1.min.js"></script>
       
         <script src="../../javascripts/mermaid.mjs" type="module"></script>
       
