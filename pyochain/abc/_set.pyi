@@ -355,7 +355,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
         The result contains elements that are in this set XOR `other`—i.e., elements present in one set but not in both.
 
-        This is the opposite of [`Set::intersection`][Set.intersection].
+        This is the opposite of [`PyoSet::intersection`][PyoSet.intersection].
 
         This operation is commutative: `A.symmetric_difference(B) == B.symmetric_difference(A)`.
 

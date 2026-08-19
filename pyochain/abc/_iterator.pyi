@@ -209,7 +209,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
 
-        This can be considered the equivalent of `.insert()` but as a constructor.
 
         Args:
             value (V): The single value to yield.
@@ -233,7 +232,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
 
-        This can be considered the equivalent of [`PyoIterator::insert`][PyoIterator.insert] but as a constructor.
+        This can be considered the lazy counterpart of [`PyoIterator::once`][PyoIterator.once].
 
         Unlike `PyoIterator::once`, this function will lazily generate the value on request.
 

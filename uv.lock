@@ -472,7 +472,7 @@ wheels = [
 
 [[package]]
 name = "pyochain"
-version = "0.27.0"
+version = "0.26.0"
 source = { editable = "." }
 
 [package.dev-dependencies]
