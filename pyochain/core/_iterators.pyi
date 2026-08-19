@@ -113,7 +113,7 @@ class Peekable[T](PyoIterator[T]):
         Examples:
             Consume a number if it's equal to 0.
             ```python
-            from pyochain import Range, Some, NONE
+            from pyochain import Range, Some
 
             iterator = Range(0, 5).iter().peekable()
 
@@ -121,7 +121,7 @@ class Peekable[T](PyoIterator[T]):
             assert iterator.next_if(lambda x: x == 0) == Some(0)
 
             # The next item returned is now 1, so `next_if` will return `None`.
-            assert iterator.next_if(lambda x: x == 0) == NONE
+            assert iterator.next_if(lambda x: x == 0).is_none()
 
             # `next_if` retains the next item if the predicate evaluates to `false` for it.
             assert iterator.next() == Some(1)
@@ -150,7 +150,7 @@ class Peekable[T](PyoIterator[T]):
         Example:
             Consume a number if it's equal to 0.
             ```python
-            from pyochain import Range, Some, NONE
+            from pyochain import Range, Some
 
             iterator = Range(0, 5).iter().peekable()
 
@@ -158,7 +158,7 @@ class Peekable[T](PyoIterator[T]):
             assert iterator.next_if_eq(0) == Some(0)
 
             # The next item returned is now 1, so `next_if_eq` will return `None`.
-            assert iterator.next_if_eq(0) == NONE
+            assert iterator.next_if_eq(0).is_none()
 
             # `next_if_eq` retains the next item if it was not equal to `expected`.
             assert iterator.next() == Some(1)
