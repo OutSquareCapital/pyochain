@@ -65,13 +65,11 @@ class Deque[T](PyoMutableSequence[T]):
             assert Deque().is_empty()
 
             # Create a Deque from an iterable
-            assert Deque([1, 2, 3]) == Deque((1, 2, 3)) == Deque(range(1, 4))
+            assert Deque(1, 2, 3) == Deque(1, 2, 3) == Deque(range(1, 4))
             # Create a Deque from individual elements
-            assert Deque(4, 5, 6) == Deque((4, 5, 6)) == Deque([4], 5, 6)
-            # You can also concatenate individual elements with an iterable
-            assert Deque([1], 2, 3) == Deque(1, 2, 3)
+            assert Deque(4, 5, 6) == Deque(4, 5, 6)
             # Create a bounded Deque with a maximum length of 3
-            assert Deque(range(10), max_length=3) == Deque([7, 8, 9])
+            assert Deque(range(10), max_length=3) == Deque(7, 8, 9)
             ```
         """
 
@@ -174,10 +172,10 @@ class Deque[T](PyoMutableSequence[T]):
             original = deque([1, 2, 3])
             deque_obj = Deque.from_ref(original)
 
-            assert deque_obj == Deque([1, 2, 3])
+            assert deque_obj == Deque(1, 2, 3)
             original.append(4)
 
-            assert deque_obj == Deque([1, 2, 3, 4])
+            assert deque_obj == Deque(1, 2, 3, 4)
             ```
         """
 
@@ -193,10 +191,10 @@ class Deque[T](PyoMutableSequence[T]):
             ```python
             from pyochain.collections import Deque
 
-            d = Deque([1, 2, 3])
+            d = Deque(1, 2, 3)
             d.append_left(0)
 
-            assert d == Deque([0, 1, 2, 3])
+            assert d == Deque(0, 1, 2, 3)
             ```
         """
 
@@ -214,13 +212,13 @@ class Deque[T](PyoMutableSequence[T]):
             ```python
             from pyochain.collections import Deque
 
-            d = Deque([1, 2, 3])
+            d = Deque(1, 2, 3)
             d_copy = d.copy()
 
-            assert d_copy == Deque([1, 2, 3])
+            assert d_copy == Deque(1, 2, 3)
             d.append(4)
-            assert d == Deque([1, 2, 3, 4])
-            assert d_copy == Deque([1, 2, 3])
+            assert d == Deque(1, 2, 3, 4)
+            assert d_copy == Deque(1, 2, 3)
             ```
         """
 
@@ -234,10 +232,10 @@ class Deque[T](PyoMutableSequence[T]):
             ```python
             from pyochain.collections import Deque
 
-            d = Deque([1, 2, 3])
+            d = Deque(1, 2, 3)
             d.extend_left([0, -1])
 
-            assert d == Deque([-1, 0, 1, 2, 3])
+            assert d == Deque(-1, 0, 1, 2, 3)
             ```
         """
 
@@ -251,10 +249,10 @@ class Deque[T](PyoMutableSequence[T]):
             ```python
             from pyochain.collections import Deque
 
-            d = Deque([1, 2, 3])
+            d = Deque(1, 2, 3)
 
             assert d.pop_left() == 1
-            assert d == Deque([2, 3])
+            assert d == Deque(2, 3)
             ```
         """
 
@@ -271,10 +269,10 @@ class Deque[T](PyoMutableSequence[T]):
             ```python
             from pyochain.collections import Deque
 
-            d = Deque([1, 2, 3, 4, 5])
+            d = Deque(1, 2, 3, 4, 5)
 
-            assert d.rotate(2) == Deque([4, 5, 1, 2, 3])
-            assert d.rotate(-3) == Deque([2, 3, 4, 5, 1])
+            assert d.rotate(2) == Deque(4, 5, 1, 2, 3)
+            assert d.rotate(-3) == Deque(2, 3, 4, 5, 1)
             ```
         """
 

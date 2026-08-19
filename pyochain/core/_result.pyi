@@ -573,7 +573,7 @@ class ResultType[T, E](Pipe, Protocol):
 
             seen = Vec[int](())
             assert Ok(2).inspect(lambda x: seen.append(x)).unwrap() == 2
-            assert seen == Vec([2])
+            assert seen == Vec(2)
             ```
         """
 

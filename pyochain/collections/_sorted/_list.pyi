@@ -288,7 +288,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
 
         assert sl[1] == "b"
         assert sl[-1] == "e"
-        assert sl[2:5] == Vec(("c", "d", "e"))
+        assert sl[2:5] == Vec("c", "d", "e")
         ```
         """
 

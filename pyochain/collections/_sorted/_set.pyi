@@ -84,7 +84,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ss = SortedSet("abcde")
             assert ss[2] == "c"
             assert ss[-1] == "e"
-            assert ss[2:5] == Vec(("c", "d", "e"))
+            assert ss[2:5] == Vec("c", "d", "e")
             ```
         """
 

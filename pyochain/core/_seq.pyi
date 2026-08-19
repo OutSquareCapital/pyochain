@@ -56,10 +56,6 @@ class Seq[T](PyoSequence[T]):
             # Create a Seq from individual elements
             assert Seq(1, 2, 3) == py_tuple
 
-            # You can also concatenate individual elements with an iterable
-
-            assert Seq([1], 2, 3) == Seq((1, 2), 3) == py_tuple
-
             # Create a Seq from a tuple without copying
             seq3 = Seq(py_tuple)
             assert id(seq3[0]) == id(py_tuple[0])
@@ -101,7 +97,7 @@ class Seq[T](PyoSequence[T]):
             from pyochain import Seq, Err, Ok
 
             s1 = Seq(1, 2, 3)
-            s2 = Seq((1, 2, 4))
+            s2 = Seq(1, 2, 4)
             assert s1 < s2
             assert not s1 < (1, 2, 3)
             try:
@@ -166,6 +162,6 @@ class Seq[T](PyoSequence[T]):
             s1 = Seq(1, 2, 3)
             s2 = (4, 5, 6)  # Can also concatenate a standard tuple
             s3 = s1.concat(s2)
-            assert s3 == Seq((1, 2, 3, 4, 5, 6))
+            assert s3 == Seq(1, 2, 3, 4, 5, 6)
             ```
         """

@@ -58,7 +58,7 @@ uv add pyochain # or pip install pyochain
 
 Being statically compiled, pyochain is by design order of magnitude faster than other similar python libraries.
 
-For example, a simple, single object creation like `x = Vec([1, 2, 3])` take 30% less time than if `Vec` was implemented in pure Python.
+For example, a simple, single object creation like `x = Vec(1, 2, 3)` take 30% less time than if `Vec` was implemented in pure Python.
 
 This speed-up is only exacerbated for `Iterator` methods and classes, often up to **2x to 10x** faster than `more-itertools` equivalents.
 

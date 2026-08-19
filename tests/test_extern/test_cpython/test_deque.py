@@ -657,7 +657,7 @@ def test_repr() -> None:
 def test_init() -> None:
     # NOTE: here we differ from cpython, since our constructor is more flexible
     # Both test raise TypeError for a collections.deque
-    assert Deque[int | str]("abc", 2, 3) == Deque(["a", "b", "c", 2, 3])
+    assert Deque[int | str]("abc", 2, 3) == Deque(["abc", 2, 3])
     assert Deque[int](1) == Deque([1])
 
 

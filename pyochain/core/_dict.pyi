@@ -40,7 +40,7 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
         ```python
         from pyochain import Dict, Iter, Seq
 
-        names = Seq(("alice", "bob", "charlie", "dave"))
+        names = Seq("alice", "bob", "charlie", "dave")
         ages = (30, 25, 35, 40)
         records = names.iter().zip(ages).collect(Dict)
         assert records == Dict({"alice": 30, "bob": 25, "charlie": 35, "dave": 40})

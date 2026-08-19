@@ -4,7 +4,7 @@
 
 ### 🆕 New features
 
-- `Vec`, `Seq` and `Deque` now have flexible constructors, instantiate with no arguments, variable number of positional arguments, or a single iterable argument. For example, `Vec(1, 2, 3)`, `Vec([1], 2, 3)`,  `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()`, `Vec(None)` or `Vec([])` will create an empty `Vec`. Same for `Seq` and `Deque`. The latter has its `max_length` argument become keyword-only.
+- `Vec`, `Seq` and `Deque` now have flexible constructors: instantiate with no arguments, variable number of positional elements, or a single iterable. For example, `Vec(1, 2, 3)` or `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()`, `Vec(None)` or `Vec([])` will create an empty `Vec`. Same for `Seq` and `Deque`. The latter has its `max_length` argument become keyword-only.
 
 ## [0.27.0] - 2026-08-19
 

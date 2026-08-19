@@ -531,7 +531,7 @@ class SetMut[T](PyoMutableSet[T]):
 
             s = SetMut(("a", "b"))
             s.add("c")
-            assert s.iter().sort() == Vec(("a", "b", "c"))
+            assert s.iter().sort() == Vec("a", "b", "c")
             ```
         """
 
@@ -568,7 +568,7 @@ class SetMut[T](PyoMutableSet[T]):
 
             s = SetMut(("a", "b", "c"))
             s.discard("b")
-            assert s.iter().sort() == Vec(("a", "c"))
+            assert s.iter().sort() == Vec("a", "c")
             ```
         """
 

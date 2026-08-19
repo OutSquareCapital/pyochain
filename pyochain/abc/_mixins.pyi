@@ -75,9 +75,9 @@ class Tap(Protocol):
 
             v = Vec()
 
-            x = Seq((1, 2, 3, 4)).tap(v.extend).last()
+            x = Seq(1, 2, 3, 4).tap(v.extend).last()
 
-            assert v == Vec((1, 2, 3, 4))
+            assert v == Vec(1, 2, 3, 4)
             assert x == 4
             ```
         """

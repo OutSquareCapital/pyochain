@@ -20,8 +20,8 @@ class Range(PyoSequence[int]):
 
         r = Range(1, 6, 2)
         assert r == Range(1, 6, 2)
-        assert r.iter().collect(Seq) == Seq((1, 3, 5))
-        assert r.rev().collect(Seq) == Seq((5, 3, 1))
+        assert r.iter().collect(Seq) == Seq(1, 3, 5)
+        assert r.rev().collect(Seq) == Seq(5, 3, 1)
         names = ("alice", "bob", "CHARLIE", "dave")
         indexed_names = (
             Range(0, 100)

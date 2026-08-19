@@ -40,22 +40,6 @@ impl PyoVec {
                     iterable.try_iter()?.try_collect_bound(py)?
                 }
                 (Some(any), true) => PyList::new(py, [any])?,
-                (Some(CaseExact::Self(inner)), false) => inner
-                    .get()
-                    .into_inner_bound(py)
-                    .as_sequence()
-                    .concat(&more.as_sequence())?
-                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyList>() }),
-                (Some(Case::PySequence(sequence)), false) => sequence
-                    .to_list()?
-                    .as_sequence()
-                    .in_place_concat(&more.as_sequence())?
-                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyList>() }),
-                (Some(Case::PyIterable(iterable)), false) => iterable
-                    .try_iter()?
-                    .into_iter()
-                    .chain(more.into_iter().map(Ok))
-                    .try_collect_bound(py)?,
                 (Some(any), false) => std::iter::once(any)
                     .chain(more.into_iter())
                     .collect_bound(py)?,

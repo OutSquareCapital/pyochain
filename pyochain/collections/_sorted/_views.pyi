@@ -90,7 +90,7 @@ class SortedKeysView(
             skv = sd.keys()
             assert skv[0] == "a"
             assert skv[-1] == "c"
-            assert skv[:] == Vec(("a", "b", "c"))
+            assert skv[:] == Vec("a", "b", "c")
             with pytest.raises(IndexError):
                 skv[100]
             ```
@@ -148,7 +148,7 @@ class SortedItemsView(
             siv = sd.items()
             assert siv[0] == ("a", 1)
             assert siv[-1] == ("c", 3)
-            assert siv[:] == Vec([("a", 1), ("b", 2), ("c", 3)])
+            assert siv[:] == Vec(("a", 1), ("b", 2), ("c", 3))
             with pytest.raises(IndexError):
                 siv[100]
             ```
@@ -206,7 +206,7 @@ class SortedValuesView(
             svv = sd.values()
             assert svv[0] == 2
             assert svv[-1] == 3
-            assert svv[:] == Vec((2, 1, 3))
+            assert svv[:] == Vec(2, 1, 3)
             with pytest.raises(IndexError):
                 svv[100]
             ```

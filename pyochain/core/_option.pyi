@@ -769,10 +769,10 @@ class OptionType[T](Pipe):
             seen = Vec[int]([])
 
             assert Some(2).inspect(lambda x: seen.append(x)) == Some(2)
-            assert seen == Vec([2])
+            assert seen == Vec(2)
 
             assert NONE.inspect(lambda x: seen.append(x)).is_none()
-            assert seen == Vec([2])
+            assert seen == Vec(2)
             ```
         """
 

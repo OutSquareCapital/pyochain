@@ -96,7 +96,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         counter = Count(5)
         assert counter.next() == Some(5)
         assert counter.next() == Some(6)
-        assert counter.iter().take(3).collect(Seq) == Seq((7, 8, 9))
+        assert counter.iter().take(3).collect(Seq) == Seq(7, 8, 9)
         ```
     """
     @abstractmethod
@@ -127,8 +127,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Iter, Seq
 
-            assert Iter.from_count(10, 2).take(3).collect(Seq) == Seq((10, 12, 14))
-            assert Iter.from_count(-5, 5).take(4).collect(Seq) == Seq((-5, 0, 5, 10))
+            assert Iter.from_count(10, 2).take(3).collect(Seq) == Seq(10, 12, 14)
+            assert Iter.from_count(-5, 5).take(4).collect(Seq) == Seq(-5, 0, 5, 10)
             assert Iter.from_count(0, -1).take(5).collect(Seq) == (0, -1, -2, -3, -4)
             x = Iter.from_count(0, 5).map(lambda x: x**2).take(4).collect(tuple)
             assert x == (0, 25, 100, 225)
@@ -220,7 +220,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Iter, Seq
 
-            assert Iter.once(42).collect(Seq) == Seq((42,))
+            assert Iter.once(42).collect(Seq) == Seq(
+                42,
+            )
             ```
         """
 
@@ -248,7 +250,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Iter, Seq
 
-            assert Iter.once_with(lambda: 42).collect(Seq) == Seq((42,))
+            assert Iter.once_with(lambda: 42).collect(Seq) == Seq(
+                42,
+            )
             ```
         """
 
@@ -394,7 +398,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Iter
             import operator
 
-            data = Seq((3, 4, 6, 2, 1, 9, 0, 7, 5, 8))
+            data = Seq(3, 4, 6, 2, 1, 9, 0, 7, 5, 8)
             running_max = data.iter().accumulate(max).collect(Seq)
             assert running_max == (3, 4, 6, 6, 6, 9, 9, 9, 9, 9)
 
@@ -429,16 +433,16 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            assert Seq((1, True)).iter().all()
+            assert Seq(1, True).iter().all()
             assert Seq().iter().all()
-            assert not Seq((1, 0)).iter().all()
+            assert not Seq(1, 0).iter().all()
 
             def is_even(x: int) -> bool:
                 return x % 2 == 0
 
-            assert Seq((2, 4, 6)).iter().all(is_even)
-            assert not Seq(("a", "", "c")).iter().all()
-            assert not Seq((1, None, 3)).iter().all()
+            assert Seq(2, 4, 6).iter().all(is_even)
+            assert not Seq("a", "", "c").iter().all()
+            assert not Seq(1, None, 3).iter().all()
             ```
         """
 
@@ -496,7 +500,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert Seq("ABCb").iter().all_unique()
 
             # Alternative way to check uniqueness by comparing lengths:
-            collection = Seq((1, 2, 3, 3))
+            collection = Seq(1, 2, 3, 3)
             assert not collection.len() == collection.pipe(Set).len()
             ```
         """
@@ -544,13 +548,13 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq, Range
 
-            assert Seq((0, 1)).iter().any()
+            assert Seq(0, 1).iter().any()
             assert not Range(0, 0).iter().any()
 
             def is_even(x: int) -> bool:
                 return x % 2 == 0
 
-            assert Seq((1, 3, 4)).iter().any(is_even)
+            assert Seq(1, 3, 4).iter().any(is_even)
             ```
         """
 
@@ -572,8 +576,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
             Identify the best machine learning model:
             ```python
-            models = Seq(("svm", "random forest", "knn", "naïve bayes"))
-            accuracy = Seq((68, 61, 84, 72))
+            models = Seq("svm", "random forest", "knn", "naïve bayes")
+            accuracy = Seq(68, 61, 84, 72)
 
             # Most accurate model
             assert models.get(accuracy.iter().arg_max()).unwrap() == "knn"
@@ -601,13 +605,13 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            assert Seq(("a", "bbb", "cc")).iter().arg_max_by(len) == 1
-            assert Seq(("Alice", "bob", "charlie")).iter().arg_max_by(str.lower) == 2
+            assert Seq("a", "bbb", "cc").iter().arg_max_by(len) == 1
+            assert Seq("Alice", "bob", "charlie").iter().arg_max_by(str.lower) == 2
             ```
             Identify the best machine learning model:
             ```python
-            models = Seq(("svm", "random forest", "knn", "naïve bayes"))
-            accuracy = Seq(("68", "61", "84", "72"))
+            models = Seq("svm", "random forest", "knn", "naïve bayes")
+            accuracy = Seq("68", "61", "84", "72")
 
             # Most accurate model
             assert models.get(accuracy.iter().arg_max_by(int)).unwrap() == "knn"
@@ -630,7 +634,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Seq
 
             assert Seq("efghabcdijkl").iter().arg_min() == 4
-            assert Seq((3, 2, 1, 0, 4, 2, 1, 0)).iter().arg_min() == 3
+            assert Seq(3, 2, 1, 0, 4, 2, 1, 0).iter().arg_min() == 3
             ```
         """
 
@@ -652,8 +656,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            assert Seq(("aaa", "b", "cc")).iter().arg_min_by(len) == 1
-            assert Seq(("Alice", "bob", "Charlie")).iter().arg_min_by(str.lower) == 0
+            assert Seq("aaa", "b", "cc").iter().arg_min_by(len) == 1
+            assert Seq("Alice", "bob", "Charlie").iter().arg_min_by(str.lower) == 0
             ```
             Find the fastest healing family member based on age:
             ```python
@@ -661,8 +665,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 "Days for a wound to heal given a subject's age."
                 return x**2 - 20 * x + 150
 
-            labels = Seq(("homer", "marge", "bart", "lisa", "maggie"))
-            ages = Seq((35, 30, 10, 9, 1))
+            labels = Seq("homer", "marge", "bart", "lisa", "maggie")
+            ages = Seq(35, 30, 10, 9, 1)
             # Fastest healing family member
             assert labels.get(ages.iter().arg_min_by(cost)).unwrap() == "bart"
             # Age with fastest healing
@@ -722,7 +726,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             a = Seq("ABCDEFG").iter().batched(3).collect(Seq)
             b = (("A", "B", "C"), ("D", "E", "F"), ("G",))
             assert a == b
-            data = Seq((1, 1, 2, -2, 6, 0, 3, 1, 0))
+            data = Seq(1, 1, 2, -2, 6, 0, 3, 1, 0)
             #           ^-----^  ^------^  ^-----^
             assert data.iter().batched(3, strict=True).map(sum).all(lambda x: x == 4)
             ```
@@ -730,7 +734,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Vec
 
-            flattened_data = Vec(["roses", "red", "violets", "blue", "sugar", "sweet"])
+            flattened_data = Vec("roses", "red", "violets", "blue", "sugar", "sweet")
             unflattened = flattened_data.iter().batched(2).collect(Vec)
             assert unflattened == [
                 ("roses", "red"),
@@ -793,7 +797,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq, Iter, Range
 
-            data = Seq((1, 2))
+            data = Seq(1, 2)
             # Multiple iterables of different types can be chained together:
             mixed = data.iter().chain((3, 4), [True], "hi").collect(Seq)
             assert mixed == (1, 2, 3, 4, True, "h", "i")
@@ -840,7 +844,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             data = Range(0, 4)
             assert data.iter().collect(list) == [0, 1, 2, 3]
-            assert data.iter().collect(Vec) == Vec((0, 1, 2, 3))
+            assert data.iter().collect(Vec) == Vec(0, 1, 2, 3)
             assert data.iter().map(str).enumerate().collect(dict) == {
                 0: "0",
                 1: "1",
@@ -897,12 +901,12 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq, Iter, Vec
 
-            a = Seq((2, 3))
-            vec = Vec([1])
+            a = Seq(2, 3)
+            vec = Vec(1)
             b = a.iter().map(lambda x: x * 2).collect_into(vec)
-            assert b == Vec((1, 4, 6))
+            assert b == Vec(1, 4, 6)
             c = a.iter().map(lambda x: x * 10).collect_into(vec)
-            assert c == Vec((1, 4, 6, 20, 30))
+            assert c == Vec(1, 4, 6, 20, 30)
             ```
             The returned mutable sequence can be used to continue the call chain:
             ```python
@@ -1100,7 +1104,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            assert Seq((1, 2)).iter().cycle().take(5).collect(Seq) == (1, 2, 1, 2, 1)
+            assert Seq(1, 2).iter().cycle().take(5).collect(Seq) == (1, 2, 1, 2, 1)
             assert Seq("ABC").iter().cycle().take(5).join("") == "ABCAB"
             ```
         """
@@ -1124,9 +1128,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            data = Seq(("apple", "banana", "cherry"))
+            data = Seq("apple", "banana", "cherry")
             output = data.iter().enumerate().collect(Seq)
-            assert output == Seq(((0, "apple"), (1, "banana"), (2, "cherry")))
+            assert output == Seq((0, "apple"), (1, "banana"), (2, "cherry"))
             output = (
                 data
                 .iter()
@@ -1134,7 +1138,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .map_star(lambda idx, val: (idx, val.upper()))
                 .collect(Seq)
             )
-            assert output == Seq(((0, "APPLE"), (1, "BANANA"), (2, "CHERRY")))
+            assert output == Seq((0, "APPLE"), (1, "BANANA"), (2, "CHERRY"))
             ```
         """
 
@@ -1208,7 +1212,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Iter, Seq, Some
 
             data = (1, 2, 3)
-            assert Iter(data).filter(lambda x: x > 1).collect(Seq) == Seq((2, 3))
+            assert Iter(data).filter(lambda x: x > 1).collect(Seq) == Seq(2, 3)
             # See the equivalence of next and find:
             assert Iter(data).filter(lambda x: x > 1).next() == Some(2)
             assert Iter(data).find(lambda x: x > 1) == Some(2)
@@ -1219,9 +1223,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 return isinstance(x, str)
 
             mixed_data = (1, "two", 3.0, "four")
-            assert Iter(mixed_data).filter(_is_str).collect(Seq) == Seq(("two", "four"))
+            assert Iter(mixed_data).filter(_is_str).collect(Seq) == Seq("two", "four")
             maybe_none = (1, None, 3, None)
-            assert Iter(maybe_none).filter().collect(Seq) == Seq((1, 3))
+            assert Iter(maybe_none).filter().collect(Seq) == Seq(1, 3)
             maybe_false = (0, 1, False, 2, "", 3, None)
             assert Iter(maybe_false).filter().collect(Seq) == Seq(1, 2, 3)
             ```
@@ -1256,10 +1260,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             a = Range(0, 5).iter().filter_false(lambda x: x > 1).collect(Seq)
             assert a == (0, 1)
-            b = Seq([1, 4, 6, 3, 8]).iter().filter_false(lambda x: x < 5).collect(Seq)
-            assert b == Seq((6, 8))
+            b = Seq(1, 4, 6, 3, 8).iter().filter_false(lambda x: x < 5).collect(Seq)
+            assert b == Seq(6, 8)
             # Count number of none values
-            assert Seq((1, None, 2, None, 3)).iter().filter_false().count() == 2
+            assert Seq(1, None, 2, None, 3).iter().filter_false().count() == 2
             ```
         """
 
@@ -1291,9 +1295,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 except ValueError:
                     return Err(f"Invalid integer, got {s!r}")
 
-            data = Seq(("1", "two", "NaN", "four", "5"))
+            data = Seq("1", "two", "NaN", "four", "5")
             parsed = data.iter().filter_map(lambda s: _parse(s).ok()).collect(Seq)
-            assert parsed == Seq((1, 5))
+            assert parsed == Seq(1, 5)
             # Equivalent to:
             parsed = (
                 data
@@ -1303,7 +1307,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .map(lambda s: s.unwrap())
                 .collect(Seq)
             )
-            assert parsed == Seq((1, 5))
+            assert parsed == Seq(1, 5)
             ```
         """
 
@@ -1378,7 +1382,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Result, Ok, Err, Seq
 
-            data = Seq((("1", "10"), ("two", "20"), ("3", "thirty")))
+            data = Seq(("1", "10"), ("two", "20"), ("3", "thirty"))
 
             def _parse_pair(s1: str, s2: str) -> Result[tuple[int, int], str]:
                 try:
@@ -1493,7 +1497,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            data = Seq(("apple", "banana", "cherry", "date"))
+            data = Seq("apple", "banana", "cherry", "date")
             output = (
                 data
                 .iter()
@@ -1554,7 +1558,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 except ValueError:
                     return NONE
 
-            assert Seq(("lol", "NaN", "2", "5")).iter().find_map(_parse) == Some(2)
+            assert Seq("lol", "NaN", "2", "5").iter().find_map(_parse) == Some(2)
             ```
         """
 
@@ -1576,7 +1580,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Range, Seq
 
             out = Range(1, 4).iter().flat_map(range).collect(Seq)
-            assert out == Seq((0, 0, 1, 0, 1, 2))
+            assert out == Seq(0, 0, 1, 0, 1, 2)
             ```
         """
 
@@ -1593,23 +1597,23 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            data = Seq(((1, 2, 3, 4), (5, 6)))
+            data = Seq((1, 2, 3, 4), (5, 6))
             flattened = data.iter().flatten().collect(Seq)
-            assert flattened == Seq((1, 2, 3, 4, 5, 6))
+            assert flattened == Seq(1, 2, 3, 4, 5, 6)
             ```
             Mapping and then flattening:
             ```python
-            words = Seq(("he", "l", "lo!"))
+            words = Seq("he", "l", "lo!")
             merged = words.iter().flatten().collect(Seq)
-            assert merged == Seq(("h", "e", "l", "l", "o", "!"))
+            assert merged == Seq("h", "e", "l", "l", "o", "!")
             ```
             Flattening only removes one level of nesting at a time:
             ```python
-            d3 = Seq((((1, 2), (3, 4)), ((5, 6), (7, 8))))
+            d3 = Seq(((1, 2), (3, 4)), ((5, 6), (7, 8)))
             d2 = d3.iter().flatten().collect(Seq)
-            assert d2 == Seq(((1, 2), (3, 4), (5, 6), (7, 8)))
+            assert d2 == Seq((1, 2), (3, 4), (5, 6), (7, 8))
             d1 = d3.iter().flatten().flatten().collect(Seq)
-            assert d1 == Seq((1, 2, 3, 4, 5, 6, 7, 8))
+            assert d1 == Seq(1, 2, 3, 4, 5, 6, 7, 8)
             ```
             Here we see that `flatten()` does not perform a “deep” flatten.
 
@@ -1643,7 +1647,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             assert data.iter().fold(0, lambda acc, x: acc + x) == 6
             assert data.iter().fold(10, lambda acc, x: acc + x) == 16
-            assert Seq(("a", "b", "c")).iter().fold("", lambda acc, x: acc + x) == "abc"
+            assert Seq("a", "b", "c").iter().fold("", lambda acc, x: acc + x) == "abc"
             ```
         """
 
@@ -1754,14 +1758,14 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Iter, Seq
 
-            data = Seq(((1, 2), (3, 4)))
+            data = Seq((1, 2), (3, 4))
             assert data.iter().fold_star(0, lambda acc, x, y: acc + x + y) == 10
-            data = Seq((("a", "b"), ("c", "d")))
+            data = Seq(("a", "b"), ("c", "d"))
             assert data.iter().fold_star("", lambda acc, x, y: acc + x + y) == "abcd"
             ```
             You can also pass additional arguments to the folding function:
             ```python
-            data = Seq(((1, 2), (3, 4)))
+            data = Seq((1, 2), (3, 4))
 
             def add_with_offset(acc: int, x: int, y: int, offset: int) -> int:
                 return acc + x + y + offset
@@ -1886,7 +1890,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             vec = Vec()
             Range(1, 5).iter().batched(2).for_each_star(lambda x, y: vec.append(x + y))
-            assert vec == Vec((3, 7))
+            assert vec == Vec(3, 7)
             ```
         """
 
@@ -2008,18 +2012,18 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 )
                 .collect(Dict)
             )
-            assert res == Dict({False: Seq((1, 3, 5, 7)), True: Seq((0, 2, 4, 6))})
+            assert res == Dict({False: Seq(1, 3, 5, 7), True: Seq(0, 2, 4, 6)})
             ```
             If we have a dataset who's items have a common key and who's already sorted by that key, we can easily perform grouped operations on it, like this:
             ```python
             from pyochain import Seq
 
-            data = Seq((
+            data = Seq(
                 {"name": "Alice", "gender": "F"},
                 {"name": "Bob", "gender": "M"},
                 {"name": "Charlie", "gender": "M"},
                 {"name": "Dan", "gender": "M"},
-            ))
+            )
             # group by the gender key, and count the number of people in each group
             output = (
                 data
@@ -2035,7 +2039,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Seq
 
             groups = (
-                Seq(("a1", "a2", "b1"))
+                Seq("a1", "a2", "b1")
                 .iter()
                 .group_by(lambda x: x[0])
                 .collect(Seq)
@@ -2050,14 +2054,14 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Seq
 
             groups = (
-                Seq(("a1", "a2", "b1", "b2"))
+                Seq("a1", "a2", "b1", "b2")
                 .iter()
                 .group_by(lambda x: x[0])
                 # ✅ Materialize NOW
                 .map_star(lambda g, vals: (g, vals.collect(Seq)))
                 .collect(Seq)
             )
-            assert groups == (("a", Seq(["a1", "a2"])), ("b", Seq(["b1", "b2"])))
+            assert groups == (("a", Seq("a1", "a2")), ("b", Seq("b1", "b2")))
             ```
         """
 
@@ -2105,18 +2109,18 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             data = Seq(1, 2, 3)
             # Simple example with numbers
             a = data.iter().intersperse(0).collect(Seq)
-            assert a == Seq((1, 0, 2, 0, 3))
+            assert a == Seq(1, 0, 2, 0, 3)
             # Useful when chaining with other operations
             assert data.iter().intersperse(5).sum() == 16
             # Inserting separators between groups, then flattening
             a = (
-                Seq(((1, 2), (3, 4), (5, 6)))
+                Seq((1, 2), (3, 4), (5, 6))
                 .iter()
                 .intersperse([-1])
                 .flatten()
                 .collect(Seq)
             )
-            assert a == Seq((1, 2, -1, 3, 4, -1, 5, 6))
+            assert a == Seq(1, 2, -1, 3, 4, -1, 5, 6)
             ```
         """
 
@@ -2153,7 +2157,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            data = Seq((1, 2, 2))
+            data = Seq(1, 2, 2)
             assert data.iter().is_sorted()
             assert not data.iter().is_sorted(strict=True)
             ```
@@ -2187,14 +2191,14 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Range, Seq
 
             assert Range(1, 6).iter().map(str).is_sorted_by(int)
-            by_int = Seq((1, 5, 3)).iter().map(str).is_sorted_by(int, reverse=True)
+            by_int = Seq(1, 5, 3).iter().map(str).is_sorted_by(int, reverse=True)
             assert not by_int
             ```
             If strict, tests for strict sorting, that is, returns False if equal elements are found:
             ```python
             from pyochain import Seq
 
-            data = Seq(("1", "2", "2"))
+            data = Seq("1", "2", "2")
             assert data.iter().is_sorted_by(int)
             assert not data.iter().is_sorted_by(int, strict=True)
             ```
@@ -2322,14 +2326,14 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            assert Seq((1, 2)).iter().map(lambda x: x + 1).collect(Seq) == Seq((2, 3))
+            assert Seq(1, 2).iter().map(lambda x: x + 1).collect(Seq) == Seq(2, 3)
             # You can use methods on the class rather than on instance for convenience:
-            data = Seq(("a", "b", "c"))
+            data = Seq("a", "b", "c")
 
             a = data.iter().map(str.upper).collect(Seq)
-            assert a == Seq(("A", "B", "C"))
+            assert a == Seq("A", "B", "C")
             b = data.iter().map(lambda s: s.upper()).collect(Seq)
-            assert b == Seq(("A", "B", "C"))
+            assert b == Seq("A", "B", "C")
             ```
         """
 
@@ -2459,8 +2463,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             def is_positive(n: int) -> bool:
                 return n > 0
 
-            out = Seq((1, -2, 3)).iter().map_juxt(is_even, is_positive).collect(Seq)
-            assert out == Seq([(False, True), (True, False), (False, True)])
+            out = Seq(1, -2, 3).iter().map_juxt(is_even, is_positive).collect(Seq)
+            assert out == Seq((False, True), (True, False), (False, True))
             ```
             If you need to pass additional args and kwargs to the functions, you can use `functools::partial` or create curried functions like this:
             ```python
@@ -2479,7 +2483,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .map_juxt(curried_add(10), curried_add(20))
                 .collect(Seq)
             )
-            assert out == Seq([(11, 21), (12, 22), (13, 23)])
+            assert out == Seq((11, 21), (12, 22), (13, 23))
             ```
             You can then combine this with various other methods to perform complex transformations in a clean and efficient way, without needing to iterate multiple times or create intermediate collections.
 
@@ -2494,7 +2498,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .filter_star(lambda double, square: double + square <= 5)
                 .collect(Seq)
             )
-            assert res == Seq([(0, 0), (2, 1)])
+            assert res == Seq((0, 0), (2, 1))
             ```
         """
 
@@ -2578,7 +2582,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             def make_sku(color: str, size: str) -> str:
                 return f"{color}-{size}"
 
-            data = Seq(("blue", "red"))
+            data = Seq("blue", "red")
             a = data.iter().product(["S", "M"]).map_star(make_sku).collect(Seq)
             assert a == ("blue-S", "blue-M", "red-S", "red-M")
             # This is equivalent to:
@@ -2609,10 +2613,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             def checked_div(x: int) -> Option[int]:
                 return Some(16 // x) if x != 0 else NONE
 
-            data = Seq((-1, 4, 0, 1))
+            data = Seq(-1, 4, 0, 1)
             divided = data.iter().map_while(checked_div).collect(Seq)
-            assert divided == Seq((-16, 4))
-            data = Seq((0, 1, 2, -3, 4, 5, -6))
+            assert divided == Seq(-16, 4)
+            data = Seq(0, 1, 2, -3, 4, 5, -6)
             # Convert to positive ints, stop at first negative
             converted = (
                 data
@@ -2620,7 +2624,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .map_while(lambda x: Some(x) if x >= 0 else NONE)
                 .collect(Seq)
             )
-            assert converted == Seq((0, 1, 2))
+            assert converted == Seq(0, 1, 2)
             ```
         """
 
@@ -2696,9 +2700,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Seq, Range
             import statistics
 
-            data = Seq((1, 2, 3, 4))
+            data = Seq(1, 2, 3, 4)
             means = data.iter().map_windows(2, statistics.mean).collect(Seq)
-            assert means == Seq((1.5, 2.5, 3.5))
+            assert means == Seq(1.5, 2.5, 3.5)
 
             joined = (
                 Seq("abcd")
@@ -2706,10 +2710,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .map_windows(3, lambda window: "".join(window).upper())
                 .collect(Seq)
             )
-            assert joined == Seq(("ABC", "BCD"))
+            assert joined == Seq("ABC", "BCD")
 
             sum_windows = Range(0, 5).iter().map_windows(4, sum).collect(Seq)
-            assert sum_windows == Seq((6, 10))
+            assert sum_windows == Seq(6, 10)
             ```
         """
 
@@ -2777,14 +2781,14 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Seq, Iter
 
             a = Iter("abcd").map_windows_star(2, lambda x, y: f"{x}+{y}").collect(Seq)
-            assert a == Seq(("a+b", "b+c", "c+d"))
+            assert a == Seq("a+b", "b+c", "c+d")
             b = (
-                Seq((1, 2, 3, 4))
+                Seq(1, 2, 3, 4)
                 .iter()
                 .map_windows_star(2, lambda x, y: x + y)
                 .collect(Seq)
             )
-            assert b == Seq((3, 5, 7))
+            assert b == Seq(3, 5, 7)
             ```
         """
 
@@ -2878,13 +2882,13 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             y = [4, 5, 6]
             z = [7, 8, 9]
             output = x.iter().map_with(Triangle, y, z).collect(Seq)
-            assert output == Seq((
+            assert output == Seq(
                 Triangle(x=1, y=4, z=7),
                 Triangle(x=2, y=5, z=8),
                 Triangle(x=3, y=6, z=9),
-            ))
+            )
             output_2 = x.iter().map_with(lambda a, b, c: a + b + c, y, z).collect(Seq)
-            assert output_2 == Seq((12, 15, 18))
+            assert output_2 == Seq(12, 15, 18)
             ```
         """
 
@@ -2904,7 +2908,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            assert Seq((3, 1, 2)).iter().max() == 3
+            assert Seq(3, 1, 2).iter().max() == 3
             ```
         """
 
@@ -2936,7 +2940,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             alice = Person("Alice", 30, False)
             bob = Person("Bob", 22, True)
             charlie = Person("Charlie", 25, False)
-            persons = Seq((alice, bob, charlie))
+            persons = Seq(alice, bob, charlie)
 
             assert persons.iter().max_by(lambda p: p.age).name == "Alice"
             assert persons.iter().max_by(lambda p: p.name).name == "Charlie"
@@ -2960,7 +2964,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            assert Seq((3, 1, 2)).iter().min() == 1
+            assert Seq(3, 1, 2).iter().min() == 1
             ```
         """
 
@@ -2992,7 +2996,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             alice = Person("Alice", 30, False)
             bob = Person("Bob", 22, True)
             charlie = Person("Charlie", 25, False)
-            persons = Seq((alice, bob, charlie))
+            persons = Seq(alice, bob, charlie)
 
             assert persons.iter().min_by(lambda p: p.age).name == "Bob"
             assert persons.iter().min_by(lambda p: p.name).name == "Alice"
@@ -3124,8 +3128,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Vec, Range
 
             a, b = Range(1, 6).iter().partition(lambda x: x % 2 == 0)
-            assert a == Vec((2, 4))
-            assert b == Vec((1, 3, 5))
+            assert a == Vec(2, 4)
+            assert b == Vec(1, 3, 5)
             ```
         """
 
@@ -3344,8 +3348,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq, Range, Iter
 
-            colors = Seq(("blue", "red"))
-            sizes = Seq(("S", "M"))
+            colors = Seq("blue", "red")
+            sizes = Seq("S", "M")
             a = colors.iter().product(sizes).collect(Seq)
             assert a == (("blue", "S"), ("blue", "M"), ("red", "S"), ("red", "M"))
             b = (
@@ -3365,7 +3369,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             )
             assert c == ((2, 20), (3, 20))
             d = (
-                Seq((26, 33))
+                Seq(26, 33)
                 .iter()
                 .product(("Michael", "Sophie"), ["Engineer"])
                 .map_star(
@@ -3379,7 +3383,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 "Michael is 33 and is Engineer",
                 "Sophie is 33 and is Engineer",
             )
-            e = Seq(("blue", "red")).iter().product(repeat=2).collect(Seq)
+            e = Seq("blue", "red").iter().product(repeat=2).collect(Seq)
             assert e == (
                 ("blue", "blue"),
                 ("blue", "red"),
@@ -3448,7 +3452,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                         return NONE
 
             out = Range(1, 6).iter().scan(0, accumulate_until_limit).collect(Seq)
-            assert out == Seq((1, 3, 6, 10))
+            assert out == Seq(1, 3, 6, 10)
             ```
         """
 
@@ -3475,7 +3479,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             data = Seq(1, 2, 3)
 
-            assert data.iter().skip(1).collect(Seq) == Seq((2, 3))
+            assert data.iter().skip(1).collect(Seq) == Seq(2, 3)
             assert data.iter().skip(5).collect(Seq).is_empty()
             assert data.iter().skip(0).collect(Seq) == Seq(1, 2, 3)
             ```
@@ -3501,8 +3505,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            out = Seq((1, 2, 0, -1)).iter().skip_while(lambda x: x > 0).collect(Seq)
-            assert out == Seq((0, -1))
+            out = Seq(1, 2, 0, -1).iter().skip_while(lambda x: x > 0).collect(Seq)
+            assert out == Seq(0, -1)
             ```
         """
 
@@ -3569,7 +3573,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Vec
 
-            assert Vec((3, 1, 2)).iter().sort() == Vec(1, 2, 3)
+            assert Vec(3, 1, 2).iter().sort() == Vec(1, 2, 3)
             ```
         """
 
@@ -3597,9 +3601,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq, Vec
 
-            str_numbers = Seq(("3", "1", "2"))
-            assert str_numbers.iter().sort_by(int) == Vec(("1", "2", "3"))
-            assert str_numbers.iter().sort_by(int, reverse=True) == Vec(("3", "2", "1"))
+            str_numbers = Seq("3", "1", "2")
+            assert str_numbers.iter().sort_by(int) == Vec("1", "2", "3")
+            assert str_numbers.iter().sort_by(int, reverse=True) == Vec("3", "2", "1")
             from dataclasses import dataclass
 
             @dataclass
@@ -3607,11 +3611,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 name: str
                 age: int
 
-            peoples = Seq((
-                Person("Alice", 30),
-                Person("Bob", 25),
-                Person("Charlie", 35),
-            ))
+            peoples = Seq(Person("Alice", 30), Person("Bob", 25), Person("Charlie", 35))
             sorted_names = (
                 peoples
                 .iter()
@@ -3620,7 +3620,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .map(lambda x: x.name)
                 .collect(Seq)
             )
-            assert sorted_names == Seq(("Bob", "Alice", "Charlie"))
+            assert sorted_names == Seq("Bob", "Alice", "Charlie")
             ```
         """
 
@@ -3640,8 +3640,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            out = Seq((0, 1, 2, 3, 4, 5)).iter().step_by(2).collect(Seq)
-            assert out == Seq((0, 2, 4))
+            out = Seq(0, 1, 2, 3, 4, 5).iter().step_by(2).collect(Seq)
+            assert out == Seq(0, 2, 4)
             ```
         """
 
@@ -3723,7 +3723,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             data = Seq(1, 2, 3)
 
-            assert data.iter().take(2).collect(Seq) == Seq((1, 2))
+            assert data.iter().take(2).collect(Seq) == Seq(1, 2)
             assert data.iter().take(5).collect(Seq) == Seq(1, 2, 3)
             ```
         """
@@ -3741,10 +3741,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            a = Seq((1, 2, 0)).iter().take_while(lambda x: x > 0).collect(Seq)
+            a = Seq(1, 2, 0).iter().take_while(lambda x: x > 0).collect(Seq)
             assert a == (1, 2)
 
-            b = Seq([1, 4, 6, 3, 8]).iter().take_while(lambda x: x < 5).collect(Seq)
+            b = Seq(1, 4, 6, 3, 8).iter().take_while(lambda x: x < 5).collect(Seq)
             assert b == (1, 4)
             ```
         """
@@ -3833,11 +3833,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             # Successfully collecting an iterator of Option[int] into Option[Vec[int]]:
             assert Range(1, 4).iter().map(Some).try_collect().unwrap() == Vec(1, 2, 3)
             # Failing to collect in the same way:
-            assert Seq((Some(1), Some(2), NONE, Some(3))).iter().try_collect().is_none()
+            assert Seq(Some(1), Some(2), NONE, Some(3)).iter().try_collect().is_none()
 
             # A similar example, but with Result:
             Range(1, 4).iter().map(Ok).try_collect().unwrap() == Vec(1, 2, 3)
-            assert Seq((Ok(1), Err("error"), Ok(3))).iter().try_collect().is_none()
+            assert Seq(Ok(1), Err("error"), Ok(3)).iter().try_collect().is_none()
 
             def external_fn(x: int) -> Option[int]:
                 if x % 2 == 0:
@@ -3848,7 +3848,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             # Demonstrating that the iterator remains usable after a failure:
             it = Iter((Some(1), NONE, Some(3), Some(4)))
             assert it.try_collect().is_none()
-            assert it.try_collect().unwrap() == Vec((3, 4))
+            assert it.try_collect().unwrap() == Vec(3, 4)
             ```
         """
 
@@ -3962,7 +3962,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                     return Ok(x + y)
 
             assert Range(1, 4).iter().try_reduce(checked_add).is_ok()
-            assert Seq((50, 60)).iter().try_reduce(checked_add).is_err()
+            assert Seq(50, 60).iter().try_reduce(checked_add).is_err()
             assert Range(0, 0).iter().try_reduce(checked_add).unwrap().is_none()
             ```
         """
@@ -3985,7 +3985,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Vec, Set, Seq
 
-            data = Seq((1, 1, 2, 2, 3, 3))
+            data = Seq(1, 1, 2, 2, 3, 3)
 
             assert data.iter().unique().collect(Seq) == Seq(1, 2, 3)
             assert data.pipe(Set).iter().sort() == Vec(1, 2, 3)
@@ -4005,8 +4005,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            data = Seq(("cat", "mouse", "dog", "hen"))
-            assert data.iter().unique_by(key=len).collect(Seq) == Seq(("cat", "mouse"))
+            data = Seq("cat", "mouse", "dog", "hen")
+            assert data.iter().unique_by(key=len).collect(Seq) == Seq("cat", "mouse")
             ```
         """
 
@@ -4066,11 +4066,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            data = Seq(("a", "b", "c"))
+            data = Seq("a", "b", "c")
             left, right = data.iter().enumerate().unzip()
 
-            assert left.collect(Seq) == Seq((0, 1, 2))
-            assert right.collect(Seq) == Seq(("a", "b", "c"))
+            assert left.collect(Seq) == Seq(0, 1, 2)
+            assert right.collect(Seq) == Seq("a", "b", "c")
             ```
         """
 
@@ -4086,21 +4086,21 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            data = Seq(("a", "b", "c", "d", "e"))
+            data = Seq("a", "b", "c", "d", "e")
             a = data.iter().with_position().collect(Seq)
-            assert a == Seq((
+            assert a == Seq(
                 ("first", "a"),
                 ("middle", "b"),
                 ("middle", "c"),
                 ("middle", "d"),
                 ("last", "e"),
-            ))
+            )
 
             b = data.iter().take(1).with_position().collect(Seq)
             assert b == Seq([("only", "a")])
 
             c = data.iter().take(2).with_position().collect(Seq)
-            assert c == Seq((("first", "a"), ("last", "b")))
+            assert c == Seq(("first", "a"), ("last", "b"))
             ```
         """
 
@@ -4163,11 +4163,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            a = Seq((1, 2)).iter().zip((10, 20)).collect(Seq)
-            assert a == Seq([(1, 10), (2, 20)])
+            a = Seq(1, 2).iter().zip((10, 20)).collect(Seq)
+            assert a == Seq((1, 10), (2, 20))
 
-            b = Seq(("a", "b")).iter().zip((1, 2, 3)).collect(Seq)
-            assert b == Seq([("a", 1), ("b", 2)])
+            b = Seq("a", "b").iter().zip((1, 2, 3)).collect(Seq)
+            assert b == Seq(("a", 1), ("b", 2))
             ```
         """
 
@@ -4220,11 +4220,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Iter, Some, NONE, Vec, Seq
 
-            out = Seq((1, 2)).iter().zip_longest([10]).collect(Vec)
+            out = Seq(1, 2).iter().zip_longest([10]).collect(Vec)
             assert out == [(Some(1), Some(10)), (Some(2), NONE)]
 
             # Can be combined with try collect to filter out the NONE:
             zipped = out.iter().map(lambda x: Iter(x).try_collect()).collect(Vec)
-            assert zipped == [Some(Vec((1, 10))), NONE]
+            assert zipped == [Some(Vec(1, 10)), NONE]
             ```
         """

@@ -36,32 +36,6 @@ impl Seq {
                     .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
                     .pipe(|x| PyTuple::new(py, x))?,
                 (Some(any), true) => PyTuple::new(py, [any])?,
-                (Some(CaseExact::PyTuple(tuple)), false) => tuple
-                    .as_sequence()
-                    .concat(&more.as_sequence())?
-                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() }),
-                (Some(CaseExact::Self(inner)), false) => inner
-                    .get()
-                    .into_inner_bound(py)
-                    .as_sequence()
-                    .concat(&more.as_sequence())?
-                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() }),
-                (Some(CaseExact::PyTuple(tuple)), false) => tuple
-                    .as_sequence()
-                    .concat(&more.as_sequence())?
-                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() }),
-                (Some(Case::PySequence(sequence)), false) => sequence
-                    .to_tuple()?
-                    .as_sequence()
-                    .concat(&more.as_sequence())?
-                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() }),
-                (Some(Case::PyIterable(iterable)), false) => iterable
-                    .try_iter()?
-                    .into_iter()
-                    .chain(more.into_iter().map(Ok))
-                    .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
-                    .into_iter()
-                    .pipe(|x| PyTuple::new(py, x))?,
                 (Some(any), false) => unsafe {
                     let tup = ffi::PyTuple_New(1 + more.len() as isize);
                     ffi::PyTuple_SET_ITEM(tup, 0, any.into_ptr());

@@ -37,22 +37,6 @@ impl Deque {
                     (Some(any), true) => PyTuple::new(py, [any])
                         .map(Bound::into_any)
                         .and_then(|iterable| PyDeque::new(py, iterable, max_length))?,
-                    (Some(CaseExact::PyDeque(deque)), false) => deque
-                        .as_sequence()
-                        .concat(&elements.as_sequence())?
-                        .pipe(|x| unsafe { x.cast_into_unchecked::<PyDeque>() }),
-                    (Some(CaseExact::Self(inner)), false) => inner
-                        .get()
-                        .into_inner_bound(py)
-                        .as_sequence()
-                        .concat(&elements.as_sequence())?
-                        .pipe(|x| unsafe { x.cast_into_unchecked::<PyDeque>() }),
-                    (Some(Case::PyIterable(iterable)), false) => iterable
-                        .try_iter()?
-                        .chain(elements.into_iter().map(Ok))
-                        .try_collect_bound::<PyList>(py)
-                        .map(Bound::into_any)
-                        .and_then(|x| PyDeque::new(py, x, max_length))?,
                     (Some(any), false) => std::iter::once(any)
                         .chain(elements.into_iter())
                         .collect_bound::<PyList>(py)

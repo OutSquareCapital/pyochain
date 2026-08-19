@@ -29,7 +29,7 @@ class Iter[T](PyoIterator[T]):
 
         data = (0, 1, 2, 3, 4)
 
-        assert Iter(data).collect(Seq) == Seq([0, 1, 2, 3, 4])
+        assert Iter(data).collect(Seq) == Seq(0, 1, 2, 3, 4)
         iterator = Iter(data)
 
         # First we have a tuple iterator
@@ -40,7 +40,7 @@ class Iter[T](PyoIterator[T]):
         assert mapped.__iter__().__class__.__name__ == "map"
 
         # We collect it, by default into a Seq
-        assert mapped.collect(Seq) == Seq([0, 2, 4, 6, 8])
+        assert mapped.collect(Seq) == Seq(0, 2, 4, 6, 8)
 
         # iterator is now exhausted
         assert iterator.collect(Seq) == Seq()
@@ -50,7 +50,7 @@ class Iter[T](PyoIterator[T]):
         from pyochain import Iter, Seq
 
         gen_expr = (x * x for x in range(5))
-        assert Iter(gen_expr).collect(Seq) == Seq([0, 1, 4, 9, 16])
+        assert Iter(gen_expr).collect(Seq) == Seq(0, 1, 4, 9, 16)
         ```
         Or from a generator function:
         ```python
@@ -60,7 +60,7 @@ class Iter[T](PyoIterator[T]):
             for x in range(5):
                 yield x * x
 
-        assert Iter(gen_func()).collect(Seq) == Seq([0, 1, 4, 9, 16])
+        assert Iter(gen_func()).collect(Seq) == Seq(0, 1, 4, 9, 16)
         ```
     """
 

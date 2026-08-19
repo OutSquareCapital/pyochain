@@ -19,8 +19,8 @@ class PyoReversible[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq, Range
 
-            assert Seq(1, 2, 3).rev().collect(Seq) == Seq((3, 2, 1))
-            assert Range(0, 5).rev().collect(Seq) == Seq((4, 3, 2, 1, 0))
+            assert Seq(1, 2, 3).rev().collect(Seq) == Seq(3, 2, 1)
+            assert Range(0, 5).rev().collect(Seq) == Seq(4, 3, 2, 1, 0)
             ```
         """
 
@@ -91,7 +91,7 @@ class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyrigh
             from pyochain import Seq
             from pyochain.collections import StableSet
 
-            data = Seq((1, 2))
+            data = Seq(1, 2)
             assert data.first() == 1
             # With an Iterator, the equivalent would be:
             assert data.iter().next().unwrap() == 1
@@ -131,7 +131,7 @@ class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyrigh
             ```python
             from pyochain import Seq, Some
 
-            data = Seq((10, 20, 30))
+            data = Seq(10, 20, 30)
             assert data.get(1) == Some(20)
             assert data.get(5).is_none()
             ```
@@ -214,17 +214,17 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
             ```python
             from pyochain import Vec, Seq
 
-            vec = Vec((1, 2, 3, 4))
+            vec = Vec(1, 2, 3, 4)
             assert vec.retain(lambda x: x % 2 == 0) is None
-            assert vec == Vec((2, 4))
+            assert vec == Vec(2, 4)
             ```
             External state may be used to decide which elements to keep.
 
             ```python
-            vec = Vec((1, 2, 3, 4, 5))
-            keep = Seq((False, True, True, False, True)).iter()
+            vec = Vec(1, 2, 3, 4, 5)
+            keep = Seq(False, True, True, False, True).iter()
             vec.retain(lambda _: next(keep))
-            assert vec == Vec((2, 3, 5))
+            assert vec == Vec(2, 3, 5)
             ```
         """
 
@@ -245,9 +245,9 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
             from pyochain import Vec
 
             # Truncating a five element vector to two elements:
-            vec = Vec((1, 2, 3, 4, 5))
+            vec = Vec(1, 2, 3, 4, 5)
             vec.truncate(2)
-            assert vec == Vec((1, 2))
+            assert vec == Vec(1, 2)
             ```
             No truncation occurs when len is greater than the `MutableSequence` current length:
             ```python
@@ -291,13 +291,13 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
             data = (1, 2, 3, 4, 5)
             vec = Vec(data)
             extracted = vec.extract_if(lambda x: x % 2 == 0).collect(Vec)
-            assert extracted == Vec((2, 4))
-            assert vec == Vec((1, 3, 5))
+            assert extracted == Vec(2, 4)
+            assert vec == Vec(1, 3, 5)
             # Extracting with a range
             vec = Vec(data)
             extracted = vec.extract_if(lambda x: x % 2 == 0, 1, 4).collect(Vec)
-            assert extracted == Vec((2, 4))
-            assert vec == Vec((1, 3, 5))
+            assert extracted == Vec(2, 4)
+            assert vec == Vec(1, 3, 5)
             ```
         """
 
@@ -317,20 +317,22 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
             ```python
             from pyochain import Vec
 
-            v = Vec([1, 2, 3])
+            v = Vec(1, 2, 3)
             u = v.drain(1).collect(Vec)
-            assert v == Vec((1,))
-            assert u == Vec((2, 3))
+            assert v == Vec(
+                1,
+            )
+            assert u == Vec(2, 3)
             ```
             Fully consuming the `Iterator` removes all drained elements
             ```python
-            v = Vec([1, 2, 3])
+            v = Vec(1, 2, 3)
             v.drain().collect(Vec)
             assert v.is_empty()
             ```
             Deleting the `Iterator` will also remove all drained elements.
             ```python
-            vec = Vec([1, 2, 3])
+            vec = Vec(1, 2, 3)
             iterator = vec.drain()
             del iterator
             assert vec.is_empty()

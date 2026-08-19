@@ -54,8 +54,6 @@ class Vec[T](PyoMutableSequence[T]):
             assert Vec(iter(py_list)) == Vec(py_list)
             # Create a Vec from individual elements
             assert Vec(1, 2, 3) == py_list
-            # You can also concatenate individual elements with an iterable
-            assert Vec([1], 2, 3) == Vec((1, 2), 3) == py_list
             # Create an empty Vec
             assert Vec() == Vec(None) == Vec([]) == Vec(()) == []
             # Create a Vec from a list will copy the underlying data
@@ -159,7 +157,7 @@ class Vec[T](PyoMutableSequence[T]):
             ```python
             from pyochain import Vec
 
-            v1 = Vec([1, 2, 3])
+            v1 = Vec(1, 2, 3)
             v2 = v1.copy()
             assert v2 == Vec(1, 2, 3)
             assert v1 is not v2
@@ -185,7 +183,7 @@ class Vec[T](PyoMutableSequence[T]):
             from pyochain import Vec
 
             v = Vec.from_ref([1, 2, 3]).repeat(2)
-            assert v == Vec((1, 2, 3, 1, 2, 3))
+            assert v == Vec(1, 2, 3, 1, 2, 3)
             ```
         """
 
@@ -211,7 +209,7 @@ class Vec[T](PyoMutableSequence[T]):
             from pyochain import Vec
 
             vec = Vec.from_ref([1, 2, 3]).repeat_mut(2)
-            assert vec == Vec((1, 2, 3, 1, 2, 3))
+            assert vec == Vec(1, 2, 3, 1, 2, 3)
             ```
         """
 
@@ -229,9 +227,9 @@ class Vec[T](PyoMutableSequence[T]):
 
             vec = Vec.from_ref(["a", "b", "c"])
             vec.insert(1, "d")
-            assert vec == Vec(("a", "d", "b", "c"))
+            assert vec == Vec("a", "d", "b", "c")
             vec.insert(4, "e")
-            assert vec == Vec(("a", "d", "b", "c", "e"))
+            assert vec == Vec("a", "d", "b", "c", "e")
             ```
         """
 
@@ -280,7 +278,7 @@ class Vec[T](PyoMutableSequence[T]):
             from pyochain import Vec, Iter
 
             x = Vec.from_ref(["3", "1", "2"]).sort_by(int)
-            y = Vec(("1", "2", "3"))
+            y = Vec("1", "2", "3")
             assert x == y
             ```
         """
@@ -306,7 +304,7 @@ class Vec[T](PyoMutableSequence[T]):
 
             v1 = Vec.from_ref([1, 2, 3])
             v2 = [4, 5, 6]  # Can also concatenate a standard list
-            expected = Vec((1, 2, 3, 4, 5, 6))
+            expected = Vec(1, 2, 3, 4, 5, 6)
             v3 = v1.concat(v2)
             assert v3 == expected
             v1.clear()  # Clean up the original vec
@@ -340,7 +338,7 @@ class Vec[T](PyoMutableSequence[T]):
 
             v1 = Vec.from_ref([1, 2, 3])
             v2 = [4, 5, 6]  # Can also concatenate a standard list
-            expected = Vec((1, 2, 3, 4, 5, 6))
+            expected = Vec(1, 2, 3, 4, 5, 6)
             assert v1.concat_mut(v2) == expected
             assert v1 == expected
             ```
