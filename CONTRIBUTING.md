@@ -33,7 +33,8 @@ The stub packages follow the public Rust module hierarchy, but the mapping is no
 
 ### Tests, documentation, and tooling
 
-- [tests/](tests/) — Python tests, ABC tests, external integration tests, and benchmarks.
+- [tests/](tests/) — Python tests, ABC tests, external integration tests
+- [benchmarks/](benchmarks/) — Python benchmarks for performance testing.
 - [docs/](docs/) — documentation sources and API reference pages.
 - [scripts/](scripts/) — documentation generation and repository validation scripts.
 - [Cargo.toml](Cargo.toml) — Rust workspace and dependency configuration.
