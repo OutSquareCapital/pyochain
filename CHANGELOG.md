@@ -2,30 +2,18 @@
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-08-19
+
 ### 🏆 Highlights
 
 - **Full** migration of the whole codebase to Rust
 - `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`, all implemented in Rust.
-- **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
+- **documentation**: All docstrings examples now use markdown code blocks instead of doctests, significantly improving readability. Many thanks to our contributor [@tecnolgd](https://github.com/tecnolgd) for his help on this matter.
+- **typing**: The variance of generics for all classes is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
 - `collections::PyoCounter`, pyochain version of python stdlib `collections::Counter`. Herit from `PyoMutableMapping` instead of `dict`, but behaves the same way.
-- `collections::{HeapMax, HeapMin}`, pyochain version of python stdlib `heapq` module.
-- **Full** port of the `sortedcontainers` library to pyochain, rewritten with native rust data structures.  Credits to Grant Jenks for the original implementation, as well as the maintainers of [the corresponding stubs package](https://github.com/h4l/sortedcontainers-stubs).
-
-#### sortedcontainers
-
-The classes from the `sortedcontainers` library have been ported to pyochain, with the same functionnalities, only with a few differences:
-
-- No dynamic dispatch of classes for `SortedList` to `SortedKeyList` if a *key* argument is provided, call the wanted class explicitely. Same behavior for `SortedSet` and `SortedDict`, with, respectively, new, explicit, corresponding `SortedKeySet`, and `SortedKeyDict` classes.
-- `_reset` method is public (i.e it's called `reset`).
-- `_check` method is deleted from classes, and is defined as pure functions only for tests.
-- `bisect` method alias is deleted, use `bisect_right` instead.
-- `update` and `__init__` methods arguments are explicit instead of `*args`.
-- `__or__` and `__ror__` don't return `NotImplemented` if the provided *value* is not a `Mapping`.
-
-#### abc's
-
-- Due to Pyo3 current limitations, no `TypeError` is raised on program launch (i.e when `__subclasshook__` is called). Rely on type checkers to ensure all `abstractmethod`s are implemented.
-- Again, due to current limitations, some subclasses relationship don't work. `PyoSized`, `PyoContainer` and `PyoReversible` are not actual parents of their expected subclasses, thus `isinstance` checks will fail.
+- `collections::{HeapMax, HeapMin}`, pyochain reimplementation of python stdlib `heapq` module with an OOP, fluent API.
+- **Full** port of the `sortedcontainers` library to pyochain, rewritten with native rust data structures, and fully typed.  
+Credits to Grant Jenks for the original implementation, as well as the maintainers of [the corresponding stubs package](https://github.com/h4l/sortedcontainers-stubs).
 
 ### 💥 Breaking changes
 
