@@ -4,6 +4,8 @@
 
 ## [0.27.0] - 2026-08-19
 
+NOTE: the performance improvements and benchmarks are very likely understated, as they were done when the Rust migration was still partial.
+
 ### 🏆 Highlights
 
 - **Full** migration of the whole codebase to Rust
@@ -12,7 +14,7 @@
 - **typing**: The variance of generics for all classes is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
 - `collections::PyoCounter`, pyochain version of python stdlib `collections::Counter`. Herit from `PyoMutableMapping` instead of `dict`, but behaves the same way.
 - `collections::{HeapMax, HeapMin}`, pyochain reimplementation of python stdlib `heapq` module with an OOP, fluent API.
-- **Full** port of the `sortedcontainers` library to pyochain, rewritten with native rust data structures, and fully typed.  
+- **Full** port of the `sortedcontainers` library to pyochain, rewritten with native rust data structures, and fully typed.
 Credits to Grant Jenks for the original implementation, as well as the maintainers of [the corresponding stubs package](https://github.com/h4l/sortedcontainers-stubs).
 
 ### 💥 Breaking changes
