@@ -281,9 +281,8 @@ class OptionType[T](Pipe):
 
             assert Some(42) == Some(42)
             assert Some(42) != Some(21)
-            assert Some(42).is_some()
-            assert NONE.is_none()
-            assert NONE == None
+            assert Some(42) != NONE
+            assert NONE == NONE
             assert Some(42) != 42
             ```
         """

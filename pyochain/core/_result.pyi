@@ -298,7 +298,7 @@ class ResultType[T, E](Pipe, Protocol):
         Returns:
             Result[R, E]: The result of the function if `Ok`, otherwise the original `Err`.
 
-        Exam    ple:
+        Example:
             ```python
             from pyochain import Ok, Err, Result
 
