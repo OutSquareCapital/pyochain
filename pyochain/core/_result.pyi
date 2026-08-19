@@ -16,18 +16,15 @@ def then_if_true[T](value: T, *, predicate: Callable[[T], bool]) -> Option[T]:
 
     Example:
         ```python
-        >>> from pyochain import then_if_true
-        >>> then_if_true(42, predicate=lambda x: x == 42)
-        Some(42)
-        >>> then_if_true(21, predicate=lambda x: x == 42)
-        NONE
-        >>> from pathlib import Path
-        >>> readme_path = then_if_true(Path("README.md"), predicate=Path.exists).map(
-        ...     str
-        ... )
-        >>> readme_path
-        Some('README.md')
+        from pyochain import then_if_true, Some
 
+        assert then_if_true(42, predicate=lambda x: x == 42) == Some(42)
+        assert then_if_true(21, predicate=lambda x: x == 42).is_none()
+
+        from pathlib import Path
+
+        readme_path = then_if_true(Path("README.md"), predicate=Path.exists).map(str)
+        assert readme_path == Some("README.md")
         ```
     """
 
@@ -42,18 +39,13 @@ def then_if_some[T](value: T) -> Option[T]:
 
     Example:
         ```python
-        >>> from pyochain import then_if_some
-        >>> then_if_some(42)
-        Some(42)
-        >>> then_if_some(0)
-        NONE
-        >>> then_if_some("hello")
-        Some('hello')
-        >>> then_if_some("")
-        NONE
-        >>> then_if_some(())  # Empty sequence is falsy
-        NONE
+        from pyochain import then_if_some, Some
 
+        assert then_if_some(42) == Some(42)
+        assert then_if_some(0).is_none()
+        assert then_if_some("hello") == Some("hello")
+        assert then_if_some("").is_none()
+        assert then_if_some(()).is_none()  # Empty sequence is falsy
         ```
     """
 
@@ -94,26 +86,26 @@ class ResultType[T, E](Pipe, Protocol):
 
     Example:
         ```python
-        >>> from pyochain import Err, Ok, Result
-        >>>
-        >>> def is_positive(x: int) -> Result[str, ValueError]:
-        ...     if x > 0:
-        ...         return Ok(f"Value is {x}")
-        ...     msg = f"{x} is not positive"
-        ...     return Err(ValueError(msg))
-        >>>
-        >>> def handle_variant(x: Result[str, ValueError]) -> str:
-        ...     match x:
-        ...         case Ok(value):
-        ...             return f"Success: {value}"
-        ...         case Err(error):
-        ...             return f"Failure: {error}"
-        >>>
-        >>> is_positive(5).map(lambda s: s.upper()).pipe(handle_variant)
-        'Success: VALUE IS 5'
-        >>> is_positive(-3).map(lambda s: s.upper()).pipe(handle_variant)
-        'Failure: -3 is not positive'
+        from pyochain import Err, Ok, Result
 
+        def is_positive(x: int) -> Result[str, ValueError]:
+            if x > 0:
+                return Ok(f"Value is {x}")
+            msg = f"{x} is not positive"
+            return Err(ValueError(msg))
+
+        def handle_variant(x: Result[str, ValueError]) -> str:
+            match x:
+                case Ok(value):
+                    return f"Success: {value}"
+                case Err(error):
+                    return f"Failure: {error}"
+
+        res1 = is_positive(5).map(lambda s: s.upper()).pipe(handle_variant)
+        assert res1 == "Success: VALUE IS 5"
+
+        res2 = is_positive(-3).map(lambda s: s.upper()).pipe(handle_variant)
+        assert res2 == "Failure: -3 is not positive"
         ```
     """
 
@@ -127,12 +119,10 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).swap()
-            Err(2)
-            >>> Err("error").swap()
-            Ok('error')
+            from pyochain import Ok, Err
 
+            assert Ok(2).swap().unwrap_err() == 2
+            assert Err("error").swap().unwrap() == "error"
             ```
         """
     def flatten[T1, E1, E2](self: ResultType[Result[T1, E1], E2]) -> Result[T1, E1]:
@@ -147,14 +137,13 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Result, Ok, Err
-            >>> nested_ok: Result[Result[int, str], str] = Ok(Ok(2))
-            >>> nested_ok.flatten()
-            Ok(2)
-            >>> nested_err: Result[Result[int, str], str] = Ok(Err("inner error"))
-            >>> nested_err.flatten()
-            Err('inner error')
+            from pyochain import Result, Ok, Err
 
+            nested_ok: Result[Result[int, str], str] = Ok(Ok(2))
+            assert nested_ok.flatten().unwrap() == 2
+
+            nested_err: Result[Result[int, str], str] = Ok(Err("inner error"))
+            assert nested_err.flatten().unwrap_err() == "inner error"
             ```
         """
 
@@ -166,12 +155,10 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(7).iter().next()
-            Some(7)
-            >>> Err("nothing!").iter().next()
-            NONE
+            from pyochain import Ok, Err, Some
 
+            assert Ok(7).iter().next() == Some(7)
+            assert Err("nothing!").iter().next().is_none()
             ```
         """
 
@@ -241,12 +228,10 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok((2, 3)).map_star(lambda x, y: x + y)
-            Ok(5)
-            >>> Err("error").map_star(lambda x, y: x + y)
-            Err('error')
+            from pyochain import Ok, Err
 
+            assert Ok((2, 3)).map_star(lambda x, y: x + y).unwrap() == 5
+            assert Err("error").map_star(lambda x, y: x + y).unwrap_err() == "error"
             ```
         """
 
@@ -315,14 +300,13 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err, Result
-            >>> def to_str(x: int, y: int) -> Result[str, str]:
-            ...     return Ok(f"{x},{y}")
-            >>> Ok((2, 3)).and_then_star(to_str)
-            Ok('2,3')
-            >>> Err("error").and_then_star(to_str)
-            Err('error')
+            from pyochain import Ok, Err, Result
 
+            def to_str(x: int, y: int) -> Result[str, str]:
+                return Ok(f"{x},{y}")
+
+            assert Ok((2, 3)).and_then_star(to_str).unwrap() == "2,3"
+            assert Err("error").and_then_star(to_str).unwrap_err() == "error"
             ```
         """
 
@@ -334,14 +318,13 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err, Result
-            >>> x: Result[int, str] = Ok(2)
-            >>> x.is_ok()
-            True
-            >>> y: Result[int, str] = Err("Some error message")
-            >>> y.is_ok()
-            False
+            from pyochain import Ok, Err, Result
 
+            x: Result[int, str] = Ok(2)
+            assert x.is_ok()
+
+            y: Result[int, str] = Err("Some error message")
+            assert not y.is_ok()
             ```
         """
 
@@ -353,14 +336,13 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err, Result
-            >>> x: Result[int, str] = Ok(2)
-            >>> x.is_err()
-            False
-            >>> y: Result[int, str] = Err("Some error message")
-            >>> y.is_err()
-            True
+            from pyochain import Ok, Err, Result
 
+            x: Result[int, str] = Ok(2)
+            assert not x.is_err()
+
+            y: Result[int, str] = Err("Some error message")
+            assert y.is_err()
             ```
         """
 
@@ -395,10 +377,9 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Err
-            >>> Err("emergency failure").unwrap_err()
-            'emergency failure'
+            from pyochain import Err
 
+            assert Err("emergency failure").unwrap_err() == "emergency failure"
             ```
             ```python
             from pyochain import Ok, ResultUnwrapError
@@ -513,12 +494,10 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).unwrap_or_else(len)
-            2
-            >>> Err("foo").unwrap_or_else(len)
-            3
+            from pyochain import Ok, Err
 
+            assert Ok(2).unwrap_or_else(len) == 2
+            assert Err("foo").unwrap_or_else(len) == 3
             ```
         """
 
@@ -540,12 +519,10 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).map(lambda x: x * 2)
-            Ok(4)
-            >>> Err("error").map(lambda x: x * 2)
-            Err('error')
+            from pyochain import Ok, Err
 
+            assert Ok(2).map(lambda x: x * 2).unwrap() == 4
+            assert Err("error").map(lambda x: x * 2).unwrap_err() == "error"
             ```
         """
 
@@ -568,12 +545,10 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).map_err(len)
-            Ok(2)
-            >>> Err("foo").map_err(len)
-            Err(3)
+            from pyochain import Ok, Err
 
+            assert Ok(2).map_err(len).unwrap() == 2
+            assert Err("foo").map_err(len).unwrap_err() == 3
             ```
         """
     def inspect[**P](
@@ -594,13 +569,11 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Vec
-            >>> seen = Vec[int](())
-            >>> Ok(2).inspect(lambda x: seen.append(x))
-            Ok(2)
-            >>> seen
-            Vec(2)
+            from pyochain import Ok, Vec
 
+            seen = Vec[int](())
+            assert Ok(2).inspect(lambda x: seen.append(x)).unwrap() == 2
+            assert seen == Vec([2])
             ```
         """
 
@@ -622,13 +595,12 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Err, Vec
-            >>> seen = Vec[str](())
-            >>> Err("oops").inspect_err(lambda e: seen.append(e))
-            Err('oops')
-            >>> seen
-            Vec('oops')
+            from pyochain import Err, Vec
 
+            seen = Vec[str](())
+            res = Err("oops").inspect_err(lambda e: seen.append(e)).unwrap_err()
+            assert res == "oops"
+            assert seen == Vec(["oops"])
             ```
         """
 
@@ -645,26 +617,23 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> x = Ok(2)
-            >>> y = Err("late error")
-            >>> x.and_(y)
-            Err('late error')
-            >>> x = Err("early error")
-            >>> y = Ok("foo")
-            >>> x.and_(y)
-            Err('early error')
+            from pyochain import Ok, Err
 
-            >>> x = Err("not a 2")
-            >>> y = Err("late error")
-            >>> x.and_(y)
-            Err('not a 2')
+            x = Ok(2)
+            y = Err("late error")
+            assert x.and_(y).unwrap_err() == "late error"
 
-            >>> x = Ok(2)
-            >>> y = Ok("different result type")
-            >>> x.and_(y)
-            Ok('different result type')
+            x = Err("early error")
+            y = Ok("foo")
+            assert x.and_(y).unwrap_err() == "early error"
 
+            x = Err("not a 2")
+            y = Err("late error")
+            assert x.and_(y).unwrap_err() == "not a 2"
+
+            x = Ok(2)
+            y = Ok("different result type")
+            assert x.and_(y).unwrap() == "different result type"
             ```
         """
 
@@ -688,14 +657,13 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err, Result
-            >>> def to_str(x: int) -> Result[str, str]:
-            ...     return Ok(str(x))
-            >>> Ok(2).and_then(to_str)
-            Ok('2')
-            >>> Err("error").and_then(to_str)
-            Err('error')
+            from pyochain import Ok, Err, Result
 
+            def to_str(x: int) -> Result[str, str]:
+                return Ok(str(x))
+
+            assert Ok(2).and_then(to_str).unwrap() == "2"
+            assert Err("error").and_then(to_str), unwrap_err() == "error"
             ```
         """
 
@@ -719,14 +687,13 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err, Result
-            >>> def fallback(e: str) -> Result[int, str]:
-            ...     return Ok(len(e))
-            >>> Ok(2).or_else(fallback)
-            Ok(2)
-            >>> Err("foo").or_else(fallback)
-            Ok(3)
+            from pyochain import Ok, Err, Result
 
+            def fallback(e: str) -> Result[int, str]:
+                return Ok(len(e))
+
+            assert Ok(2).or_else(fallback).unwrap() == 2
+            assert Err("foo").or_else(fallback).unwrap() == 3
             ```
         """
 
@@ -739,14 +706,12 @@ class ResultType[T, E](Pipe, Protocol):
             Option[T]: An `Option` containing the `Ok` value, or `None` if the result is `Err`.
 
         Example:
-            ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).ok()
-            Some(2)
-            >>> Err("error").ok()
-            NONE
+                ```python
+                from pyochain import Ok, Err, Some
 
-            ```
+                assert Ok(2).ok().unwrap() == 2
+                assert Err("error").ok().is_none()
+                ```
         """
 
     def err(self) -> Option[E]:
@@ -759,12 +724,10 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).err()
-            NONE
-            >>> Err("error").err()
-            Some('error')
+            from pyochain import Ok, Err, Some
 
+            assert Ok(2).err().is_none()
+            assert Err("error").err().unwrap() == "error"
             ```
         """
 
@@ -783,14 +746,11 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).is_ok_and(lambda x: x > 1)
-            True
-            >>> Ok(0).is_ok_and(lambda x: x > 1)
-            False
-            >>> Err("err").is_ok_and(lambda x: x > 1)
-            False
+            from pyochain import Ok, Err
 
+            assert Ok(2).is_ok_and(lambda x: x > 1)
+            assert not Ok(0).is_ok_and(lambda x: x > 1)
+            assert not Err("err").is_ok_and(lambda x: x > 1)
             ```
         """
 
@@ -809,14 +769,11 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Err, Ok
-            >>> Err("foo").is_err_and(lambda e: len(e) == 3)
-            True
-            >>> Err("bar").is_err_and(lambda e: e == "baz")
-            False
-            >>> Ok(2).is_err_and(lambda e: True)
-            False
+            from pyochain import Err, Ok
 
+            assert Err("foo").is_err_and(lambda e: len(e) == 3)
+            assert not Err("bar").is_err_and(lambda e: e == "baz")
+            assert not Ok(2).is_err_and(lambda e: True)
             ```
         """
 
@@ -840,12 +797,10 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).map_or(10, lambda x: x * 2)
-            4
-            >>> Err("err").map_or(10, lambda x: x * 2)
-            10
+            from pyochain import Ok, Err
 
+            assert Ok(2).map_or(10, lambda x: x * 2) == 4
+            assert Err("err").map_or(10, lambda x: x * 2) == 10
             ```
         """
 
@@ -865,14 +820,11 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err, Some, NONE
-            >>> Ok(Some(2)).transpose()
-            Some(Ok(2))
-            >>> Ok(NONE).transpose()
-            NONE
-            >>> Err("err").transpose()
-            Some(Err('err'))
+            from pyochain import Ok, Err, Some, NONE
 
+            assert Ok(Some(2)).transpose().unwrap().unwrap() == 2
+            assert Ok(NONE).transpose().is_none()
+            assert Err("err").transpose().unwrap().unwrap_err() == "err"
             ```
         """
 
@@ -887,16 +839,12 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).or_(Err("late error"))
-            Ok(2)
-            >>> Err("early error").or_(Ok(2))
-            Ok(2)
-            >>> Err("not a 2").or_(Err("late error"))
-            Err('late error')
-            >>> Ok(2).or_(Ok(100))
-            Ok(2)
+            from pyochain import Ok, Err
 
+            assert Ok(2).or_(Err("late error")).unwrap() == 2
+            assert Err("early error").or_(Ok(2)).unwrap() == 2
+            assert Err("not a 2").or_(Err("late error")).unwrap_err() == "late error"
+            assert Ok(2).or_(Ok(100)).unwrap() == 2
             ```
         """
 

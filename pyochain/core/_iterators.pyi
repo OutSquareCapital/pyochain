@@ -25,45 +25,42 @@ class Iter[T](PyoIterator[T]):
 
     Example:
         ```python
-        >>> from pyochain import Iter, Seq
-        >>>
-        >>> data = (0, 1, 2, 3, 4)
-        >>> Iter(data).collect(Seq)
-        Seq(0, 1, 2, 3, 4)
-        >>> iterator = Iter(data)
-        >>> # First we have a tuple iterator
-        >>> iterator.__iter__().__class__.__name__
-        'tuple_iterator'
-        >>> # Now we have a map object
-        >>> mapped = iterator.map(lambda x: x * 2)
-        >>> mapped.__iter__().__class__.__name__
-        'map'
-        >>> # We collect it, by default into a Seq
-        >>> mapped.collect(Seq)
-        Seq(0, 2, 4, 6, 8)
-        >>> # iterator is now exhausted
-        >>> iterator.collect(Seq)
-        Seq()
+        from pyochain import Iter, Seq
 
+        data = (0, 1, 2, 3, 4)
+
+        assert Iter(data).collect(Seq) == Seq([0, 1, 2, 3, 4])
+        iterator = Iter(data)
+
+        # First we have a tuple iterator
+        assert iterator.__iter__().__class__.__name__ == "tuple_iterator"
+
+        # Now we have a map object
+        mapped = iterator.map(lambda x: x * 2)
+        assert mapped.__iter__().__class__.__name__ == "map"
+
+        # We collect it, by default into a Seq
+        assert mapped.collect(Seq) == Seq([0, 2, 4, 6, 8])
+
+        # iterator is now exhausted
+        assert iterator.collect(Seq) == Seq([])
         ```
         You can also easily create an `Iter` from a generator expression:
         ```python
-        >>> from pyochain import Iter
-        >>> gen_expr = (x * x for x in range(5))
-        >>> Iter(gen_expr).collect(Seq)
-        Seq(0, 1, 4, 9, 16)
+        from pyochain import Iter, Seq
 
+        gen_expr = (x * x for x in range(5))
+        assert Iter(gen_expr).collect(Seq) == Seq([0, 1, 4, 9, 16])
         ```
         Or from a generator function:
         ```python
-        >>> from pyochain import Iter
-        >>> def gen_func():
-        ...     for x in range(5):
-        ...         yield x * x
-        >>>
-        >>> Iter(gen_func()).collect(Seq)
-        Seq(0, 1, 4, 9, 16)
+        from pyochain import Iter
 
+        def gen_func():
+            for x in range(5):
+                yield x * x
+
+        assert Iter(gen_func()).collect(Seq) == Seq([0, 1, 4, 9, 16])
         ```
     """
 
@@ -90,18 +87,18 @@ class Peekable[T](PyoIterator[T]):
         Examples:
             Peek at the next value of an iterator without consuming it.
             ```python
-            >>> from pyochain import Range
-            >>> iterator = Range(0, 5).iter().peekable()
-            >>> # Peek at the first item of the iterator without consuming it.
-            >>> iterator.peek()
-            Some(0)
-            >>> # The next item returned is still 0, as we haven't consumed it yet.
-            >>> iterator.next()
-            Some(0)
-            >>> # Now the next item returned is 1, as we have consumed the first item.
-            >>> iterator.next()
-            Some(1)
+            from pyochain import Range, Some
 
+            iterator = Range(0, 5).iter().peekable()
+
+            # Peek at the first item of the iterator without consuming it.
+            assert iterator.peek() == Some(0)
+
+            # The next item returned is still 0, as we haven't consumed it yet.
+            assert iterator.next() == Some(0)
+
+            # Now the next item returned is 1, as we have consumed the first item.
+            assert iterator.next() == Some(1)
             ```
         """
     def next_if(self, func: Callable[[T], bool]) -> Option[T]:
@@ -116,29 +113,29 @@ class Peekable[T](PyoIterator[T]):
         Examples:
             Consume a number if it's equal to 0.
             ```python
-            >>> from pyochain import Range
-            >>> iterator = Range(0, 5).iter().peekable()
-            >>> # The first item of the iterator is 0; consume it.
-            >>> iterator.next_if(lambda x: x == 0)
-            Some(0)
-            >>> # The next item returned is now 1, so `next_if` will return `None`.
-            >>> iterator.next_if(lambda x: x == 0)
-            NONE
-            >>> # `next_if` retains the next item if the predicate evaluates to `false` for it.
-            >>> iterator.next()
-            Some(1)
+            from pyochain import Range, Some
 
+            iterator = Range(0, 5).iter().peekable()
+
+            # The first item of the iterator is 0; consume it.
+            assert iterator.next_if(lambda x: x == 0) == Some(0)
+
+            # The next item returned is now 1, so `next_if` will return `None`.
+            assert iterator.next_if(lambda x: x == 0).is_none()
+
+            # `next_if` retains the next item if the predicate evaluates to `false` for it.
+            assert iterator.next() == Some(1)
             ```
             Consume any number less than 10.
             ```python
-            >>> iterator = Range(1, 20).iter().peekable()
-            >>> # Consume all numbers less than 10
-            >>> while iterator.next_if(lambda x: x < 10).is_some():
-            ...     pass
-            >>> # The next value returned will be 10
-            >>> iterator.next()
-            Some(10)
+            iterator = Range(1, 20).iter().peekable()
 
+            # Consume all numbers less than 10
+            while iterator.next_if(lambda x: x < 10).is_some():
+                pass
+
+            # The next value returned will be 10
+            assert iterator.next() == Some(10)
             ```
         """
     def next_if_eq(self, expected: object) -> Option[T]:
@@ -153,18 +150,18 @@ class Peekable[T](PyoIterator[T]):
         Example:
             Consume a number if it's equal to 0.
             ```python
-            >>> from pyochain import Range
-            >>> iterator = Range(0, 5).iter().peekable()
-            >>> # The first item of the iterator is 0; consume it.
-            >>> iterator.next_if_eq(0)
-            Some(0)
-            >>> # The next item returned is now 1, so `next_if_eq` will return `None`.
-            >>> iterator.next_if_eq(0)
-            NONE
-            >>> # `next_if_eq` retains the next item if it was not equal to `expected`.
-            >>> iterator.next()
-            Some(1)
+            from pyochain import Range, Some
 
+            iterator = Range(0, 5).iter().peekable()
+
+            # The first item of the iterator is 0; consume it.
+            assert iterator.next_if_eq(0) == Some(0)
+
+            # The next item returned is now 1, so `next_if_eq` will return `None`.
+            assert iterator.next_if_eq(0).is_none()
+
+            # `next_if_eq` retains the next item if it was not equal to `expected`.
+            assert iterator.next() == Some(1)
             ```
         """
 
@@ -188,26 +185,25 @@ class Peekable[T](PyoIterator[T]):
         Examples:
             Parse the leading decimal number from an iterator of characters.
             ```python
-            >>> from pyochain import Iter, Option, Some, NONE, Result
-            >>> import unicodedata
-            >>>
-            >>> iterator = Iter("125 GOTO 10").peekable()
-            >>> line_num = 0
-            >>> def try_parse_digit(c: str) -> Result[int, str]:
-            ...     try:
-            ...         res = Some(unicodedata.digit(c))
-            ...     except ValueError as e:
-            ...         res = NONE
-            ...     return res.ok_or(c)
-            >>>
-            >>> digit = iterator.next_if_map(try_parse_digit)
-            >>> while digit.is_some():
-            ...     line_num = line_num * 10 + digit.unwrap()
-            ...     digit = iterator.next_if_map(try_parse_digit)
-            >>> line_num
-            125
-            >>> iterator.join("")
-            ' GOTO 10'
+            from pyochain import Iter, Option, Some, NONE, Result
+            import unicodedata
 
+            iterator = Iter("125 GOTO 10").peekable()
+            line_num = 0
+
+            def try_parse_digit(c: str) -> Result[int, str]:
+                try:
+                    res = Some(unicodedata.digit(c))
+                except ValueError as e:
+                    res = NONE
+                return res.ok_or(c)
+
+            digit = iterator.next_if_map(try_parse_digit)
+            while digit.is_some():
+                line_num = line_num * 10 + digit.unwrap()
+                digit = iterator.next_if_map(try_parse_digit)
+
+            assert line_num == 125
+            assert iterator.join("") == " GOTO 10"
             ```
         """

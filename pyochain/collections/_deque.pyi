@@ -71,17 +71,16 @@ class Deque[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain.collections import Deque
-            >>> from collections import deque
-            >>>
-            >>> original = deque([1, 2, 3])
-            >>> deque_obj = Deque.from_ref(original)
-            >>> deque_obj
-            Deque([1, 2, 3])
-            >>> original.append(4)
-            >>> deque_obj
-            Deque([1, 2, 3, 4])
+            from pyochain.collections import Deque
+            from collections import deque
 
+            original = deque([1, 2, 3])
+            deque_obj = Deque.from_ref(original)
+
+            assert deque_obj == Deque([1, 2, 3])
+            original.append(4)
+
+            assert deque_obj == Deque([1, 2, 3, 4])
             ```
         """
 
@@ -166,12 +165,12 @@ class Deque[T](PyoMutableSequence[T]):
 
         Examples:
             ```python
-            >>> from pyochain.collections import Deque
-            >>> d = Deque([1, 2, 3])
-            >>> d.append_left(0)
-            >>> d
-            Deque([0, 1, 2, 3])
+            from pyochain.collections import Deque
 
+            d = Deque([1, 2, 3])
+            d.append_left(0)
+
+            assert d == Deque([0, 1, 2, 3])
             ```
         """
 
@@ -187,17 +186,15 @@ class Deque[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain.collections import Deque
-            >>> d = Deque([1, 2, 3])
-            >>> d_copy = d.copy()
-            >>> d_copy
-            Deque([1, 2, 3])
-            >>> d.append(4)
-            >>> d
-            Deque([1, 2, 3, 4])
-            >>> d_copy
-            Deque([1, 2, 3])
+            from pyochain.collections import Deque
 
+            d = Deque([1, 2, 3])
+            d_copy = d.copy()
+
+            assert d_copy == Deque([1, 2, 3])
+            d.append(4)
+            assert d == Deque([1, 2, 3, 4])
+            assert d_copy == Deque([1, 2, 3])
             ```
         """
 
@@ -209,12 +206,12 @@ class Deque[T](PyoMutableSequence[T]):
 
         Examples:
             ```python
-            >>> from pyochain.collections import Deque
-            >>> d = Deque([1, 2, 3])
-            >>> d.extend_left([0, -1])
-            >>> d
-            Deque([-1, 0, 1, 2, 3])
+            from pyochain.collections import Deque
 
+            d = Deque([1, 2, 3])
+            d.extend_left([0, -1])
+
+            assert d == Deque([-1, 0, 1, 2, 3])
             ```
         """
 
@@ -226,13 +223,12 @@ class Deque[T](PyoMutableSequence[T]):
 
         Examples:
             ```python
-            >>> from pyochain.collections import Deque
-            >>> d = Deque([1, 2, 3])
-            >>> d.pop_left()
-            1
-            >>> d
-            Deque([2, 3])
+            from pyochain.collections import Deque
 
+            d = Deque([1, 2, 3])
+
+            assert d.pop_left() == 1
+            assert d == Deque([2, 3])
             ```
         """
     def rotate(self, n: int = 1, /) -> Self:
@@ -246,13 +242,12 @@ class Deque[T](PyoMutableSequence[T]):
 
         Examples:
             ```python
-            >>> from pyochain.collections import Deque
-            >>> d = Deque([1, 2, 3, 4, 5])
-            >>> d.rotate(2)
-            Deque([4, 5, 1, 2, 3])
-            >>> d.rotate(-3)
-            Deque([2, 3, 4, 5, 1])
+            from pyochain.collections import Deque
 
+            d = Deque([1, 2, 3, 4, 5])
+
+            assert d.rotate(2) == Deque([4, 5, 1, 2, 3])
+            assert d.rotate(-3) == Deque([2, 3, 4, 5, 1])
             ```
         """
 
