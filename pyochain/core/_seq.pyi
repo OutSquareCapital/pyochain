@@ -22,26 +22,52 @@ class Seq[T](PyoSequence[T]):
 
         If you need immediate iteration anyway, you can directly use [`Iter`][Iter] instead.
 
-    Args:
-        data (Iterable[T]): The data to initialize the Seq with.
-
-    Example:
-        ```python
-        from pyochain import Seq
-
-        empty = Seq(())
-        assert repr(empty) == "Seq()"
-        t = (1, 2, 3)
-        seq = Seq(t)
-        assert seq == Seq((1, 2, 3))
-        # If you already have a `tuple`, you can use it directly without copying:
-        t = ([1], [2], [3])
-        seq2 = Seq(t)
-        assert id(seq2.first()) == id(t[0])
-        ```
     """
+    @overload
+    def __new__(cls, data: Iterable[T], /) -> Self: ...
+    @overload
+    def __new__(cls, data: T, *more: T) -> Self: ...
+    @overload
+    def __new__(cls, data: None = None) -> Self: ...
+    def __new__(cls, data: Iterable[T] | T | None = None, *more: T) -> Self:
+        """Create a new `Seq` instance.
 
-    def __init__(self, data: Iterable[T]) -> None: ...
+        You can either provide a single iterable, or one/multiple individual elements.
+
+        If no arguments or `None` are provided, an empty `Seq` is created.
+
+        Passing a `tuple` or another `Seq` will not copy the underlying data.
+
+        Args:
+            data (Iterable[T] | T | None): The data to initialize the `Seq` with.
+            *more (T): Additional elements to include in the `Seq`.
+
+        Returns:
+            Self: A new `Seq` instance.
+
+        Example:
+            ```python
+            from pyochain import Seq
+
+            py_tuple = (1, 2, 3)
+            # Create a Seq from an iterable
+            assert Seq(iter(py_tuple)) == py_tuple
+
+            # Create a Seq from individual elements
+            assert Seq(1, 2, 3) == py_tuple
+
+            # You can also concatenate individual elements with an iterable
+
+            assert Seq([1], 2, 3) == Seq((1, 2), 3) == py_tuple
+
+            # Create a Seq from a tuple without copying
+            seq3 = Seq(py_tuple)
+            assert id(seq3[0]) == id(py_tuple[0])
+
+            # Create an empty Seq
+            assert Seq() == Seq(None) == Seq([]) == Seq(()) == ()
+            ```
+        """
     @override
     def __iter__(self) -> Iterator[T]: ...
     @override
@@ -74,7 +100,7 @@ class Seq[T](PyoSequence[T]):
             ```python
             from pyochain import Seq, Err, Ok
 
-            s1 = Seq((1, 2, 3))
+            s1 = Seq(1, 2, 3)
             s2 = Seq((1, 2, 4))
             assert s1 < s2
             assert not s1 < (1, 2, 3)
@@ -118,8 +144,8 @@ class Seq[T](PyoSequence[T]):
             ```python
             from pyochain import Seq
 
-            s = Seq((1, 2, 3))
-            assert s.repeat(2) == Seq((1, 2, 3, 1, 2, 3))
+            s = Seq(1, 2, 3)
+            assert s.repeat(2) == Seq(1, 2, 3, 1, 2, 3)
             ```
         """
     def concat[O](self, other: IntoSeq[O]) -> Seq[T | O]:
@@ -137,7 +163,7 @@ class Seq[T](PyoSequence[T]):
             ```python
             from pyochain import Seq
 
-            s1 = Seq((1, 2, 3))
+            s1 = Seq(1, 2, 3)
             s2 = (4, 5, 6)  # Can also concatenate a standard tuple
             s3 = s1.concat(s2)
             assert s3 == Seq((1, 2, 3, 4, 5, 6))

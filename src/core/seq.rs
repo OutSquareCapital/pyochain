@@ -5,31 +5,76 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    PyTypeInfo,
+    ffi,
     prelude::*,
     pyclass_init::PyClassInitializer,
     types::{PyInt, PyIterator, PySequence, PySlice, PyTuple},
 };
-use pyo3_ext::prelude::*;
-use pyochain_macros::try_cast;
+use pyo3_ext::{prelude::*, types::PyIterable};
+use pyochain_macros::{try_cast, try_cast_into};
 use tap::Pipe;
 
 #[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct Seq(pub Py<PyTuple>);
 #[pymethods]
 impl Seq {
+    #[pyo3(signature = (data = None, *more))]
     #[new]
-    fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
-        let py = data.py();
-        data.cast_exact::<Self>()
-            .map(|x| x.get().inner().clone_ref(py))
-            .or_else(|_| {
-                PyTuple::type_object(py)
-                    .call1((&data,))
-                    .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
-                    .map(Bound::unbind)
-            })
-            .map(|inner| abc::PyoSequence::build_init().add_subclass(Self(inner)))
+    fn new(
+        data: Option<Bound<'_, PyAny>>,
+        more: Bound<'_, PyTuple>,
+    ) -> PyResult<PyClassInitializer<Self>> {
+        let py = more.py();
+        let tup = try_cast_into! {
+            match (data, more.is_empty()) {
+                (None, _) => more,
+                (Some(CaseExact::PyTuple(tuple)), true) => tuple,
+                (Some(CaseExact::Self(inner)), true) => inner.get().into_inner_bound(py),
+                (Some(Case::PySequence(sequence)), true) => sequence.to_tuple()?,
+                (Some(Case::PyIterable(iterable)), true) => iterable
+                    .try_iter()?
+                    .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
+                    .pipe(|x| PyTuple::new(py, x))?,
+                (Some(any), true) => PyTuple::new(py, [any])?,
+                (Some(CaseExact::PyTuple(tuple)), false) => tuple
+                    .as_sequence()
+                    .concat(&more.as_sequence())?
+                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() }),
+                (Some(CaseExact::Self(inner)), false) => inner
+                    .get()
+                    .into_inner_bound(py)
+                    .as_sequence()
+                    .concat(&more.as_sequence())?
+                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() }),
+                (Some(CaseExact::PyTuple(tuple)), false) => tuple
+                    .as_sequence()
+                    .concat(&more.as_sequence())?
+                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() }),
+                (Some(Case::PySequence(sequence)), false) => sequence
+                    .to_tuple()?
+                    .as_sequence()
+                    .concat(&more.as_sequence())?
+                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() }),
+                (Some(Case::PyIterable(iterable)), false) => iterable
+                    .try_iter()?
+                    .into_iter()
+                    .chain(more.into_iter().map(Ok))
+                    .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
+                    .into_iter()
+                    .pipe(|x| PyTuple::new(py, x))?,
+                (Some(any), false) => unsafe {
+                    let tup = ffi::PyTuple_New(1 + more.len() as isize);
+                    ffi::PyTuple_SET_ITEM(tup, 0, any.into_ptr());
+                    for (i, item) in more.into_iter().enumerate() {
+                        ffi::PyTuple_SET_ITEM(tup, i as ffi::Py_ssize_t + 1, item.into_ptr());
+                    }
+                    Bound::from_owned_ptr(py, tup).cast_into_unchecked::<PyTuple>()
+                },
+            }
+        };
+        abc::PyoSequence::build_init()
+            .add_subclass(Self(tup.unbind()))
+            .pipe(Ok)
     }
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {

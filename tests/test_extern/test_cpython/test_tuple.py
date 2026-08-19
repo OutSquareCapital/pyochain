@@ -12,7 +12,7 @@ NHASHBITS = sys.hash_info.width
 
 
 def test_getitem_error() -> None:
-    t = Seq(())
+    t = Seq[object]()
     msg = "tuple indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
         # pyrefly: ignore [bad-index]
@@ -33,7 +33,7 @@ def test_constructors() -> None:
     assert seq.last() is seq_from_tup.last()
     assert seq is not seq_from_seq
     assert seq is not seq_from_tup
-    assert Seq([]) == ()
+    assert Seq() == ()
     assert Seq([0, 1, 2, 3]) == (0, 1, 2, 3)
     assert Seq("") == ()
     assert Seq("spam") == ("s", "p", "a", "m")
@@ -47,12 +47,12 @@ def test_keyword_args() -> None:
 
 
 def test_truth() -> None:
-    assert not Seq(())
+    assert not Seq()
     assert Seq((42,))
 
 
 def test_len() -> None:
-    assert len(Seq(())) == 0
+    assert len(Seq[object]()) == 0
     assert len(Seq((0,))) == 1
     assert len(Seq((0, 1, 2))) == 3
 
@@ -90,7 +90,7 @@ def test_hash_exact() -> None:
             msg = f"FAIL hash({Seq(t)!r}) == {got} != {expected}"
             raise AssertionError(msg)
 
-    check_one_exact(Seq(()), 750394483, 5740354900026072187)
+    check_one_exact(Seq(), 750394483, 5740354900026072187)
     check_one_exact(Seq((0,)), 1214856301, -8753497827991233192)
     check_one_exact(Seq((0, 0)), -168982784, -8458139203682520985)
     check_one_exact(Seq((0.5,)), 2077348973, -408149959306781352)

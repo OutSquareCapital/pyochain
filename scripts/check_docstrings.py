@@ -256,7 +256,7 @@ def _check_code_blocks(
         return state
 
     lines = Vec.from_ref(docstring.split("\n"))
-    state = State(Vec(()), Vec(()))
+    state = State(Vec(), Vec())
     block_errors = (
         lines
         .iter()

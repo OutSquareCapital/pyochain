@@ -42,7 +42,7 @@ class Pipe(Protocol):
                     case Err(err):
                         return f"Data is invalid: {err}"
 
-            x = Seq((1, 2, 3)).pipe(check_data).pipe(handle_result)
+            x = Seq(1, 2, 3).pipe(check_data).pipe(handle_result)
             assert x == "Data is valid: Seq(1, 2, 3)"
             ```
         """
@@ -73,7 +73,7 @@ class Tap(Protocol):
             ```python
             from pyochain import Seq, Vec
 
-            v = Vec(())
+            v = Vec()
 
             x = Seq((1, 2, 3, 4)).tap(v.extend).last()
 
@@ -113,8 +113,8 @@ class Checkable(Protocol):
         ```python
         from pyochain import Seq, Some
 
-        assert Seq((1, 2, 3)).then(sum) == Some(6)
-        assert Seq(()).then(sum).is_none()
+        assert Seq(1, 2, 3).then(sum) == Some(6)
+        assert Seq().then(sum).is_none()
         ```
         This can also be extended to any type, not just collections.
         ```python
@@ -180,8 +180,8 @@ class Checkable(Protocol):
             ```python
             from pyochain import Seq, Some
 
-            assert Seq((1, 2, 3)).then(lambda s: s.iter().sum()) == Some(6)
-            assert Seq(()).then(lambda s: s.iter().sum()).is_none()
+            assert Seq(1, 2, 3).then(lambda s: s.iter().sum()) == Some(6)
+            assert Seq().then(lambda s: s.iter().sum()).is_none()
             ```
         """
 
@@ -195,10 +195,10 @@ class Checkable(Protocol):
             ```python
             from pyochain import Seq, Some
 
-            data = Seq((1, 2, 3))
+            data = Seq(1, 2, 3)
 
             assert data.then_some() == Some(data)
-            assert Seq(()).then_some().is_none()
+            assert Seq().then_some().is_none()
             ```
         """
     def ok_or[E](self, err: E) -> Result[Self, E]:
@@ -216,11 +216,11 @@ class Checkable(Protocol):
             ```python
             from pyochain import Seq
 
-            data = Seq((1, 2, 3))
+            data = Seq(1, 2, 3)
             msg = "empty"
 
             assert data.ok_or(msg).unwrap() == data
-            assert Seq(()).ok_or(msg).unwrap_err() == msg
+            assert Seq().ok_or(msg).unwrap_err() == msg
             ```
         """
     def err_or[T](self, ok: T) -> Result[T, Self]:
@@ -239,10 +239,10 @@ class Checkable(Protocol):
             from pyochain import Seq
 
             msg = "should be empty"
-            data = Seq((1, 2, 3))
+            data = Seq(1, 2, 3)
 
             assert data.err_or(msg).unwrap_err() == data
-            assert Seq(()).err_or(msg).unwrap() == msg
+            assert Seq().err_or(msg).unwrap() == msg
             ```
         """
 
@@ -270,11 +270,11 @@ class Checkable(Protocol):
             ```python
             from pyochain import Seq
 
-            data = Seq((1, 2, 3))
+            data = Seq(1, 2, 3)
             msg = "empty seq"
 
             assert data.ok_or_else(lambda s: msg).unwrap() == data
-            assert Seq(()).ok_or_else(lambda s: msg).unwrap_err() == msg
+            assert Seq().ok_or_else(lambda s: msg).unwrap_err() == msg
             ```
         """
     def err_or_else[**P, T](
@@ -304,9 +304,9 @@ class Checkable(Protocol):
 
             msg = "should be empty"
 
-            data = Seq((1, 2, 3))
+            data = Seq(1, 2, 3)
 
             assert data.err_or_else(lambda s: msg).unwrap_err() == data
-            assert Seq(()).err_or_else(lambda s: msg).unwrap() == msg
+            assert Seq().err_or_else(lambda s: msg).unwrap() == msg
             ```
         """

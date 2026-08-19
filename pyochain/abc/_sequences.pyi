@@ -19,7 +19,7 @@ class PyoReversible[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq, Range
 
-            assert Seq((1, 2, 3)).rev().collect(Seq) == Seq((3, 2, 1))
+            assert Seq(1, 2, 3).rev().collect(Seq) == Seq((3, 2, 1))
             assert Range(0, 5).rev().collect(Seq) == Seq((4, 3, 2, 1, 0))
             ```
         """
@@ -110,7 +110,7 @@ class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyrigh
             ```python
             from pyochain import Seq
 
-            assert Seq((1, 2, 3)).last() == 3
+            assert Seq(1, 2, 3).last() == 3
             ```
         """
 
@@ -251,13 +251,13 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
             ```
             No truncation occurs when len is greater than the `MutableSequence` current length:
             ```python
-            vec = Vec((1, 2, 3))
+            vec = Vec(1, 2, 3)
             vec.truncate(8)
-            assert vec == Vec((1, 2, 3))
+            assert vec == Vec(1, 2, 3)
             ```
             Truncating when len == 0 is equivalent to calling the clear method.
             ```python
-            vec = Vec((1, 2, 3))
+            vec = Vec(1, 2, 3)
             vec.truncate(0)
             assert vec.is_empty()
             ```

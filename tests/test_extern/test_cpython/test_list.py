@@ -25,19 +25,19 @@ This is a niche behavior anyway, `clear` is what you *should* use."""
 @_SKIP_INIT_TEST
 def test_init_clear_previous_values() -> None:
     a = Vec([1, 2, 3])
-    a.__init__(())
-    assert a == Vec([])
+    a.__init__(())  # pyright: ignore[reportCallIssue]
+    assert a == Vec()
 
 
 @_SKIP_INIT_TEST
 def test_init_overwrite_previous_values() -> None:
     a = Vec([1, 2, 3])
-    a.__init__([4, 5, 6])
+    a.__init__([4, 5, 6])  # pyright: ignore[reportCallIssue]
     assert a == Vec([4, 5, 6])
 
 
 def test_init_empty() -> None:
-    assert Vec([]) == Vec(())
+    assert Vec() == Vec()
 
 
 def test_init_copy() -> None:
@@ -66,7 +66,7 @@ def test_setitem_error() -> None:
 
 @pytest.mark.skip(reason="We don't handle recursive repr yet")
 def test_repr() -> None:
-    l0: Vec[int] = Vec([])
+    l0: Vec[int] = Vec()
     l2 = Vec([0, 1, 2])
     a0 = Vec(l0)
     a2 = Vec(l2)
@@ -272,12 +272,12 @@ def test_delslice() -> None:
     a = Vec([0, 1])
     del a[1:2]
     del a[0:1]
-    assert a == Vec([])
+    assert a == Vec()
 
     a = Vec([0, 1])
     del a[1:2]
     del a[0:1]
-    assert a == Vec([])
+    assert a == Vec()
 
     a = Vec([0, 1])
     del a[-2:-1]
@@ -290,12 +290,12 @@ def test_delslice() -> None:
     a = Vec([0, 1])
     del a[1:]
     del a[:1]
-    assert a == Vec([])
+    assert a == Vec()
 
     a = Vec([0, 1])
     del a[1:]
     del a[:1]
-    assert a == Vec([])
+    assert a == Vec()
 
     a = Vec([0, 1])
     del a[-1:]
@@ -307,7 +307,7 @@ def test_delslice() -> None:
 
     a = Vec([0, 1])
     del a[:]
-    assert a == Vec([])
+    assert a == Vec()
 
 
 def test_append() -> None:
@@ -329,7 +329,7 @@ def test_extend() -> None:
     a.extend(a2)
     assert a == a1 + a2
 
-    a.extend(Vec([]))
+    a.extend(Vec())
     assert a == a1 + a2
 
     a.extend(a)
@@ -484,8 +484,8 @@ def test_index() -> None:
             del self.victim[:]
             return False
 
-    a = Vec(())
-    a[:] = [EvilCmp(a) for _ in range(100)]  # pyright: ignore[reportCallIssue, reportArgumentType]
+    a = Vec[object]()
+    a[:] = [EvilCmp(a) for _ in range(100)]
     # This used to seg fault before patch #1005778
     with pytest.raises(ValueError):
         _ = a.index(None)
@@ -690,7 +690,7 @@ def test_constructor_exception_handling() -> None:
 
     with pytest.raises(KeyboardInterrupt):
         # pyrefly: ignore [bad-argument-type]
-        _ = Vec(F())  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+        _ = Vec(F())
 
 
 def test_exhausted_iterator() -> None:
@@ -711,12 +711,12 @@ def test_exhausted_iterator() -> None:
 
 
 def test_basic() -> None:
-    assert Vec([]) == []
+    assert Vec() == []
     l0_3 = [0, 1, 2, 3]
     l0_3_bis = Vec(l0_3)
     assert l0_3 == l0_3_bis
     assert l0_3 is not l0_3_bis
-    assert Vec(()) == []
+    assert Vec() == []
     assert Vec((0, 1, 2, 3)) == [0, 1, 2, 3]
     assert Vec("") == []
     assert Vec("spam") == ["s", "p", "a", "m"]
@@ -758,7 +758,7 @@ def test_truth() -> None:
 
 
 def test_identity() -> None:
-    assert Vec([]) is not Vec([])
+    assert Vec() is not Vec()
 
 
 def test_len() -> None:

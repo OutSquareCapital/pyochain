@@ -7,33 +7,65 @@ use pyo3::{
     exceptions::PyTypeError,
     intern,
     prelude::*,
-    types::{PyInt, PyIterator, PyNotImplemented, PyTuple},
+    types::{PyInt, PyIterator, PyList, PyNotImplemented, PyTuple},
 };
 use pyo3_ext::{
     prelude::*,
-    types::{FromCmp, PyCmpOut, PyDeque, PySupportsIndex},
+    types::{FromCmp, PyCmpOut, PyDeque, PyIterable, PySupportsIndex},
 };
-use pyochain_macros::try_cast;
+use pyochain_macros::{try_cast, try_cast_into};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections",frozen, generic, sequence, extends = abc::PyoMutableSequence)]
 pub struct Deque(pub Py<PyDeque>);
 #[pymethods]
 impl Deque {
     #[new]
-    #[pyo3(signature = (data=None, max_length=None))]
+    #[pyo3(signature = (data=None, *elements, max_length=None))]
     fn new(
         py: Python<'_>,
         data: Option<Bound<'_, PyAny>>,
+        elements: Bound<'_, PyTuple>,
         max_length: Option<Bound<'_, PyInt>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        Ok(abc::PyoMutableSequence::build_init().add_subclass(Self(
-            PyDeque::new(
-                py,
-                data.unwrap_or_else(|| PyTuple::empty(py).into_any()),
-                max_length,
-            )?
-            .unbind(),
-        )))
+        let deque = {
+            try_cast_into! {
+                match (data, elements.is_empty()) {
+                    (None, _) => PyDeque::new(py, elements.into_any(), max_length)?,
+                    (Some(Case::PyIterable(iterable)), true) => {
+                        PyDeque::new(py, iterable.into_any(), max_length)?
+                    }
+                    (Some(any), true) => PyTuple::new(py, [any])
+                        .map(Bound::into_any)
+                        .and_then(|iterable| PyDeque::new(py, iterable, max_length))?,
+                    (Some(CaseExact::PyDeque(deque)), false) => deque
+                        .as_sequence()
+                        .concat(&elements.as_sequence())?
+                        .pipe(|x| unsafe { x.cast_into_unchecked::<PyDeque>() }),
+                    (Some(CaseExact::Self(inner)), false) => inner
+                        .get()
+                        .into_inner_bound(py)
+                        .as_sequence()
+                        .concat(&elements.as_sequence())?
+                        .pipe(|x| unsafe { x.cast_into_unchecked::<PyDeque>() }),
+                    (Some(Case::PyIterable(iterable)), false) => iterable
+                        .try_iter()?
+                        .chain(elements.into_iter().map(Ok))
+                        .try_collect_bound::<PyList>(py)
+                        .map(Bound::into_any)
+                        .and_then(|x| PyDeque::new(py, x, max_length))?,
+                    (Some(any), false) => std::iter::once(any)
+                        .chain(elements.into_iter())
+                        .collect_bound::<PyList>(py)
+                        .map(Bound::into_any)
+                        .and_then(|x| PyDeque::new(py, x, max_length))?,
+                }
+            }
+        };
+        deque
+            .unbind()
+            .pipe(Self)
+            .pipe(|slf| abc::PyoMutableSequence::build_init().add_subclass(slf))
+            .pipe(Ok)
     }
 
     #[staticmethod]

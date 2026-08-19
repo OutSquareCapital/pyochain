@@ -43,7 +43,7 @@ class Iter[T](PyoIterator[T]):
         assert mapped.collect(Seq) == Seq([0, 2, 4, 6, 8])
 
         # iterator is now exhausted
-        assert iterator.collect(Seq) == Seq([])
+        assert iterator.collect(Seq) == Seq()
         ```
         You can also easily create an `Iter` from a generator expression:
         ```python

@@ -24,7 +24,7 @@ def test_non_reversible(x: object) -> None:
     assert not issubclass(type(x), PyoReversible)
 
 
-@pytest.mark.parametrize("x", (Vec[object](()).iter(), Vec(()).rev()))
+@pytest.mark.parametrize("x", (Vec[object]().iter(), Vec[object]().rev()))
 def test_non_reversible_iterables(x: object) -> None:
     # Check some non-reversible iterables
     assert not isinstance(x, PyoReversible)

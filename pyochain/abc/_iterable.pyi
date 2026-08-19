@@ -83,10 +83,10 @@ class PyoIterable[T](Checkable, Fluent, Protocol):
             ```python
             from pyochain import Seq
 
-            seq = Seq((1, 2, 3))
+            seq = Seq(1, 2, 3)
             iterator = seq.iter()
 
-            assert iterator.collect(Seq) == Seq((1, 2, 3))
+            assert iterator.collect(Seq) == Seq(1, 2, 3)
 
             # iterator is now empty
             assert iterator.collect(Seq).is_empty()

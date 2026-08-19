@@ -38,18 +38,41 @@ class Deque[T](PyoMutableSequence[T]):
     If not specified or None, the `Deque` is unbounded."""
 
     @overload
-    def __new__(cls, *, max_length: int | None = None) -> Self: ...
+    def __new__(cls, data: None = None, *, max_length: int | None = ...) -> Self: ...
     @overload
-    def __new__(cls, data: Iterable[T], max_length: int | None = None) -> Self: ...
-    def __new__(cls, data: Iterable[T] = (), max_length: int | None = None) -> Self:
+    def __new__(cls, data: Iterable[T], *, max_length: int | None = ...) -> Self: ...
+    @overload
+    def __new__(cls, data: T, *elements: T, max_length: int | None = ...) -> Self: ...
+    def __new__(
+        cls, data: Iterable[T] | T | None, *elements: T, max_length: int | None = None
+    ) -> Self:
         """Returns a new `Deque` object initialized left-to-right (using append()) from `data`.
 
         Args:
-            data (Iterable[T]): The initial data to populate the `Deque`. Defaults to an empty `Iterable`.
+            data (Iterable[T] | T | None): The initial data to populate the `Deque`. Defaults to `None`, which creates an empty `Deque`.
+            *elements (T): Additional elements to append to the `Deque` after `data`.
             max_length (int | None): The maximum length of the `Deque`. If not specified or `None`, the `Deque` is unbounded.
 
         Returns:
             Self: A new `Deque` instance.
+
+        Example:
+            ```python
+            from pyochain.collections import Deque
+
+            # Create an empty Deque
+            assert Deque() == Deque(None) == Deque(()) == Deque([])
+            assert Deque().is_empty()
+
+            # Create a Deque from an iterable
+            assert Deque([1, 2, 3]) == Deque((1, 2, 3)) == Deque(range(1, 4))
+            # Create a Deque from individual elements
+            assert Deque(4, 5, 6) == Deque((4, 5, 6)) == Deque([4], 5, 6)
+            # You can also concatenate individual elements with an iterable
+            assert Deque([1], 2, 3) == Deque(1, 2, 3)
+            # Create a bounded Deque with a maximum length of 3
+            assert Deque(range(10), max_length=3) == Deque([7, 8, 9])
+            ```
         """
 
     @override

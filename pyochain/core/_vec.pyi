@@ -23,10 +23,47 @@ class Vec[T](PyoMutableSequence[T]):
 
     It uses a `list` as the underlying data structure, so it has the same performance characteristics regarding indexing, slicing, and iteration.
 
-    Args:
-        data (Iterable[T]): Any `Iterable` of elements to initialize the `Vec` with.
     """
-    def __init__(self, data: Iterable[T]) -> None: ...
+    @overload
+    def __new__(cls, data: Iterable[T], /) -> Self: ...
+    @overload
+    def __new__(cls, data: T, *more: T) -> Self: ...
+    @overload
+    def __new__(cls, data: None = None) -> Self: ...
+    def __new__(cls, data: Iterable[T] | T | None = None, *more: T) -> Self:
+        """Create a new `Vec` instance.
+
+        You can either provide a single iterable, or one/multiple individual elements.
+
+        If no arguments or `None` are provided, an empty `Vec` is created.
+
+        Args:
+            data (Iterable[T] | T | None): The data to initialize the `Vec` with.
+            *more (T): Additional elements to include in the `Vec`.
+
+        Returns:
+            Self: A new `Vec` instance.
+
+        Example:
+            ```python
+            from pyochain import Vec
+
+            py_list = [1, 2, 3]
+
+            # Create a Vec from an iterable
+            assert Vec(iter(py_list)) == Vec(py_list)
+            # Create a Vec from individual elements
+            assert Vec(1, 2, 3) == py_list
+            # You can also concatenate individual elements with an iterable
+            assert Vec([1], 2, 3) == Vec((1, 2), 3) == py_list
+            # Create an empty Vec
+            assert Vec() == Vec(None) == Vec([]) == Vec(()) == []
+            # Create a Vec from a list will copy the underlying data
+            vec = Vec(py_list)
+            vec[0] = 10
+            assert py_list == [1, 2, 3]
+            ```
+        """
     @override
     def __iter__(self) -> Iterator[T]: ...
     @overload
@@ -96,7 +133,7 @@ class Vec[T](PyoMutableSequence[T]):
 
             original_list = [1, 2, 3]
             vec = Vec.from_ref(original_list)
-            assert vec == Vec((1, 2, 3))
+            assert vec == Vec(1, 2, 3)
             vec[0] = 10
             assert original_list == [10, 2, 3]
             ```
@@ -124,7 +161,7 @@ class Vec[T](PyoMutableSequence[T]):
 
             v1 = Vec([1, 2, 3])
             v2 = v1.copy()
-            assert v2 == Vec((1, 2, 3))
+            assert v2 == Vec(1, 2, 3)
             assert v1 is not v2
             ```
         """
@@ -217,7 +254,7 @@ class Vec[T](PyoMutableSequence[T]):
             from pyochain import Vec, Iter
 
             x = Vec.from_ref([3, 1, 2]).sort()
-            assert x == Vec((1, 2, 3))
+            assert x == Vec(1, 2, 3)
             ```
         """
 
@@ -273,7 +310,7 @@ class Vec[T](PyoMutableSequence[T]):
             v3 = v1.concat(v2)
             assert v3 == expected
             v1.clear()  # Clean up the original vec
-            assert v1 == Vec(())
+            assert v1 == Vec()
             # New vec remains unaffected
             assert v3 == expected
             ```

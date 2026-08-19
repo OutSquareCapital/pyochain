@@ -1,5 +1,5 @@
 import math
-from collections.abc import Container, Sequence
+from collections.abc import Container, Iterable, Sequence
 from typing import override
 
 import pytest
@@ -24,9 +24,9 @@ def test_not_pyocontainer(x: object) -> None:
     assert not issubclass(type(x), PyoContainer)
 
 
-OKS: Seq[object] = Seq((
-    Seq(()),
-    Vec(()),
+OKS: Seq[Iterable[object]] = Seq((
+    Seq(),
+    Vec(),
     Set(()),
     SetMut(()),
     Dict[object, object](()),

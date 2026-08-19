@@ -202,7 +202,7 @@ def test_constructors(type2test: TestedSeq[object]) -> None:
 
     s = OtherSeq(u0)
     # pyrefly: ignore [bad-argument-type]
-    v0 = type2test(s)  # pyright: ignore[reportArgumentType]
+    v0 = type2test(s)
     assert len(v0) == len(s)
 
     s = "this is also a sequence"
@@ -213,15 +213,14 @@ def test_constructors(type2test: TestedSeq[object]) -> None:
     for s in ("123", "", range(1000), ("do", 1.2), range(2000, 2200, 5)):
         for g in (SequenceTest, IterFunc, IterGen, itermulti, iterfunc):
             # pyrefly: ignore [bad-argument-type]
-            assert type2test(g(s)) == type2test(s)  # pyright: ignore[reportArgumentType]
+            assert type2test(g(s)) == type2test(s)  # pyright: ignore[ reportUnknownArgumentType]
         assert type2test(IterFuncStop(s)) == type2test(())
         assert type2test(c for c in "123") == type2test("123")
+        # NOTE: Here we differ from CPython, because our constructors are more flexible
+        assert type2test(IterNextOnly(s)).len() == 1
         with pytest.raises(TypeError):
             # pyrefly: ignore [bad-argument-type]
-            _ = type2test(IterNextOnly(s))  # pyright: ignore[reportArgumentType]
-        with pytest.raises(TypeError):
-            # pyrefly: ignore [bad-argument-type]
-            _ = type2test(IterNoNext(s))  # pyright: ignore[reportArgumentType]
+            _ = type2test(IterNoNext(s))
         with pytest.raises(ZeroDivisionError):
             _ = type2test(IterGenExc(s))
 

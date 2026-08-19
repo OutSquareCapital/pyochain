@@ -159,7 +159,7 @@ def test_keys_and_set_operations() -> None:
     assert not isinstance(set_and_keys, SetMut)
     assert type(d4.keys() & SetMut(d3.keys())) is SetMut
     assert type(d1.keys() & []) is SetMut
-    assert type(Vec(()) & d1.keys()) is SetMut
+    assert type(Vec[object]() & d1.keys()) is SetMut
 
 
 def test_keys_and_set_operations_or() -> None:

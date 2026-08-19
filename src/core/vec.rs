@@ -6,35 +6,64 @@ use crate::{
 
 use either::Either;
 use pyo3::{
-    PyTypeInfo, ffi, intern,
+    ffi, intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PySlice, PyTuple},
+    types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PySequence, PySlice, PyTuple},
 };
 use pyo3_ext::{
     prelude::*,
     pylibs,
-    types::{FromCmp, PyCmpOut},
+    types::{FromCmp, PyCmpOut, PyIterable},
 };
-use pyochain_macros::try_cast;
+use pyochain_macros::{try_cast, try_cast_into};
 use tap::Pipe;
 #[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]
 pub struct PyoVec(pub Py<PyList>);
-impl PyoVec {
-    pub fn new_bound(py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-        let init = Self::new(PyTuple::empty(py).into_any())?;
-        Bound::new(py, init)
-    }
-}
 #[pymethods]
 impl PyoVec {
+    #[pyo3(signature = (data = None, *more))]
     #[new]
-    pub fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
-        let py = data.py();
-        data.pipe(|x| PyList::type_object(py).call1((x,)))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
-            .map(Bound::unbind)
-            .map(|inner| abc::PyoMutableSequence::build_init().add_subclass(Self(inner)))
+    fn new(
+        data: Option<Bound<'_, PyAny>>,
+        more: Bound<'_, PyTuple>,
+    ) -> PyResult<PyClassInitializer<Self>> {
+        let py = more.py();
+        let list = try_cast_into! {
+            match (data, more.is_empty()) {
+                (None, _) => more.to_list(),
+                (Some(CaseExact::Self(inner)), true) => {
+                    inner.get().into_inner_bound(py).as_sequence().to_list()?
+                }
+                (Some(Case::PySequence(sequence)), true) => sequence.to_list()?,
+                (Some(Case::PyIterable(iterable)), true) => {
+                    iterable.try_iter()?.try_collect_bound(py)?
+                }
+                (Some(any), true) => PyList::new(py, [any])?,
+                (Some(CaseExact::Self(inner)), false) => inner
+                    .get()
+                    .into_inner_bound(py)
+                    .as_sequence()
+                    .concat(&more.as_sequence())?
+                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyList>() }),
+                (Some(Case::PySequence(sequence)), false) => sequence
+                    .to_list()?
+                    .as_sequence()
+                    .in_place_concat(&more.as_sequence())?
+                    .pipe(|x| unsafe { x.cast_into_unchecked::<PyList>() }),
+                (Some(Case::PyIterable(iterable)), false) => iterable
+                    .try_iter()?
+                    .into_iter()
+                    .chain(more.into_iter().map(Ok))
+                    .try_collect_bound(py)?,
+                (Some(any), false) => std::iter::once(any)
+                    .chain(more.into_iter())
+                    .collect_bound(py)?,
+            }
+        };
+        abc::PyoMutableSequence::build_init()
+            .add_subclass(Self(list.unbind()))
+            .pipe(Ok)
     }
     #[staticmethod]
     fn from_ref<'py>(data: Bound<'py, PyList>) -> PyResult<Bound<'py, Self>> {

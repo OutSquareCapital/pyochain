@@ -19,10 +19,10 @@ def test_sized_err(x: object) -> None:
 
 
 OKS: Seq[PyoSized] = Seq((
-    Seq(()),
-    Vec(()),
-    Set(()),
-    SetMut(()),
+    Seq[object](),
+    Vec[object](),
+    Set[object](()),
+    SetMut[object](()),
     Dict[object, object](()),
     Dict[object, object](()).keys(),
     Dict[object, object](()).items(),

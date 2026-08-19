@@ -68,15 +68,15 @@ def test_basics() -> None:
 
 def test_max_length() -> None:
     with pytest.raises(ValueError):
-        _ = Deque("abc", -1)
+        _ = Deque("abc", max_length=-1)
     with pytest.raises(ValueError):
-        _ = Deque("abc", -2)
+        _ = Deque("abc", max_length=-2)
     it = iter(range(10))
     d = Deque(it, max_length=3)
     assert list(it) == []
     assert repr(d) == "Deque([7, 8, 9], max_length=3)"
     assert list(d) == [7, 8, 9]
-    assert d == Deque(range(10), 3)
+    assert d == Deque(range(10), max_length=3)
     d.append(10)
     assert list(d) == [8, 9, 10]
     d.append_left(7)
@@ -429,7 +429,7 @@ def test_imul() -> None:
         assert d.max_length is None
 
     for n in (-10, -1, 0, 1, 2, 10, 499, 500, 501, 1000):
-        d = Deque("a", 500)
+        d = Deque("a", max_length=500)
         d *= n
         assert d == Deque("a" * min(n, 500))
         assert d.max_length == 500
@@ -441,7 +441,7 @@ def test_imul() -> None:
         assert d.max_length is None
 
     for n in (-10, -1, 0, 1, 2, 10, 499, 500, 501, 1000):
-        d = Deque("abcdef", 500)
+        d = Deque("abcdef", max_length=500)
         d *= n
         assert d == Deque(("abcdef" * n)[-500:])
         assert d.max_length == 500
@@ -655,13 +655,10 @@ def test_repr() -> None:
 
 
 def test_init() -> None:
-    with pytest.raises(TypeError):
-        # pyrefly: ignore [no-matching-overload]
-        _ = Deque[int | str]("abc", 2, 3)  # pyright: ignore[reportCallIssue]
-    with pytest.raises(TypeError):
-        # pyrefly: ignore [bad-argument-type]
-        # pyrefly: ignore [bad-argument-type]
-        _ = Deque[int](1)  # pyright: ignore[reportArgumentType]
+    # NOTE: here we differ from cpython, since our constructor is more flexible
+    # Both test raise TypeError for a collections.deque
+    assert Deque[int | str]("abc", 2, 3) == Deque(["a", "b", "c", 2, 3])
+    assert Deque[int](1) == Deque([1])
 
 
 def test_hash() -> None:
@@ -844,12 +841,11 @@ def test_constructor() -> None:
             # pyrefly: ignore [bad-argument-type]
             # pyrefly: ignore [bad-argument-type]
             assert list(Deque(g(s))) == list(g(s))  # pyright: ignore[reportArgumentType]
+        # NOTE: Here we diff from CPython, since our constructor is more flexible.
+        _ = Deque(test_seq.IterNextOnly(s))
         with pytest.raises(TypeError):
             # pyrefly: ignore [bad-argument-type]
-            _ = Deque(test_seq.IterNextOnly(s))  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
-        with pytest.raises(TypeError):
-            # pyrefly: ignore [bad-argument-type]
-            _ = Deque(test_seq.IterNoNext(s))  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+            _ = Deque(test_seq.IterNoNext(s))
         with pytest.raises(ZeroDivisionError):
             _ = Deque(test_seq.IterGenExc(s))
 

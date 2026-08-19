@@ -4,7 +4,7 @@ from pyochain import Dict, Range, Seq, Set, SetMut, Vec
 from pyochain.abc import PyoSized
 from pyochain.collections import Deque, SortedDict
 
-DATA = Seq((1, 2, 3))
+DATA = Seq(1, 2, 3)
 DATA_MAP = DATA.iter().map(str).enumerate().collect(Dict)
 PARAMS_THEN_SOME: Vec[PyoSized] = Vec.from_ref([
     DATA,
