@@ -27,7 +27,7 @@ impl Dict {
             .map(Bound::unbind)
             .map(|inner| abc::PyoMutableMapping::build_init().add_subclass(Self(inner)))
     }
-
+    #[allow(unused_variables)]
     #[classmethod]
     #[pyo3(signature = (keys, value=None))]
     fn from_keys<'py>(
@@ -35,11 +35,7 @@ impl Dict {
         keys: Bound<'py, PyAny>,
         value: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>> {
-        let py = cls.py();
-
-        PyDict::type_object(py)
-            .call_method1(intern!(py, "fromkeys"), (keys, value))
-            .and_then(|x| unsafe { x.cast_into_unchecked::<PyDict>() }.into_pyochain())
+        PyDict::from_keys(keys, value)?.into_pyochain()
     }
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {

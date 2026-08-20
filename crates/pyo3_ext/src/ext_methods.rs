@@ -237,7 +237,23 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
         Ok(())
     }
 }
-
+pub trait PyDictExtConstructors: PyTypeInfo {
+    fn from_keys<'py>(
+        keys: Bound<'py, PyAny>,
+        value: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, Self>>;
+}
+impl PyDictExtConstructors for PyDict {
+    fn from_keys<'py>(
+        keys: Bound<'py, PyAny>,
+        value: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, Self>> {
+        let py = keys.py();
+        Self::type_object(py)
+            .call_method1(intern!(py, "fromkeys"), (keys, value))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyDict>() })
+    }
+}
 #[allow(unused)]
 pub trait PyDictExtMethods<'py> {
     /// Return a view of the dictionnary items, just like calling `dict.items()` in Python

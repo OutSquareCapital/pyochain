@@ -6,7 +6,6 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    PyTypeInfo, intern,
     prelude::*,
     types::{PyDict, PyIterator, PyNone, PyNotImplemented, PySet},
 };
@@ -22,12 +21,10 @@ pub struct StableSet(pub Py<PyDict>);
 impl StableSet {
     #[new]
     fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
-        let py = data.py();
-        PyDict::type_object(py)
-            .call_method1(intern!(py, "fromkeys"), (data,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyDict>() })
+        PyDict::from_keys(data, None)
             .map(Bound::unbind)
-            .map(|inner| abc::PyoMutableSet::build_init().add_subclass(Self(inner)))
+            .map(Self)
+            .map(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
     }
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
