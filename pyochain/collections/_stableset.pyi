@@ -38,18 +38,18 @@ class StableSet[T](PyoMutableSet[T]):
         assert repr(s) == "StableSet('a', 'c', 'd')"
         ```
     """
-    def __new__(cls, data: Iterable[T] | T | None = None, /, *elements: T) -> Self:
+    def __new__(cls, data: Iterable[T] | T = (), /, *elements: T) -> Self:
         """Create a new `StableSet` instance.
 
         If data is
-        - not provided, `None` or an empty `Iterable`, an empty `StableSet` is created.
+        - not provided, or an empty `Iterable`, an empty `StableSet` is created.
         - a non-empty `Iterable`, the elements of the iterable are added to the set.
         - a single non-iterable element, it creates a `StableSet` with that element.
 
         Additional elements can be provided as positional arguments.
 
         Args:
-            data (Iterable[T] | T | None): initial data to populate the `StableSet`. Defaults to `None`.
+            data (Iterable[T] | T): initial data to populate the `StableSet`. Defaults to `()`.
             *elements (T): Additional elements to add to the set.
 
         Examples:
@@ -57,6 +57,8 @@ class StableSet[T](PyoMutableSet[T]):
             from pyochain.collections import StableSet
 
             data = ("a", "b", "c")
+            # Creates an empty `StableSet`
+            assert StableSet() == StableSet(()) == StableSet([]) == frozenset()
             # Create a `StableSet` from an iterable
             assert StableSet(data) == StableSet(list(data)) == frozenset(data)
             # Create a `StableSet` from a single non-iterable element

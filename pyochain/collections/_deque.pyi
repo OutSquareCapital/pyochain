@@ -38,7 +38,7 @@ class Deque[T](PyoMutableSequence[T]):
     If not specified or None, the `Deque` is unbounded."""
 
     @overload
-    def __new__(cls, data: None = None, *, max_length: int | None = ...) -> Self: ...
+    def __new__(cls, max_length: int | None = ...) -> Self: ...
     @overload
     def __new__(cls, data: Iterable[T], *, max_length: int | None = ...) -> Self: ...
     @overload
@@ -46,16 +46,14 @@ class Deque[T](PyoMutableSequence[T]):
         cls, data: T, /, *elements: T, max_length: int | None = ...
     ) -> Self: ...
     def __new__(
-        cls,
-        data: Iterable[T] | T | None,
-        /,
-        *elements: T,
-        max_length: int | None = None,
+        cls, data: Iterable[T] | T = (), /, *elements: T, max_length: int | None = None
     ) -> Self:
         """Returns a new `Deque` object initialized left-to-right (using append()) from `data`.
 
+        If no positional arguments are provided, an empty `Deque` is created.
+
         Args:
-            data (Iterable[T] | T | None): The initial data to populate the `Deque`. Defaults to `None`, which creates an empty `Deque`.
+            data (Iterable[T] | T): The initial data to populate the `Deque`. Defaults to `()`.
             *elements (T): Additional elements to append to the `Deque` after `data`.
             max_length (int | None): The maximum length of the `Deque`. If not specified or `None`, the `Deque` is unbounded.
 
@@ -67,7 +65,7 @@ class Deque[T](PyoMutableSequence[T]):
             from pyochain.collections import Deque
 
             # Create an empty Deque
-            assert Deque() == Deque(None) == Deque(()) == Deque([])
+            assert Deque() == Deque(()) == Deque([])
             assert Deque().is_empty()
 
             # Create a Deque from an iterable

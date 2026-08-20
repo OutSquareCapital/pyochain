@@ -24,19 +24,15 @@ class Set[T](PyoSet[T]):
     @overload
     def __new__(cls, data: T, /, *more: T) -> Self: ...
     @overload
-    def __new__(cls, data: None = None, /) -> Self: ...
-    def __new__(cls, data: Iterable[T] | T | None = None, /, *more: T) -> Self:
+    def __new__(cls) -> Self: ...
+    def __new__(cls, data: Iterable[T] | T = (), /, *more: T) -> Self:
         """Create a new `Set` instance.
 
-        If `data` is:
-        - an `Iterable`, the `Set` will be initialized with its elements.
-        - a single, non-iterable element of type `T`, the `Set` will contain just that element.
-        - `None`, the `Set` will be empty.
+        If not arguments are provided, an empty `Set` is created.
 
-        Additional elements can be added using the `*more` argument.
 
         Args:
-            data (Iterable[T] | T | None): Any `Iterable` of elements to initialize the set with, a single element of type `T`, or `None`.
+            data (Iterable[T] | T): Initial elements to populate the set with. Defaults to `()`.
             *more (T): Additional elements to add to the set.
 
         Example:
@@ -55,7 +51,7 @@ class Set[T](PyoSet[T]):
             assert Set(0, 1, 2, 3) == Set(data)
 
             # Create an empty `Set`
-            assert Set() == Set([]) == Set(()) == Set(None) == frozenset()
+            assert Set() == Set([]) == Set(()) == frozenset()
             assert repr(Set()) == "Set()"
 
             # If you already have a `frozenset`, you can use it directly without copying:
@@ -282,17 +278,41 @@ class SetMut[T](PyoMutableSet[T]):
 
     Tip:
         If you have an existing `set`, consider using [`SetMut::from_ref`][from_ref] to avoid unnecessary copying.
-
-    Args:
-        data (Iterable[T]): Any `Iterable` of elements to initialize the set with.
     """
     @overload
     def __new__(cls, data: Iterable[T], /) -> Self: ...
     @overload
     def __new__(cls, data: T, *more: T) -> Self: ...
     @overload
-    def __new__(cls, data: None = None) -> Self: ...
-    def __new__(cls, data: Iterable[T] | T | None = None) -> Self: ...
+    def __new__(cls) -> Self: ...
+    def __new__(cls, data: Iterable[T] | T = (), *more: T) -> Self:
+        """Create a new `SetMut` instance.
+
+        If no arguments are provided, an empty `SetMut` is created.
+
+        Args:
+            data (Iterable[T] | T): Initial elements to populate the set with. Defaults to `()`.
+            *more (T): Additional elements to add to the set.
+
+        Example:
+            ```python
+            from pyochain import SetMut
+
+            data = (0, 1, 2, 3)
+
+            # Create a `SetMut` from an iterable
+            assert SetMut(data) == SetMut(range(0, 4)) == set(data)
+
+            # Create a `SetMut` from a single, non-iterable element
+            assert SetMut(1) == SetMut((1,)) == SetMut([1]) == set([1])
+
+            # Create a `SetMut` from multiple elements
+            assert SetMut(0, 1, 2, 3) == SetMut(data)
+
+            # Create an empty `SetMut`
+            assert SetMut() == SetMut([]) == SetMut(()) == set()
+            ```
+        """
     @override
     def __iter__(self) -> Iterator[T]: ...
     @override

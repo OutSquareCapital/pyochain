@@ -8,10 +8,7 @@ use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{
-        DerefToPyAny, PyBool, PyFrozenSet, PyFrozenSetBuilder, PyIterator, PyNotImplemented, PySet,
-        PyTuple,
-    },
+    types::{DerefToPyAny, PyBool, PyFrozenSet, PyIterator, PyNotImplemented, PySet, PyTuple},
 };
 use pyo3_ext::{
     prelude::*,
@@ -168,35 +165,23 @@ impl<'py> SetCmpMethods<'py, PySet> for SetMut {}
 pub struct Set(pub Py<PyFrozenSet>);
 #[pymethods]
 impl Set {
-    #[pyo3(signature = (data=None, *more))]
+    #[pyo3(signature = (*elements))]
     #[new]
-    fn new(
-        data: Option<Bound<'_, PyAny>>,
-        more: Bound<'_, PyTuple>,
-    ) -> PyResult<PyClassInitializer<Self>> {
-        let py = more.py();
-        let set = try_cast_into! {
-            match (data, more.is_empty()) {
-                (None, _) => more.into_iter().collect_bound(py)?,
-                (Some(CaseExact::PyFrozenSet(set)), true) => set,
-                (Some(CaseExact::Self(inner)), true) => inner
+    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
+        let py = elements.py();
+        let set = match elements.len() {
+            0 => PyFrozenSet::empty(py)?,
+            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
+                CaseExact::PyFrozenSet(set) => set,
+                CaseExact::Self(inner) => inner
                     .get()
                     .into_inner_bound(py)
                     .into_iter()
                     .collect_bound(py)?,
-                (Some(Case::PyIterable(iterable)), true) => {
-                    iterable.try_iter()?.try_collect_bound(py)?
-                }
-                (Some(any), true) => [any].into_iter().collect_bound(py)?,
-                (Some(any), false) => {
-                    let mut builder = PyFrozenSetBuilder::new(py)?;
-                    builder.add(any)?;
-                    for item in more.iter() {
-                        builder.add(item)?;
-                    }
-                    builder.finalize()
-                }
-            }
+                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
+                any => [any].into_iter().collect_bound(py)?,
+            }},
+            _ => elements.into_iter().collect_bound::<PyFrozenSet>(py)?,
         };
         set.unbind()
             .pipe(Self)
@@ -320,32 +305,23 @@ impl Set {
 pub struct SetMut(pub Py<PySet>);
 #[pymethods]
 impl SetMut {
-    #[pyo3(signature = (data=None, *more))]
+    #[pyo3(signature = (*elements))]
     #[new]
-    fn new(
-        data: Option<Bound<'_, PyAny>>,
-        more: Bound<'_, PyTuple>,
-    ) -> PyResult<PyClassInitializer<Self>> {
-        let py = more.py();
-        let set = try_cast_into! {
-            match (data, more.is_empty()) {
-                (None, _) => PySet::empty(py)?,
-                (Some(CaseExact::PySet(set)), true) => set.into_iter().collect_bound(py)?,
-                (Some(CaseExact::Self(inner)), true) => inner
+    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
+        let py = elements.py();
+        let set = match elements.len() {
+            0 => PySet::empty(py)?,
+            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
+                CaseExact::PySet(set) => set.into_iter().collect_bound(py)?,
+                CaseExact::Self(inner) => inner
                     .get()
                     .into_inner_bound(py)
                     .into_iter()
                     .collect_bound(py)?,
-                (Some(Case::PyIterable(iterable)), true) => {
-                    iterable.try_iter()?.try_collect_bound(py)?
-                }
-                (Some(any), true) => PySet::new(py, [any])?,
-                (Some(any), false) => {
-                    let set = more.into_iter().collect_bound::<PySet>(py)?;
-                    set.add(any)?;
-                    set
-                }
-            }
+                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
+                any => PySet::new(py, [any])?,
+            }},
+            _ => elements.into_iter().collect_bound::<PySet>(py)?,
         };
         set.unbind()
             .pipe(Self)

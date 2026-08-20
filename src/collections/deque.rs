@@ -7,7 +7,7 @@ use pyo3::{
     exceptions::PyTypeError,
     intern,
     prelude::*,
-    types::{PyInt, PyIterator, PyList, PyNotImplemented, PyTuple},
+    types::{PyInt, PyIterator, PyNotImplemented, PyTuple},
 };
 use pyo3_ext::{
     prelude::*,
@@ -20,30 +20,20 @@ pub struct Deque(pub Py<PyDeque>);
 #[pymethods]
 impl Deque {
     #[new]
-    #[pyo3(signature = (data=None, /, *elements, max_length=None))]
+    #[pyo3(signature = (*elements, max_length=None))]
     fn new(
-        py: Python<'_>,
-        data: Option<Bound<'_, PyAny>>,
         elements: Bound<'_, PyTuple>,
         max_length: Option<Bound<'_, PyInt>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let deque = {
-            try_cast_into! {
-                match (data, elements.is_empty()) {
-                    (None, _) => PyDeque::new(py, elements.into_any(), max_length)?,
-                    (Some(Case::PyIterable(iterable)), true) => {
-                        PyDeque::new(py, iterable.into_any(), max_length)?
-                    }
-                    (Some(any), true) => PyTuple::new(py, [any])
-                        .map(Bound::into_any)
-                        .and_then(|iterable| PyDeque::new(py, iterable, max_length))?,
-                    (Some(any), false) => std::iter::once(any)
-                        .chain(elements.into_iter())
-                        .collect_bound::<PyList>(py)
-                        .map(Bound::into_any)
-                        .and_then(|x| PyDeque::new(py, x, max_length))?,
-                }
-            }
+        let py = elements.py();
+        let deque = match elements.len() {
+            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
+                Case::PyIterable(iterable) => PyDeque::new(py, iterable.into_any(), max_length)?,
+                any => PyTuple::new(py, [any])
+                    .map(Bound::into_any)
+                    .and_then(|iterable| PyDeque::new(py, iterable, max_length))?,
+            }},
+            _ => PyDeque::new(py, elements.into_any(), max_length)?,
         };
         deque
             .unbind()

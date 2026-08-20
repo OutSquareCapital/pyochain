@@ -22,31 +22,25 @@ use tap::Pipe;
 pub struct PyoVec(pub Py<PyList>);
 #[pymethods]
 impl PyoVec {
-    #[pyo3(signature = (data = None, *more))]
+    #[pyo3(signature = (*elements))]
     #[new]
-    fn new(
-        data: Option<Bound<'_, PyAny>>,
-        more: Bound<'_, PyTuple>,
-    ) -> PyResult<PyClassInitializer<Self>> {
-        let py = more.py();
-        let list = try_cast_into! {
-            match (data, more.is_empty()) {
-                (None, _) => more.to_list(),
-                (Some(CaseExact::Self(inner)), true) => {
+    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
+        let py = elements.py();
+        let list = match elements.len() {
+            0 => PyList::empty(py),
+            1 => try_cast_into! {match unsafe {elements.get_item_unchecked(0)} {
+                CaseExact::Self(inner) => {
                     inner.get().into_inner_bound(py).as_sequence().to_list()?
                 }
-                (Some(Case::PySequence(sequence)), true) => sequence.to_list()?,
-                (Some(Case::PyIterable(iterable)), true) => {
-                    iterable.try_iter()?.try_collect_bound(py)?
-                }
-                (Some(any), true) => PyList::new(py, [any])?,
-                (Some(any), false) => std::iter::once(any)
-                    .chain(more.into_iter())
-                    .collect_bound(py)?,
-            }
+                Case::PySequence(sequence) => sequence.to_list()?,
+                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
+                any => PyList::new(py, [any])?,
+            }},
+            _ => elements.to_list(),
         };
-        abc::PyoMutableSequence::build_init()
-            .add_subclass(Self(list.unbind()))
+        list.unbind()
+            .pipe(Self)
+            .pipe(|slf| abc::PyoMutableSequence::build_init().add_subclass(slf))
             .pipe(Ok)
     }
     #[staticmethod]

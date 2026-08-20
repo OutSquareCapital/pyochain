@@ -24,22 +24,20 @@ class Seq[T](PyoSequence[T]):
 
     """
     @overload
+    def __new__(cls) -> Self: ...
+    @overload
     def __new__(cls, data: Iterable[T], /) -> Self: ...
     @overload
     def __new__(cls, data: T, /, *more: T) -> Self: ...
-    @overload
-    def __new__(cls, data: None = None, /) -> Self: ...
-    def __new__(cls, data: Iterable[T] | T | None = None, /, *more: T) -> Self:
+    def __new__(cls, data: Iterable[T] | T = (), /, *more: T) -> Self:
         """Create a new `Seq` instance.
 
-        You can either provide a single iterable, or one/multiple individual elements.
-
-        If no arguments or `None` are provided, an empty `Seq` is created.
+        If no arguments are provided, an empty `Seq` is created.
 
         Passing a `tuple` or another `Seq` will not copy the underlying data.
 
         Args:
-            data (Iterable[T] | T | None): The data to initialize the `Seq` with.
+            data (Iterable[T] | T | None): Initial data to populate the `Seq` with. Defaults to `()`.
             *more (T): Additional elements to include in the `Seq`.
 
         Returns:
@@ -61,7 +59,7 @@ class Seq[T](PyoSequence[T]):
             assert id(seq3[0]) == id(py_tuple[0])
 
             # Create an empty Seq
-            assert Seq() == Seq(None) == Seq([]) == Seq(()) == ()
+            assert Seq() == Seq([]) == Seq(()) == ()
             ```
         """
     @override

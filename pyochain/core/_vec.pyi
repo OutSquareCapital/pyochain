@@ -29,16 +29,14 @@ class Vec[T](PyoMutableSequence[T]):
     @overload
     def __new__(cls, data: T, /, *more: T) -> Self: ...
     @overload
-    def __new__(cls, data: None = None, /) -> Self: ...
-    def __new__(cls, data: Iterable[T] | T | None = None, /, *more: T) -> Self:
+    def __new__(cls) -> Self: ...
+    def __new__(cls, data: Iterable[T] | T = (), /, *more: T) -> Self:
         """Create a new `Vec` instance.
 
-        You can either provide a single iterable, or one/multiple individual elements.
-
-        If no arguments or `None` are provided, an empty `Vec` is created.
+        If not arguments are provided, an empty `Vec` is created.
 
         Args:
-            data (Iterable[T] | T | None): The data to initialize the `Vec` with.
+            data (Iterable[T] | T): The data to initialize the `Vec` with. Defaults to `()`.
             *more (T): Additional elements to include in the `Vec`.
 
         Returns:
@@ -55,7 +53,7 @@ class Vec[T](PyoMutableSequence[T]):
             # Create a Vec from individual elements
             assert Vec(1, 2, 3) == py_list
             # Create an empty Vec
-            assert Vec() == Vec(None) == Vec([]) == Vec(()) == []
+            assert Vec() == Vec([]) == Vec(()) == []
             # Create a Vec from a list will copy the underlying data
             vec = Vec(py_list)
             vec[0] = 10
