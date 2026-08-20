@@ -40,7 +40,7 @@ enum SetCmp<'py> {
 trait SetCmpMethods<
     'py,
     T: PyTypeInfo + DerefToPyAny + TryFromBoundIterator<'py, Bound<'py, PyAny>>,
->: Sized + PyWrapper<T> + PyTypeInfo
+>: Sized + PyWrapper + PyTypeInfo
 {
     #[inline(always)]
     fn handle_pyabstract_set(pyset: Bound<'py, PyAny>) -> PyResult<Bound<'py, T>> {

@@ -3,10 +3,12 @@ from typing import Any, Self, SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoSequence
 
+from ._protocols import FlexibleWrapper
+
 type IntoSeq[T] = Seq[T] | tuple[T, ...]
 
 @final
-class Seq[T](PyoSequence[T]):
+class Seq[T](PyoSequence[T], FlexibleWrapper[T]):
     """Represent an in memory `Sequence`.
 
     Implements the `Sequence` Protocol from `collections.abc`, as well as `PyoSequence`.
@@ -62,6 +64,7 @@ class Seq[T](PyoSequence[T]):
             assert Seq() == Seq([]) == Seq(()) == ()
             ```
         """
+
     @override
     def __iter__(self) -> Iterator[T]: ...
     @override
@@ -106,6 +109,7 @@ class Seq[T](PyoSequence[T]):
             assert res.map_err(lambda e: isinstance(e, TypeError)).unwrap_err()
             ```
         """
+
     def __le__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
     def __gt__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
     def __ge__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
@@ -113,6 +117,15 @@ class Seq[T](PyoSequence[T]):
     def __rmul__(self, value: SupportsIndex, /) -> Seq[T]: ...
     @override
     def __reversed__(self) -> Iterator[T]: ...
+    @override
+    @staticmethod
+    def wrap[S](iterable: tuple[S, ...]) -> Seq[S]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    @staticmethod
+    def of[E](*elements: E) -> Seq[E]: ...
+    @override
+    @staticmethod
+    def from_iter[I](iterable: Iterable[I], /) -> Seq[I]: ...
     @override
     def count(self, value: Any, /) -> int: ...  # pyright: ignore[reportAny]
     @override
@@ -142,6 +155,7 @@ class Seq[T](PyoSequence[T]):
             assert s.repeat(2) == Seq(1, 2, 3, 1, 2, 3)
             ```
         """
+
     def concat[O](self, other: IntoSeq[O]) -> Seq[T | O]:
         """Concatenate another `Seq` or `tuple` to **self** and return a new `Seq`.
 

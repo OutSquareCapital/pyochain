@@ -5,10 +5,12 @@ from _typeshed import SupportsRichComparison
 
 from pyochain.abc import PyoMutableSequence
 
+from ._protocols import FlexibleWrapper
+
 type IntoVec[T] = Vec[T] | list[T]
 
 @final
-class Vec[T](PyoMutableSequence[T]):
+class Vec[T](PyoMutableSequence[T], FlexibleWrapper[T]):
     """Represent a mutable sequence of elements.
 
     Implement `collections::abc::MutableSequence`, and pyochain's `PyoMutableSequence` ABC.
@@ -60,6 +62,7 @@ class Vec[T](PyoMutableSequence[T]):
             assert py_list == [1, 2, 3]
             ```
         """
+
     @override
     def __iter__(self) -> Iterator[T]: ...
     @overload
@@ -106,35 +109,15 @@ class Vec[T](PyoMutableSequence[T]):
     def __le__(self, value: IntoVec[T], /) -> bool: ...
     @override
     def __reversed__(self) -> Iterator[T]: ...
+    @override
     @staticmethod
-    def from_ref[V](data: list[V]) -> Vec[V]:
-        """Create a `Vec` from a reference to an existing `list`.
-
-        This method wraps the provided `list` without copying it, allowing for efficient creation of a `Vec`.
-
-        This is the recommended way to create a `Vec` from foreign functions.
-
-        Warning:
-            Since the `Vec` directly references the original `list`, any modifications made to the `Vec` will also affect the original `list`, and vice versa.
-
-        Args:
-            data (list[V]): The `list` to wrap.
-
-        Returns:
-            Vec[V]: A new Vec instance wrapping the provided `list`.
-
-        Example:
-            ```python
-            from pyochain import Vec
-
-            original_list = [1, 2, 3]
-            vec = Vec.from_ref(original_list)
-            assert vec == Vec(1, 2, 3)
-            vec[0] = 10
-            assert original_list == [10, 2, 3]
-            ```
-        """
-
+    def of[E](*elements: E) -> Vec[E]: ...
+    @override
+    @staticmethod
+    def from_iter[I](iterable: Iterable[I], /) -> Vec[I]: ...
+    @staticmethod
+    @override
+    def wrap[S](iterable: list[S]) -> Vec[S]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def reverse(self) -> None: ...
     @override

@@ -6,37 +6,40 @@ use pyo3::{
         DerefToPyAny, PyDict, PyFrozenSet, PyIterator, PyList, PyRange, PySequence, PySet, PyTuple,
     },
 };
+use pyochain_macros::{py_abc, try_cast_into};
+use tap::Pipe;
 
 use crate::{
     abc, collections,
     core::{Dict, PyoVec, Range, Seq, Set, SetMut, SliceView, iterators::Iter},
 };
 use pyo3_ext::types::PyDeque;
-pub trait PyWrapper<T: PyTypeInfo + DerefToPyAny>:
-    PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
-{
-    fn inner(&self) -> &Py<T>;
-    fn inner_bind<'py>(&self, py: Python<'py>) -> &Bound<'py, T> {
+pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync {
+    type Wrapped: PyTypeInfo + DerefToPyAny;
+    fn inner(&self) -> &Py<Self::Wrapped>;
+    fn inner_bind<'py>(&self, py: Python<'py>) -> &Bound<'py, Self::Wrapped> {
         self.inner().bind(py)
     }
     #[inline(always)]
-    fn into_inner_bound<'py>(&self, py: Python<'py>) -> Bound<'py, T> {
+    fn into_inner_bound<'py>(&self, py: Python<'py>) -> Bound<'py, Self::Wrapped> {
         self.inner().clone_ref(py).into_bound(py)
     }
 
     /// Extracts the inner type of `Self` from an arbitrary python object.\
     /// For example, if `Self` is `seq::Seq`, this will extract the inner `PyTuple` from a `seq::Seq` or a `PyTuple`.
     #[inline]
-    fn extract_union<'py, 'r>(value: &'r Bound<'py, PyAny>) -> PyResult<&'r Bound<'py, T>> {
+    fn extract_union<'py, 'r>(
+        value: &'r Bound<'py, PyAny>,
+    ) -> PyResult<&'r Bound<'py, Self::Wrapped>> {
         let py = value.py();
         value
             .cast_exact::<Self>()
             .map(|x| x.get().inner_bind(py))
-            .or_else(|_| value.cast_exact::<T>())
+            .or_else(|_| value.cast_exact::<Self::Wrapped>())
             .map_err(|_| {
                 let py = value.py();
                 let wrapper = Self::type_object(py).name().unwrap();
-                let inner = T::type_object(py).name().unwrap();
+                let inner = Self::Wrapped::type_object(py).name().unwrap();
                 let incorrect = value.get_type().name().unwrap();
                 let txt = format!(
                     "Input must be a '{}'' or a '{}', got '{}'",
@@ -50,10 +53,11 @@ pub trait PyWrapper<T: PyTypeInfo + DerefToPyAny>:
 macro_rules! impl_py_wrapper {
     ($($wrapper:ty => $T:ty),* $(,)?) => {
         $(
-            impl PyWrapper<$T> for $wrapper {
+            impl PyWrapper for $wrapper {
+                type Wrapped = $T;
 
                 #[inline(always)]
-                fn inner(&self) -> &Py<$T> {
+                fn inner(&self) -> &Py<Self::Wrapped> {
                     &self.0
                 }
             }
@@ -75,9 +79,10 @@ impl_py_wrapper! {
     collections::Deque => PyDeque,
 }
 /// Named struct so need to implement `PyWrapper` manually.
-impl PyWrapper<PySequence> for SliceView {
+impl PyWrapper for SliceView {
+    type Wrapped = PySequence;
     #[inline(always)]
-    fn inner(&self) -> &Py<PySequence> {
+    fn inner(&self) -> &Py<Self::Wrapped> {
         &self.inner
     }
 }
@@ -208,5 +213,77 @@ impl PyoABC for abc::PyoMutableMapping {
 impl PyoABC for collections::Heap {
     fn build_init() -> PyClassInitializer<Self> {
         abc::PyoMutableSequence::build_init().add_subclass(Self)
+    }
+}
+
+#[py_abc(Seq, PyoVec)]
+pub trait FlexInit: Sized {
+    #[pyo3(signature = (iterable, /))]
+    #[staticmethod]
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>>;
+    #[staticmethod]
+    #[pyo3(signature = (*elements))]
+    fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>>;
+}
+#[py_abc(Seq, PyoVec)]
+pub trait FlexWrapper: PyWrapper + FlexInit {
+    #[pyo3(signature = (iterable, /))]
+    #[staticmethod]
+    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>>;
+}
+
+impl FlexWrapper for PyoVec {
+    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
+        iterable.into_pyochain()
+    }
+}
+impl FlexWrapper for Seq {
+    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
+        iterable.into_pyochain()
+    }
+}
+impl FlexInit for Seq {
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        let py = iterable.py();
+        try_cast_into! {
+            match iterable {
+                CaseExact::PyTuple(tuple) => tuple.into_pyochain(),
+                CaseExact::Self(inner) => Ok(inner),
+                Case::PySequence(sequence) => sequence.to_tuple()?.into_pyochain(),
+                iterable => iterable
+                    .try_iter()?
+                    .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
+                    .pipe(|x| PyTuple::new(py, x))?
+                    .into_pyochain(),
+            }
+        }
+    }
+    fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
+        elements.into_pyochain()
+    }
+}
+impl FlexInit for PyoVec {
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        let py = iterable.py();
+        try_cast_into! {
+            match iterable {
+                CaseExact::PyList(list) => list.as_sequence().to_list()?.into_pyochain(),
+                CaseExact::Self(inner) => inner
+                    .get()
+                    .into_inner_bound(py)
+                    .as_sequence()
+                    .to_list()?
+                    .into_pyochain(),
+                Case::PySequence(sequence) => sequence.to_list()?.into_pyochain(),
+                iterable => iterable
+                    .try_iter()?
+                    .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
+                    .pipe(|x| PyList::new(py, x))?
+                    .into_pyochain(),
+            }
+        }
+    }
+    fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
+        elements.to_list().into_pyochain()
     }
 }
