@@ -6,25 +6,52 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
+    BoundObject,
     prelude::*,
-    types::{PyDict, PyIterator, PyNone, PyNotImplemented, PySet},
+    types::{PyDict, PyIterator, PyNone, PyNotImplemented, PySet, PyTuple},
 };
 use pyo3_ext::{
     prelude::*,
-    types::{FromCmp, PyAbstractSet, PyCmpOut},
+    types::{FromCmp, PyAbstractSet, PyCmpOut, PyIterable},
 };
-use pyochain_macros::try_cast;
+use pyochain_macros::{try_cast, try_cast_into};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections",frozen, generic, extends=abc::PyoMutableSet)]
 pub struct StableSet(pub Py<PyDict>);
 #[pymethods]
 impl StableSet {
+    #[pyo3(signature = (data=None, /, *elements))]
     #[new]
-    fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
-        PyDict::from_keys(data, None)
-            .map(Bound::unbind)
-            .map(Self)
-            .map(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
+    fn new(
+        data: Option<Bound<'_, PyAny>>,
+        elements: Bound<'_, PyTuple>,
+    ) -> PyResult<PyClassInitializer<Self>> {
+        let py = elements.py();
+        let dict = try_cast_into! {
+
+            match (data, elements.is_empty()) {
+                (None, _) => PyDict::new(py),
+                (Some(Case::PyIterable(iterable)), true) => PyDict::from_keys(iterable, None)?,
+                (Some(any), true) => {
+                    let dict = PyDict::new(py);
+                    dict.set_item(any, PyNone::get(py))?;
+                    dict
+                }
+                (Some(any), false) => {
+                    let none = PyNone::get(py).into_bound();
+                    let dict = PyDict::new(py);
+                    dict.set_item(any, PyNone::get(py))?;
+                    elements
+                        .into_iter()
+                        .try_for_each(|e| dict.set_item(e, &none))?;
+                    dict
+                }
+            }
+        };
+        dict.unbind()
+            .pipe(Self)
+            .pipe(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
+            .pipe(Ok)
     }
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
@@ -54,12 +81,6 @@ impl StableSet {
         try_cast! {
             match other {
                 Case::PyAbstractSet(abc_set) => inner.keys_view().eq(abc_set).map(Either::Left),
-                CaseExact::Self(stable) => stable
-                    .get()
-                    .inner_bind(py)
-                    .pipe(|set| inner.keys_view().eq(set))
-                    .map(Either::Left),
-                Case::PySet(py_set) => inner.keys_view().eq(py_set).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
             }
         }

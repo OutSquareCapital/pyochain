@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from typing import Any, override
+from typing import Any, Self, override
 
 from pyochain import SetMut
 from pyochain.abc import PyoMutableSet
@@ -16,23 +16,55 @@ class StableSet[T](PyoMutableSet[T]):
     Note:
         This is not the same as `sortedcontainers`, i.e it does not maintain the elements in sorted order, but rather in the order they were inserted.
 
-    Args:
-        data (Iterable[T]): Any `Iterable` of elements to initialize the set with.
-
-    Examples:
+    Example:
         ```python
+        from pyochain import Some
         from pyochain.collections import StableSet
 
-        s = StableSet(("a", "b", "c"))
-        assert s
-        assert s == StableSet(("a", "b", "c"))
+        s = StableSet("a", "b", "c")
+        assert repr(s) == "StableSet('a', 'b', 'c')"
+
+        # Mutation preserves insertion order
+
         s.add("d")
-        assert s == StableSet(("a", "b", "c", "d"))
+        assert s.iter().next() == Some("a")
+        assert s.iter().last() == "d"
+        assert repr(s) == "StableSet('a', 'b', 'c', 'd')"
+
         s.discard("b")
-        assert s == StableSet(("a", "c", "d"))
+        assert s.iter().next() == Some("a")
+        assert s.iter().skip(1).next() == Some("c")
+        assert s.iter().last() == "d"
+        assert repr(s) == "StableSet('a', 'c', 'd')"
         ```
     """
-    def __init__(self, data: Iterable[T]) -> None: ...
+    def __new__(cls, data: Iterable[T] | T | None = None, /, *elements: T) -> Self:
+        """Create a new `StableSet` instance.
+
+        If data is
+        - not provided, `None` or an empty `Iterable`, an empty `StableSet` is created.
+        - a non-empty `Iterable`, the elements of the iterable are added to the set.
+        - a single non-iterable element, it creates a `StableSet` with that element.
+
+        Additional elements can be provided as positional arguments.
+
+        Args:
+            data (Iterable[T] | T | None): initial data to populate the `StableSet`. Defaults to `None`.
+            *elements (T): Additional elements to add to the set.
+
+        Examples:
+            ```python
+            from pyochain.collections import StableSet
+
+            data = ("a", "b", "c")
+            # Create a `StableSet` from an iterable
+            assert StableSet(data) == StableSet(list(data)) == frozenset(data)
+            # Create a `StableSet` from a single non-iterable element
+            assert StableSet(1) == StableSet([1]) == frozenset([1])
+            # Create a `StableSet` from multiple elements
+            assert StableSet("a", "b", "c") == StableSet(*data) == frozenset(data)
+            ```
+        """
     @override
     def __iter__(self) -> Iterator[T]: ...
     @override
@@ -64,9 +96,9 @@ class StableSet[T](PyoMutableSet[T]):
 
             original = {"Alice": 30, "Bob": 25, "Charlie": 35}
             set_obj = StableSet.from_ref(original)
-            assert set_obj == StableSet(("Alice", "Bob", "Charlie"))
+            assert set_obj == StableSet("Alice", "Bob", "Charlie")
             original["David"] = 40
-            assert set_obj == StableSet(("Alice", "Bob", "Charlie", "David"))
+            assert set_obj == StableSet("Alice", "Bob", "Charlie", "David")
         ```
         """
     @override
@@ -81,9 +113,9 @@ class StableSet[T](PyoMutableSet[T]):
             ```python
             from pyochain.collections import StableSet
 
-            s = StableSet(("a", "b", "c"))
+            s = StableSet("a", "b", "c")
             s_copy = s.copy()
-            assert s_copy == StableSet(("a", "b", "c"))
+            assert s_copy == StableSet("a", "b", "c")
             ```
         """
 
