@@ -19,7 +19,6 @@ from pyochain import (
     Option,
     Result,
     Seq,
-    Set,
     SetMut,
     Some,
     Vec,
@@ -99,11 +98,10 @@ def main() -> None:
     Color.INFO.show(msg)
 
     return (
-        _get_files("py")
+        _get_files("pyi")
         .iter()
-        .chain(_get_files("pyi"))
-        .filter_map(_check_file)
-        .flatten()
+        .filter_false(lambda f: f.name == "_types.pyi")
+        .flat_map(_check_file)
         .collect(Seq)
         .then(_handle_errors)
         .unwrap_or_else(lambda: Color.SUCCESS.show("[OK] No issues found!"))
@@ -113,7 +111,6 @@ def main() -> None:
 def _get_files(pattern: str) -> Seq[Path]:
     files = Seq(SRC_DIR.rglob(f"*.{pattern}"))
     Color.INFO.show(f"Checking {files.len()} {pattern} files...")
-
     return files
 
 
@@ -138,60 +135,24 @@ def _show_table(all_errors: Seq[DocstringError]) -> None:
     CONSOLE.print(table)
 
 
-def _check_file(file_path: Path) -> Option[PyoIterator[DocstringError]]:
+def _check_file(file_path: Path) -> PyoIterator[DocstringError]:
 
     def _is_documentable(node: ast.AST) -> TypeIs[DocumentableNode]:
         return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
 
-    try:
-        tree = ast.parse(file_path.read_text(encoding="utf-8"))
-    except SyntaxError:
-        return NONE
-
-    protocol_methods = _get_protocol_methods(tree)
-
-    return Some(
-        Iter(ast.walk(tree))
-        .filter(_is_documentable)  # We do two filter for `TypeIs` inference
-        .filter(lambda node: not _has_skip_decorator(node))
-        .filter_map(lambda node: _process_node(file_path, node, protocol_methods))
-    )
-
-
-def _get_protocol_methods(tree: ast.Module) -> Set[int]:
-    """Get line numbers of all methods inside Protocol classes.
-
-    Returns:
-        Set[int]: A set of line numbers of methods inside Protocol classes.
-    """
-
-    def _is_class_def(node: ast.AST) -> TypeIs[ast.ClassDef]:
-        return isinstance(node, ast.ClassDef)
-
-    def _is_protocol(expr: ast.expr) -> TypeIs[ast.Name | ast.Attribute]:
-        protocol = "Protocol"
-        return (isinstance(expr, ast.Name) and expr.id == protocol) or (
-            isinstance(expr, ast.Attribute) and expr.attr == protocol
-        )
-
-    def _is_method(node: ast.AST) -> TypeIs[MethodNode]:
-        return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    tree = ast.parse(file_path.read_text(encoding="utf-8"))
 
     return (
         Iter(ast.walk(tree))
-        .filter(_is_class_def)
-        .filter(lambda node: Iter(node.bases).any(_is_protocol))
-        .flat_map(lambda node: Iter(ast.walk(node)).filter(_is_method))
-        .map(lambda node: node.lineno)
-        .collect(Set)
+        .filter(_is_documentable)  # We do two filter for `TypeIs` inference
+        .filter(lambda node: not _has_skip_decorator(node))
+        .filter_map(lambda node: _process_node(file_path, node))
     )
 
 
-def _process_node(
-    file_path: Path, node: DocumentableNode, protocol_methods: Set[int]
-) -> Option[DocstringError]:
+def _process_node(file_path: Path, node: DocumentableNode) -> Option[DocstringError]:
     match option(ast.get_docstring(node)):
-        case Null() if _should_report_missing_docstring(node, protocol_methods):
+        case Null() if _should_report_missing_docstring(node):
             return Some(
                 DocstringError(
                     file_path,
@@ -205,7 +166,6 @@ def _process_node(
             result = _check_code_blocks(
                 docstring,
                 _get_docstring_start_line(node),
-                node.name,
                 skip_doctest=_has_skip_decorator(node),
             )
             match result:
@@ -224,19 +184,14 @@ def _process_node(
             return NONE
 
 
-def _should_report_missing_docstring(
-    node: DocumentableNode, protocol_methods: Set[int]
-) -> bool:
+def _should_report_missing_docstring(node: DocumentableNode) -> bool:
     return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
-        not node.name.startswith("_")
-        and not node.name.istitle()
-        and not _has_skip_decorator(node)
-        and node.lineno not in protocol_methods
+        not _has_skip_decorator(node)
     )
 
 
 def _check_code_blocks(
-    docstring: str, start_line: int, fn_name: str, *, skip_doctest: bool = False
+    docstring: str, start_line: int, *, skip_doctest: bool = False
 ) -> Result[tuple[()], Vec[ErrorDetail]]:
     def _process_line(state: State, line_num: int, line: str) -> State:
         marker = "```"
@@ -270,7 +225,7 @@ def _check_code_blocks(
         )
         .collect(Vec)
     )
-    doctest_errors = _check_errs(lines, fn_name, start_line, skip_doctest=skip_doctest)
+    doctest_errors = _check_errs(lines, start_line, skip_doctest=skip_doctest)
 
     match doctest_errors:
         case Ok(_) if block_errors.is_empty():
@@ -301,17 +256,10 @@ def _has_skip_decorator(node: DocumentableNode) -> bool:
 
 
 def _check_errs(
-    lines: Vec[str], fn_name: str, start_line: int, *, skip_doctest: bool
+    lines: Vec[str], start_line: int, *, skip_doctest: bool
 ) -> Result[tuple[()], Vec[ErrorDetail]]:
-    should_skip = (
-        fn_name.startswith("_")
-        or fn_name.istitle()
-        or skip_doctest
-        or lines.iter().any(
-            lambda line: bool(
-                CODE_BLOCK_PATTERN.search(line.lstrip()) and "python" in line
-            )
-        )
+    should_skip = skip_doctest or lines.iter().any(
+        lambda line: bool(CODE_BLOCK_PATTERN.search(line.lstrip()) and "python" in line)
     )
     if should_skip:
         return Ok(())
