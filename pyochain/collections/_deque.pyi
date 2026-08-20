@@ -42,9 +42,15 @@ class Deque[T](PyoMutableSequence[T]):
     @overload
     def __new__(cls, data: Iterable[T], *, max_length: int | None = ...) -> Self: ...
     @overload
-    def __new__(cls, data: T, *elements: T, max_length: int | None = ...) -> Self: ...
     def __new__(
-        cls, data: Iterable[T] | T | None, *elements: T, max_length: int | None = None
+        cls, data: T, /, *elements: T, max_length: int | None = ...
+    ) -> Self: ...
+    def __new__(
+        cls,
+        data: Iterable[T] | T | None,
+        /,
+        *elements: T,
+        max_length: int | None = None,
     ) -> Self:
         """Returns a new `Deque` object initialized left-to-right (using append()) from `data`.
 

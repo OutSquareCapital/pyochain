@@ -20,7 +20,7 @@ pub struct Deque(pub Py<PyDeque>);
 #[pymethods]
 impl Deque {
     #[new]
-    #[pyo3(signature = (data=None, *elements, max_length=None))]
+    #[pyo3(signature = (data=None, /, *elements, max_length=None))]
     fn new(
         py: Python<'_>,
         data: Option<Bound<'_, PyAny>>,

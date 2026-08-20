@@ -329,6 +329,7 @@ impl SetMut {
         let py = more.py();
         let set = try_cast_into! {
             match (data, more.is_empty()) {
+                (None, _) => PySet::empty(py)?,
                 (Some(CaseExact::PySet(set)), true) => set.into_iter().collect_bound(py)?,
                 (Some(CaseExact::Self(inner)), true) => inner
                     .get()
@@ -344,8 +345,6 @@ impl SetMut {
                     set.add(any)?;
                     set
                 }
-                (None, true) => PySet::empty(py)?,
-                (None, false) => more.into_iter().collect_bound(py)?,
             }
         };
         set.unbind()

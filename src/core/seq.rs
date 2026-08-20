@@ -18,7 +18,7 @@ use tap::Pipe;
 pub struct Seq(pub Py<PyTuple>);
 #[pymethods]
 impl Seq {
-    #[pyo3(signature = (data = None, *more))]
+    #[pyo3(signature = (data = None, /, *more))]
     #[new]
     fn new(
         data: Option<Bound<'_, PyAny>>,
