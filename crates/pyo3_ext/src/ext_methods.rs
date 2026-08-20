@@ -238,14 +238,14 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
     }
 }
 pub trait PyDictExtConstructors: PyTypeInfo {
-    fn from_keys<'py>(
-        keys: Bound<'py, PyAny>,
+    fn from_keys<'py, T: PyTypeInfo>(
+        keys: Bound<'py, T>,
         value: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>>;
 }
 impl PyDictExtConstructors for PyDict {
-    fn from_keys<'py>(
-        keys: Bound<'py, PyAny>,
+    fn from_keys<'py, T: PyTypeInfo>(
+        keys: Bound<'py, T>,
         value: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = keys.py();
