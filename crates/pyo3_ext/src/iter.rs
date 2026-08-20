@@ -74,6 +74,17 @@ impl<'py, T: IntoPyObject<'py>> FromBoundIterator<'py, T> for PySet {
         PySet::new(py, iter)
     }
 }
+impl<'py, T: IntoPyObject<'py>> FromBoundIterator<'py, T> for PyFrozenSet {
+    fn from_iter_bound<I>(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>>
+    where
+        I: IntoIterator<Item = T>,
+    {
+        let mut builder = PyFrozenSetBuilder::new(py)?;
+        iter.into_iter()
+            .try_for_each(|item| builder.add(item))
+            .map(|_| builder.finalize())
+    }
+}
 impl<'py, T: IntoPyObject<'py>> TryFromBoundIterator<'py, T> for PyFrozenSet {
     fn try_from_iter_bound<I>(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>>
     where
