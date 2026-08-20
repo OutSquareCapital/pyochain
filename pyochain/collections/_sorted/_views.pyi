@@ -58,6 +58,27 @@ class SortedKeysView(
 
     The keys view implements the set and sequence abstract base classes.
 
+    Example:
+        ```python
+        from pyochain import Vec, Set, Seq
+        from pyochain.collections import SortedDict
+
+        data = Seq("a", "b", "c")
+
+        skv = (
+            data
+            .iter()
+            .enumerate()
+            .map_star(lambda i, x: (x, i))
+            .collect(SortedDict)
+            .keys()
+        )
+        assert skv == Set(data)
+        assert skv[0] == "a"
+        assert skv[-1] == "c"
+        assert skv[:] == Vec(data)
+        assert repr(skv) == "SortedKeysView(SortedDict({'a': 0, 'b': 1, 'c': 2}))"
+        ```
     """
 
     @overload
@@ -86,8 +107,7 @@ class SortedKeysView(
             from pyochain.collections import SortedDict
             import pytest
 
-            sd = SortedDict({"a": 1, "b": 2, "c": 3})
-            skv = sd.keys()
+            skv = SortedDict({"a": 1, "b": 2, "c": 3}).keys()
             assert skv[0] == "a"
             assert skv[-1] == "c"
             assert skv[:] == Vec("a", "b", "c")
@@ -113,6 +133,17 @@ class SortedItemsView(
     When the sorted dict's items change, the view reflects those changes.
 
     The items view implements the set and sequence abstract base classes.
+
+    Example:
+        ```python
+        from pyochain import Vec
+        from pyochain.collections import SortedDict
+
+        siv = SortedDict({"a": 1, "b": 2, "c": 3}).items()
+        assert siv[0] == ("a", 1)
+        assert siv[-1] == ("c", 3)
+        assert siv[:] == Vec(("a", 1), ("b", 2), ("c", 3))
+        ```
 
     """
 
@@ -173,6 +204,17 @@ class SortedValuesView(
     When the sorted dict's values change, the view reflects those changes.
 
     The values view implements the sequence abstract base class.
+
+    Example:
+        ```python
+        from pyochain import Vec
+        from pyochain.collections import SortedDict
+
+        svv = SortedDict({"a": 2, "b": 1, "c": 3}).values()
+        assert svv[0] == 2
+        assert svv[-1] == 3
+        assert svv[:] == Vec(2, 1, 3)
+        ```
 
     """
 

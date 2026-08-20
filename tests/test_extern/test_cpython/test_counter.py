@@ -110,8 +110,8 @@ def test_basics() -> None:
 )
 def test_init_reinitialization() -> None:
     c = PyoCounter[str]({"a": 5, "b": 3, "c": 1})
-    c.__init__("a" * 500 + "b" * 300)
-    c.__init__("cdc")
+    c.__init__("a" * 500 + "b" * 300)  # pyright: ignore[reportCallIssue]
+    c.__init__("cdc")  # pyright: ignore[reportCallIssue]
     c.__init__()
     assert c == {"a": 555, "b": 333, "c": 3, "d": 1}
     assert c.setdefault("d", 5) == 1

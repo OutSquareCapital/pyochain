@@ -143,7 +143,7 @@ uv run sdsort . --stubs;
 uv run ruff check . --fix --unsafe-fixes;
 uv run ruff format . --preview;
 uv run basedpyright src/pyochain;
-uv run -m scripts.check_docstrings;
+uv run scripts/check_docstrings.py;
 uv run pydoclint pyochain/**/*.pyi
 ```
 

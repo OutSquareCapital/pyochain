@@ -6,8 +6,6 @@ from _typeshed import SupportsItems, SupportsKeysAndGetItem
 from pyochain import Vec
 from pyochain.abc import PyoIterator, PyoMutableMapping, PyoReversible
 
-# TODO: once in stubs, add overload to new when kwargs is passed to infer PyoCounter[str]
-
 @final
 class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     """Dict subclass for counting hashable items.
@@ -25,7 +23,7 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     assert c.most_common(3) == [("a", 5), ("b", 4), ("c", 3)]
 
     # list all unique elements
-    assert sorted(c.iter()) == ["a", "b", "c", "d", "e"]
+    assert c.iter().sort() == ["a", "b", "c", "d", "e"]
 
     # list elements with repetitions
     joined = c.elements().iter().sort().iter().join("")
@@ -80,15 +78,15 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
 
     """
     @overload
-    def __init__(self, iterable: None = None, /) -> None: ...
+    def __new__(cls, /) -> Self: ...
     @overload
-    def __init__(
-        self: PyoCounter[str], iterable: None = None, /, **kwargs: int
-    ) -> None: ...
+    def __new__(
+        cls: type[PyoCounter[str]], iterable: None = None, /, **kwargs: int
+    ) -> PyoCounter[str]: ...
     @overload
-    def __init__(self, mapping: SupportsKeysAndGetItem[T, int], /) -> None: ...
+    def __new__(cls, mapping: SupportsKeysAndGetItem[T, int], /) -> Self: ...
     @overload
-    def __init__(self, iterable: Iterable[T], /) -> None: ...
+    def __new__(cls, iterable: Iterable[T], /) -> Self: ...
     @override
     def __iter__(self) -> Iterator[T]: ...
     @override
@@ -422,19 +420,18 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
         """
 
     def elements(self) -> PyoIterator[T]:
-        """Iterator over elements repeating each as many times as its count.
+        """`Iterator` over elements repeating each as many times as its count.
 
         ```python
         from pyochain.collections import PyoCounter
 
         c = PyoCounter("ABCABC")
-        assert sorted(c.elements()) == ["A", "A", "B", "B", "C", "C"]
+        assert c.elements().sort() == ["A", "A", "B", "B", "C", "C"]
         ```
 
         Knuth's example for prime factors of 1836:  2**2 * 3**3 * 17**1
 
         ```python
-        from pyochain.collections import PyoCounter
         import math
 
         prime_factors = PyoCounter({2: 2, 3: 3, 17: 1})
