@@ -8,24 +8,63 @@ from pyochain.abc import PyoIterable
 class FlexibleInit[T](PyoIterable[T], ABC):
     """This ABC is used to define a common interface for pyochain collection types with a flexible constructor.
 
-    The "flexible constructor", is, generally speaking, a `__new__(data, *elements)` method, where `data` can be an `Iterable` or a single element, and `*elements` are additional elements to include in the collection.
+    The "flexible constructor", is, generally speaking, a `__new__(data, *elements)` method, where `data` can be an `Iterable[T]` or a single element `T`, and `*elements` are any number of `T` to include in the collection.
 
     This means that said constructor can handle a lot of different situations.
 
     This flexibility, while great for ergonomics, has unfortunately a cost: runtime checks and branching, which may not be desirable in performance-critical code.
 
-    Thus, this protocol provides various alternative, precise constructors.
+    Thus, this protocol provides various alternatives, with constructors for each use case.
 
-    That way, user who want to prioritize performance or explicitely named methods can use these alternative constructors, while still having the flexibility of `__new__` for more generic use cases.
+    That way, user who want to prioritize performance or explicitely named methods can use these alternative constructors,
+    while still having the flexibility of `__new__` for more generic use cases.
     """
     @staticmethod
     @abstractmethod
     def of[E](*elements: E) -> FlexibleInit[E]:
-        """Create the instance from a variable number of elements."""
+        """Create the instance from a variable number of single elements `E`.
+
+        Args:
+            *elements (E): The elements to create the instance from.
+
+        Returns:
+            FlexibleInit[E]: A new instance containing the provided `elements`.
+
+        Example:
+            ```python
+            from pyochain import Vec, Seq
+
+            assert Vec.of(1, 2, 3) == Vec(1, 2, 3)
+            assert Seq.of(1, 2, 3) == Seq(1, 2, 3)
+            assert Seq.of([1, 2], 3) == Seq([1, 2], 3) == Seq.from_iter([[1, 2], 3])
+            assert Seq.of("h", "e", "l", "l", "o") == Seq("h", "e", "l", "l", "o")
+            ```
+        """
     @staticmethod
     @abstractmethod
     def from_iter[I](iterable: Iterable[I], /) -> FlexibleInit[I]:
-        """Create the instance from an `Iterable` of elements."""
+        """Create the instance from an `Iterable`.
+
+        Tip:
+            For converting a literal tuple to a `Seq`, `FlexibleInit::of` is more efficient since it directly constructs the instance from the `*elements` tuple.
+
+            Keep in mind that it's an exception rather than the rule.
+
+        Args:
+            iterable (Iterable[I]): The iterable to create the instance from.
+
+        Returns:
+            FlexibleInit[I]: A new instance containing the elements from the provided `iterable`.
+
+        Example:
+            ```python
+            from pyochain import Vec, Seq
+
+            assert Vec.from_iter([1, 2, 3]) == Vec(1, 2, 3)
+            assert Seq.from_iter((1, 2, 3)) == Seq(1, 2, 3)
+            assert Vec.from_iter("hello") == Vec("h", "e", "l", "l", "o")
+            ```
+        """
 
 @type_check_only
 class FlexibleWrapper[T](FlexibleInit[T], ABC):
@@ -43,9 +82,9 @@ class FlexibleWrapper[T](FlexibleInit[T], ABC):
         Thus, it is the most efficient way to create a non-empty pyochain wrapper from an existing corresponding data structure.
 
         Warning:
-            No-copy behavior means that mutable collections will be shared between the pyochain wrapper and the original data structure.
+            No-copy behavior means that mutable collections will be shared between wrapper <-> wrapped.
 
-            Modifying one will affect the other.
+            Hence, modifying one will affect the other.
 
         Args:
             wrapped (Iterable[W]): The object to wrap.
@@ -54,16 +93,16 @@ class FlexibleWrapper[T](FlexibleInit[T], ABC):
             FlexibleWrapper[W]: A new instance wrapping the provided `wrapped` object.
 
         Example:
-        ```python
-        from pyochain import Vec, Seq
+            ```python
+            from pyochain import Vec, Seq
 
-        original_list = [1, 2, 3]
-        vec = Vec.wrap(original_list)
-        assert vec == Vec(1, 2, 3)
-        vec[0] = 10
-        assert original_list == [10, 2, 3]
-        original_tuple = (1, 2, 3)
-        seq = Seq.wrap(original_tuple)
-        assert seq == Seq(1, 2, 3)
-        ```
+            original_list = [1, 2, 3]
+            vec = Vec.wrap(original_list)
+            assert vec == Vec(1, 2, 3)
+            vec[0] = 10
+            assert original_list == [10, 2, 3]
+
+            original_tuple = (1, 2, 3)
+            assert Seq.wrap(original_tuple) == Seq(1, 2, 3)
+            ```
         """
