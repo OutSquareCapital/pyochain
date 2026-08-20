@@ -52,6 +52,9 @@ class StableSet[T](PyoMutableSet[T]):
             data (Iterable[T] | T): initial data to populate the `StableSet`. Defaults to `()`.
             *elements (T): Additional elements to add to the set.
 
+        Returns:
+            Self: A new `StableSet` instance.
+
         Examples:
             ```python
             from pyochain.collections import StableSet

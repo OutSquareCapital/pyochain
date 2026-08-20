@@ -53,6 +53,9 @@ class Iter[T](PyoIterator[T]):
             data (Iterable[T] | T): Input data to create the `Iter` instance from.
             *more (T): Additional elements to yield from the iterator.
 
+        Returns:
+            Self: A new `Iter` instance.
+
         Example:
             ```python
             from pyochain import Iter, Range

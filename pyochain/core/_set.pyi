@@ -30,10 +30,12 @@ class Set[T](PyoSet[T]):
 
         If not arguments are provided, an empty `Set` is created.
 
-
         Args:
             data (Iterable[T] | T): Initial elements to populate the set with. Defaults to `()`.
             *more (T): Additional elements to add to the set.
+
+        Returns:
+            Self: A new `Set` instance.
 
         Example:
             ```python
@@ -293,6 +295,9 @@ class SetMut[T](PyoMutableSet[T]):
         Args:
             data (Iterable[T] | T): Initial elements to populate the set with. Defaults to `()`.
             *more (T): Additional elements to add to the set.
+
+        Returns:
+            Self: A new `SetMut` instance.
 
         Example:
             ```python

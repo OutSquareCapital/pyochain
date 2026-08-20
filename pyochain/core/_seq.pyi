@@ -37,7 +37,7 @@ class Seq[T](PyoSequence[T]):
         Passing a `tuple` or another `Seq` will not copy the underlying data.
 
         Args:
-            data (Iterable[T] | T | None): Initial data to populate the `Seq` with. Defaults to `()`.
+            data (Iterable[T] | T): Initial data to populate the `Seq` with. Defaults to `()`.
             *more (T): Additional elements to include in the `Seq`.
 
         Returns:

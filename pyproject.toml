@@ -60,8 +60,8 @@ typeCheckingMode = "all"
 addopts = "--docflex --benchmark-skip"
 testpaths = ["README.md", "docs", "pyochain", "tests"]
 [tool.sdsort]
-behavior-order = ["classmethod", "instancemethod", "property", "staticmethod"]
-contract-order = ["abstract_override", "abstractmethod"]
-method-order = ["behavior", "contract", "visibility"]
+method-order = ["visibility", "behavior", "contract"]
 "sort-by-name" = true
-visibility-order = ["dunder", "private", "protected", "public"]
+visibility-order = ["dunder", "protected", "private", "public"]
+behavior-order = ["classmethod", "staticmethod", "property", "instancemethod"]
+contract-order = ["abstractmethod", "abstract_override"]
