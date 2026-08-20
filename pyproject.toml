@@ -1,68 +1,67 @@
 [project]
-    description     = "Method chaining for iterables and dictionaries in Python."
-    name            = "pyochain"
-    readme          = "README.md"
-    requires-python = ">=3.13"
-    version         = "0.27.0"
+description = "Method chaining for iterables and dictionaries in Python."
+name = "pyochain"
+readme = "README.md"
+requires-python = ">=3.13"
+version = "0.27.0"
 
-    dependencies = []
+dependencies = []
 
-    classifiers = ["License :: OSI Approved :: MIT License"]
-
+classifiers = ["License :: OSI Approved :: MIT License"]
 
 [dependency-groups]
-    dev = [
-        "basedpyright>=1.39.9",
-        "maturin>=1.14.1",
-        "mkdocstrings-python>=2.0.5",
-        "pydoclint>=0.9.1",
-        "pytest-benchmark>=5.2.3",
-        "pytest-cov>=7.0.0",
-        "pytest-docflex",
-        "pytest>=9.1.1",
-        "rich>=15.0.0",
-        "ruff>=0.16.1",
-        "sdsort",
-        "toml>=0.10.2",
-        "zensical>=0.0.53",
+dev = [
+    "basedpyright>=1.39.9",
+    "maturin>=1.14.1",
+    "mkdocstrings-python>=2.0.5",
+    "pydoclint>=0.9.1",
+    "pytest-benchmark>=5.2.3",
+    "pytest-cov>=7.0.0",
+    "pytest-docflex",
+    "pytest>=9.1.1",
+    "rich>=15.0.0",
+    "ruff>=0.16.1",
+    "sdsort",
+    "toml>=0.10.2",
+    "zensical>=0.0.53",
 ]
 [tool.pydoclint]
-    arg-type-hints-in-docstring                   = true
-    arg-type-hints-in-signature                   = true
-    check-class-attributes                        = true
-    check-raises                                  = true
-    check-return-types                            = true
-    check-yield                                   = true
-    require-arg-section                           = true
-    require-return-section                        = true
-    require-return-section-when-returning-nothing = false
-    skip-checking-short-docstrings                = true
-    style                                         = "google"
-    require-inline-class-var-docs = true
+arg-type-hints-in-docstring = true
+arg-type-hints-in-signature = true
+check-class-attributes = true
+check-raises = true
+check-return-types = true
+check-yield = true
+require-arg-section = true
+require-inline-class-var-docs = true
+require-return-section = true
+require-return-section-when-returning-nothing = false
+skip-checking-short-docstrings = true
+style = "google"
 
 [tool.uv.sources]
-    pytest-docflex = { git = "https://github.com/OutSquareCapital/pytest-docflex.git" }
-    sdsort = { git = "https://github.com/OutSquareCapital/sdsort.git", branch = "decorators-kind" }
+pytest-docflex = { git = "https://github.com/OutSquareCapital/pytest-docflex.git" }
+sdsort = { git = "https://github.com/OutSquareCapital/sdsort.git", branch = "decorators-kind" }
 
 [build-system]
-    build-backend = "maturin"
-    requires      = ["maturin>=1.8,<2.0"]
+build-backend = "maturin"
+requires = ["maturin>=1.8,<2.0"]
 
 [tool.maturin]
-    manifest-path = "Cargo.toml"
-    module-name   = "pyochain"
-    editable-profile = "dev"
+editable-profile = "dev"
+manifest-path = "Cargo.toml"
+module-name = "pyochain"
 [tool.basedpyright]
-    reportExplicitAny      = false # As a library we have no choice but to use `Any` in some places, so we disable this check.
-    reportImportCycles     = false
-    reportMissingSuperCall = false
-    typeCheckingMode       = "all"
+reportExplicitAny = false
+reportImportCycles = false
+reportMissingSuperCall = false
+typeCheckingMode = "all"
 [tool.pytest.ini_options]
-    addopts   = "--docflex --benchmark-skip"
-    testpaths = ["README.md", "docs", "pyochain", "tests"]
+addopts = "--docflex --benchmark-skip"
+testpaths = ["README.md", "docs", "pyochain", "tests"]
 [tool.sdsort]
-    method-order = ["visibility", "behavior", "contract"]
-    "sort-by-name" = true
-    visibility-order = ["dunder", "protected", "private", "public"]
-    behavior-order = ["classmethod", "staticmethod", "property", "instancemethod"]
-    contract-order = ["abstractmethod", "abstract_override"]
+behavior-order = ["classmethod", "instancemethod", "property", "staticmethod"]
+contract-order = ["abstract_override", "abstractmethod"]
+method-order = ["behavior", "contract", "visibility"]
+"sort-by-name" = true
+visibility-order = ["dunder", "private", "protected", "public"]
