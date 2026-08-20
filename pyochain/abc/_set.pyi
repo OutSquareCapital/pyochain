@@ -122,10 +122,10 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```python
             from pyochain import Set
 
-            assert Set((1, 2)).is_subset({1, 2, 3})  # All elements present
+            assert Set(1, 2).is_subset({1, 2, 3})  # All elements present
 
-            assert Set((1, 2)).is_subset({1, 2})  # Also True: they're equal
-            assert not Set((1, 4)).is_subset({1, 2, 3})  # 4 is not in the other set
+            assert Set(1, 2).is_subset({1, 2})  # Also True: they're equal
+            assert not Set(1, 4).is_subset({1, 2, 3})  # 4 is not in the other set
             ```
         """
 
@@ -150,9 +150,9 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```python
             from pyochain import Set
 
-            assert Set((1, 2)).is_subset_strict({1, 2, 3})  # Proper subset
-            assert not Set((1, 2)).is_subset_strict({1, 2})  # Equal, not proper
-            assert not Set((1, 4)).is_subset_strict({1, 2, 3})  # 4 not contained
+            assert Set(1, 2).is_subset_strict({1, 2, 3})  # Proper subset
+            assert not Set(1, 2).is_subset_strict({1, 2})  # Equal, not proper
+            assert not Set(1, 4).is_subset_strict({1, 2, 3})  # 4 not contained
             ```
         """
 
@@ -173,9 +173,9 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```python
             from pyochain import Set
 
-            assert Set((1, 2)).eq({2, 1})  # Same elements, different order
-            assert not Set((1, 2)).eq({1, 2, 3})  # Different number of elements
-            assert Set((1, 2)).eq({1, 2})  # Identical
+            assert Set(1, 2).eq({2, 1})  # Same elements, different order
+            assert not Set(1, 2).eq({1, 2, 3})  # Different number of elements
+            assert Set(1, 2).eq({1, 2})  # Identical
             ```
         """
 
@@ -202,9 +202,9 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```python
             from pyochain import Set
 
-            assert Set((1, 2, 3)).is_superset({1, 2})  # Contains all
-            assert Set((1, 2)).is_superset({1, 2})  # Also True: they're equal
-            assert not Set((1, 2)).is_superset({1, 2, 3})  # Missing element 3
+            assert Set(1, 2, 3).is_superset({1, 2})  # Contains all
+            assert Set(1, 2).is_superset({1, 2})  # Also True: they're equal
+            assert not Set(1, 2).is_superset({1, 2, 3})  # Missing element 3
             ```
         """
 
@@ -229,9 +229,9 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```python
             from pyochain import Set
 
-            assert Set((1, 2, 3)).is_superset_strict({1, 2})  # Proper superset
-            assert not Set((1, 2)).is_superset_strict({1, 2})  # Equal, not proper
-            assert not Set((1, 2)).is_superset_strict({1, 2, 3})  # Missing element 3
+            assert Set(1, 2, 3).is_superset_strict({1, 2})  # Proper superset
+            assert not Set(1, 2).is_superset_strict({1, 2})  # Equal, not proper
+            assert not Set(1, 2).is_superset_strict({1, 2, 3})  # Missing element 3
             ```
         """
 
@@ -254,9 +254,9 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```python
             from pyochain import Set
 
-            assert Set((1, 2)).is_disjoint((3, 4))  # No overlap
-            assert not Set((1, 2)).is_disjoint((2, 3))  # Share element 2
-            assert not Set((1, 2)).is_disjoint((1, 2))  # Identical sets
+            assert Set(1, 2).is_disjoint((3, 4))  # No overlap
+            assert not Set(1, 2).is_disjoint((2, 3))  # Share element 2
+            assert not Set(1, 2).is_disjoint((1, 2))  # Identical sets
             ```
         """
 
@@ -279,9 +279,9 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```python
             from pyochain import Set, Dict, Vec
 
-            from_set = Set((1, 2))
-            assert from_set.intersection({2, 3}) == Set((2,))
-            assert from_set.intersection({3, 4}) == Set(())
+            from_set = Set(1, 2)
+            assert from_set.intersection({2, 3}) == Set(2)
+            assert from_set.intersection({3, 4}) == Set()
             dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
             from_keys = dct.keys().intersection({"b", "c", "d"}).iter().sort()
             assert from_keys == Vec("b", "c")
@@ -309,7 +309,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```python
             from pyochain import Set, Dict, Vec
 
-            x = Set((1, 2)).union({2, 3}).union({4}).iter().sort()
+            x = Set(1, 2).union({2, 3}).union({4}).iter().sort()
             assert x == Vec(1, 2, 3, 4)
             dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
             from_keys = dct.keys().union({"b", "c", "d"}).iter().sort()
@@ -336,9 +336,9 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```python
             from pyochain import Set, Dict, Vec
 
-            x = Set((1, 2)).difference({2, 3})
-            assert x == Set([1])
-            y = Set((1, 2)).difference({3, 4}).iter().sort()
+            x = Set(1, 2).difference({2, 3})
+            assert x == Set(1)
+            y = Set(1, 2).difference({3, 4}).iter().sort()
             assert y == Vec(1, 2)
             dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
             from_keys = dct.keys().difference({"b", "c", "d"}).iter().sort()
@@ -371,9 +371,9 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```python
             from pyochain import Set, Dict, Vec
 
-            x = Set((1, 2)).symmetric_difference({2, 3}).iter().sort()
+            x = Set(1, 2).symmetric_difference({2, 3}).iter().sort()
             assert x == Vec(1, 3)
-            y = Set((1, 2, 3)).symmetric_difference({3, 4, 5}).iter().sort()
+            y = Set(1, 2, 3).symmetric_difference({3, 4, 5}).iter().sort()
             assert y == Vec(1, 2, 4, 5)
             dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
             from_keys = dct.keys().symmetric_difference({"b", "c", "d"}).iter().sort()

@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Iterator
 from collections.abc import Set as AbstractSet
-from typing import Self, override
+from typing import Self, overload, override
 
 from pyochain.abc import PyoMutableSet, PyoSet
 
@@ -18,30 +18,56 @@ class Set[T](PyoSet[T]):
     Tip:
         - `Set(frozenset)` is a no-copy operation since Python optimizes this under the hood.
         - If you have an existing `set`, consider using [`SetMut::from_ref`][SetMut.from_ref] to avoid unnecessary copying.
-
-    Args:
-        data (Iterable[T]): Any `Iterable` of elements to initialize the set with.
-
-    Example:
-        ```python
-        from pyochain import Set, Iter
-
-        assert repr(Set(())) == "Set()"
-        s = Set((1, 2, 2, 3))
-        assert s == Set((1, 2, 3))
-        # If you already have a `frozenset`, you can use it directly without copying:
-        fs = frozenset((1, 2, 3))
-        s2 = Set(fs)
-        assert s2 == Set((1, 2, 3))
-        is_same = (
-            s2.iter().find(lambda x: x == 1).unwrap()
-            is Iter(fs).find(lambda x: x == 1).unwrap()
-        )
-        assert is_same
-        ```
     """
+    @overload
+    def __new__(cls, data: Iterable[T], /) -> Self: ...
+    @overload
+    def __new__(cls, data: T, *more: T) -> Self: ...
+    @overload
+    def __new__(cls, data: None = None) -> Self: ...
+    def __new__(cls, data: Iterable[T] | T | None = None, *more: T) -> Self:
+        """Create a new `Set` instance.
 
-    def __init__(self, data: Iterable[T]) -> None: ...
+        If `data` is:
+        - an `Iterable`, the `Set` will be initialized with its elements.
+        - a single, non-iterable element of type `T`, the `Set` will contain just that element.
+        - `None`, the `Set` will be empty.
+
+        Additional elements can be added using the `*more` argument.
+
+        Args:
+            data (Iterable[T] | T | None): Any `Iterable` of elements to initialize the set with, a single element of type `T`, or `None`.
+            *more (T): Additional elements to add to the set.
+
+        Example:
+            ```python
+            from pyochain import Set, Iter, Range
+
+            data = (0, 1, 2, 3)
+
+            # Create a `Set` from an iterable
+            assert Set(data) == Set(Range(0, 4)) == frozenset(data)
+
+            # Create a `Set` from a single, non-iterable element
+            assert Set(1) == Set((1,)) == Set([1]) == frozenset([1])
+
+            # Create a `Set` from multiple elements
+            assert Set(0, 1, 2, 3) == Set(data)
+
+            # Create an empty `Set`
+            assert Set() == Set([]) == Set(()) == Set(None) == frozenset()
+            assert repr(Set()) == "Set()"
+
+            # If you already have a `frozenset`, you can use it directly without copying:
+            fs = frozenset(data)
+            s2 = Set(fs)
+            assert s2 == Set(data)
+            find_one: Callable[[object], bool] = lambda x: x == 0
+            a = s2.iter().find(find_one).unwrap()
+            b = Iter(fs).find(find_one).unwrap()
+            assert a is b
+            ```
+        """
     @override
     def __contains__(self, item: object) -> bool: ...
     @override
@@ -63,10 +89,10 @@ class Set[T](PyoSet[T]):
             ```python
             from pyochain import Set
 
-            s1 = Set((1, 2, 3))
-            s2 = Set((2, 3, 4))
+            s1 = Set(1, 2, 3)
+            s2 = Set(2, 3, 4)
             s3 = s1 & s2
-            assert s3 == Set((2, 3))
+            assert s3 == Set(2, 3)
             ```
         """
 
@@ -85,10 +111,10 @@ class Set[T](PyoSet[T]):
             ```python
             from pyochain import Set
 
-            s1 = Set((1, 2, 3))
-            s2 = Set((3, 4, 5))
+            s1 = Set(1, 2, 3)
+            s2 = Set(3, 4, 5)
             s3 = s1 | s2
-            assert s3 == Set((1, 2, 3, 4, 5))
+            assert s3 == Set(1, 2, 3, 4, 5)
             ```
         """
 
@@ -107,10 +133,10 @@ class Set[T](PyoSet[T]):
             ```python
             from pyochain import Set
 
-            s1 = Set((1, 2, 3))
-            s2 = Set((2, 3, 4))
+            s1 = Set(1, 2, 3)
+            s2 = Set(2, 3, 4)
             s3 = s1 - s2
-            assert s3 == Set([1])
+            assert s3 == Set(1)
             ```
 
         """
@@ -130,10 +156,10 @@ class Set[T](PyoSet[T]):
             ```python
             from pyochain import Set
 
-            s1 = Set((1, 2, 3))
-            s2 = Set((2, 3, 4))
+            s1 = Set(1, 2, 3)
+            s2 = Set(2, 3, 4)
             s3 = s1 ^ s2
-            assert s3 == Set((1, 4))
+            assert s3 == Set(1, 4)
             ```
         """
 
@@ -151,8 +177,8 @@ class Set[T](PyoSet[T]):
             ```python
             from pyochain import Set
 
-            s1 = Set((1, 2))
-            s2 = Set((1, 2, 3))
+            s1 = Set(1, 2)
+            s2 = Set(1, 2, 3)
             assert s1 <= s2
             assert not s2 <= s1
             ```
@@ -171,8 +197,8 @@ class Set[T](PyoSet[T]):
             ```python
             from pyochain import Set
 
-            s1 = Set((1, 2))
-            s2 = Set((1, 2, 3))
+            s1 = Set(1, 2)
+            s2 = Set(1, 2, 3)
             assert s1 < s2
             assert not s2 < s1
             ```
@@ -192,8 +218,8 @@ class Set[T](PyoSet[T]):
             ```python
             from pyochain import Set
 
-            s1 = Set((1, 2, 3))
-            s2 = Set((1, 2))
+            s1 = Set(1, 2, 3)
+            s2 = Set(1, 2)
             assert s1 >= s2
             assert not s2 >= s1
             ```
@@ -213,8 +239,8 @@ class Set[T](PyoSet[T]):
             ```python
             from pyochain import Set
 
-            s1 = Set((1, 2, 3))
-            s2 = Set((1, 2))
+            s1 = Set(1, 2, 3)
+            s2 = Set(1, 2)
             assert s1 > s2
             assert not s2 > s1
             ```
@@ -260,7 +286,13 @@ class SetMut[T](PyoMutableSet[T]):
     Args:
         data (Iterable[T]): Any `Iterable` of elements to initialize the set with.
     """
-    def __init__(self, data: Iterable[T]) -> None: ...
+    @overload
+    def __new__(cls, data: Iterable[T], /) -> Self: ...
+    @overload
+    def __new__(cls, data: T, *more: T) -> Self: ...
+    @overload
+    def __new__(cls, data: None = None) -> Self: ...
+    def __new__(cls, data: Iterable[T] | T | None = None) -> Self: ...
     @override
     def __iter__(self) -> Iterator[T]: ...
     @override
@@ -292,10 +324,10 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s1 = SetMut((1, 2, 3))
-            s2 = SetMut((3, 4, 5))
+            s1 = SetMut(1, 2, 3)
+            s2 = SetMut(3, 4, 5)
             s3 = s1 | s2
-            assert s3 == SetMut((1, 2, 3, 4, 5))
+            assert s3 == SetMut(1, 2, 3, 4, 5)
             ```
         """
     @override
@@ -312,10 +344,10 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s1 = SetMut((1, 2, 3))
-            s2 = SetMut((3, 4, 5))
+            s1 = SetMut(1, 2, 3)
+            s2 = SetMut(3, 4, 5)
             s1 |= s2
-            assert s1 == SetMut((1, 2, 3, 4, 5))
+            assert s1 == SetMut(1, 2, 3, 4, 5)
             ```
         """
 
@@ -334,10 +366,10 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s1 = SetMut((1, 2, 3))
-            s2 = SetMut((2, 3, 4))
+            s1 = SetMut(1, 2, 3)
+            s2 = SetMut(2, 3, 4)
             s3 = s1 - s2
-            assert s3 == SetMut([1])
+            assert s3 == SetMut(1)
             ```
         """
 
@@ -355,10 +387,10 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s1 = SetMut((1, 2, 3))
-            s2 = SetMut((2, 3, 4))
+            s1 = SetMut(1, 2, 3)
+            s2 = SetMut(2, 3, 4)
             s1 -= s2
-            assert s1 == SetMut([1])
+            assert s1 == SetMut(1)
             ```
         """
 
@@ -377,10 +409,10 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s1 = SetMut((1, 2, 3))
-            s2 = SetMut((3, 4, 5))
+            s1 = SetMut(1, 2, 3)
+            s2 = SetMut(3, 4, 5)
             s3 = s1 ^ s2
-            assert s3 == SetMut((1, 2, 4, 5))
+            assert s3 == SetMut(1, 2, 4, 5)
             ```
         """
 
@@ -398,10 +430,10 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s1 = SetMut((1, 2, 3))
-            s2 = SetMut((3, 4, 5))
+            s1 = SetMut(1, 2, 3)
+            s2 = SetMut(3, 4, 5)
             s1 ^= s2
-            assert s1 == SetMut((1, 2, 4, 5))
+            assert s1 == SetMut(1, 2, 4, 5)
             ```
         """
 
@@ -419,8 +451,8 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s1 = SetMut((1, 2))
-            s2 = SetMut((1, 2, 3))
+            s1 = SetMut(1, 2)
+            s2 = SetMut(1, 2, 3)
             assert s1 <= s2
             assert not s2 <= s1
             ```
@@ -440,8 +472,8 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s1 = SetMut((1, 2))
-            s2 = SetMut((1, 2, 3))
+            s1 = SetMut(1, 2)
+            s2 = SetMut(1, 2, 3)
             assert s1 < s2
             assert not s2 < s1
             ```
@@ -461,8 +493,8 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s1 = SetMut((1, 2, 3))
-            s2 = SetMut((1, 2))
+            s1 = SetMut(1, 2, 3)
+            s2 = SetMut(1, 2)
             assert s1 >= s2
             assert not s2 >= s1
             ```
@@ -482,8 +514,8 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s1 = SetMut((1, 2, 3))
-            s2 = SetMut((1, 2))
+            s1 = SetMut(1, 2, 3)
+            s2 = SetMut(1, 2)
             assert s1 > s2
             assert not s2 > s1
             ```
@@ -512,9 +544,9 @@ class SetMut[T](PyoMutableSet[T]):
 
             original_set = {1, 2, 3}
             set_obj = SetMut.from_ref(original_set)
-            assert set_obj == SetMut((1, 2, 3))
+            assert set_obj == SetMut(1, 2, 3)
             original_set.add(4)
-            assert set_obj == SetMut((1, 2, 3, 4))
+            assert set_obj == SetMut(1, 2, 3, 4)
             ```
         """
 
@@ -529,7 +561,7 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut, Vec
 
-            s = SetMut(("a", "b"))
+            s = SetMut("a", "b")
             s.add("c")
             assert s.iter().sort() == Vec("a", "b", "c")
             ```
@@ -545,7 +577,7 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut
 
-            s = SetMut(("a", "b"))
+            s = SetMut("a", "b")
             s_copy = s.copy()
             s_copy.add("c")
             assert not "c" in s
@@ -566,7 +598,7 @@ class SetMut[T](PyoMutableSet[T]):
             ```python
             from pyochain import SetMut, Vec
 
-            s = SetMut(("a", "b", "c"))
+            s = SetMut("a", "b", "c")
             s.discard("b")
             assert s.iter().sort() == Vec("a", "c")
             ```

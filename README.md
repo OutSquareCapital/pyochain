@@ -216,7 +216,7 @@ assert (
     == "No values"
 )
 # Create empty Set, convert to Result, then back to Option
-assert Set(()).then(_process).ok_or("No values").ok() is NONE
+assert Set().then(_process).ok_or("No values").ok() is NONE
 ```
 
 #### Type safe exhaustive handling with pattern matching

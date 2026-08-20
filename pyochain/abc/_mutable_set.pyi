@@ -34,7 +34,7 @@ class PyoMutableSet[T](PyoSet[T], MutableSet[T]):  # pyright: ignore[reportImpli
             ```python
             from pyochain import SetMut
 
-            s = SetMut((1, 2, 3))
+            s = SetMut(1, 2, 3)
             s.clear()
             assert s.len() == 0
             ```
