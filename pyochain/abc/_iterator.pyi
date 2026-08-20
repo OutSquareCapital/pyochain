@@ -207,8 +207,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def once[V](cls, value: V) -> PyoIterator[V]:
         """Create an `Iterator` that yields a single value.
 
-        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
-
+        It's a bit more performant compared to `Iter(value)`, since this bypass the runtime checks in its constructor.
 
         Args:
             value (V): The single value to yield.
@@ -572,7 +571,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             from pyochain import Iter, Seq
 
             assert Iter("abcdefghabcd").arg_max() == 7
-            assert Iter((0, 1, 2, 3, 3, 2, 1, 0)).arg_max() == 3
+            assert Iter(0, 1, 2, 3, 3, 2, 1, 0).arg_max() == 3
             ```
             Identify the best machine learning model:
             ```python
@@ -1074,7 +1073,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Iter
 
-            data = Iter((1, 2, 3))
+            data = Iter(1, 2, 3)
             assert data.count() == 3
             # data is now empty
             assert data.count() == 0
@@ -2151,7 +2150,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Iter
 
-            assert Iter((1, 2, 3, 4, 5)).is_sorted()
+            assert Iter(1, 2, 3, 4, 5).is_sorted()
             ```
             If strict, tests for strict sorting, that is, returns False if equal elements are found:
             ```python
@@ -2219,7 +2218,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Iter
 
-            assert Iter(("a", "b", "c")).join("-") == "a-b-c"
+            assert Iter("a", "b", "c").join("-") == "a-b-c"
             ```
         """
 
@@ -3846,7 +3845,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             assert Range(1, 5).iter().map(external_fn).try_collect().is_none()
             # Demonstrating that the iterator remains usable after a failure:
-            it = Iter((Some(1), NONE, Some(3), Some(4)))
+            it = Iter(Some(1), NONE, Some(3), Some(4))
             assert it.try_collect().is_none()
             assert it.try_collect().unwrap() == Vec(3, 4)
             ```
@@ -3930,10 +3929,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                     return Ok("success")
                 return Err(f"Value {n} is not positive")
 
-            assert Iter((1, 2, 3, 4, 5)).try_for_each(validate_positive).is_ok()
+            assert Iter(1, 2, 3, 4, 5).try_for_each(validate_positive).is_ok()
 
             # Short-circuit on first error:
-            error = Iter((1, 2, -1, 4)).try_for_each(validate_positive).unwrap_err()
+            error = Iter(1, 2, -1, 4).try_for_each(validate_positive).unwrap_err()
             assert error == "Value -1 is not positive"
             ```
         """

@@ -12,7 +12,8 @@ use pyo3::{
     prelude::*,
     types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple},
 };
-use pyo3_ext::prelude::*;
+use pyo3_ext::{prelude::*, types::PyIterable};
+use pyochain_macros::try_cast_into;
 use tap::prelude::*;
 //TODO: the double collect in `Vec` => `PyTuple` is a performance tax on large Vecs of funcs. Need to optimize.
 #[pyclass(module = "pyochain._iterators")]
@@ -885,10 +886,21 @@ impl Iter {
 }
 #[pymethods]
 impl Iter {
+    #[pyo3(signature = (*elements))]
     #[new]
-    fn py_new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
-        abc::PyoIterator::build_init()
-            .add_subclass(Self(data.try_iter()?.unbind()))
+    fn py_new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
+        let iterator = match elements.len() {
+            1 => try_cast_into! {match { unsafe { elements.get_item_unchecked(0) } } {
+                Case::PyIterator(iterator) => iterator,
+                Case::PyIterable(iterable) => iterable.try_iter()?,
+                any => PyTuple::new(elements.py(), [any])?.try_iter().unwrap(),
+            }},
+            _ => elements.try_iter().unwrap(),
+        };
+        iterator
+            .unbind()
+            .pipe(Self)
+            .pipe(|slf| abc::PyoIterator::build_init().add_subclass(slf))
             .pipe(Ok)
     }
 

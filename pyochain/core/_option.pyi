@@ -733,17 +733,18 @@ class OptionType[T](Pipe):
         - If the option is `Some(value)`, the iterator yields `value`.
         - If the option is `NONE`, the iterator yields nothing.
 
-        Equivalent to `Iter((self,))`.
+        Equivalent to `Iter(self.unwrap())` if `Some`, or `Iter()` if `NONE`.
 
         Returns:
             PyoIterator[T]: An `Iterator` over the optional value.
 
         Example:
             ```python
-            from pyochain import Some, NONE
+            from pyochain import Some, NONE, Iter
 
             assert Some(42).iter().next() == Some(42)
             assert NONE.iter().next().is_none()
+            assert Iter(42).next() == Some(42).iter().next()
             ```
         """
 

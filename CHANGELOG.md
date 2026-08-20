@@ -4,7 +4,7 @@
 
 ### 🆕 New features
 
-- `Vec`, `Seq` and `Deque` now have flexible constructors: instantiate with no arguments, variable number of positional elements, or a single iterable. For example, `Vec(1, 2, 3)` or `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()`, `Vec(None)` or `Vec([])` will create an empty `Vec`. Same for `Seq` and `Deque`. The latter has its `max_length` argument become keyword-only.
+- `Vec`, `Seq` and `Deque` now have flexible constructors: instantiate with no arguments, variable number of positional elements, or a single iterable. For example, `Vec(1, 2, 3)` or `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()` or `Vec([])` will create an empty `Vec`. Same for `Seq`, `Iter`, and `Deque`. The latter has its `max_length` argument become keyword-only.
 
 ## [0.27.0] - 2026-08-19
 
@@ -389,7 +389,7 @@ generator comprehension, i.e `(x for x in iterable)` | **0.9** to **0.95x** (i.e
 ### 💥 Breaking changes
 
 - **API change**: `pyochain::traits` module is now `pyochain::abc`. If you were importing from `pyochain.traits`, update your imports to `pyochain.abc` instead.
-- **Removed**: `PyoIterable::new`. Call `__init__(())` for the same behavior, e.g `Seq()`, `Iter(())`, etc...
+- **Removed**: `PyoIterable::new`. Call `__init__(())` for the same behavior, e.g `Seq()`, `Iter()`, etc...
 - **Removed**: `Unzipped` and `Peekable` dataclasses. The `Iter` methods who constructed them now simply return tuples instead, simplifying the API and improving speed.
 - **API change**: `Iter::sort` (now in base class `PyoIterator`) has been split into `Iter::sort` and `Iter::sort_by`. If you were using `Iter::sort(key=...)`, you should now use `Iter::sort_by(key=...)` instead. This should bring typing improvements as well as a clearer API.
 - **API change**: `PyoIterable::__init__` is deleted. This means that subclasses are free to implement their own constructors, without typing constraints nor default behavior.

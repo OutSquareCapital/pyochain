@@ -15,10 +15,7 @@ class Iter[T](PyoIterator[T]):
     Tip:
         `Iter::__iter__()` returns the underlying wrapped `Iterator`, hence native speed is kept.
 
-        i.e `Iter([...]).map(f).collect(list)` is as fast as `list(map(f, [...]))`.
-
-    Args:
-        data (Iterable[T]): Any object that can be iterated over.
+        i.e `Iter(...).map(f).collect(list)` is as fast as `list(map(f, [...]))`.
 
     See Also:
         [`abc::PyoIterator`][PyoIterator]: The abstract base class that `Iter` implements.
@@ -29,7 +26,7 @@ class Iter[T](PyoIterator[T]):
 
         data = (0, 1, 2, 3, 4)
 
-        assert Iter(data).collect(Seq) == Seq(0, 1, 2, 3, 4)
+        assert Iter(data).collect(Seq) == Seq(data)
         iterator = Iter(data)
 
         # First we have a tuple iterator
@@ -45,26 +42,50 @@ class Iter[T](PyoIterator[T]):
         # iterator is now exhausted
         assert iterator.collect(Seq) == Seq()
         ```
-        You can also easily create an `Iter` from a generator expression:
-        ```python
-        from pyochain import Iter, Seq
-
-        gen_expr = (x * x for x in range(5))
-        assert Iter(gen_expr).collect(Seq) == Seq(0, 1, 4, 9, 16)
-        ```
-        Or from a generator function:
-        ```python
-        from pyochain import Iter
-
-        def gen_func():
-            for x in range(5):
-                yield x * x
-
-        assert Iter(gen_func()).collect(Seq) == Seq(0, 1, 4, 9, 16)
-        ```
     """
 
-    def __init__(self, data: Iterable[T]) -> None: ...
+    def __new__(cls, data: Iterable[T] | T = (), /, *more: T) -> Self:
+        """Create a new `Iter` instance.
+
+        If no arguments are provided, an empty `Iterator` is created.
+
+        Args:
+            data (Iterable[T] | T): Input data to create the `Iter` instance from.
+            *more (T): Additional elements to yield from the iterator.
+
+        Example:
+            ```python
+            from pyochain import Iter, Range
+
+            data = (0, 1, 2, 3)
+
+            # Create an `Iter` from an iterable
+            assert Iter(data).collect(tuple) == Iter(Range(0, 4)).collect(tuple) == data
+
+            # Create an `Iter` from individual elements
+            assert Iter(0, 1, 2, 3).collect(tuple) == Iter(*data).collect(tuple) == data
+
+            # Create an empty `Iter`
+            assert 0 == Iter().count() == Iter(()).count() == Iter([]).count()
+            ```
+            You can also easily create an `Iter` from a generator expression:
+            ```python
+            from pyochain import Iter, Seq
+
+            gen_expr = (x * x for x in range(5))
+            assert Iter(gen_expr).collect(Seq) == Seq(0, 1, 4, 9, 16)
+            ```
+            Or from a generator function:
+            ```python
+            from pyochain import Iter
+
+            def gen_func():
+                for x in range(5):
+                    yield x * x
+
+            assert Iter(gen_func()).collect(Seq) == Seq(0, 1, 4, 9, 16)
+            ```
+        """
     @override
     def __iter__(self) -> Iterator[T]: ...
     @override
