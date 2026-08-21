@@ -129,7 +129,7 @@ fn get_matching_stubs(
     stub_root: &paths::Related,
 ) -> Result<Vec<Stub>, std::io::Error> {
     stub_root
-        .iter_on_extension("pyi")
+        .iter()
         .filter(|path| path.file_stem().and_then(|stem| stem.to_str()) != Some("__init__"))
         .filter_map(|path| {
             path.pipe_ref(fs::read_to_string)

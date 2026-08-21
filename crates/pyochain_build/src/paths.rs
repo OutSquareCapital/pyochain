@@ -21,26 +21,29 @@ impl Normalized {
 pub(super) struct Related {
     parent: PathBuf,
     pub child: PathBuf,
+    extension: String,
 }
 impl Related {
-    pub(super) fn new(path: PathBuf, child: &str) -> Self {
-        let child = path.join(child);
+    pub(super) fn new(parent: PathBuf, child: &str, extension: &str) -> Self {
+        let child = parent.join(child);
         Self {
-            parent: path,
+            parent,
             child,
+            extension: extension.to_string(),
         }
     }
     pub(super) fn display(&self) -> Display<'_> {
         self.parent.display()
     }
 
-    pub(super) fn iter_on_extension(&self, extension: &str) -> impl Iterator<Item = PathBuf> {
+    pub(super) fn iter(&self) -> impl Iterator<Item = PathBuf> {
         WalkDir::new(&self.parent)
             .into_iter()
             .map(|file| file.expect("Failed to read file entry"))
             .filter(|entry| entry.file_type().is_file())
             .filter(|entry| {
-                entry.path().extension().and_then(|value| value.to_str()) == Some(extension)
+                entry.path().extension().and_then(|value| value.to_str())
+                    == Some(self.extension.as_str())
             })
             .map(|entry| entry.into_path())
     }

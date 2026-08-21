@@ -19,7 +19,7 @@ pub(super) fn run(
         .unwrap()
         .pipe(RegisteredClassVisitor::visit)
         .pipe(|registered_classes| {
-            src.iter_on_extension("rs")
+            src.iter()
                 .flat_map(|path: PathBuf| {
                     path.pipe_ref(fs::read_to_string)
                         .expect("Failed to read source file")
@@ -38,8 +38,8 @@ pub(super) fn run(
         .pipe_ref(fs::read_to_string)?
         .parse::<toml::Table>()?
         .pipe(get_nav_paths);
-    let known_paths = docs
-        .iter_on_extension("md")
+    let ref_paths = docs
+        .iter()
         .map(|path| {
             docs.make_relative(&path)
                 .0
@@ -51,7 +51,7 @@ pub(super) fn run(
     let error_count = pyclasses
         .iter()
         .map(|pyclass| pyclass.check(&stubs, &docs.child, &nav_paths))
-        .chain(nav_paths.difference(&known_paths).map(|path| {
+        .chain(nav_paths.difference(&ref_paths).map(|path| {
             Err(format!(
                 "invalid path in navigation\nNavigation path: {path}"
             ))
