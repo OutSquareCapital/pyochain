@@ -6,7 +6,7 @@ Thank you for your interest in contributing to pyochain! This document outlines 
 
 ### Python API and typing
 
-- [pyochain/](pyochain/) — runtime package shim, public `.pyi` stubs, and typing metadata.
+- [pyochain/](pyochain/) — all stubs
 - [pyochain/_types.pyi](pyochain/_types.pyi) — shared typing protocols and type aliases; it has no direct Rust module.
 - [pyochain/pyochain.pyi](pyochain/pyochain.pyi) — top-level public re-exports for the extension initialized by [src/lib.rs](src/lib.rs).
 - [pyochain/core/](pyochain/core/) — stubs for the core Rust types in [src/core/](src/core/).
