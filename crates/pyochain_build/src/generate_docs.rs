@@ -1,21 +1,44 @@
-use crate::paths::Root;
-use crate::stub_check::Reference;
-use crate::write;
-use std::{collections::HashSet, fs, path::Path};
-use tap::Pipe;
-use toml::{Table, Value};
+use crate::{
+    parse::{PyClass, RegisteredClassVisitor},
+    paths,
+};
+use owo_colors::OwoColorize;
+use std::{collections::HashSet, fs, path::PathBuf, process};
 
 use tap::prelude::*;
 
-pub(super) fn run(root: &Root, docs: Root, refs: Vec<Reference>) -> Result<&'static str, String> {
-    let docs_dir = docs
-        .join("reference")
-        .tap(|docs_ref| fs::create_dir_all(docs_ref).unwrap());
-    let generated = refs
-        .iter()
-        .map(|pyclass| handle_class(&docs_dir, pyclass))
-        .collect::<HashSet<_>>();
-    let pre_existing = docs
+pub(super) fn run(
+    root: paths::Related,
+    src: paths::Related,
+    docs: paths::Related,
+    stubs: paths::Related,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let pyclasses = src
+        .child
+        .pipe_ref(fs::read_to_string)
+        .unwrap()
+        .pipe(RegisteredClassVisitor::visit)
+        .pipe(|registered_classes| {
+            src.iter_on_extension("rs")
+                .flat_map(|path: PathBuf| {
+                    path.pipe_ref(fs::read_to_string)
+                        .expect("Failed to read source file")
+                        .pipe_ref(|source| syn::parse_file(source))
+                        .expect("Failed to parse source file")
+                        .items
+                        .into_iter()
+                        .filter_map(|item| PyClass::from_item(item, src.make_relative(&path)))
+                        .filter(|pyclass| registered_classes.contains(&pyclass.rust_name))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
+        });
+    let nav_paths = root
+        .child
+        .pipe_ref(fs::read_to_string)?
+        .parse::<toml::Table>()?
+        .pipe(get_nav_paths);
+    let known_paths = docs
         .iter_on_extension("md")
         .map(|path| {
             docs.make_relative(&path)
@@ -23,78 +46,95 @@ pub(super) fn run(root: &Root, docs: Root, refs: Vec<Reference>) -> Result<&'sta
                 .to_string_lossy()
                 .replace('\\', "/")
         })
+        .chain(pyclasses.iter().map(PyClass::document_path))
         .collect::<HashSet<_>>();
-    check_nav(root, generated, pre_existing)
+    let error_count = pyclasses
+        .iter()
+        .map(|pyclass| pyclass.check(&stubs, &docs.child, &nav_paths))
+        .chain(nav_paths.difference(&known_paths).map(|path| {
+            Err(format!(
+                "invalid path in navigation\nNavigation path: {path}"
+            ))
+        }))
+        .enumerate()
+        .try_fold(0, |error_count, (index, result)| match result {
+            Ok((path, content)) => {
+                anstream::eprintln!("{}", write_document(&root, path, content)?.cyan().bold());
+                Ok::<usize, Box<dyn std::error::Error>>(error_count)
+            }
+            Err(message) => {
+                anstream::eprintln!("\n{:>3}. {}", index + 1, message.red().bold());
+                Ok(error_count + 1)
+            }
+        })?;
+    finalize(error_count, pyclasses.len());
+    Ok(())
 }
-#[inline]
-fn handle_class(docs_ref: &Path, refs: &Reference) -> String {
-    let name = &refs.0;
-    let filename = format!("{}.md", name.to_lowercase());
-    let path = docs_ref.join(&filename);
-    let new_content = write::get_new_content(name, &refs.1);
-    write::Kind::new(&path, &new_content).maybe_write(&path, new_content);
-    format!("reference/{filename}")
-}
-fn check_nav(
-    root: &Root,
-    generated: HashSet<String>,
-    pre_existing: HashSet<String>,
-) -> Result<&'static str, String> {
-    let mut nav_paths = HashSet::new();
-    get_project(&root)
-        .pipe_ref(get_references)
-        .pipe(|references| collect_nav_paths(references, &mut nav_paths));
-    let missing_paths = generated.difference(&nav_paths).pipe(join_paths);
-    let invalid_nav_paths = nav_paths.difference(&pre_existing).pipe(join_paths);
-    match (missing_paths.is_empty(), invalid_nav_paths.is_empty()) {
-        (false, _) => Err(format!(
-            "⚠️  Missing paths in navigation:\n {missing_paths}"
-        )),
-        (_, false) => Err(format!(
-            "⚠️  Invalid paths in navigation:\n {invalid_nav_paths}"
-        )),
-        (true, true) => Ok("✓ Navigation is complete!"),
+fn finalize(error_count: usize, pyclasses_nb: usize) {
+    if error_count == 0 {
+        println!("{}", "✓ Navigation is complete!".green().bold());
+    } else {
+        anstream::eprintln!(
+            "{}: {} issue(s) found in {} pyclass declaration(s).",
+            "Documentation generation failed".red().bold(),
+            error_count.red().bold(),
+            pyclasses_nb.cyan(),
+        );
+        anstream::eprintln!("============================================================");
+        process::exit(1);
     }
 }
-fn get_project(root: &Root) -> toml::value::Table {
-    let project = root
-        .join("zensical.toml")
-        .pipe(fs::read_to_string)
-        .expect("Failed to read zensical.toml")
-        .parse::<toml::Table>()
-        .expect("Failed to parse zensical.toml")
-        .remove("project")
-        .expect("Failed to get `project` key from parsed file");
-    match project {
-        Value::Table(table) => table,
-        _ => panic!("Invalid zensical.toml: 'project' should be a table"),
-    }
+
+fn write_document(
+    root: &paths::Related,
+    path: PathBuf,
+    content: String,
+) -> Result<String, std::io::Error> {
+    let display_path = root.make_relative(&path).0.display();
+    let result = match path.exists() {
+        false => {
+            fs::write(&path, content)?;
+            format!("Generated {display_path} (new file)")
+        }
+        true if fs::read_to_string(&path)? == content => {
+            format!("Skipping {display_path} (no changes)")
+        }
+        true => {
+            fs::write(&path, content)?;
+            format!("Updating {display_path} (co§ntent changed)")
+        }
+    };
+    Ok(result)
 }
-fn get_references(project: &Table) -> &Value {
-    project
+
+fn get_nav_paths(parsed: toml::map::Map<String, toml::Value>) -> HashSet<String> {
+    let api_ref = parsed
+        .get("project")
+        .expect("Failed to get `project` key from parsed file")
+        .as_table()
+        .expect("Invalid zensical.toml: 'project' should be a table")
         .get("nav")
         .expect("Failed to get nav")
         .as_array()
         .expect("Failed to get nav as array")
         .iter()
         .find_map(|item| item.get("API reference"))
-        .expect("Failed to get API reference")
+        .expect("Failed to get API reference");
+    let mut paths = HashSet::new();
+    collect_nav_paths(api_ref, &mut paths);
+    paths
 }
-fn collect_nav_paths(value: &Value, paths: &mut HashSet<String>) {
+fn collect_nav_paths(value: &toml::Value, paths: &mut HashSet<String>) {
     match value {
-        Value::Table(table) => table
+        toml::Value::Table(table) => table
             .values()
             .for_each(|value| collect_nav_paths(value, paths)),
-        Value::Array(values) => values
+        toml::Value::Array(values) => values
             .iter()
             .for_each(|value| collect_nav_paths(value, paths)),
-        Value::String(path) => {
+        toml::Value::String(path) => {
             paths.insert(path.clone());
         }
         _ => {}
     }
-}
-
-fn join_paths<'a>(paths: impl Iterator<Item = &'a String>) -> String {
-    paths.map(String::as_str).collect::<Vec<_>>().join("\n")
 }

@@ -1,6 +1,8 @@
-use std::collections::HashSet;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashSet,
+    fs,
+    path::{Path, PathBuf},
+};
 use syn::{Expr, Item, Lit, Meta, spanned::Spanned, visit::Visit};
 use tap::Pipe;
 
@@ -15,7 +17,7 @@ pub(super) struct PyClass {
 }
 
 impl PyClass {
-    fn from_item(item: Item, relative: paths::Relative<'_>) -> Option<Self> {
+    pub fn from_item(item: Item, relative: paths::Relative<'_>) -> Option<Self> {
         let (attrs, ident, span) = get_infos_from_item(item)?;
         let name = get_name_from_attrs(attrs).unwrap_or_else(|| ident.to_string());
         Some(Self {
@@ -25,7 +27,67 @@ impl PyClass {
             python_name: name,
         })
     }
+
+    pub fn document_path(&self) -> String {
+        format!("reference/{}.md", self.python_name.to_lowercase())
+    }
+
+    pub fn check(
+        &self,
+        stub_root: &paths::Related,
+        docs_dir: &Path,
+        nav_paths: &HashSet<String>,
+    ) -> Result<(PathBuf, String), String> {
+        let stubs = get_matching_stubs(&self.python_name, stub_root)
+            .map_err(|error| format!("Failed to read stub files: {error}"))?;
+        let detail = match stubs.as_slice() {
+            [] => Err(format!(
+                "missing stub class declaration\nNo `.pyi` file under {} declares Python class `{}`.",
+                stub_root.display(),
+                self.python_name
+            )),
+            [stub] if self.path != stub.path => Err(format!(
+                "Rust source file does not match stub file\nStub location: {}:{}\nThe stub path must correspond to the Rust path, with optional prefixes.",
+                stub.path.display(),
+                stub.line
+            )),
+            [stub] => {
+                let path = self.document_path();
+                nav_paths
+                    .contains(&path)
+                    .then(|| {
+                        (
+                            docs_dir.join(path.trim_start_matches("reference/")),
+                            format!(
+                                "# {}\n\n::: {}.{}\n",
+                                self.python_name, stub.module, self.python_name
+                            ),
+                        )
+                    })
+                    .ok_or_else(|| format!("missing path in navigation\nExpected path: {path}"))
+            }
+            stubs => Err(format!(
+                "duplicate stub class declaration\nPython class `{}` is declared in more than one stub:\n{}",
+                self.python_name,
+                stubs
+                    .iter()
+                    .map(|stub| format!("Stub declaration: {}:{}", stub.path.display(), stub.line))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            )),
+        };
+        detail.map_err(|detail| {
+            format!(
+                "{detail}\nRust declaration: `{}`\nPython class: `{}`\nRust location: {}:{}",
+                self.rust_name,
+                self.python_name,
+                self.path.display(),
+                self.line
+            )
+        })
+    }
 }
+
 fn get_infos_from_item(item: Item) -> Option<(Vec<syn::Attribute>, syn::Ident, proc_macro2::Span)> {
     match item {
         Item::Struct(item) => {
@@ -56,42 +118,68 @@ fn get_name_from_attrs(attrs: Vec<syn::Attribute>) -> Option<String> {
         _ => None,
     })
 }
-
-pub(super) fn get_pyclasses(root: &paths::Root, lib_path: &str) -> Vec<PyClass> {
-    root.join(lib_path)
-        .pipe(fs::read_to_string)
-        .unwrap()
-        .pipe(RegisteredClassVisitor::visit)
-        .pipe(|registered_classes| {
-            root.iter_on_extension("rs")
-                .flat_map(|path: PathBuf| get_classes_from_file(&path, &registered_classes, root))
-                .collect::<Vec<_>>()
-        })
+struct Stub {
+    path: paths::Normalized,
+    module: String,
+    line: usize,
 }
 
-#[inline]
-fn get_classes_from_file(
-    path: &Path,
-    registered_classes: &HashSet<String>,
-    root: &paths::Root,
-) -> Vec<PyClass> {
-    path.pipe_ref(fs::read_to_string)
-        .expect("Failed to read source file")
-        .pipe_ref(|source| syn::parse_file(source))
-        .expect("Failed to parse source file")
-        .items
-        .into_iter()
-        .filter_map(|item| PyClass::from_item(item, root.make_relative(&path)))
-        .filter(|pyclass| registered_classes.contains(&pyclass.rust_name))
+fn get_matching_stubs(
+    python_name: &str,
+    stub_root: &paths::Related,
+) -> Result<Vec<Stub>, std::io::Error> {
+    stub_root
+        .iter_on_extension("pyi")
+        .filter(|path| path.file_stem().and_then(|stem| stem.to_str()) != Some("__init__"))
+        .filter_map(|path| {
+            path.pipe_ref(fs::read_to_string)
+                .map(|source| {
+                    source
+                        .lines()
+                        .enumerate()
+                        .find_map(|(index, line)| name_from_line(index, line, python_name))
+                        .map(|line| Stub {
+                            path: stub_root.make_relative(&path).normalize(),
+                            module: stub_module(&path, stub_root),
+                            line,
+                        })
+                })
+                .transpose()
+        })
+        .collect::<Result<Vec<Stub>, std::io::Error>>()
+}
+fn name_from_line(index: usize, line: &str, python_name: &str) -> Option<usize> {
+    line.trim_start()
+        .strip_prefix("class ")
+        .or_else(|| line.trim_start().strip_prefix("type "))?
+        .chars()
+        .take_while(|character| character.is_ascii_alphanumeric() || *character == '_')
+        .collect::<String>()
+        .pipe(|name| name == python_name)
+        .then(|| index + 1)
+}
+fn stub_module(path: &Path, root: &paths::Related) -> String {
+    root.make_relative(path)
+        .0
+        .with_extension("")
+        .components()
+        .map(|component| {
+            component
+                .as_os_str()
+                .to_str()
+                .expect("Expected valid unicode path component")
+        })
         .collect::<Vec<_>>()
+        .join(".")
+        .pipe(|module_parts| format!("pyochain.{module_parts}"))
 }
 
 #[derive(Default)]
-struct RegisteredClassVisitor {
+pub(super) struct RegisteredClassVisitor {
     classes: HashSet<String>,
 }
 impl RegisteredClassVisitor {
-    fn visit(source: String) -> HashSet<String> {
+    pub fn visit(source: String) -> HashSet<String> {
         let mut visitor = RegisteredClassVisitor::default();
         visitor.visit_file(&syn::parse_file(&source).unwrap());
         visitor.classes

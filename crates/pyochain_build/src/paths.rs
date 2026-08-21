@@ -18,20 +18,24 @@ impl Normalized {
     }
 }
 
-pub(super) struct Root(PathBuf);
-impl Root {
-    pub(super) fn new(path: PathBuf) -> Self {
-        Self(path)
+pub(super) struct Related {
+    parent: PathBuf,
+    pub child: PathBuf,
+}
+impl Related {
+    pub(super) fn new(path: PathBuf, child: &str) -> Self {
+        let child = path.join(child);
+        Self {
+            parent: path,
+            child,
+        }
     }
     pub(super) fn display(&self) -> Display<'_> {
-        self.0.display()
-    }
-    pub(super) fn join(&self, path: &str) -> PathBuf {
-        self.0.join(path)
+        self.parent.display()
     }
 
     pub(super) fn iter_on_extension(&self, extension: &str) -> impl Iterator<Item = PathBuf> {
-        WalkDir::new(&self.0)
+        WalkDir::new(&self.parent)
             .into_iter()
             .map(|file| file.expect("Failed to read file entry"))
             .filter(|entry| entry.file_type().is_file())
@@ -42,7 +46,7 @@ impl Root {
     }
 
     pub(super) fn make_relative<'a>(&self, path: &'a Path) -> Relative<'a> {
-        Relative(path.strip_prefix(&self.0).unwrap())
+        Relative(path.strip_prefix(&self.parent).unwrap())
     }
 }
 
