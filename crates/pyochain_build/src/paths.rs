@@ -40,10 +40,10 @@ impl Related {
         WalkDir::new(&self.parent)
             .into_iter()
             .map(|file| file.expect("Failed to read file entry"))
-            .filter(|entry| entry.file_type().is_file())
             .filter(|entry| {
-                entry.path().extension().and_then(|value| value.to_str())
-                    == Some(self.extension.as_str())
+                entry.file_type().is_file()
+                    && entry.path().extension().and_then(|value| value.to_str())
+                        == Some(self.extension.as_str())
             })
             .map(|entry| entry.into_path())
     }
@@ -57,9 +57,6 @@ impl Related {
 pub(super) struct Relative<'a>(pub &'a Path);
 impl<'a> Relative<'a> {
     pub(super) fn normalize(self) -> Normalized {
-        fn normalize_os_str(os_str: &std::ffi::OsStr) -> String {
-            os_str.to_str().unwrap().trim_start_matches('_').to_string()
-        }
         Normalized {
             source: self.0.to_path_buf(),
             parent: self
@@ -72,4 +69,8 @@ impl<'a> Relative<'a> {
     pub(super) fn components(&self) -> Components<'_> {
         self.0.parent().unwrap().components()
     }
+}
+
+fn normalize_os_str(os_str: &std::ffi::OsStr) -> String {
+    os_str.to_str().unwrap().trim_start_matches('_').to_string()
 }
