@@ -118,7 +118,7 @@ uv run maturin develop --uv --features build-docs
 The build tool can also be run directly:
 
 ```bash
-cargo run -p pyochain-build
+cargo run --release -p pyochain-build
 ```
 
 To force a complete rebuild (clears all Rust artifacts):

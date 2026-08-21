@@ -1,113 +1,116 @@
 [project]
-    site_author      = "Thibaud Wilson Stettler"
-    site_description = "A fast, memory-efficient Python library for fluent iterators, monadic result and option types, and data structures."
-    site_name        = "pyochain"
-    site_url         = "https://outsquarecapital.github.io/pyochain/"
+site_author = "Thibaud Wilson Stettler"
+site_description = "A fast, memory-efficient Python library for fluent iterators, monadic result and option types, and data structures."
+site_name = "pyochain"
+site_url = "https://outsquarecapital.github.io/pyochain/"
 
-    docs_dir         = "docs"
-    extra_javascript = ["javascripts/mermaid.mjs"]
-    site_dir         = "site"
+docs_dir = "docs"
+extra_javascript = ["javascripts/mermaid.mjs"]
+site_dir = "site"
 
-    nav = [
-        { "API reference" = [
-            { "ABC" = [
-                { "Mixins" = [
-                    { "Checkable" = "reference/checkable.md" },
-                    { "Fluent" = "reference/fluent.md" },
-                    { "Pipe" = "reference/pipe.md" },
-                    { "Tap" = "reference/tap.md" },
-                ] },
-                { "PyoCollection" = "reference/pyocollection.md" },
-                { "PyoContainer" = "reference/pyocontainer.md" },
-                { "PyoIterable" = "reference/pyoiterable.md" },
-                { "PyoIterator" = "reference/pyoiterator.md" },
-                { "PyoMapping" = "reference/pyomapping.md" },
-                { "PyoMappingView" = "reference/pyomappingview.md" },
-                { "PyoMutableMapping" = "reference/pyomutablemapping.md" },
-                { "PyoMutableSequence" = "reference/pyomutablesequence.md" },
-                { "PyoMutableSet" = "reference/pyomutableset.md" },
-                { "PyoReversible" = "reference/pyoreversible.md" },
-                { "PyoSequence" = "reference/pyosequence.md" },
-                { "PyoSet" = "reference/pyoset.md" },
-                { "PyoSized" = "reference/pyosized.md" },
+nav = [
+    { "API reference" = [
+        { "ABC" = [
+            { "Mixins" = [
+                { "Checkable" = "reference/checkable.md" },
+                { "Fluent" = "reference/fluent.md" },
+                { "Pipe" = "reference/pipe.md" },
+                { "Tap" = "reference/tap.md" },
             ] },
-            { "Collections" = [
-                { "Deque" = "reference/deque.md" },
-                { "Heap" = "reference/heap.md" },
-                { "HeapMax" = "reference/heapmax.md" },
-                { "HeapMin" = "reference/heapmin.md" },
-                { "PyoCounter" = "reference/pyocounter.md" },
-                { "SortedDict" = "reference/sorteddict.md" },
-                { "SortedItemsView" = "reference/sorteditemsview.md" },
-                { "SortedKeyDict" = "reference/sortedkeydict.md" },
-                { "SortedKeyList" = "reference/sortedkeylist.md" },
-                { "SortedKeySet" = "reference/sortedkeyset.md" },
-                { "SortedKeysView" = "reference/sortedkeysview.md" },
-                { "SortedList" = "reference/sortedlist.md" },
-                { "SortedSet" = "reference/sortedset.md" },
-                { "SortedValuesView" = "reference/sortedvaluesview.md" },
-                { "StableSet" = "reference/stableset.md" },
-            ] },
-            { "Core" = [
-                { "Collections" = [
-                    { "Dict" = "reference/dict.md" },
-                    { "PyoItemsView" = "reference/pyoitemsview.md" },
-                    { "PyoKeysView" = "reference/pyokeysview.md" },
-                    { "PyoValuesView" = "reference/pyovaluesview.md" },
-                    { "Range" = "reference/range.md" },
-                    { "Seq" = "reference/seq.md" },
-                    { "Set" = "reference/set.md" },
-                    { "SetMut" = "reference/setmut.md" },
-                    { "SliceView" = "reference/sliceview.md" },
-                    { "Vec" = "reference/vec.md" },
-                ] },
-                { "Error Handling" = [
-                    { "Err" = "reference/err.md" },
-                    { "Ok" = "reference/ok.md" },
-                    { "Result" = "reference/result.md" },
-                    { "ResultType" = "reference/resulttype.md" },
-                    { "ResultUnwrapError" = "reference/resultunwraperror.md" },
-                ] },
-                { "Iterators" = [
-                    { "Iter" = "reference/iter.md" },
-                    { "Peekable" = "reference/peekable.md" },
-                ] },
-                { "Optional Values" = [
-                    { "None" = "reference/null.md" },
-                    { "Option" = "reference/option.md" },
-                    { "OptionType" = "reference/optiontype.md" },
-                    { "OptionUnwrapError" = "reference/optionunwraperror.md" },
-                    { "Some" = "reference/some.md" },
-                ] },
-            ] },
-            { "Overview" = "api-reference.md" },
+            { "PyoCollection" = "reference/pyocollection.md" },
+            { "PyoContainer" = "reference/pyocontainer.md" },
+            { "PyoIterable" = "reference/pyoiterable.md" },
+            { "PyoIterator" = "reference/pyoiterator.md" },
+            { "PyoMapping" = "reference/pyomapping.md" },
+            { "PyoMappingView" = "reference/pyomappingview.md" },
+            { "PyoMutableMapping" = "reference/pyomutablemapping.md" },
+            { "PyoMutableSequence" = "reference/pyomutablesequence.md" },
+            { "PyoMutableSet" = "reference/pyomutableset.md" },
+            { "PyoReversible" = "reference/pyoreversible.md" },
+            { "PyoSequence" = "reference/pyosequence.md" },
+            { "PyoSet" = "reference/pyoset.md" },
+            { "PyoSized" = "reference/pyosized.md" },
         ] },
-        { "Core Types Overview" = "overview.md" },
-        { "Home" = "index.md" },
-    ]
+        { "Collections" = [
+            { "Deque" = "reference/deque.md" },
+            { "Heap" = "reference/heap.md" },
+            { "HeapMax" = "reference/heapmax.md" },
+            { "HeapMin" = "reference/heapmin.md" },
+            { "PyoCounter" = "reference/pyocounter.md" },
+            { "SortedDict" = "reference/sorteddict.md" },
+            { "SortedItemsView" = "reference/sorteditemsview.md" },
+            { "SortedKeyDict" = "reference/sortedkeydict.md" },
+            { "SortedKeyList" = "reference/sortedkeylist.md" },
+            { "SortedKeySet" = "reference/sortedkeyset.md" },
+            { "SortedKeysView" = "reference/sortedkeysview.md" },
+            { "SortedList" = "reference/sortedlist.md" },
+            { "SortedSet" = "reference/sortedset.md" },
+            { "SortedValuesView" = "reference/sortedvaluesview.md" },
+            { "StableSet" = "reference/stableset.md" },
+        ] },
+        { "Core" = [
+            { "Collections" = [
+                { "Dict" = "reference/dict.md" },
+                { "PyoItemsView" = "reference/pyoitemsview.md" },
+                { "PyoKeysView" = "reference/pyokeysview.md" },
+                { "PyoValuesView" = "reference/pyovaluesview.md" },
+                { "Range" = "reference/range.md" },
+                { "Seq" = "reference/seq.md" },
+                { "Set" = "reference/set.md" },
+                { "SetMut" = "reference/setmut.md" },
+                { "SliceView" = "reference/sliceview.md" },
+                { "Vec" = "reference/vec.md" },
+            ] },
+            { "Error Handling" = [
+                { "Err" = "reference/err.md" },
+                { "Ok" = "reference/ok.md" },
+                { "Result" = "reference/result.md" },
+                { "ResultType" = "reference/resulttype.md" },
+                { "ResultUnwrapError" = "reference/resultunwraperror.md" },
+            ] },
+            { "Iterators" = [
+                { "Iter" = "reference/iter.md" },
+                { "Peekable" = "reference/peekable.md" },
+            ] },
+            { "Optional Values" = [
+                { "None" = "reference/null.md" },
+                { "Option" = "reference/option.md" },
+                { "OptionType" = "reference/optiontype.md" },
+                { "OptionUnwrapError" = "reference/optionunwraperror.md" },
+                { "Some" = "reference/some.md" },
+            ] },
+            { "Protocols" = [
+                { "FlexibleInit" = "reference/flexibleinit.md" },
+            ] },
+        ] },
+        { "Overview" = "api-reference.md" },
+    ] },
+    { "Core Types Overview" = "overview.md" },
+    { "Home" = "index.md" },
+]
 
-    [project.theme]
-        palette = [
-            { media = "(prefers-color-scheme: dark)", scheme = "slate", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/moon", name = "Switch to light mode" } },
-            { media = "(prefers-color-scheme: light)", scheme = "default", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/sun", name = "Switch to dark mode" } },
-        ]
-        paths = ["src"]
+[project.theme]
+palette = [
+    { media = "(prefers-color-scheme: dark)", scheme = "slate", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/moon", name = "Switch to light mode" } },
+    { media = "(prefers-color-scheme: light)", scheme = "default", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/sun", name = "Switch to dark mode" } },
+]
+paths = ["src"]
 
-    [project.plugins.mkdocstrings.handlers.python.options]
-        docstring_style          = "google"
-        filters                  = ["!^_[^_]"]
-        inherited_members        = false
-        members_order            = "alphabetical"
-        scoped_crossrefs         = true
-        show_inheritance_diagram = true
-        show_overloads           = true
-        show_source              = true
-        signature_crossrefs      = true
+[project.plugins.mkdocstrings.handlers.python.options]
+docstring_style = "google"
+filters = ["!^_[^_]"]
+inherited_members = false
+members_order = "alphabetical"
+scoped_crossrefs = true
+show_inheritance_diagram = true
+show_overloads = true
+show_source = true
+signature_crossrefs = true
 
 
-    [project.markdown_extensions.pymdownx.superfences]
-        custom_fences = [
-            { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
-        ]
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+    { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
 
-    [project.markdown_extensions."mkdocs_autorefs._internal.references:AutorefsExtension"]
+[project.markdown_extensions."mkdocs_autorefs._internal.references:AutorefsExtension"]

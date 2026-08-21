@@ -56,7 +56,7 @@ class Vec[T](PyoMutableSequence[T], FlexibleWrapper[T]):
             assert Vec(1, 2, 3) == py_list
             # Create an empty Vec
             assert Vec() == Vec([]) == Vec(()) == []
-            # Create a Vec from a list will copy the underlying data
+            # Creating a Vec from a list will copy the underlying data
             vec = Vec(py_list)
             vec[0] = 10
             assert py_list == [1, 2, 3]
