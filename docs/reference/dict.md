@@ -1,3 +1,3 @@
 # Dict
 
-::: pyochain.core.Dict
+::: pyochain.core._dict.Dict

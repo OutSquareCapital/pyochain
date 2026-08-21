@@ -1,3 +1,3 @@
 # PyoCounter
 
-::: pyochain.collections.PyoCounter
+::: pyochain.collections._counter.PyoCounter

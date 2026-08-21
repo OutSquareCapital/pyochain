@@ -1,3 +1,3 @@
 # Heap
 
-::: pyochain.collections.Heap
+::: pyochain.collections._heap.Heap

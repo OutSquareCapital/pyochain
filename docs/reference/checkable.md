@@ -1,3 +1,3 @@
 # Checkable
 
-::: pyochain.abc.Checkable
+::: pyochain.abc._mixins.Checkable

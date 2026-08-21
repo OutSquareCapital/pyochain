@@ -1,3 +1,3 @@
 # PyoReversible
 
-::: pyochain.abc.PyoReversible
+::: pyochain.abc._sequences.PyoReversible

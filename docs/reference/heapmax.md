@@ -1,3 +1,3 @@
 # HeapMax
 
-::: pyochain.collections.HeapMax
+::: pyochain.collections._heap.HeapMax

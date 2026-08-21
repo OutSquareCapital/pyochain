@@ -1,3 +1,3 @@
 # Pipe
 
-::: pyochain.abc.Pipe
+::: pyochain.abc._mixins.Pipe

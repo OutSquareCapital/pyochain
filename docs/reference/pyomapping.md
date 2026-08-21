@@ -1,3 +1,3 @@
 # PyoMapping
 
-::: pyochain.abc.PyoMapping
+::: pyochain.abc._mappings.PyoMapping

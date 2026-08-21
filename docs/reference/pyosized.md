@@ -1,3 +1,3 @@
 # PyoSized
 
-::: pyochain.abc.PyoSized
+::: pyochain.abc._collection.PyoSized

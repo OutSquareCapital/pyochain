@@ -1,3 +1,3 @@
 # PyoMutableMapping
 
-::: pyochain.abc.PyoMutableMapping
+::: pyochain.abc._mappings.PyoMutableMapping

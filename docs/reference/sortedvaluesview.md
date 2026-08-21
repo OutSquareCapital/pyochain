@@ -1,3 +1,3 @@
 # SortedValuesView
 
-::: pyochain.collections._sorted.SortedValuesView
+::: pyochain.collections._sorted._views.SortedValuesView

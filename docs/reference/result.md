@@ -1,3 +1,3 @@
 # Result
 
-::: pyochain.core.Result
+::: pyochain.core._result.Result

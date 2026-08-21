@@ -1,3 +1,3 @@
 # OptionUnwrapError
 
-::: pyochain.core.OptionUnwrapError
+::: pyochain.core._option.OptionUnwrapError

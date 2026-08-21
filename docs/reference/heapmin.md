@@ -1,3 +1,3 @@
 # HeapMin
 
-::: pyochain.collections.HeapMin
+::: pyochain.collections._heap.HeapMin
