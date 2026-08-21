@@ -1,16 +1,16 @@
 [package]
-    edition = "2024"
-    name    = "pyo3_ext"
-    version = "0.1.0"
+edition = "2024"
+name = "pyo3_ext"
+version = "0.1.0"
 [lib]
-    name = "pyo3_ext"
+name = "pyo3_ext"
 
 [dependencies]
-    either = "1.17.0"
-    pyo3 = { version = ">=0.29", features = [
-        "either",
-        "extension-module",
-        "multiple-pymethods",
-        "smallvec",
-    ] }
-    tap = "1.0.1"
+either = "1.17.0"
+pyo3 = { version = ">=0.29", features = [
+    "either",
+    "extension-module",
+    "multiple-pymethods",
+    "smallvec",
+] }
+tap = "1.0.1"

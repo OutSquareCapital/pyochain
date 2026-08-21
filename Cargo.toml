@@ -1,39 +1,39 @@
 [workspace]
-    members = [".", "./crates/pyochain_build", "./crates/pyochain_macros"]
+members = [".", "./crates/pyochain_build", "./crates/pyochain_macros"]
 
 
 [package]
-    edition = "2024"
-    license = "MIT"
-    name    = "pyochain"
-    version = "0.1.0"
+edition = "2024"
+license = "MIT"
+name = "pyochain"
+version = "0.1.0"
 
 [lib]
-    crate-type = ["cdylib"]
-    name       = "pyochain"
+crate-type = ["cdylib"]
+name = "pyochain"
 
 [features]
-    build-docs = []
+build-docs = []
 
 [dependencies]
-    color-eyre = "0.6.5"
-    either = "1.16.0"
-    pyderive = "0.9"
-    pyo3 = { version = ">=0.29", features = [
-        "either",
-        "extension-module",
-        "multiple-pymethods",
-        "smallvec",
-    ] }
-    pyo3_ext = { path = "crates/pyo3_ext" }
-    pyochain_macros = { path = "crates/pyochain_macros" }
-    smallvec = "1.15.2"
-    tap = "1.0.1"
+color-eyre = "0.6.5"
+either = "1.16.0"
+pyderive = "0.9"
+pyo3 = { version = ">=0.29", features = [
+    "either",
+    "extension-module",
+    "multiple-pymethods",
+    "smallvec",
+] }
+pyo3_ext = { path = "crates/pyo3_ext" }
+pyochain_macros = { path = "crates/pyochain_macros" }
+smallvec = "1.15.2"
+tap = "1.0.1"
 
 [build-dependencies]
-    pyochain_build = { package = "pyochain-build", path = "crates/pyochain_build" }
+pyochain_build = { package = "pyochain-build", path = "crates/pyochain_build" }
 
 [profile.release]
-    codegen-units = 1
-    lto           = true
-    opt-level     = 3
+codegen-units = 1
+lto = true
+opt-level = 3
