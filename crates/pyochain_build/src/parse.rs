@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 use std::fs;
-use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 use syn::{Expr, Item, Lit, Meta, spanned::Spanned, visit::Visit};
 use tap::Pipe;
@@ -13,19 +12,17 @@ pub(super) struct PyClass {
     pub(super) line: usize,
     pub(super) rust_name: String,
     pub(super) python_name: String,
-    pub(super) module: Option<String>,
 }
 
 impl PyClass {
     fn from_item(item: Item, relative: paths::Relative<'_>) -> Option<Self> {
         let (attrs, ident, span) = get_infos_from_item(item)?;
-        let (name, module) = get_name_and_module_from_attrs(attrs)?;
+        let name = get_name_from_attrs(attrs).unwrap_or_else(|| ident.to_string());
         Some(Self {
             path: relative.normalize(),
             line: span.start().line,
             rust_name: ident.to_string(),
-            python_name: name.unwrap_or_else(|| ident.to_string()),
-            module,
+            python_name: name,
         })
     }
 }
@@ -42,37 +39,22 @@ fn get_infos_from_item(item: Item) -> Option<(Vec<syn::Attribute>, syn::Ident, p
         _ => None,
     }
 }
-fn get_name_and_module_from_attrs(
-    attrs: Vec<syn::Attribute>,
-) -> Option<(Option<String>, Option<String>)> {
+fn get_name_from_attrs(attrs: Vec<syn::Attribute>) -> Option<String> {
     let meta = attrs
         .into_iter()
         .find(|attribute| attribute.path().is_ident("pyclass"))?
         .parse_args_with(syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated)
         .expect("Failed to parse pyclass attributes");
-    let values = meta
-        .iter()
-        .filter_map(|meta| match meta {
-            Meta::NameValue(meta) => match (&meta.path, &meta.value) {
-                (path, Expr::Lit(expression)) => match &expression.lit {
-                    Lit::Str(value) if path.is_ident("name") => Some((Some(value.value()), None)),
-                    Lit::Str(value) if path.is_ident("module") => Some((None, Some(value.value()))),
-                    _ => None,
-                },
+    meta.iter().find_map(|meta| match meta {
+        Meta::NameValue(meta) => match (&meta.path, &meta.value) {
+            (path, Expr::Lit(expression)) if path.is_ident("name") => match &expression.lit {
+                Lit::Str(value) => Some(value.value()),
                 _ => None,
             },
             _ => None,
-        })
-        .try_fold((None, None), |(name, module), (new_name, new_module)| {
-            let values = (name.or(new_name), module.or(new_module));
-            match values {
-                (Some(_), Some(_)) => ControlFlow::Break(values),
-                _ => ControlFlow::Continue(values),
-            }
-        });
-    match values {
-        ControlFlow::Continue(values) | ControlFlow::Break(values) => Some(values),
-    }
+        },
+        _ => None,
+    })
 }
 
 pub(super) fn get_pyclasses(root: &paths::Root, lib_path: &str) -> Vec<PyClass> {

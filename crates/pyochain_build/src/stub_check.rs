@@ -9,26 +9,43 @@ use std::{
     process,
 };
 use tap::Pipe;
-
-pub(super) fn run(stub_root: &paths::Root, pyclasses: &[PyClass]) {
-    let mut failures = get_failures(&pyclasses, &stub_root);
-    if failures.peek().is_none() {
+/// Full path and name of a Python class declaration in a stub file.
+pub type Reference = (String, String);
+pub(super) fn run(stub_root: &paths::Root, pyclasses: &[PyClass]) -> Vec<Reference> {
+    let (references, failures) = pyclasses.iter().fold(
+        (Vec::new(), Vec::new()),
+        |(mut references, mut failures), pyclass| {
+            match StubResult::new(pyclass, stub_root) {
+                StubResult::Ok { name, full_path } => references.push((name, full_path)),
+                failure => failures.push((pyclass, failure)),
+            }
+            (references, failures)
+        },
+    );
+    if failures.is_empty() {
         let msg = "pyclass stub check passed!";
         println!("{} ({} declarations)", msg.green().bold(), pyclasses.len());
+        references
     } else {
-        show_failures(failures, &pyclasses);
+        failures
+            .into_iter()
+            .enumerate()
+            .peekable()
+            .pipe(|failures| show_failures(failures, pyclasses));
         process::exit(1);
     }
 }
 fn show_failures<'a>(
-    failures: Peekable<impl Iterator<Item = (usize, (&'a PyClass, CheckErr))> + 'a>,
+    failures: Peekable<impl Iterator<Item = (usize, (&'a PyClass, StubResult))> + 'a>,
     pyclasses: &[PyClass],
 ) {
     let add_sep = || {
         anstream::eprintln!("\n============================================================");
     };
     add_sep();
-    let count = failures.count();
+    let count = failures
+        .inspect(|(index, (pyclass, failure))| failure.show(*index, pyclass))
+        .count();
     add_sep();
     anstream::eprintln!(
         "{}: {} issue(s) found in {} pyclass declaration(s).",
@@ -37,17 +54,6 @@ fn show_failures<'a>(
         pyclasses.len().cyan(),
     );
     add_sep();
-}
-fn get_failures<'a>(
-    pyclasses: &'a [PyClass],
-    stub_root: &'a paths::Root,
-) -> Peekable<impl Iterator<Item = (usize, (&'a PyClass, CheckErr))> + 'a> {
-    pyclasses
-        .iter()
-        .filter_map(|pyclass| CheckErr::new(pyclass, stub_root).map(|failure| (pyclass, failure)))
-        .enumerate()
-        .inspect(|(index, (pyclass, failure))| failure.show(*index, pyclass))
-        .peekable()
 }
 
 impl Display for PyClass {
@@ -74,59 +80,42 @@ impl Display for PyClass {
     }
 }
 
-enum CheckErr {
-    MissingModule,
-    MissingStub { root: String },
-    DuplicateStub { stubs: Vec<Stub> },
-    SourceStub { stub: Stub },
-    ModuleNotEq { module: String, stub: Stub },
+enum StubResult {
+    Ok { name: String, full_path: String },
+    Missing(String),
+    Duplicated(Vec<Stub>),
+    NoCorrespondance(Stub),
 }
 
-impl CheckErr {
-    fn new(pyclass: &PyClass, stub_root: &paths::Root) -> Option<Self> {
-        match pyclass.module.as_ref() {
-            None => Some(Self::MissingModule),
-            Some(module) => {
-                let mut matching_stubs = get_matching_stubs(pyclass, stub_root);
-                match matching_stubs.len() {
-                    0 => Some(Self::MissingStub {
-                        root: stub_root.display().to_string(),
-                    }),
-                    1 => {
-                        let stub = matching_stubs.remove(0);
-                        if pyclass.path != stub.path {
-                            Some(Self::SourceStub { stub: stub })
-                        } else {
-                            if module != &stub.module {
-                                Some(Self::ModuleNotEq {
-                                    module: module.to_string(),
-                                    stub: stub,
-                                })
-                            } else {
-                                None
-                            }
-                        }
+impl StubResult {
+    fn new(pyclass: &PyClass, stub_root: &paths::Root) -> Self {
+        let mut matching_stubs = get_matching_stubs(pyclass, stub_root);
+        match matching_stubs.len() {
+            0 => Self::Missing(stub_root.display().to_string()),
+            1 => {
+                let stub = matching_stubs.remove(0);
+                if pyclass.path == stub.path {
+                    Self::Ok {
+                        name: pyclass.python_name.clone(),
+                        full_path: format!("{}.{}", stub.module, pyclass.python_name),
                     }
-                    _ => Some(Self::DuplicateStub {
-                        stubs: matching_stubs,
-                    }),
+                } else {
+                    Self::NoCorrespondance(stub)
                 }
             }
+            _ => Self::Duplicated(matching_stubs),
         }
     }
-
     fn show(&self, index: usize, pyclass: &PyClass) {
         anstream::eprintln!("\n{:>3}. {}", index + 1, self.title().yellow().bold(),);
         anstream::eprint!("{}\n", pyclass);
         match self {
-            Self::MissingModule => {
-                show_detail("The `#[pyclass(...)]` attribute has no `module = \"...\"` entry.")
-            }
-            Self::MissingStub { root } => show_detail(format_args!(
+            Self::Ok { .. } => {}
+            Self::Missing(root) => show_detail(format_args!(
                 "No `.pyi` file under {root} declares Python class `{}`.",
                 pyclass.python_name
             )),
-            Self::DuplicateStub { stubs } => {
+            Self::Duplicated(stubs) => {
                 show_detail(format_args!(
                     "Python class `{}` is declared in more than one stub:",
                     pyclass.python_name
@@ -135,26 +124,20 @@ impl CheckErr {
                     .iter()
                     .for_each(|stub| show_field("Stub declaration:", stub));
             }
-            Self::SourceStub { stub } => {
+            Self::NoCorrespondance(stub) => {
                 show_field("Stub location:", stub);
                 show_detail(
                     "The stub path must correspond to the Rust path, with optional prefixes.",
                 );
             }
-            Self::ModuleNotEq { module, stub } => {
-                show_field("Declared module:", format_args!("`{module}`"));
-                show_field("Stub declaration:", stub);
-                show_field("Implied module:", format_args!("`{}`", stub.module));
-            }
         }
     }
     fn title(&self) -> &'static str {
         match self {
-            Self::MissingModule => "missing module declaration",
-            Self::MissingStub { .. } => "missing stub class declaration",
-            Self::DuplicateStub { .. } => "duplicate stub class declaration",
-            Self::SourceStub { .. } => "Rust source file does not match stub file",
-            Self::ModuleNotEq { .. } => "Rust module does not match stub module",
+            Self::Ok { .. } => "Stub check passed",
+            Self::Missing(_) => "missing stub class declaration",
+            Self::Duplicated(_) => "duplicate stub class declaration",
+            Self::NoCorrespondance(_) => "Rust source file does not match stub file",
         }
     }
 }
@@ -200,6 +183,8 @@ fn get_matching_stubs(pyclass: &PyClass, stub_root: &paths::Root) -> Vec<Stub> {
 fn stub_module(path: &Path, root: &paths::Root) -> String {
     let module_parts = root
         .make_relative(path)
+        .0
+        .with_extension("")
         .components()
         .map(|component| component.as_os_str().to_str().unwrap())
         .collect::<Vec<_>>()

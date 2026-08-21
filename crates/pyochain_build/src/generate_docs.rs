@@ -1,17 +1,17 @@
 use crate::paths::Root;
+use crate::stub_check::Reference;
 use crate::write;
 use std::{collections::HashSet, fs, path::Path};
 use tap::Pipe;
 use toml::{Table, Value};
 
-use crate::parse::PyClass;
 use tap::prelude::*;
 
-pub(super) fn run(root: &Root, docs: Root, pyclasses: &[PyClass]) -> Result<&'static str, String> {
+pub(super) fn run(root: &Root, docs: Root, refs: Vec<Reference>) -> Result<&'static str, String> {
     let docs_dir = docs
         .join("reference")
         .tap(|docs_ref| fs::create_dir_all(docs_ref).unwrap());
-    let generated = pyclasses
+    let generated = refs
         .iter()
         .map(|pyclass| handle_class(&docs_dir, pyclass))
         .collect::<HashSet<_>>();
@@ -27,12 +27,11 @@ pub(super) fn run(root: &Root, docs: Root, pyclasses: &[PyClass]) -> Result<&'st
     check_nav(root, generated, pre_existing)
 }
 #[inline]
-fn handle_class(docs_ref: &Path, pyclass: &PyClass) -> String {
-    let name = &pyclass.python_name;
+fn handle_class(docs_ref: &Path, refs: &Reference) -> String {
+    let name = &refs.0;
     let filename = format!("{}.md", name.to_lowercase());
     let path = docs_ref.join(&filename);
-    let full_path = format!("{}.{}", pyclass.module.as_ref().unwrap(), name);
-    let new_content = write::get_new_content(name, &full_path);
+    let new_content = write::get_new_content(name, &refs.1);
     write::Kind::new(&path, &new_content).maybe_write(&path, new_content);
     format!("reference/{filename}")
 }

@@ -13,8 +13,8 @@ pub fn run(root: PathBuf) {
     let docs = root.join("docs").pipe(paths::Root::new);
     let src = root.join("src").pipe(paths::Root::new);
     parse::get_pyclasses(&src, "lib.rs")
-        .tap(|pyclasses| stub_check::run(&stubs, pyclasses))
-        .pipe_ref(|pyclasses| generate_docs::run(&root, docs, pyclasses))
+        .pipe(|pyclasses| stub_check::run(&stubs, &pyclasses))
+        .pipe(|pyclasses| generate_docs::run(&root, docs, pyclasses))
         .pipe(|result| match result {
             Ok(msg) => msg.green().bold().to_string().pipe(|msg| println!("{msg}")),
             Err(err) => err.red().bold().to_string().pipe(|err| println!("{err}")),
