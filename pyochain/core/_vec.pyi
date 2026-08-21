@@ -163,7 +163,7 @@ class Vec[T](PyoMutableSequence[T], FlexibleWrapper[T]):
             ```python
             from pyochain import Vec
 
-            v = Vec.from_ref([1, 2, 3]).repeat(2)
+            v = Vec(1, 2, 3).repeat(2)
             assert v == Vec(1, 2, 3, 1, 2, 3)
             ```
         """
@@ -189,7 +189,7 @@ class Vec[T](PyoMutableSequence[T], FlexibleWrapper[T]):
             ```python
             from pyochain import Vec
 
-            vec = Vec.from_ref([1, 2, 3]).repeat_mut(2)
+            vec = Vec(1, 2, 3).repeat_mut(2)
             assert vec == Vec(1, 2, 3, 1, 2, 3)
             ```
         """
@@ -206,7 +206,7 @@ class Vec[T](PyoMutableSequence[T], FlexibleWrapper[T]):
             ```python
             from pyochain import Vec
 
-            vec = Vec.from_ref(["a", "b", "c"])
+            vec = Vec("a", "b", "c")
             vec.insert(1, "d")
             assert vec == Vec("a", "d", "b", "c")
             vec.insert(4, "e")
@@ -232,7 +232,7 @@ class Vec[T](PyoMutableSequence[T], FlexibleWrapper[T]):
             ```python
             from pyochain import Vec, Iter
 
-            x = Vec.from_ref([3, 1, 2]).sort()
+            x = Vec(3, 1, 2).sort()
             assert x == Vec(1, 2, 3)
             ```
         """
@@ -258,7 +258,7 @@ class Vec[T](PyoMutableSequence[T], FlexibleWrapper[T]):
             ```python
             from pyochain import Vec, Iter
 
-            x = Vec.from_ref(["3", "1", "2"]).sort_by(int)
+            x = Vec("3", "1", "2").sort_by(int)
             y = Vec("1", "2", "3")
             assert x == y
             ```
@@ -283,7 +283,7 @@ class Vec[T](PyoMutableSequence[T], FlexibleWrapper[T]):
             ```python
             from pyochain import Vec
 
-            v1 = Vec.from_ref([1, 2, 3])
+            v1 = Vec(1, 2, 3)
             v2 = [4, 5, 6]  # Can also concatenate a standard list
             expected = Vec(1, 2, 3, 4, 5, 6)
             v3 = v1.concat(v2)
@@ -317,7 +317,7 @@ class Vec[T](PyoMutableSequence[T], FlexibleWrapper[T]):
             ```python
             from pyochain import Vec
 
-            v1 = Vec.from_ref([1, 2, 3])
+            v1 = Vec(1, 2, 3)
             v2 = [4, 5, 6]  # Can also concatenate a standard list
             expected = Vec(1, 2, 3, 4, 5, 6)
             assert v1.concat_mut(v2) == expected
