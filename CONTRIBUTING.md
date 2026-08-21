@@ -109,16 +109,19 @@ For benchmarking (optimized, slower compile):
 uv run maturin develop --release --uv
 ```
 
-Prior to a release, to check correct documentation generation, run the build with the `build-docs` feature:
+Prior to a release, to check correct documentation generation, run the build tool:
 
 ```bash
-uv run maturin develop --uv --features build-docs
+.\target\release\pyochain-build.exe
 ```
 
-The build tool can also be run directly:
+If you are working on the build tool itself, you can build/run it directly with cargo:
 
 ```bash
+cargo run -p pyochain-build
 cargo run --release -p pyochain-build
+cargo build -p pyochain-build
+cargo build --release -p pyochain-build
 ```
 
 To force a complete rebuild (clears all Rust artifacts):

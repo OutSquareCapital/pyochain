@@ -30,9 +30,6 @@ pyochain_macros = { path = "crates/pyochain_macros" }
 smallvec = "1.15.2"
 tap = "1.0.1"
 
-[build-dependencies]
-pyochain_build = { package = "pyochain-build", path = "crates/pyochain_build" }
-
 [profile.release]
 codegen-units = 1
 lto = true

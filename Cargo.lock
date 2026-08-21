@@ -366,7 +366,6 @@ dependencies = [
  "pyderive",
  "pyo3",
  "pyo3_ext",
- "pyochain-build",
  "pyochain_macros",
  "smallvec",
  "tap",
