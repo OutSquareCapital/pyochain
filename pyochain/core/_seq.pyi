@@ -13,8 +13,6 @@ class Seq[T](PyoSequence[T], FlexibleWrapper[T]):
 
     Implements the `Sequence` Protocol from `collections.abc`, as well as `PyoSequence`.
 
-    This class is notably the default return type of [`Iter::collect`][Iter.collect].
-
     The underlying data structure is an immutable `tuple`, hence the memory efficiency is better than a [`Vec`][Vec].
 
     Tip:
