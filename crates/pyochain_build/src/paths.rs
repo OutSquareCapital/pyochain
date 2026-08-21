@@ -1,4 +1,7 @@
-use std::path::{Components, Display, Path, PathBuf};
+use std::{
+    fs,
+    path::{Components, Display, Path, PathBuf},
+};
 use tap::Pipe;
 use walkdir::WalkDir;
 #[derive(Clone, Debug, Eq)]
@@ -50,6 +53,24 @@ impl Related {
 
     pub(super) fn make_relative<'a>(&self, path: &'a Path) -> Relative<'a> {
         Relative(path.strip_prefix(&self.parent).unwrap())
+    }
+
+    pub fn write(&self, path: PathBuf, content: String) -> Result<String, std::io::Error> {
+        let display_path = self.make_relative(&path).0.display();
+        let result = match path.exists() {
+            false => {
+                fs::write(&path, content)?;
+                format!("Generated {display_path} (new file)")
+            }
+            true if fs::read_to_string(&path)? == content => {
+                format!("Skipping {display_path} (no changes)")
+            }
+            true => {
+                fs::write(&path, content)?;
+                format!("Updating {display_path} (co§ntent changed)")
+            }
+        };
+        Ok(result)
     }
 }
 
