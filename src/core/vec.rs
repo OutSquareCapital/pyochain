@@ -1,53 +1,26 @@
 use crate::{
     abc,
     display::get_repr,
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    traits::{IntoPyochain, PyWrapper},
 };
 
 use either::Either;
 use pyo3::{
     ffi, intern,
     prelude::*,
-    pyclass_init::PyClassInitializer,
-    types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PySequence, PySlice, PyTuple},
+    types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PySlice},
 };
 use pyo3_ext::{
     prelude::*,
     pylibs,
-    types::{FromCmp, PyCmpOut, PyIterable},
+    types::{FromCmp, PyCmpOut},
 };
-use pyochain_macros::{try_cast, try_cast_into};
+use pyochain_macros::try_cast;
 use tap::Pipe;
 #[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]
 pub struct PyoVec(pub Py<PyList>);
 #[pymethods]
 impl PyoVec {
-    #[pyo3(signature = (*elements))]
-    #[new]
-    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
-        let py = elements.py();
-        let list = match elements.len() {
-            0 => PyList::empty(py),
-            1 => try_cast_into! {match unsafe {elements.get_item_unchecked(0)} {
-                CaseExact::Self(inner) => {
-                    inner.get().into_inner_bound(py).as_sequence().to_list()?
-                }
-                Case::PySequence(sequence) => sequence.to_list()?,
-                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
-                any => PyList::new(py, [any])?,
-            }},
-            _ => elements.to_list(),
-        };
-        list.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableSequence::build_init().add_subclass(slf))
-            .pipe(Ok)
-    }
-    #[staticmethod]
-    fn from_ref<'py>(data: Bound<'py, PyList>) -> PyResult<Bound<'py, Self>> {
-        data.into_pyochain()
-    }
-
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
         slf.get().inner_bind(slf.py()).iter_py()
     }

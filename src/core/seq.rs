@@ -1,47 +1,21 @@
 use crate::{
     abc,
     display::get_repr,
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    traits::{IntoPyochain, PyWrapper},
 };
 use either::Either;
 use pyo3::{
     prelude::*,
-    pyclass_init::PyClassInitializer,
     types::{PyInt, PyIterator, PySequence, PySlice, PyTuple},
 };
-use pyo3_ext::{prelude::*, types::PyIterable};
-use pyochain_macros::{try_cast, try_cast_into};
+use pyo3_ext::prelude::*;
+use pyochain_macros::try_cast;
 use tap::Pipe;
 
 #[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct Seq(pub Py<PyTuple>);
 #[pymethods]
 impl Seq {
-    #[pyo3(signature = (*elements))]
-    #[new]
-    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
-        let py = elements.py();
-        let tup = {
-            match elements.len() {
-                1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                    CaseExact::PyTuple(tuple) => tuple,
-                    CaseExact::Self(inner) => inner.get().into_inner_bound(py),
-                    Case::PySequence(sequence) => sequence.to_tuple()?,
-                    Case::PyIterable(iterable) => iterable
-                        .try_iter()?
-                        .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
-                        .pipe(|x| PyTuple::new(py, x))?,
-                    any => PyTuple::new(py, [any])?,
-                }},
-                _ => elements,
-            }
-        };
-        tup.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoSequence::build_init().add_subclass(slf))
-            .pipe(Ok)
-    }
-
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
         let name = slf.get_type().name()?;
