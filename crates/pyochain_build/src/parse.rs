@@ -36,7 +36,6 @@ impl PyClass {
         &self,
         stub_root: &paths::Related,
         docs_dir: &Path,
-        nav_paths: &HashSet<String>,
     ) -> Result<(PathBuf, String), String> {
         let stubs = get_matching_stubs(&self.python_name, stub_root)
             .map_err(|error| format!("Failed to read stub files: {error}"))?;
@@ -53,18 +52,13 @@ impl PyClass {
             )),
             [stub] => {
                 let path = self.document_path();
-                nav_paths
-                    .contains(&path)
-                    .then(|| {
-                        (
-                            docs_dir.join(path.trim_start_matches("reference/")),
-                            format!(
-                                "# {}\n\n::: {}.{}\n",
-                                self.python_name, stub.module, self.python_name
-                            ),
-                        )
-                    })
-                    .ok_or_else(|| format!("missing path in navigation\nExpected path: {path}"))
+                Ok((
+                    docs_dir.join(path.trim_start_matches("reference/")),
+                    format!(
+                        "# {}\n\n::: {}.{}\n",
+                        self.python_name, stub.module, self.python_name
+                    ),
+                ))
             }
             stubs => Err(format!(
                 "duplicate stub class declaration\nPython class `{}` is declared in more than one stub:\n{}",
