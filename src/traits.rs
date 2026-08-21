@@ -1,3 +1,7 @@
+use crate::{
+    abc, collections,
+    core::{Dict, PyoVec, Range, Seq, Set, SetMut, SliceView, iterators::Iter},
+};
 use pyo3::{
     PyClass, PyTypeInfo,
     exceptions::PyTypeError,
@@ -5,13 +9,6 @@ use pyo3::{
     types::{
         DerefToPyAny, PyDict, PyFrozenSet, PyIterator, PyList, PyRange, PySequence, PySet, PyTuple,
     },
-};
-use pyochain_macros::{py_abc, try_cast_into};
-use tap::Pipe;
-
-use crate::{
-    abc, collections,
-    core::{Dict, PyoVec, Range, Seq, Set, SetMut, SliceView, iterators::Iter},
 };
 use pyo3_ext::types::PyDeque;
 pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync {
@@ -213,77 +210,5 @@ impl PyoABC for abc::PyoMutableMapping {
 impl PyoABC for collections::Heap {
     fn build_init() -> PyClassInitializer<Self> {
         abc::PyoMutableSequence::build_init().add_subclass(Self)
-    }
-}
-
-#[py_abc(Seq, PyoVec)]
-pub trait FlexInit: Sized {
-    #[pyo3(signature = (iterable, /))]
-    #[staticmethod]
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>>;
-    #[staticmethod]
-    #[pyo3(signature = (*elements))]
-    fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>>;
-}
-#[py_abc(Seq, PyoVec)]
-pub trait FlexWrapper: PyWrapper + FlexInit {
-    #[pyo3(signature = (iterable, /))]
-    #[staticmethod]
-    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>>;
-}
-
-impl FlexWrapper for PyoVec {
-    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-        iterable.into_pyochain()
-    }
-}
-impl FlexWrapper for Seq {
-    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-        iterable.into_pyochain()
-    }
-}
-impl FlexInit for Seq {
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        let py = iterable.py();
-        try_cast_into! {
-            match iterable {
-                CaseExact::PyTuple(tuple) => tuple.into_pyochain(),
-                CaseExact::Self(inner) => Ok(inner),
-                Case::PySequence(sequence) => sequence.to_tuple()?.into_pyochain(),
-                iterable => iterable
-                    .try_iter()?
-                    .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
-                    .pipe(|x| PyTuple::new(py, x))?
-                    .into_pyochain(),
-            }
-        }
-    }
-    fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
-        elements.into_pyochain()
-    }
-}
-impl FlexInit for PyoVec {
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        let py = iterable.py();
-        try_cast_into! {
-            match iterable {
-                CaseExact::PyList(list) => list.as_sequence().to_list()?.into_pyochain(),
-                CaseExact::Self(inner) => inner
-                    .get()
-                    .into_inner_bound(py)
-                    .as_sequence()
-                    .to_list()?
-                    .into_pyochain(),
-                Case::PySequence(sequence) => sequence.to_list()?.into_pyochain(),
-                iterable => iterable
-                    .try_iter()?
-                    .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
-                    .pipe(|x| PyList::new(py, x))?
-                    .into_pyochain(),
-            }
-        }
-    }
-    fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
-        elements.to_list().into_pyochain()
     }
 }
