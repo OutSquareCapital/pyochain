@@ -25,11 +25,7 @@ pub(super) fn run(
         .pipe(get_nav_paths)
         .into_iter()
         .filter_map(|path| {
-            if docs
-                .child
-                .join(path.trim_start_matches("reference/"))
-                .is_file()
-            {
+            if docs.parent.join(&path).is_file() {
                 None
             } else {
                 let msg = format!("invalid path in navigation\nNavigation path: {path}");

@@ -22,7 +22,7 @@ impl Normalized {
 }
 
 pub(super) struct Related {
-    parent: PathBuf,
+    pub parent: PathBuf,
     pub child: PathBuf,
     extension: String,
 }
