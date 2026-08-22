@@ -23,12 +23,12 @@ def _count(data: Range) -> int:
 @pytest.mark.benchmark(group="last")
 @pytest.mark.parametrize("size", SIZES)
 def test_last(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
+    data = Range(size)
     assert benchmark(_last, data) == size - 1
 
 
 @pytest.mark.benchmark(group="count")
 @pytest.mark.parametrize("size", SIZES)
 def test_count(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
+    data = Range(size)
     assert benchmark(_count, data) == size
