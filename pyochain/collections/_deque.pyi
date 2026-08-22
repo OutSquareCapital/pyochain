@@ -3,11 +3,14 @@ from collections.abc import Iterable, Iterator
 from typing import Final, Self, SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoMutableSequence
+from pyochain.core._protocols import (  # ruff: ignore[import-private-name]
+    FlexibleWrapper,
+)
 
 type IntoDeque[T] = deque[T] | Deque[T]
 
 @final
-class Deque[T](PyoMutableSequence[T]):
+class Deque[T](PyoMutableSequence[T], FlexibleWrapper[T]):
     """Deques are a generalization of stacks and queues (the name is pronounced “deck” and is short for “double-ended queue”).
 
     Deques support thread-safe, memory efficient appends and pops from either side of the deque with approximately the same O(1) performance in either direction.
@@ -150,39 +153,17 @@ class Deque[T](PyoMutableSequence[T]):
     @override
     def __eq__(self, value: object, /) -> bool:
         """Return self==value."""
-
+    @override
     @staticmethod
-    def from_ref[T1](data: deque[T1]) -> Deque[T1]:
-        """Create a `Deque` from a reference to an existing `deque`.
-
-        This method wraps the provided `deque` without copying it, allowing for efficient object instanciation.
-
-        This is the recommended way to create a `Deque` from foreign functions that return `deque` objects.
-
-        Warning:
-            Since the `Deque` directly references the original `deque`, any modifications made to the `Deque` will also affect the original `deque`, and vice versa.
-
-        Args:
-            data (deque[T1]): The `deque` to wrap.
-
-        Returns:
-            Deque[T1]: A new `Deque` instance.
-
-        Example:
-            ```python
-            from pyochain.collections import Deque
-            from collections import deque
-
-            original = deque([1, 2, 3])
-            deque_obj = Deque.from_ref(original)
-
-            assert deque_obj == Deque(1, 2, 3)
-            original.append(4)
-
-            assert deque_obj == Deque(1, 2, 3, 4)
-            ```
-        """
-
+    def of[T1](*elements: T1, max_length: int | None = None) -> Deque[T1]: ...
+    @override
+    @staticmethod
+    def from_iter[T1](
+        iterable: Iterable[T1], /, max_length: int | None = None
+    ) -> Deque[T1]: ...
+    @override
+    @staticmethod
+    def wrap[T1](data: deque[T1]) -> Deque[T1]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def append(self, x: T, /) -> None: ...
     def append_left(self, x: T, /) -> None:

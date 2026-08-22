@@ -1,6 +1,6 @@
 use crate::{
     abc,
-    traits::{PyWrapper, PyoABC},
+    traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use either::Either;
 use pyo3::{
@@ -28,12 +28,12 @@ impl Deque {
         let py = elements.py();
         let deque = match elements.len() {
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                Case::PyIterable(iterable) => PyDeque::new(py, iterable.into_any(), max_length)?,
+                Case::PyIterable(iterable) => PyDeque::new(iterable.into_any(), max_length)?,
                 any => PyTuple::new(py, [any])
                     .map(Bound::into_any)
-                    .and_then(|iterable| PyDeque::new(py, iterable, max_length))?,
+                    .and_then(|iterable| PyDeque::new(iterable, max_length))?,
             }},
-            _ => PyDeque::new(py, elements.into_any(), max_length)?,
+            _ => PyDeque::new(elements.into_any(), max_length)?,
         };
         deque
             .unbind()
@@ -42,11 +42,25 @@ impl Deque {
             .pipe(Ok)
     }
 
+    #[pyo3(signature = (iterable, /, max_length=None))]
     #[staticmethod]
-    fn from_ref(data: Bound<'_, PyDeque>) -> PyResult<Bound<'_, Self>> {
-        let py = data.py();
-        let initializer = abc::PyoMutableSequence::build_init().add_subclass(Self(data.unbind()));
-        Bound::new(py, initializer)
+    fn from_iter<'py>(
+        iterable: Bound<'py, PyAny>,
+        max_length: Option<Bound<'py, PyInt>>,
+    ) -> PyResult<Bound<'py, Self>> {
+        PyDeque::new(iterable, max_length)?.into_pyochain()
+    }
+    #[staticmethod]
+    #[pyo3(signature = (*elements, max_length=None))]
+    fn of<'py>(
+        elements: Bound<'py, PyTuple>,
+        max_length: Option<Bound<'py, PyInt>>,
+    ) -> PyResult<Bound<'py, Self>> {
+        PyDeque::new(elements.into_any(), max_length)?.into_pyochain()
+    }
+    #[staticmethod]
+    fn wrap(data: Bound<'_, PyDeque>) -> PyResult<Bound<'_, Self>> {
+        data.into_pyochain()
     }
 
     fn __repr__(slf: Bound<'_, Self>, py: Python<'_>) -> PyResult<String> {
@@ -108,12 +122,12 @@ impl Deque {
                     .as_sequence()
                     .concat(d.get().inner_bind(py).as_sequence())
                     .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
-                    .and_then(Self::from_ref),
+                    .and_then(Self::wrap),
                 Case::PyDeque(pyd) => inner
                     .as_sequence()
                     .concat(pyd.as_sequence())
                     .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
-                    .and_then(Self::from_ref),
+                    .and_then(Self::wrap),
                 _ => Err(PyTypeError::new_err("")),
             }
         }
@@ -123,7 +137,7 @@ impl Deque {
         self.inner_bind(value.py())
             .mul(value)
             .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
-            .and_then(Self::from_ref)
+            .and_then(Self::wrap)
     }
     fn __rmul__<'py>(&self, value: Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
         self.__mul__(value)
@@ -224,7 +238,7 @@ impl Deque {
         self.inner_bind(py)
             .call_method0(intern!(py, "copy"))
             .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
-            .and_then(Self::from_ref)
+            .and_then(Self::wrap)
     }
 
     fn extend_left(slf: Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {

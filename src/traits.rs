@@ -151,6 +151,15 @@ impl<'py> IntoPyochain<'py, Iter> for Bound<'py, PyIterator> {
         Bound::new(py, initializer)
     }
 }
+impl<'py> IntoPyochain<'py, collections::Deque> for Bound<'py, PyDeque> {
+    #[inline]
+    fn into_pyochain(self) -> PyResult<Bound<'py, collections::Deque>> {
+        let py = self.py();
+        let initializer =
+            abc::PyoMutableSequence::build_init().add_subclass(collections::Deque(self.unbind()));
+        Bound::new(py, initializer)
+    }
+}
 
 pub trait PyoABC: PyTypeInfo + PyClass {
     fn build_init() -> PyClassInitializer<Self>;

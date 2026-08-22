@@ -83,10 +83,10 @@ class StableSet[T](PyoMutableSet[T], FlexibleWrapper[T]):
     def __eq__(self, other: object) -> bool: ...
     @override
     @staticmethod
-    def from_iter(iterable: Iterable[T], /) -> StableSet[T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def from_iter[T1](iterable: Iterable[T1], /) -> StableSet[T1]: ...
     @override
     @staticmethod
-    def of(*elements: T) -> StableSet[T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def of[T1](*elements: T1) -> StableSet[T1]: ...
     @override
     @staticmethod
     def wrap[V](data: dict[V, Any]) -> StableSet[V]: ...  # pyright: ignore[reportIncompatibleMethodOverride]

@@ -295,11 +295,10 @@ unsafe impl PyTypeInfo for PyDeque {
 impl PyDeque {
     #[inline]
     pub fn new<'py>(
-        py: Python<'py>,
         iterable: Bound<'py, PyAny>,
         maxlen: Option<Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, Self>> {
-        Self::type_object(py)
+        Self::type_object(iterable.py())
             .call1((iterable, maxlen))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }

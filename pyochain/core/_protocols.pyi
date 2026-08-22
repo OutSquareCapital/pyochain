@@ -95,8 +95,8 @@ class FlexibleWrapper[T](FlexibleInit[T], ABC):
         Example:
             ```python
             from pyochain import Vec, Seq
-
-            from pyochain.collections import StableSet
+            from pyochain.collections import StableSet, Deque
+            from collections import deque
 
             original_list = [1, 2, 3]
             vec = Vec.wrap(original_list)
@@ -112,5 +112,13 @@ class FlexibleWrapper[T](FlexibleInit[T], ABC):
             assert set_obj == StableSet("Alice", "Bob", "Charlie")
             py_dict["David"] = 40
             assert set_obj == StableSet("Alice", "Bob", "Charlie", "David")
+
+            original = deque([1, 2, 3])
+            deque_obj = Deque.wrap(original)
+
+            assert deque_obj == Deque(1, 2, 3)
+            original.append(4)
+
+            assert deque_obj == Deque(1, 2, 3, 4)
             ```
         """
