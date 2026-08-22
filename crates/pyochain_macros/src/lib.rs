@@ -56,11 +56,9 @@ pub fn derive_bound_from_any(input: TokenStream) -> TokenStream {
 ///   #[new]
 /// fn new(data: Bound<'_, PyList>) -> PyResult<PyClassInitializer<Self>>;
 /// #[skip]
-/// fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>> {
-///   Self::new(data).and_then(|init| Bound::new(py, init))
-/// }
+/// fn foo<'py>(data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>>;
 /// #[pyo3(signature = (item))]
-/// fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
+/// fn bar<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
 /// }
 /// ```
 ///
