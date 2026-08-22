@@ -27,7 +27,7 @@ from pyochain import (
 from pyochain.abc import PyoIterator
 
 CODE_BLOCK_PATTERN = re.compile(r"^```(\w*)", re.MULTILINE)
-SKIP_DECORATORS = SetMut.from_ref({"overload", "override", "wraps", "property"})
+SKIP_DECORATORS = SetMut.wrap({"overload", "override", "wraps", "property"})
 type MethodNode = ast.FunctionDef | ast.AsyncFunctionDef
 type DocumentableNode = MethodNode | ast.ClassDef
 

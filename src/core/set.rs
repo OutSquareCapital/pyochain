@@ -1,20 +1,19 @@
 use crate::{
     abc,
     display::get_repr,
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    traits::{IntoPyochain, PyWrapper},
 };
 use either::Either;
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
-    pyclass_init::PyClassInitializer,
     types::{DerefToPyAny, PyBool, PyFrozenSet, PyIterator, PyNotImplemented, PySet, PyTuple},
 };
 use pyo3_ext::{
     prelude::*,
-    types::{FromCmp, PyAbstractSet, PyCmpOut, PyIterable},
+    types::{FromCmp, PyAbstractSet, PyCmpOut},
 };
-use pyochain_macros::{BoundFromAny, try_cast, try_cast_into};
+use pyochain_macros::{BoundFromAny, try_cast};
 use tap::Pipe;
 /// Accepted types for set operations.
 /// In the case of pyochain types, we extract the inner sets.
@@ -165,30 +164,6 @@ impl<'py> SetCmpMethods<'py, PySet> for SetMut {}
 pub struct Set(pub Py<PyFrozenSet>);
 #[pymethods]
 impl Set {
-    #[pyo3(signature = (*elements))]
-    #[new]
-    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
-        let py = elements.py();
-        let set = match elements.len() {
-            0 => PyFrozenSet::empty(py)?,
-            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                CaseExact::PyFrozenSet(set) => set,
-                CaseExact::Self(inner) => inner
-                    .get()
-                    .into_inner_bound(py)
-                    .into_iter()
-                    .collect_bound(py)?,
-                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
-                any => [any].into_iter().collect_bound(py)?,
-            }},
-            _ => elements.into_iter().collect_bound::<PyFrozenSet>(py)?,
-        };
-        set.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoSet::build_init().add_subclass(slf))
-            .pipe(Ok)
-    }
-
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
         let name = slf.get_type().name()?;
@@ -305,30 +280,6 @@ impl Set {
 pub struct SetMut(pub Py<PySet>);
 #[pymethods]
 impl SetMut {
-    #[pyo3(signature = (*elements))]
-    #[new]
-    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
-        let py = elements.py();
-        let set = match elements.len() {
-            0 => PySet::empty(py)?,
-            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                CaseExact::PySet(set) => set.into_iter().collect_bound(py)?,
-                CaseExact::Self(inner) => inner
-                    .get()
-                    .into_inner_bound(py)
-                    .into_iter()
-                    .collect_bound(py)?,
-                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
-                any => PySet::new(py, [any])?,
-            }},
-            _ => elements.into_iter().collect_bound::<PySet>(py)?,
-        };
-        set.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
-            .pipe(Ok)
-    }
-
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
         slf.get().inner_bind(slf.py()).iter_py()
     }
@@ -414,11 +365,6 @@ impl SetMut {
 
     fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         self.inner_bind(value.py()).gt(value)
-    }
-
-    #[staticmethod]
-    fn from_ref(data: Bound<'_, PySet>) -> PyResult<Bound<'_, Self>> {
-        data.into_pyochain()
     }
 
     fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {

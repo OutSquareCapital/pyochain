@@ -3,12 +3,15 @@ from collections.abc import Set as AbstractSet
 from typing import Self, overload, override
 
 from pyochain.abc import PyoMutableSet, PyoSet
+from pyochain.core._protocols import (  # ruff: ignore[import-private-name]
+    FlexibleWrapper,
+)
 
 # TODO: address the following note from official python docs regarding Set performance, with benchmarks:
 # To override the comparisons (presumably for speed, as the semantics are fixed),
 # redefine __le__() and __ge__(), then the other operations will automatically follow suit.
 
-class Set[T](PyoSet[T]):
+class Set[T](PyoSet[T], FlexibleWrapper[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
     Implements the `collections::abc::Collection` Protocol, so it can be used as a standard immutable collection.
@@ -66,6 +69,7 @@ class Set[T](PyoSet[T]):
             assert a is b
             ```
         """
+
     @override
     def __contains__(self, item: object) -> bool: ...
     @override
@@ -181,6 +185,7 @@ class Set[T](PyoSet[T]):
             assert not s2 <= s1
             ```
         """
+
     @override
     def __lt__(self, value: AbstractSet[object], /) -> bool:
         """Return self<value.
@@ -249,8 +254,18 @@ class Set[T](PyoSet[T]):
     @override
     def __hash__(self) -> int: ...
     @override
+    @staticmethod
+    def wrap[W](iterable: frozenset[W]) -> Set[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    @staticmethod
+    def from_iter[I](iterable: Iterable[I], /) -> Set[I]: ...
+    @override
+    @staticmethod
+    def of[E](*args: E) -> Set[E]: ...
+    @override
     def isdisjoint(self, s: Iterable[object], /) -> bool:
         """Return True if two sets have a null intersection."""
+
     @override
     def is_subset(self, other: Iterable[object]) -> bool: ...
     @override
@@ -269,7 +284,7 @@ class Set[T](PyoSet[T]):
     @override
     def symmetric_difference[S](self, other: Iterable[S]) -> Set[T | S]: ...
 
-class SetMut[T](PyoMutableSet[T]):
+class SetMut[T](PyoMutableSet[T], FlexibleWrapper[T]):
     """A mutable, unordered collection of unique elements.
 
     Unlike [`Set`][Set] which is immutable, `SetMut` allows in-place modification of elements.
@@ -318,6 +333,7 @@ class SetMut[T](PyoMutableSet[T]):
             assert SetMut() == SetMut([]) == SetMut(()) == set()
             ```
         """
+
     @override
     def __iter__(self) -> Iterator[T]: ...
     @override
@@ -334,6 +350,7 @@ class SetMut[T](PyoMutableSet[T]):
     @override
     def __iand__(self, value: AbstractSet[object], /) -> SetMut[T]:
         """Return self&=value."""
+
     @override
     # pyrefly: ignore [bad-override]
     def __or__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -355,6 +372,7 @@ class SetMut[T](PyoMutableSet[T]):
             assert s3 == SetMut(1, 2, 3, 4, 5)
             ```
         """
+
     @override
     def __ior__(self, value: AbstractSet[T], /) -> SetMut[T]:
         """Return self|=value.
@@ -546,35 +564,15 @@ class SetMut[T](PyoMutableSet[T]):
             ```
         """
 
+    @override
     @staticmethod
-    def from_ref[V](data: set[V]) -> SetMut[V]:
-        """Create a `SetMut` from a reference to an existing `set`.
-
-        This method wraps the provided `set` without copying it, allowing for efficient object instanciation.
-
-        This is the recommended way to create a `SetMut` from foreign functions that return `set` objects.
-
-        Warning:
-            Since the `SetMut` directly references the original `set`, any modifications made to the `SetMut` will also affect the original `set`, and vice versa.
-
-        Args:
-            data (set[V]): The `set` to wrap.
-
-        Returns:
-            SetMut[V]: A new `SetMut` instance.
-
-        Example:
-            ```python
-            from pyochain import SetMut
-
-            original_set = {1, 2, 3}
-            set_obj = SetMut.from_ref(original_set)
-            assert set_obj == SetMut(1, 2, 3)
-            original_set.add(4)
-            assert set_obj == SetMut(1, 2, 3, 4)
-            ```
-        """
-
+    def wrap[W](iterable: set[W]) -> SetMut[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    @staticmethod
+    def from_iter[I](iterable: Iterable[I], /) -> SetMut[I]: ...
+    @override
+    @staticmethod
+    def of[E](*args: E) -> SetMut[E]: ...
     @override
     def add(self, value: T) -> None:
         """Add an element to **self**.
@@ -667,5 +665,6 @@ class SetMut[T](PyoMutableSet[T]):
         ...
     def difference_update(self, *s: Iterable[object]) -> None:
         """Update the set, removing elements found in others."""
+
     @override
     def symmetric_difference[S](self, other: Iterable[S]) -> SetMut[T | S]: ...

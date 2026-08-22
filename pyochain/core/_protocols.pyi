@@ -94,7 +94,7 @@ class FlexibleWrapper[T](FlexibleInit[T], ABC):
 
         Example:
             ```python
-            from pyochain import Vec, Seq
+            from pyochain import Vec, Seq, SetMut
             from pyochain.collections import StableSet, Deque
             from collections import deque
 
@@ -120,5 +120,11 @@ class FlexibleWrapper[T](FlexibleInit[T], ABC):
             original.append(4)
 
             assert deque_obj == Deque(1, 2, 3, 4)
+
+            original_set = {1, 2, 3}
+            set_obj = SetMut.wrap(original_set)
+            assert set_obj == SetMut(1, 2, 3)
+            original_set.add(4)
+            assert set_obj == SetMut(1, 2, 3, 4)
             ```
         """

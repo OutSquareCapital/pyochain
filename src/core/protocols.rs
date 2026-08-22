@@ -1,10 +1,10 @@
 use pyo3::{
     PyClass,
     prelude::*,
-    types::{PyDict, PyIterator, PyList, PyNone, PySequence, PyTuple},
+    types::{PyDict, PyFrozenSet, PyIterator, PyList, PyNone, PySequence, PySet, PyTuple},
 };
 use pyo3_ext::{
-    iter::TryCollectBoundIterator,
+    iter::{CollectBoundIterator, TryCollectBoundIterator},
     prelude::{IntoPyIterator, PyDictExtConstructors},
     types::PyIterable,
 };
@@ -14,13 +14,13 @@ use tap::Pipe;
 use crate::{
     abc,
     collections::{self, StableSet},
-    core::{PyoVec, Seq, iterators},
+    core::{PyoVec, Seq, Set, SetMut, iterators},
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 #[pyclass(module = "pyochain.core", frozen, generic)]
 pub struct FlexibleInit;
 
-#[py_abc(Seq, PyoVec, collections::StableSet, iterators::Iter)]
+#[py_abc(Seq, PyoVec, Set, SetMut, collections::StableSet, iterators::Iter)]
 pub trait FlexInitProtocol: Sized + PyClass {
     #[pyo3(signature = (*elements))]
     #[new]
@@ -32,7 +32,7 @@ pub trait FlexInitProtocol: Sized + PyClass {
     #[pyo3(signature = (*elements))]
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>>;
 }
-#[py_abc(Seq, PyoVec, collections::StableSet, iterators::Iter)]
+#[py_abc(Seq, PyoVec, Set, SetMut, collections::StableSet, iterators::Iter)]
 pub trait FlexWrapper: PyWrapper + FlexInitProtocol {
     #[pyo3(signature = (iterable, /))]
     #[staticmethod]
@@ -48,21 +48,19 @@ impl FlexWrapper for collections::StableSet {
         Bound::new(py, initializer)
     }
 }
-impl FlexWrapper for iterators::Iter {
-    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-        iterable.into_pyochain()
-    }
+macro_rules! impl_flex_wrapper {
+    ($($ty:ty),*) => {
+        $(
+            impl FlexWrapper for $ty {
+                fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
+                    iterable.into_pyochain()
+                }
+            }
+        )*
+    };
 }
-impl FlexWrapper for PyoVec {
-    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-        iterable.into_pyochain()
-    }
-}
-impl FlexWrapper for Seq {
-    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-        iterable.into_pyochain()
-    }
-}
+impl_flex_wrapper!(Set, SetMut, iterators::Iter, PyoVec, Seq);
+
 impl FlexInitProtocol for iterators::Iter {
     fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
         let iterator = match elements.len() {
@@ -210,5 +208,95 @@ impl FlexInitProtocol for collections::StableSet {
             .map(Self)
             .map(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
             .and_then(|slf| Bound::new(py, slf))
+    }
+}
+impl FlexInitProtocol for Set {
+    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
+        let py = elements.py();
+        let set = match elements.len() {
+            0 => PyFrozenSet::empty(py)?,
+            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
+                CaseExact::PyFrozenSet(set) => set,
+                CaseExact::Self(inner) => inner
+                    .get()
+                    .into_inner_bound(py)
+                    .into_iter()
+                    .collect_bound(py)?,
+                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
+                any => [any].into_iter().collect_bound(py)?,
+            }},
+            _ => elements.into_iter().collect_bound::<PyFrozenSet>(py)?,
+        };
+        set.unbind()
+            .pipe(Self)
+            .pipe(|slf| abc::PyoSet::build_init().add_subclass(slf))
+            .pipe(Ok)
+    }
+    fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
+        let py = elements.py();
+        elements
+            .into_iter()
+            .collect_bound::<PyFrozenSet>(py)?
+            .into_pyochain()
+    }
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        let py = iterable.py();
+        try_cast_into! {
+            match iterable {
+                CaseExact::PyFrozenSet(set) => set,
+                CaseExact::Self(inner) => inner
+                    .get()
+                    .into_inner_bound(py)
+                    .into_iter()
+                    .collect_bound(py)?,
+                any => any.try_iter()?.try_collect_bound(py)?,
+            }
+        }
+        .into_pyochain()
+    }
+}
+impl FlexInitProtocol for SetMut {
+    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
+        let py = elements.py();
+        let set = match elements.len() {
+            0 => PySet::empty(py)?,
+            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
+                CaseExact::PySet(set) => set.into_iter().collect_bound(py)?,
+                CaseExact::Self(inner) => inner
+                    .get()
+                    .into_inner_bound(py)
+                    .into_iter()
+                    .collect_bound(py)?,
+                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
+                any => PySet::new(py, [any])?,
+            }},
+            _ => elements.into_iter().collect_bound::<PySet>(py)?,
+        };
+        set.unbind()
+            .pipe(Self)
+            .pipe(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
+            .pipe(Ok)
+    }
+    fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
+        let py = elements.py();
+        elements
+            .into_iter()
+            .collect_bound::<PySet>(py)?
+            .into_pyochain()
+    }
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        let py = iterable.py();
+        try_cast_into! {
+            match iterable {
+                CaseExact::PySet(set) => set.into_iter().collect_bound(py)?,
+                CaseExact::Self(inner) => inner
+                    .get()
+                    .into_inner_bound(py)
+                    .into_iter()
+                    .collect_bound(py)?,
+                any => any.try_iter()?.try_collect_bound(py)?,
+            }
+        }
+        .into_pyochain()
     }
 }
