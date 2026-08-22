@@ -1,8 +1,8 @@
 use crate::{
     abc::{self},
-    core::SetMut,
+    core::{SetMut, protocols::FlexWrapper},
     display::get_repr,
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    traits::{IntoPyochain, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -51,23 +51,13 @@ impl StableSet {
         }
     }
 
-    #[staticmethod]
-    fn from_ref(data: Bound<'_, PyDict>) -> PyResult<Bound<'_, Self>> {
-        let py = data.py();
-        let initializer = abc::PyoMutableSet::build_init().add_subclass(Self(data.unbind()));
-        Bound::new(py, initializer)
-    }
-
     fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         self.inner_bind(py).set_item(value, PyNone::get(py))
     }
 
     fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
-        slf.get()
-            .inner_bind(slf.py())
-            .copy()
-            .and_then(Self::from_ref)
+        slf.get().inner_bind(slf.py()).copy().and_then(Self::wrap)
     }
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
