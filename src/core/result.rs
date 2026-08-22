@@ -4,6 +4,7 @@ use crate::{
         option::{PyNull, PySome},
     },
     hasher::hash_fn,
+    traits::IntoPyochain,
 };
 use pyderive::*;
 use pyo3::{
@@ -164,8 +165,8 @@ impl PyoOk {
         self.value
             .clone_ref(py)
             .pipe(|x| PyTuple::new(py, &[x]))?
-            .pipe(iterators::Iter::from_tuple)
-            .into_bound(py)
+            .iter_py()
+            .into_pyochain()
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {

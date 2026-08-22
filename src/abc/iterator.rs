@@ -31,9 +31,9 @@ impl PyoIterator {
         value: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = cls.py();
-        PyTuple::new(py, &[value])
-            .map(iterators::Iter::from_tuple)?
-            .into_bound(py)
+        PyTuple::new(py, &[value])?
+            .iter_py()
+            .into_pyochain()
             .map(Bound::into_super)
     }
     #[pyo3(signature = (func, *args, **kwargs))]

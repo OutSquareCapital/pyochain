@@ -1,22 +1,26 @@
 use pyo3::{
     PyClass,
     prelude::*,
-    types::{PyDict, PyList, PyNone, PySequence, PyTuple},
+    types::{PyDict, PyIterator, PyList, PyNone, PySequence, PyTuple},
 };
-use pyo3_ext::{iter::TryCollectBoundIterator, prelude::PyDictExtConstructors, types::PyIterable};
+use pyo3_ext::{
+    iter::TryCollectBoundIterator,
+    prelude::{IntoPyIterator, PyDictExtConstructors},
+    types::PyIterable,
+};
 use pyochain_macros::{py_abc, try_cast_into};
 use tap::Pipe;
 
 use crate::{
     abc,
     collections::{self, StableSet},
-    core::{PyoVec, Seq},
+    core::{PyoVec, Seq, iterators},
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 #[pyclass(module = "pyochain.core", frozen, generic)]
 pub struct FlexibleInit;
 
-#[py_abc(Seq, PyoVec, collections::StableSet)]
+#[py_abc(Seq, PyoVec, collections::StableSet, iterators::Iter)]
 pub trait FlexInitProtocol: Sized + PyClass {
     #[pyo3(signature = (*elements))]
     #[new]
@@ -28,7 +32,7 @@ pub trait FlexInitProtocol: Sized + PyClass {
     #[pyo3(signature = (*elements))]
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>>;
 }
-#[py_abc(Seq, PyoVec, collections::StableSet)]
+#[py_abc(Seq, PyoVec, collections::StableSet, iterators::Iter)]
 pub trait FlexWrapper: PyWrapper + FlexInitProtocol {
     #[pyo3(signature = (iterable, /))]
     #[staticmethod]
@@ -44,6 +48,11 @@ impl FlexWrapper for collections::StableSet {
         Bound::new(py, initializer)
     }
 }
+impl FlexWrapper for iterators::Iter {
+    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
+        iterable.into_pyochain()
+    }
+}
 impl FlexWrapper for PyoVec {
     fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
         iterable.into_pyochain()
@@ -52,6 +61,29 @@ impl FlexWrapper for PyoVec {
 impl FlexWrapper for Seq {
     fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
         iterable.into_pyochain()
+    }
+}
+impl FlexInitProtocol for iterators::Iter {
+    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
+        let iterator = match elements.len() {
+            1 => try_cast_into! {match { unsafe { elements.get_item_unchecked(0) } } {
+                Case::PyIterator(iterator) => iterator,
+                Case::PyIterable(iterable) => iterable.try_iter()?,
+                any => PyTuple::new(elements.py(), [any])?.iter_py(),
+            }},
+            _ => elements.iter_py(),
+        };
+        iterator
+            .unbind()
+            .pipe(Self)
+            .pipe(|slf| abc::PyoIterator::build_init().add_subclass(slf))
+            .pipe(Ok)
+    }
+    fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
+        elements.iter_py().into_pyochain()
+    }
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        iterable.try_iter()?.into_pyochain()
     }
 }
 impl FlexInitProtocol for Seq {

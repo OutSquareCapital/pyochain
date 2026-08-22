@@ -3,9 +3,12 @@ from typing import Self, final, override
 
 from pyochain import Option, Result
 from pyochain.abc import PyoIterator
+from pyochain.core._protocols import (  # ruff: ignore[import-private-name]
+    FlexibleWrapper,
+)
 
 @final
-class Iter[T](PyoIterator[T]):
+class Iter[T](PyoIterator[T], FlexibleWrapper[T]):
     """Concrete implementation for `abc::PyoIterator`.
 
     Can be instantiated from any `Iterable` (like lists, sets, generators, etc.) efficiently (it only calls the builtin `iter()` on the input).
@@ -93,6 +96,15 @@ class Iter[T](PyoIterator[T]):
     def __iter__(self) -> Iterator[T]: ...
     @override
     def __next__(self) -> T: ...
+    @override
+    @staticmethod
+    def from_iter[I](iterable: Iterable[I], /) -> Iter[I]: ...
+    @override
+    @staticmethod
+    def of[I](*elements: I) -> Iter[I]: ...
+    @override
+    @staticmethod
+    def wrap[W](wrapped: Iterator[W], /) -> Iter[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
 @final
 class Peekable[T](PyoIterator[T]):
