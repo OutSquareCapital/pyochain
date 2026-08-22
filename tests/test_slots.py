@@ -45,7 +45,7 @@ def test_slots() -> None:
     assert _check_slots(pc.SetMut(()))
     assert _check_slots(pc.Dict[str, str](()))
     assert _check_slots(pc.Some(42))
-    assert _check_slots(pc.Range(0, 1))
+    assert _check_slots(pc.Range(1))
     assert _check_slots(pc.Vec(()))
     assert _check_slots(pc.NONE)
     assert _check_slots(pc.Err[int, object](42))

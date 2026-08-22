@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_contains(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).pipe(Set)
+    data = Range(size).pipe(Set)
     assert benchmark(_contains, data, size) is True
 
 

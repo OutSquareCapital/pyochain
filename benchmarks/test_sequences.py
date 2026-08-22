@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_rev(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
+    data = Range(size)
     assert benchmark(_rev, data) == 0
 
 
@@ -27,7 +27,7 @@ def _rev(data: PyoReversible[int]) -> int:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_first(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).pipe(Seq)
+    data = Range(size).pipe(Seq)
     assert benchmark(_first, data) == 0
 
 
@@ -39,7 +39,7 @@ def _first(data: PyoSequence[int]) -> int:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_last(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).pipe(Seq)
+    data = Range(size).pipe(Seq)
     assert benchmark(_last, data) == size - 1
 
 
@@ -51,13 +51,13 @@ def _last(data: PyoSequence[int]) -> int:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_get_some(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).pipe(Seq)
+    data = Range(size).pipe(Seq)
     assert benchmark(_get, data, size - 1).is_some()
 
 
 @pytest.mark.parametrize("size", SIZES)
 def test_get_none(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
+    data = Range(size)
     assert benchmark(_get, data, size).is_none()
 
 
@@ -69,7 +69,7 @@ def _get(data: PyoSequence[int], idx: int) -> Option[int]:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_init_seq(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
+    data = Range(size)
     assert benchmark(_init_seq, data, size).first() == data.first()
 
 
@@ -81,19 +81,19 @@ def _init_seq(data: PyoSequence[int], size: int) -> Seq[int]:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_init_range(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
+    data = Range(size)
     assert benchmark(_init_range, size).first() == data.first()
 
 
 def _init_range(size: int) -> Range:
     for _ in range(SIZES[size]):
-        _ = Range(0, size)
-    return Range(0, size)
+        _ = Range(size)
+    return Range(size)
 
 
 @pytest.mark.parametrize("size", SIZES)
 def test_concat(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).pipe(Seq)
+    data = Range(size).pipe(Seq)
     assert benchmark(_concat, data, size).last() == data.last()
 
 

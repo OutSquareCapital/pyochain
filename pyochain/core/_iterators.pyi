@@ -89,7 +89,7 @@ class Peekable[T](PyoIterator[T]):
             ```python
             from pyochain import Range, Some
 
-            iterator = Range(0, 5).iter().peekable()
+            iterator = Range(5).iter().peekable()
 
             # Peek at the first item of the iterator without consuming it.
             assert iterator.peek() == Some(0)
@@ -115,7 +115,7 @@ class Peekable[T](PyoIterator[T]):
             ```python
             from pyochain import Range, Some
 
-            iterator = Range(0, 5).iter().peekable()
+            iterator = Range(5).iter().peekable()
 
             # The first item of the iterator is 0; consume it.
             assert iterator.next_if(lambda x: x == 0) == Some(0)
@@ -152,7 +152,7 @@ class Peekable[T](PyoIterator[T]):
             ```python
             from pyochain import Range, Some
 
-            iterator = Range(0, 5).iter().peekable()
+            iterator = Range(5).iter().peekable()
 
             # The first item of the iterator is 0; consume it.
             assert iterator.next_if_eq(0) == Some(0)

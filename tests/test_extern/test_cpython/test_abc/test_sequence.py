@@ -17,7 +17,7 @@ def test_sequence_ok() -> None:
     for sample in [Seq, Vec]:
         assert isinstance(sample(()), PyoSequence)
         assert issubclass(sample, PyoSequence)
-    assert isinstance(Range(0, 10), PyoSequence)
+    assert isinstance(Range(10), PyoSequence)
     assert issubclass(Range, PyoSequence)
 
 

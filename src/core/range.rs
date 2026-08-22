@@ -6,7 +6,9 @@ use either::Either;
 use pyo3::{
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyInt, PyIterator, PyRange, PyRangeMethods, PySequence, PySlice},
+    types::{PyInt, PyIterator, PyRange, PyRangeMethods, PySequence, PySlice, PyTuple},
+    exceptions::PyTypeError,
+
 };
 use pyo3_ext::{prelude::*, pylibs};
 use pyochain_macros::try_cast;
@@ -26,14 +28,35 @@ impl Range {
 }
 #[pymethods]
 impl Range {
-    #[pyo3(signature = (start, stop, step = 1))]
+    #[pyo3(signature = (*args))]
     #[new]
     fn py_new(
         py: Python<'_>,
-        start: isize,
-        stop: isize,
-        step: isize,
+        args: &Bound<'_, PyTuple>,
     ) -> PyResult<PyClassInitializer<Self>> {
+
+        let (start, stop, step) = match args.len() {
+            1 => {
+                let stop: isize = args.get_item(0)?.extract()?;
+                (0, stop, 1)
+            }
+            2 => {
+                let start: isize = args.get_item(0)?.extract()?;
+                let stop: isize = args.get_item(1)?.extract()?;
+                (start, stop, 1)
+            }
+            3 => {
+                let start: isize = args.get_item(0)?.extract()?;
+                let stop: isize = args.get_item(1)?.extract()?; 
+                let step: isize = args.get_item(2)?.extract()?;
+                (start, stop, step)
+            }
+            len => {
+                return Err(PyTypeError::new_err(
+                    format!("range expected at most 3 arguments, got {}", len)
+                ));
+            }
+        };
         PyRange::new_with_step(py, start, stop, step)
             .map(Bound::unbind)
             .map(|inner| abc::PyoSequence::build_init().add_subclass(Self(inner)))

@@ -108,7 +108,7 @@ class SliceView[T](PyoSequence[T]):
             ```python
             from pyochain import SliceView, Range, Seq
 
-            data = Range(0, 10).iter().collect(Seq)
+            data = Range(10).iter().collect(Seq)
             sv = SliceView(data, 0, 3)
             assert sv.iter().collect(Seq) == Seq([0, 1, 2])
 

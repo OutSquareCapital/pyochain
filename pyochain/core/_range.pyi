@@ -7,12 +7,13 @@ from pyochain.abc import PyoSequence
 class Range(PyoSequence[int]):
     """A wrapper around the built-in `range` type that implements the `PyoSequence` protocol.
 
-    `start` must be specified, unlike the built-in type, but everything else is the same.
+    Behaves identically to Python's built-in range type
 
     Args:
-        start (int): The starting value of the range (inclusive).
-        stop (int): The ending value of the range (exclusive).
-        step (int, optional): The step size between values in the range. Defaults to 1.
+        *args: can be passed as:
+            - stop (int): Range from 0 to `stop` (exclusive).
+            - start (int), stop (int): Range from `start`(inclusive) to `stop`(exclusive).
+            - start (int), stop (int), step (int): Range from `start` to `stop` with `step`.
 
     Example:
         ```python
@@ -24,7 +25,7 @@ class Range(PyoSequence[int]):
         assert r.rev().collect(Seq) == Seq((5, 3, 1))
         names = ("alice", "bob", "CHARLIE", "dave")
         indexed_names = (
-            Range(0, 100)
+            Range(100)
             .iter()
             .zip(names)
             .map_star(lambda i, n: (i, n.title()))
@@ -34,7 +35,11 @@ class Range(PyoSequence[int]):
         ```
     """
 
-    def __init__(self, start: int, stop: int, step: int = 1) -> None: ...
+    @overload
+    def __init__(self, stop: int, /) -> None: ...
+    @overload
+    def __init__(self, start: int, stop: int, step: int = 1, /) -> None: ...
+    def __init__(self, *args: int) -> None: ...
     @override
     def __iter__(self) -> Iterator[int]: ...
     @override
