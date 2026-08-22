@@ -3,8 +3,11 @@ from typing import Any, Self, override
 
 from pyochain import SetMut
 from pyochain.abc import PyoMutableSet
+from pyochain.core._protocols import (  # ruff: ignore[import-private-name]
+    FlexibleWrapper,
+)
 
-class StableSet[T](PyoMutableSet[T]):
+class StableSet[T](PyoMutableSet[T], FlexibleWrapper[T]):
     """A mutable collection of unique elements which remember their insertion order.
 
     Uses a `dict` as the underlying data structure to maintain insertion order while ensuring uniqueness of elements.
@@ -78,34 +81,15 @@ class StableSet[T](PyoMutableSet[T]):
     def __contains__(self, item: object) -> bool: ...
     @override
     def __eq__(self, other: object) -> bool: ...
+    @override
     @staticmethod
-    def from_ref[V](data: dict[V, Any]) -> StableSet[V]:
-        """Create a `StableSet` from a reference to an existing `dict`.
-
-        This method wraps the provided `dict` without copying it, allowing for efficient object instanciation.
-
-        This is the recommended way to create a `StableSet` from foreign functions that return `dict` objects.
-
-        Warning:
-            Since the `StableSet` directly references the original `dict`, any modifications made to the `StableSet` will also affect the original `dict`, and vice versa.
-
-        Args:
-            data (dict[V, Any]): The `dict` to wrap.
-
-        Returns:
-            StableSet[V]: A new `StableSet` instance.
-
-        Example:
-            ```python
-            from pyochain.collections import StableSet
-
-            original = {"Alice": 30, "Bob": 25, "Charlie": 35}
-            set_obj = StableSet.from_ref(original)
-            assert set_obj == StableSet("Alice", "Bob", "Charlie")
-            original["David"] = 40
-            assert set_obj == StableSet("Alice", "Bob", "Charlie", "David")
-        ```
-        """
+    def from_iter(iterable: Iterable[T], /) -> StableSet[T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    @staticmethod
+    def of(*elements: T) -> StableSet[T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    @staticmethod
+    def wrap[V](data: dict[V, Any]) -> StableSet[V]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def add(self, value: T) -> None: ...
     def copy(self) -> StableSet[T]:

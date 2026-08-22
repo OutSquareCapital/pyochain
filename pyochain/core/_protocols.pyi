@@ -96,6 +96,8 @@ class FlexibleWrapper[T](FlexibleInit[T], ABC):
             ```python
             from pyochain import Vec, Seq
 
+            from pyochain.collections import StableSet
+
             original_list = [1, 2, 3]
             vec = Vec.wrap(original_list)
             assert vec == Vec(1, 2, 3)
@@ -104,5 +106,11 @@ class FlexibleWrapper[T](FlexibleInit[T], ABC):
 
             original_tuple = (1, 2, 3)
             assert Seq.wrap(original_tuple) == Seq(1, 2, 3)
+
+            py_dict = {"Alice": 30, "Bob": 25, "Charlie": 35}
+            set_obj = StableSet.wrap(py_dict)
+            assert set_obj == StableSet("Alice", "Bob", "Charlie")
+            py_dict["David"] = 40
+            assert set_obj == StableSet("Alice", "Bob", "Charlie", "David")
             ```
         """

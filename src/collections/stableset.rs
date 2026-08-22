@@ -7,41 +7,18 @@ use crate::{
 use either::Either;
 use pyo3::{
     prelude::*,
-    types::{PyDict, PyIterator, PyNone, PyNotImplemented, PySet, PyTuple},
+    types::{PyDict, PyIterator, PyNone, PyNotImplemented, PySet},
 };
 use pyo3_ext::{
     prelude::*,
-    types::{FromCmp, PyAbstractSet, PyCmpOut, PyIterable},
+    types::{FromCmp, PyAbstractSet, PyCmpOut},
 };
-use pyochain_macros::{try_cast, try_cast_into};
+use pyochain_macros::try_cast;
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections",frozen, generic, extends=abc::PyoMutableSet)]
 pub struct StableSet(pub Py<PyDict>);
 #[pymethods]
 impl StableSet {
-    #[pyo3(signature = (*elements))]
-    #[new]
-    fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
-        let py = elements.py();
-        let dict = match elements.len() {
-            0 => PyDict::new(py),
-            1 => {
-                try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                Case::PyIterable(iterable) => PyDict::from_keys(iterable, None)?,
-                any => {
-                    let dict = PyDict::new(py);
-                    dict.set_item(any, PyNone::get(py))?;
-                    dict
-                }}}
-            }
-            _ => PyDict::from_keys(elements.into_any(), None)?,
-        };
-        dict.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
-            .pipe(Ok)
-    }
-
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let name = slf.get_type().name()?;
         slf.get()
