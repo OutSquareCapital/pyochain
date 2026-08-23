@@ -31,7 +31,6 @@ impl Range {
     #[pyo3(signature = (*args))]    
     #[new]
     fn py_new(
-        _py: Python<'_>,
         args: &Bound<'_, PyTuple>,
     ) -> PyResult<PyClassInitializer<Self>> {
 
