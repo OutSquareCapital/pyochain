@@ -7,13 +7,7 @@ from pyochain.abc import PyoSequence
 class Range(PyoSequence[int]):
     """A wrapper around the built-in `range` type that implements the `PyoSequence` protocol.
 
-    Behaves identically to Python's built-in range type
-
-    Args:
-        *args: can be passed as:
-            - stop (int): Range from 0 to `stop` (exclusive).
-            - start (int), stop (int): Range from `start`(inclusive) to `stop`(exclusive).
-            - start (int), stop (int), step (int): Range from `start` to `stop` with `step`.
+    Behaves identically to Python's built-in range type.
 
     Example:
         ```python
@@ -39,7 +33,32 @@ class Range(PyoSequence[int]):
     def __new__(cls, stop: int, /) -> Self: ...
     @overload
     def __new__(cls, start: int, stop: int, step: int = 1, /) -> Self: ...
-    def __new__(cls, *args: int) -> Self: ...
+    def __new__(cls, *args: int) -> Self:
+        """Creates a new `Range` instance.
+
+        The number of arguments passed will determine the behavior of the range:
+
+            - 1 => `Range` from 0 to *stop* (exclusive).
+            - 2 =>  `Range` from *start* (inclusive) to *stop* (exclusive).
+            - 3 => `Range` from *start* to *stop* with *step*
+            - 4 or more => Raises a `TypeError`.
+
+        Args:
+          *args (int): Start, stop, and step values for the range.
+
+        Returns:
+            Self: A new `Range` instance.
+
+        Examples:
+            ```python
+            from pyochain import Range
+
+            assert tuple(Range(5)) == (0, 1, 2, 3, 4)
+            assert tuple(Range(1, 5)) == (1, 2, 3, 4)
+            assert tuple(Range(1, 5, 2)) == (1, 3)
+            ```
+
+        """
     @override
     def __iter__(self) -> Iterator[int]: ...
     @override

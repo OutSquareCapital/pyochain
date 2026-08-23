@@ -461,7 +461,7 @@ def _all_equal(data: PyoIterable[int]) -> bool:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_partition(benchmark: BenchFixture, size: int) -> None:
-    data = Range(stop=size)
+    data = Range(size)
     assert benchmark(_partition, data) == (size // 2, size - size // 2)
 
 
