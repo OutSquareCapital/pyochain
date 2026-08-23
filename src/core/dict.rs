@@ -5,27 +5,52 @@ use crate::{
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use pyo3::{
-    PyTypeInfo,
     exceptions::PyKeyError,
     intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyDict, PyIterator, PyTuple, PyType},
+    types::{PyDict, PyIterator, PyMapping, PyTuple, PyType},
 };
 use pyo3_ext::{prelude::*, pylibs, types::PopResult};
+use pyochain_macros::try_cast_into;
 use tap::Pipe;
 
 #[pyclass(module = "pyochain.core",frozen, generic, extends=abc::PyoMutableMapping)]
 pub struct Dict(pub Py<PyDict>);
 #[pymethods]
 impl Dict {
+    #[pyo3(signature = (*elements, **kwargs))]
     #[new]
-    fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
-        PyDict::type_object(data.py())
-            .call1((data,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyDict>() })
-            .map(Bound::unbind)
-            .map(|inner| abc::PyoMutableMapping::build_init().add_subclass(Self(inner)))
+    fn new(
+        elements: Bound<'_, PyTuple>,
+        kwargs: Option<Bound<'_, PyDict>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
+        let py = elements.py();
+        let dict = match elements.len() {
+            0 => kwargs.unwrap_or_else(|| PyDict::new(py)),
+            1 => {
+                let dict = try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
+                    Case::PyDict(dict) => dict,
+                    Case::PyMapping(mapping) => PyDict::from_mapping(mapping)?,
+                    any => PyDict::new(py).merge(&any)?,
+                }};
+                if let Some(kw) = kwargs {
+                    dict.update(kw.as_mapping())?;
+                };
+                dict
+            }
+            _ => {
+                let dict = elements.as_any().pipe(PyDict::from_sequence)?;
+                if let Some(kw) = kwargs {
+                    dict.update(kw.as_mapping())?;
+                };
+                dict
+            }
+        };
+        dict.unbind()
+            .pipe(Self)
+            .pipe(|slf| abc::PyoMutableMapping::build_init().add_subclass(slf))
+            .pipe(Ok)
     }
     #[allow(unused_variables)]
     #[classmethod]

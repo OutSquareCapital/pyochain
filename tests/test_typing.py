@@ -799,3 +799,15 @@ def check_chain_covariance[T, S](
     y = itertools.chain(base, *others)
 
     return x, y
+
+
+def check_dict() -> None:
+
+    def _(_d: Dict[str, int]) -> None:
+        pass
+
+    _(Dict({"a": 1, "b": 2}))
+    _(Dict([("a", 1), ("b", 2)]))
+    _(Dict(("a", 1), ("b", 2)))
+    _(Dict(a=1, b=2))
+    _(Dict({"a": 1}, b=2))

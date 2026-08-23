@@ -90,8 +90,22 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
         assert Dict(minimal_dict_like) == Dict({1: "a", 2: "b"})
         ```
     """
-
-    def __init__(self, data: DictConvertible[K, V]) -> None: ...
+    @overload
+    def __new__(cls, iterable: DictConvertible[K, V], /) -> Dict[K, V]: ...
+    @overload
+    def __new__(cls, **kwargs: V) -> Dict[str, V]: ...
+    @overload
+    def __new__[K1, V1](
+        cls, iterable: DictConvertible[str, V], **kwargs: V
+    ) -> Dict[str, V]: ...
+    @overload
+    def __new__(cls, iterable: tuple[K, V], *elements: tuple[K, V]) -> Dict[K, V]: ...
+    def __new__(
+        cls,
+        iterable: DictConvertible[K, V] | tuple[K, V] = (),
+        *elements: tuple[K, V],
+        **kwargs: V,
+    ) -> Self: ...
     @override
     def __iter__(self) -> Iterator[K]: ...
     @override

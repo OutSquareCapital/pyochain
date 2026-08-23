@@ -6,7 +6,7 @@ use pyo3::{
     prelude::*,
     types::{
         PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator,
-        PyList, PyRange, PySequence, PySet, PyTuple,
+        PyList, PyMapping, PyRange, PySequence, PySet, PyTuple,
     },
 };
 
@@ -242,6 +242,7 @@ pub trait PyDictExtConstructors: PyTypeInfo {
         keys: Bound<'py, T>,
         value: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>>;
+    fn from_mapping(mapping: Bound<'_, PyMapping>) -> PyResult<Bound<'_, Self>>;
 }
 impl PyDictExtConstructors for PyDict {
     fn from_keys<'py, T: PyTypeInfo>(
@@ -253,9 +254,13 @@ impl PyDictExtConstructors for PyDict {
             .call_method1(intern!(py, "fromkeys"), (keys, value))
             .map(|x| unsafe { x.cast_into_unchecked::<PyDict>() })
     }
+    fn from_mapping(mapping: Bound<'_, PyMapping>) -> PyResult<Bound<'_, Self>> {
+        let dict = PyDict::new(mapping.py());
+        dict.update(&mapping).map(|_| dict)
+    }
 }
 #[allow(unused)]
-pub trait PyDictExtMethods<'py> {
+pub trait PyDictExtMethods<'py>: Sized {
     /// Return a view of the dictionnary items, just like calling `dict.items()` in Python
     fn items_view(&self) -> Bound<'py, PyDictItems>;
     /// Return a view of the dictionnary keys, just like calling `dict.keys()` in Python
@@ -265,8 +270,16 @@ pub trait PyDictExtMethods<'py> {
     fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>>;
     fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PopResult<'py>;
     fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<&Self>;
+    fn merge(self, other: &Bound<'_, PyAny>) -> PyResult<Self>;
 }
 impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
+    // BUG, TODO: add SupportsKey or something like that Protocol type, bc iterables dom't work with this
+    fn merge(self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
+        match unsafe { ffi::PyDict_Merge(self.as_ptr(), other.as_ptr(), 0) } {
+            0 => Ok(self),
+            _ => Err(PyErr::fetch(self.py())),
+        }
+    }
     fn items_view(&self) -> Bound<'py, PyDictItems> {
         unsafe {
             self.call_method0(intern!(self.py(), "items"))
