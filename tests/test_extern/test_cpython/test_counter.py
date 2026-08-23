@@ -109,7 +109,7 @@ def test_basics() -> None:
     reason="We don't support the __init__ reinitialization behavior of CPython's Counter"
 )
 def test_init_reinitialization() -> None:
-    c = PyoCounter[str]({"a": 5, "b": 3, "c": 1})
+    c = PyoCounter({"a": 5, "b": 3, "c": 1})
     c.__init__("a" * 500 + "b" * 300)  # pyright: ignore[reportCallIssue]
     c.__init__("cdc")  # pyright: ignore[reportCallIssue]
     c.__init__()
@@ -136,8 +136,8 @@ def test_update_reentrant_add_clears_counter() -> None:
 
 
 def test_init() -> None:
-    assert list(PyoCounter[str](self=42).items()) == [("self", 42)]
-    assert list(PyoCounter[str](iterable=42).items()) == [("iterable", 42)]
+    assert list(PyoCounter(self=42).items()) == [("self", 42)]
+    assert list(PyoCounter(iterable=42).items()) == [("iterable", 42)]
     # pyrefly: ignore [bad-argument-type]
     assert list(PyoCounter[str](iterable=None).items()) == [("iterable", None)]  # pyright: ignore[reportArgumentType]
     with pytest.raises(TypeError):
@@ -152,8 +152,7 @@ def test_init() -> None:
 
 
 def test_total() -> None:
-    c = PyoCounter[str](a=10, b=5, c=0)
-    assert c.total() == 15
+    assert PyoCounter(a=10, b=5, c=0).total() == 15
 
 
 def test_order_preservation() -> None:
@@ -310,7 +309,7 @@ def test_conversions() -> None:
 
 
 def test_invariant_for_the_in_operator() -> None:
-    c = PyoCounter[str](a=10, b=-2, c=0)
+    c = PyoCounter(a=10, b=-2, c=0)
     for elem in c:
         assert elem in c
         assert elem in c
@@ -318,7 +317,7 @@ def test_invariant_for_the_in_operator() -> None:
 
 def test_multiset_operations() -> None:
     # Verify that adding a zero counter will strip zeros and negatives
-    c = PyoCounter[str](a=10, b=-2, c=0) + PyoCounter[str]()
+    c = PyoCounter(a=10, b=-2, c=0) + PyoCounter[str]()
     assert dict(c) == {"a": 10}
 
     ops_1: Ops[int] = [
@@ -396,11 +395,11 @@ def test_inplace_operations(ops: tuple[PyoCounterFn, PyoCounterFn]) -> None:
 
 
 def test_subtract() -> None:
-    c = PyoCounter[str](a=-5, b=0, c=5, d=10, e=15, g=40)
+    c = PyoCounter(a=-5, b=0, c=5, d=10, e=15, g=40)
     c.subtract(a=1, b=2, c=-3, d=10, e=20, f=30, h=-50)
-    assert c == PyoCounter[str](a=-6, b=-2, c=8, d=0, e=-5, f=-30, g=40, h=50)
-    c = PyoCounter[str](a=-5, b=0, c=5, d=10, e=15, g=40)
-    c.subtract(PyoCounter[str](a=1, b=2, c=-3, d=10, e=20, f=30, h=-50))
+    assert c == PyoCounter(a=-6, b=-2, c=8, d=0, e=-5, f=-30, g=40, h=50)
+    c = PyoCounter(a=-5, b=0, c=5, d=10, e=15, g=40)
+    c.subtract(PyoCounter(a=1, b=2, c=-3, d=10, e=20, f=30, h=-50))
     assert c == PyoCounter(a=-6, b=-2, c=8, d=0, e=-5, f=-30, g=40, h=50)
     c = PyoCounter("aaabbcd")
     c.subtract("aaaabbcce")
@@ -424,7 +423,7 @@ def test_subtract() -> None:
 
 
 def test_unary() -> None:
-    c = PyoCounter[str](a=-5, b=0, c=5, d=10, e=15, g=40)
+    c = PyoCounter(a=-5, b=0, c=5, d=10, e=15, g=40)
     assert dict(+c) == {"c": 5, "d": 10, "e": 15, "g": 40}
     assert dict(-c) == {"a": 5}
 
@@ -495,8 +494,8 @@ def test_symmetric_difference() -> None:
     population = (-4, -1, 0, 1, 4)
 
     for a, b1, b2, c in itertools.product(population, repeat=4):
-        p = PyoCounter[str](a=a, b=b1)
-        q = PyoCounter[str](b=b2, c=c)
+        p = PyoCounter(a=a, b=b1)
+        q = PyoCounter(b=b2, c=c)
         r = p ^ q
 
         # Elementwise invariants
