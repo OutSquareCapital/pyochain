@@ -1,0 +1,41 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Type checking, linting, and formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Lint Python files
+        run: uv run ruff check .
+
+      - name: Check Python formatting
+        run: uv run ruff format --check --preview .
+
+      - name: Check python ordering
+        run: uv run sdsort . --stubs --check
+
+      - name: Check stub docstrings
+        run: |
+          shopt -s globstar
+          uv run pydoclint pyochain/**/*.pyi
+
+      - name: Type-check Python package
+        run: uv run basedpyright .
