@@ -28,38 +28,25 @@ impl Range {
 }
 #[pymethods]
 impl Range {
-    #[pyo3(signature = (*args))]
+    #[pyo3(signature = (*args))]    
     #[new]
     fn py_new(
-        py: Python<'_>,
+        _py: Python<'_>,
         args: &Bound<'_, PyTuple>,
     ) -> PyResult<PyClassInitializer<Self>> {
 
-        let (start, stop, step) = match args.len() {
-            1 => {
-                let stop: isize = args.get_item(0)?.extract()?;
-                (0, stop, 1)
-            }
-            2 => {
-                let start: isize = args.get_item(0)?.extract()?;
-                let stop: isize = args.get_item(1)?.extract()?;
-                (start, stop, 1)
-            }
-            3 => {
-                let start: isize = args.get_item(0)?.extract()?;
-                let stop: isize = args.get_item(1)?.extract()?; 
-                let step: isize = args.get_item(2)?.extract()?;
-                (start, stop, step)
-            }
-            len => {
-                return Err(PyTypeError::new_err(
-                    format!("range expected at most 3 arguments, got {}", len)
-                ));
-            }
-        };
-        PyRange::new_with_step(py, start, stop, step)
-            .map(Bound::unbind)
-            .map(|inner| abc::PyoSequence::build_init().add_subclass(Self(inner)))
+        let item_at = |idx: usize| unsafe {args.get_item_unchecked(idx).extract::<isize>()};
+        
+        let inner = match args.len(){
+            1 => PyRange::new(item_at(0)?),
+            2 => PyRange::new_with_step(item_at(0)?, item_at(1)?, 1),
+            3 => PyRange::new_with_step(item_at(0)?, item_at(1)?, item_at(2)?),
+            len => Err(PyTypeError::new_err(format!(
+                "{} expected at most 3 arguments, got {len}", Self::NAME
+            ))),
+        }?;
+        
+        Ok(abc::PyoSequence::build_init().add_subclass(Self(inner)))
     }
     pub fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
         self.inner_bind(py).iter_py()
