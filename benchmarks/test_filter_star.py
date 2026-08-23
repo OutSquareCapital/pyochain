@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.benchmark(group="filter_star")
 def test_filter_star_2tuple(benchmark: BenchFixture) -> None:
-    data = Range(0, Sizes.SIZE_4096).iter().map(lambda x: (x, x + 1)).collect(Seq)
+    data = Range(Sizes.SIZE_4096).iter().map(lambda x: (x, x + 1)).collect(Seq)
     assert benchmark(_filter_star_2tuple, data)[0] % 2 == 0
 
 
@@ -24,9 +24,7 @@ def _filter_star_2tuple(data: Seq[tuple[int, int]]) -> tuple[int, int]:
 
 @pytest.mark.benchmark(group="filter_star")
 def test_filter_star_3tuple(benchmark: BenchFixture) -> None:
-    data = (
-        Range(0, Sizes.SIZE_4096).iter().map(lambda x: (x, x + 1, x + 2)).collect(Seq)
-    )
+    data = Range(Sizes.SIZE_4096).iter().map(lambda x: (x, x + 1, x + 2)).collect(Seq)
     assert benchmark(_filter_star_3tuple, data)[0] % 2 == 0
 
 
@@ -37,7 +35,7 @@ def _filter_star_3tuple(data: Seq[tuple[int, int, int]]) -> tuple[int, int, int]
 @pytest.mark.benchmark(group="filter_star")
 def test_filter_star_4tuple(benchmark: BenchFixture) -> None:
     data = (
-        Range(0, Sizes.SIZE_4096)
+        Range(Sizes.SIZE_4096)
         .iter()
         .map(lambda x: (x, x + 1, x + 2, x + 3))
         .collect(Seq)
@@ -54,7 +52,7 @@ def _filter_star_4tuple(
 @pytest.mark.benchmark(group="filter_star")
 def test_filter_star_5tuple(benchmark: BenchFixture) -> None:
     data = (
-        Range(0, Sizes.SIZE_4096)
+        Range(Sizes.SIZE_4096)
         .iter()
         .map(lambda x: (x, x + 1, x + 2, x + 3, x + 4))
         .collect(Seq)

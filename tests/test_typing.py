@@ -247,13 +247,13 @@ def check_and_then() -> None:
 
 def check_iter_flatten() -> None:
     nested: PyoIterator[PyoIterator[PyoIterator[list[int]]]] = (
-        Range(0, 3)
+        Range(3)
         .iter()
         .map(
             lambda x: (
-                Range(0, x)
+                Range(x)
                 .iter()
-                .map(lambda y: Range(0, y).iter().map(lambda z: Range(0, z).pipe(list)))
+                .map(lambda y: Range(y).iter().map(lambda z: Range(z).pipe(list)))
             )
         )
     )

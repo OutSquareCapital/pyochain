@@ -136,14 +136,14 @@ def test_swap(benchmark: BenchFixture, fn: BenchCall) -> None:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_iter_ok(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
+    data = Range(size)
     opt = Ok(1)
     assert benchmark(_iter, data, opt).is_some()
 
 
 @pytest.mark.parametrize("size", SIZES)
 def test_iter_err(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
+    data = Range(size)
     opt = Err(0)
     assert benchmark(_iter, data, opt).is_none()
 

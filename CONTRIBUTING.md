@@ -142,10 +142,12 @@ If `uv run -m scripts.check_docstrings` fails, don't worry.
 `sdsort` will re-order the python stubs depending on various rules, so don't be surprised if your code moves around a bit.
 
 ```bash
+uv run cargo clippy --fix --allow-dirty --allow-staged --workspace
+cargo fmt --all
 uv run sdsort . --stubs;
 uv run ruff check . --fix --unsafe-fixes;
 uv run ruff format . --preview;
-uv run basedpyright src/pyochain;
+uv run basedpyright .;
 uv run scripts/check_docstrings.py;
 uv run pydoclint pyochain/**/*.pyi
 ```

@@ -4,9 +4,11 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
+    PyTypeInfo,
+    exceptions::PyTypeError,
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyInt, PyIterator, PyRange, PyRangeMethods, PySequence, PySlice},
+    types::{PyInt, PyIterator, PyRange, PyRangeMethods, PySequence, PySlice, PyTuple},
 };
 use pyo3_ext::{prelude::*, pylibs};
 use pyochain_macros::try_cast;
@@ -26,17 +28,27 @@ impl Range {
 }
 #[pymethods]
 impl Range {
-    #[pyo3(signature = (start, stop, step = 1))]
+    #[pyo3(signature = (*args))]
     #[new]
-    fn py_new(
-        py: Python<'_>,
-        start: isize,
-        stop: isize,
-        step: isize,
-    ) -> PyResult<PyClassInitializer<Self>> {
-        PyRange::new_with_step(py, start, stop, step)
-            .map(Bound::unbind)
-            .map(|inner| abc::PyoSequence::build_init().add_subclass(Self(inner)))
+    fn py_new(args: &Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
+        let py = args.py();
+        let item_at = |idx: usize| unsafe { args.get_item_unchecked(idx).extract::<isize>() };
+
+        let inner = match args.len() {
+            1 => PyRange::new(py, 0, item_at(0)?),
+            2 => PyRange::new(py, item_at(0)?, item_at(1)?),
+            3 => PyRange::new_with_step(py, item_at(0)?, item_at(1)?, item_at(2)?),
+            invalid_length => Err(PyTypeError::new_err(format!(
+                "{} expected at most 3 arguments, got {invalid_length}",
+                Self::type_object(py).name()?
+            ))),
+        }?;
+
+        inner
+            .unbind()
+            .pipe(Self)
+            .pipe(|slf| abc::PyoSequence::build_init().add_subclass(slf))
+            .pipe(Ok)
     }
     pub fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
         self.inner_bind(py).iter_py()

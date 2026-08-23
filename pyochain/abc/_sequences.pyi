@@ -20,7 +20,7 @@ class PyoReversible[T](PyoIterable[T], Protocol):
             from pyochain import Seq, Range
 
             assert Seq(1, 2, 3).rev().collect(Seq) == Seq(3, 2, 1)
-            assert Range(0, 5).rev().collect(Seq) == Seq(4, 3, 2, 1, 0)
+            assert Range(5).rev().collect(Seq) == Seq(4, 3, 2, 1, 0)
             ```
         """
 

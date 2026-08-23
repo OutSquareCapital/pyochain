@@ -20,7 +20,7 @@ def test_try_find(benchmark: BenchFixture, size: int) -> None:
     def fn(data: Range) -> None:
         _ = data.iter().try_find(lambda value: Ok(value == unreachable))
 
-    data = Range(0, size)
+    data = Range(size)
     assert benchmark(fn, data) is None
 
 
@@ -30,7 +30,7 @@ def test_try_fold(benchmark: BenchFixture, size: int) -> None:
     def fn(data: Range) -> None:
         _ = data.iter().try_fold(0, lambda accumulator, value: Ok(accumulator + value))
 
-    data = Range(0, size)
+    data = Range(size)
     assert benchmark(fn, data) is None
 
 
@@ -40,5 +40,5 @@ def test_try_reduce(benchmark: BenchFixture, size: int) -> None:
     def fn(data: Range) -> None:
         _ = data.iter().try_reduce(lambda left, right: Ok(left + right))
 
-    data = Range(0, size)
+    data = Range(size)
     assert benchmark(fn, data) is None

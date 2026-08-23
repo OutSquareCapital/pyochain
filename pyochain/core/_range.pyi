@@ -7,12 +7,7 @@ from pyochain.abc import PyoSequence
 class Range(PyoSequence[int]):
     """A wrapper around the built-in `range` type that implements the `PyoSequence` protocol.
 
-    `start` must be specified, unlike the built-in type, but everything else is the same.
-
-    Args:
-        start (int): The starting value of the range (inclusive).
-        stop (int): The ending value of the range (exclusive).
-        step (int, optional): The step size between values in the range. Defaults to 1.
+    Behaves identically to Python's built-in range type.
 
     Example:
         ```python
@@ -24,7 +19,7 @@ class Range(PyoSequence[int]):
         assert r.rev().collect(Seq) == Seq(5, 3, 1)
         names = ("alice", "bob", "CHARLIE", "dave")
         indexed_names = (
-            Range(0, 100)
+            Range(100)
             .iter()
             .zip(names)
             .map_star(lambda i, n: (n.title(), i))
@@ -34,7 +29,36 @@ class Range(PyoSequence[int]):
         ```
     """
 
-    def __init__(self, start: int, stop: int, step: int = 1) -> None: ...
+    @overload
+    def __new__(cls, stop: int, /) -> Self: ...
+    @overload
+    def __new__(cls, start: int, stop: int, step: int = 1, /) -> Self: ...
+    def __new__(cls, *args: int) -> Self:
+        """Creates a new `Range` instance.
+
+        The number of arguments passed will determine the behavior of the range:
+
+            - 1 => `Range` from 0 to *stop* (exclusive).
+            - 2 =>  `Range` from *start* (inclusive) to *stop* (exclusive).
+            - 3 => `Range` from *start* to *stop* with *step*
+            - 4 or more => Raises a `TypeError`.
+
+        Args:
+          *args (int): Start, stop, and step values for the range.
+
+        Returns:
+            Self: A new `Range` instance.
+
+        Examples:
+            ```python
+            from pyochain import Range
+
+            assert tuple(Range(5)) == (0, 1, 2, 3, 4)
+            assert tuple(Range(1, 5)) == (1, 2, 3, 4)
+            assert tuple(Range(1, 5, 2)) == (1, 3)
+            ```
+
+        """
     @override
     def __iter__(self) -> Iterator[int]: ...
     @override
