@@ -2,71 +2,21 @@ use crate::{
     abc::{self, traits::ImplPyoReversible},
     core::iterators,
     display::pformat,
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    traits::{IntoPyochain, PyWrapper},
 };
 use pyo3::{
-    exceptions::{PyKeyError, PyTypeError},
+    exceptions::PyKeyError,
     intern,
     prelude::*,
-    pyclass_init::PyClassInitializer,
-    types::{PyDict, PyIterator, PyMapping, PyTuple, PyType},
+    types::{PyDict, PyIterator, PyTuple, PyType},
 };
-use pyo3_ext::{
-    prelude::*,
-    pylibs,
-    types::{PopResult, PyIterable},
-};
-use pyochain_macros::try_cast_into;
+use pyo3_ext::{prelude::*, pylibs, types::PopResult};
 use tap::Pipe;
 
-#[inline]
-fn into_dict<'py>(obj: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
-    let py = obj.py();
-    try_cast_into! {
-        match obj {
-            Case::PyDict(dict) => Ok(dict),
-            Case::PyMapping(mapping) => PyDict::from_mapping(mapping),
-            supports_keys
-                if supports_keys.hasattr(intern!(py, "__getitem__"))?
-                    && supports_keys.hasattr(intern!(py, "keys"))? =>
-            {
-                unsafe { supports_keys.cast_into_unchecked::<PyMapping>() }
-                    .pipe(PyDict::from_mapping)
-            }
-            Case::PyIterable(iterable) => iterable.as_any().pipe(PyDict::from_sequence),
-            incorrect_type => Err(PyTypeError::new_err(format!(
-                "Cannot convert object of type {} to dict",
-                incorrect_type.get_type().name()?
-            ))),
-        }
-    }
-}
 #[pyclass(module = "pyochain.core",frozen, generic, extends=abc::PyoMutableMapping)]
 pub struct Dict(pub Py<PyDict>);
 #[pymethods]
 impl Dict {
-    #[pyo3(signature = (iterable = None,/, **kwargs))]
-    #[new]
-    fn new(
-        py: Python<'_>,
-        iterable: Option<Bound<'_, PyAny>>,
-        kwargs: Option<Bound<'_, PyDict>>,
-    ) -> PyResult<PyClassInitializer<Self>> {
-        let dict = match (iterable, kwargs) {
-            (None, None) => PyDict::new(py),
-            (None, Some(kw)) => kw,
-            (Some(iterable), None) => into_dict(iterable)?,
-            (Some(iterable), Some(kw)) => {
-                let dict = into_dict(iterable)?;
-                dict.update(kw.as_mapping())?;
-                dict
-            }
-        };
-        dict.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableMapping::build_init().add_subclass(slf))
-            .pipe(Ok)
-    }
     #[allow(unused_variables)]
     #[classmethod]
     #[pyo3(signature = (keys, value=None))]
@@ -137,21 +87,6 @@ impl Dict {
     fn __ior__<'py>(slf: Bound<'py, Self>, value: Bound<'py, PyAny>) -> PyResult<()> {
         Self::union_mut(slf, value)?;
         Ok(())
-    }
-    #[staticmethod]
-    fn from_ref<'py>(data: Bound<'py, PyDict>) -> PyResult<Bound<'py, Self>> {
-        data.into_pyochain()
-    }
-
-    #[classmethod]
-    #[pyo3(signature = (**kwargs))]
-    fn from_kwargs<'py>(
-        cls: Bound<'py, PyType>,
-        kwargs: Option<Bound<'py, PyDict>>,
-    ) -> PyResult<Bound<'py, Self>> {
-        kwargs
-            .unwrap_or_else(|| PyDict::new(cls.py()))
-            .into_pyochain()
     }
 
     #[staticmethod]

@@ -49,11 +49,11 @@ class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # 
             from pyochain import Dict
             from pyochain.abc import PyoKeysView
 
-            data = Dict({1: "a", 2: "b"})
+            data = Dict(a=1, b=2)
             keys = data.keys()
             assert isinstance(keys, PyoKeysView)
-            assert keys.pipe(tuple) == (1, 2)
-            assert repr(keys) == "PyoKeysView(Dict(1: 'a', 2: 'b'))"
+            assert keys.pipe(tuple) == ("a", "b")
+            assert repr(keys) == "PyoKeysView(Dict('a': 1, 'b': 2))"
             ```
         """
 
@@ -69,11 +69,11 @@ class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # 
             from pyochain import Dict
             from pyochain.abc import PyoValuesView
 
-            data = Dict({1: "a", 2: "b"})
+            data = Dict(a=1, b=2)
             values = data.values()
             assert isinstance(values, PyoValuesView)
-            assert values.pipe(tuple) == ("a", "b")
-            assert repr(values) == "PyoValuesView(Dict(1: 'a', 2: 'b'))"
+            assert values.pipe(tuple) == (1, 2)
+            assert repr(values) == "PyoValuesView(Dict('a': 1, 'b': 2))"
             ```
         """
 
@@ -89,11 +89,11 @@ class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # 
             from pyochain import Dict
             from pyochain.abc import PyoItemsView
 
-            data = Dict({1: "a", 2: "b"})
+            data = Dict(a=1, b=2)
             items = data.items()
             assert isinstance(items, PyoItemsView)
-            assert items.pipe(tuple) == ((1, "a"), (2, "b"))
-            assert repr(items) == "PyoItemsView(Dict(1: 'a', 2: 'b'))"
+            assert items.pipe(tuple) == (("a", 1), ("b", 2))
+            assert repr(items) == "PyoItemsView(Dict('a': 1, 'b': 2))"
             ```
         """
 
@@ -126,7 +126,7 @@ class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # 
             ```python
             from pyochain import Dict, Some
 
-            data = Dict.from_ref({"a": 1})
+            data = Dict(a=1)
             item = data.get_item("a")
             assert item == Some(1)
             assert data.get_item("x").unwrap_or("Not Found") == "Not Found"
@@ -179,21 +179,21 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
             ```python
             from pyochain import Dict, Ok, Err
 
-            d = Dict({1: "a", 2: "b"})
+            d = Dict(a=1, b=2)
             popped = d.popitem()
-            assert popped == (2, "b")
+            assert popped == ("b", 2)
             popped = d.popitem()
-            assert popped == (1, "a")
+            assert popped == ("a", 1)
             try:
                 res = Ok(d.popitem())
             except KeyError as e:
                 res = Err(e)
             assert repr(res) == '''Err(KeyError('popitem(): dictionary is empty'))'''
             # LIFO order is preserved
-            d = Dict({1: "a", 2: "b", 3: "c"})
-            assert d.popitem() == (3, "c")
-            assert d.popitem() == (2, "b")
-            assert d.popitem() == (1, "a")
+            d = Dict(a=1, b=2, c=3)
+            assert d.popitem() == ("c", 3)
+            assert d.popitem() == ("b", 2)
+            assert d.popitem() == ("a", 1)
             assert d.is_empty()
             ```
         """
@@ -263,12 +263,12 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
         Example:
             ```python
             from pyochain import Dict
-            d = Dict({1: "a", 2: "b"})
-            assert d.setdefault(2, "c") == "b"
-            assert d.setdefault(3, "d") == "d"
-            assert d == Dict({1: "a", 2: "b", 3: "d"})
-            assert d.setdefault(4) is None
-            assert d == Dict({1: "a", 2: "b", 3: "d", 4: None})
+            d = Dict(a=1, b=2)
+            assert d.setdefault("b", 3) == 2
+            assert d.setdefault("c", 4) == 4
+            assert d == Dict(a=1, b=2, c=4)
+            assert d.setdefault("d") is None
+            assert d == Dict(a=1, b=2, c=4, d=None)
 
             ```
         """
@@ -318,15 +318,15 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
             from pyochain import Dict, Err
 
             d = Dict(())
-            assert d.try_insert(37, "a").unwrap() == "a"
+            assert d.try_insert("a", 1).unwrap() == 1
 
-            x = d.try_insert(37, "b")
+            x = d.try_insert("a", 2)
             assert x.is_err()
             unwrapped = x.unwrap_err()
             assert isinstance(unwrapped, KeyError)
-            assert repr(unwrapped) == "KeyError('Key 37 already exists with value a.')"
+            assert repr(unwrapped) == "KeyError('Key a already exists with value 1.')"
 
-            assert d == Dict({37: "a"})
+            assert d == Dict(a=1)
             ```
         """
 
@@ -345,9 +345,9 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
             ```python
             from pyochain import Dict, Some
 
-            data = Dict({1: "a", 2: "b"})
-            assert data.remove(1) == Some("a")
-            assert data.remove(3).is_none()
+            data = Dict(a=1, b=2)
+            assert data.remove("a") == Some(1)
+            assert data.remove("c").is_none()
             ```
         """
 
@@ -366,8 +366,8 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
             ```python
             from pyochain import Dict, Some
 
-            data = Dict({1: "a", 2: "b"})
-            assert data.remove_entry(1) == Some((1, "a"))
-            assert data.remove_entry(3).is_none()
+            data = Dict(a=1, b=2)
+            assert data.remove_entry("a") == Some(("a", 1))
+            assert data.remove_entry("c").is_none()
             ```
         """

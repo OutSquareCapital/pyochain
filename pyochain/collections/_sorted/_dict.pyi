@@ -69,9 +69,9 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             import pytest
             from pyochain.collections import SortedDict
 
-            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            sd = SortedDict(a=1, b=2, c=3)
             del sd["b"]
-            assert sd == SortedDict({"a": 1, "c": 3})
+            assert sd == SortedDict(a=1, c=3)
             with pytest.raises(KeyError):
                 del sd["z"]
             ```
@@ -121,7 +121,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             sd["c"] = 3
             sd["a"] = 1
             sd["b"] = 2
-            assert sd == SortedDict({"a": 1, "b": 2, "c": 3})
+            assert sd == SortedDict(a=1, b=2, c=3)
             ```
 
         """
@@ -261,7 +261,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             from pyochain.collections import SortedDict
             import pytest
 
-            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            sd = SortedDict(a=1, b=2, c=3)
             assert sd.pop("c") == 3
             assert sd.pop("z", 26) == 26
             with pytest.raises(KeyError):
@@ -295,7 +295,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             from pyochain.collections import SortedDict
             import pytest
 
-            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            sd = SortedDict(a=1, b=2, c=3)
             assert sd.popitem() == ("c", 3)
             assert sd.popitem(0) == ("a", 1)
             with pytest.raises(IndexError):
@@ -326,7 +326,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             from pyochain.collections import SortedDict
             import pytest
 
-            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            sd = SortedDict(a=1, b=2, c=3)
             assert sd.peekitem() == ("c", 3)
             assert sd.peekitem(0) == ("a", 1)
             with pytest.raises(IndexError):
@@ -366,7 +366,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             sd = SortedDict()
             assert sd.setdefault("a", 1) == 1
             assert sd.setdefault("a", 10) == 1
-            assert sd == SortedDict({"a": 1})
+            assert sd == SortedDict(a=1)
             ```
         """
 
@@ -506,11 +506,11 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](BaseSortedDict[K, V]):
     ```python
     from pyochain.collections import SortedDict
 
-    d = {"alpha": 1, "beta": 2}
+    d = {"a": 1, "b": 2}
 
-    assert SortedDict([("alpha", 1), ("beta", 2)]) == d
-    assert SortedDict({"alpha": 1, "beta": 2}) == d
-    assert SortedDict(alpha=1, beta=2) == d
+    assert SortedDict([("a", 1), ("b", 2)]) == d
+    assert SortedDict({"a": 1, "b": 2}) == d
+    assert SortedDict(a=1, b=2) == d
     ```
 
     """

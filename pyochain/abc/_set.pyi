@@ -282,7 +282,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             from_set = Set(1, 2)
             assert from_set.intersection({2, 3}) == Set(2)
             assert from_set.intersection({3, 4}) == Set()
-            dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            dct = Dict(a=1, b=2, c=3)
             from_keys = dct.keys().intersection({"b", "c", "d"}).iter().sort()
             assert from_keys == Vec("b", "c")
             from_items = (
@@ -311,7 +311,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
             x = Set(1, 2).union({2, 3}).union({4}).iter().sort()
             assert x == Vec(1, 2, 3, 4)
-            dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            dct = Dict(a=1, b=2, c=3)
             from_keys = dct.keys().union({"b", "c", "d"}).iter().sort()
             assert from_keys == Vec("a", "b", "c", "d")
             from_items = dct.items().union({("b", 2), ("c", 3), ("d", 4)}).iter().sort()
@@ -340,7 +340,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             assert x == Set(1)
             y = Set(1, 2).difference({3, 4}).iter().sort()
             assert y == Vec(1, 2)
-            dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            dct = Dict(a=1, b=2, c=3)
             from_keys = dct.keys().difference({"b", "c", "d"}).iter().sort()
             assert from_keys == Vec(["a"])
             from_items = (
@@ -375,7 +375,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             assert x == Vec(1, 3)
             y = Set(1, 2, 3).symmetric_difference({3, 4, 5}).iter().sort()
             assert y == Vec(1, 2, 4, 5)
-            dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            dct = Dict(a=1, b=2, c=3)
             from_keys = dct.keys().symmetric_difference({"b", "c", "d"}).iter().sort()
             assert from_keys == Vec("a", "d")
             from_items = (

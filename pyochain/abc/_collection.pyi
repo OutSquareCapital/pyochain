@@ -23,10 +23,10 @@ class PyoContainer[T](Checkable, Protocol):
             ```python
             from pyochain import Dict
 
-            data = Dict.from_ref({1: "a", 2: "b"})
+            data = Dict(a=1, b=2)
 
-            assert data.contains(1)
-            assert not data.contains(3)
+            assert data.contains("a")
+            assert not data.contains("c")
             ```
         """
 
@@ -46,8 +46,7 @@ class PyoSized(Checkable, Protocol):
             ```python
             from pyochain import Dict
 
-            data = Dict.from_ref({1: "a", 2: "b"})
-            assert data.len() == 2
+            assert Dict(a=1, b=2).len() == 2
             ```
         """
 

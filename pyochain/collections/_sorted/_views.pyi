@@ -33,14 +33,14 @@ class BaseSortedView(Generic[_K_co, _V_co]):  # ruff: ignore[non-pep695-generic-
             from pyochain.collections import SortedDict
             import pytest
 
-            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            sd = SortedDict(a=1, b=2, c=3)
             view = sd.keys()
             del view[0]
-            assert sd == SortedDict({"b": 2, "c": 3})
+            assert sd == SortedDict(b=2, c=3)
             del view[-1]
-            assert sd == SortedDict({"b": 2})
+            assert sd == SortedDict(b=2)
             del view[:]
-            assert sd == SortedDict({})
+            assert sd == SortedDict()
             with pytest.raises(IndexError):
                 del view[10]
             ```
@@ -107,7 +107,7 @@ class SortedKeysView(
             from pyochain.collections import SortedDict
             import pytest
 
-            skv = SortedDict({"a": 1, "b": 2, "c": 3}).keys()
+            skv = SortedDict(a=1, b=2, c=3).keys()
             assert skv[0] == "a"
             assert skv[-1] == "c"
             assert skv[:] == Vec("a", "b", "c")
@@ -139,7 +139,7 @@ class SortedItemsView(
         from pyochain import Vec
         from pyochain.collections import SortedDict
 
-        siv = SortedDict({"a": 1, "b": 2, "c": 3}).items()
+        siv = SortedDict(a=1, b=2, c=3).items()
         assert siv[0] == ("a", 1)
         assert siv[-1] == ("c", 3)
         assert siv[:] == Vec(("a", 1), ("b", 2), ("c", 3))
@@ -175,7 +175,7 @@ class SortedItemsView(
             from pyochain.collections import SortedDict
             import pytest
 
-            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            sd = SortedDict(a=1, b=2, c=3)
             siv = sd.items()
             assert siv[0] == ("a", 1)
             assert siv[-1] == ("c", 3)
@@ -210,7 +210,7 @@ class SortedValuesView(
         from pyochain import Vec
         from pyochain.collections import SortedDict
 
-        svv = SortedDict({"a": 2, "b": 1, "c": 3}).values()
+        svv = SortedDict(a=2, b=1, c=3).values()
         assert svv[0] == 2
         assert svv[-1] == 3
         assert svv[:] == Vec(2, 1, 3)
@@ -244,7 +244,7 @@ class SortedValuesView(
             from pyochain.collections import SortedDict
             import pytest
 
-            sd = SortedDict({"a": 2, "b": 1, "c": 3})
+            sd = SortedDict(a=2, b=1, c=3)
             svv = sd.values()
             assert svv[0] == 2
             assert svv[-1] == 3

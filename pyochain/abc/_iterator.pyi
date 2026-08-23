@@ -2235,7 +2235,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Dict, Seq
 
-            data = Dict({"a": 1, "b": 2, "c": 3})
+            data = Dict(a=1, b=2, c=3)
             assert data.iter().last() == "c"
             # If you have a `Sequence`, you can use `PyoSequence::last` instead, which is more efficient.
             assert data.pipe(Seq).last() == "c"

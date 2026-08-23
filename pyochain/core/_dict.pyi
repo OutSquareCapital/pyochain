@@ -33,8 +33,8 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             **kwargs (V): Additional key-value pairs to include in the Dict.
 
         See Also:
-            - [`Dict::from_ref`][from_ref]: Create a `Dict` from an existing dictionary, no-copy.
-            - [`Dict::from_kwargs`][from_kwargs]: Create a `Dict` from keyword arguments.
+            - [`Dict::wrap`][wrap]: Create a `Dict` from an existing dictionary, no-copy.
+            - [`Dict::of`][of]: Create a `Dict` from keyword arguments.
             - [`Dict::from_object`][from_object]: Create a `Dict` from an object's `__dict__` attribute, no-copy.
 
         Example:
@@ -140,15 +140,15 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             ```python
             from pyochain import Dict
 
-            d = Dict.from_keys([1, 2, 3], "a")
-            assert d == Dict({1: "a", 2: "a", 3: "a"})
+            d = Dict.from_keys(["a", "b", "c"], 1)
+            assert d == Dict(a=1, b=1, c=1)
             d2 = Dict.from_keys("abc")
-            assert d2 == Dict({"a": None, "b": None, "c": None})
+            assert d2 == Dict(a=None, b=None, c=None)
             ```
         """
 
     @staticmethod
-    def from_ref[K1, V1](data: dict[K1, V1]) -> Dict[K1, V1]:
+    def wrap[K1, V1](data: dict[K1, V1]) -> Dict[K1, V1]:
         """Wrap an existing Python builtin `dict` without copying.
 
         This is the recommended way to create a `Dict` from foreign functions that return a standard Python `dict`.
@@ -166,17 +166,17 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             ```python
             from pyochain import Dict, Some
 
-            original_dict = {1: "a", 2: "b", 3: "c"}
-            ref_dict = Dict.from_ref(original_dict)
+            original_dict = {"a": 1, "b": 2, "c": 3}
+            ref_dict = Dict.wrap(original_dict)
 
-            assert ref_dict == Dict({1: "a", 2: "b", 3: "c"})
-            assert ref_dict.insert(1, "z") == Some("a")
-            assert original_dict == {1: "z", 2: "b", 3: "c"}
+            assert ref_dict == Dict(a=1, b=2, c=3)
+            assert ref_dict.insert("a", 100) == Some(1)
+            assert original_dict == {"a": 100, "b": 2, "c": 3}
             ```
         """
 
     @staticmethod
-    def from_kwargs[U](**kwargs: U) -> Dict[str, U]:
+    def of[U](**kwargs: U) -> Dict[str, U]:
         """Create a `Dict` from keyword arguments.
 
         Args:
@@ -189,8 +189,9 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             ```python
             from pyochain import Dict
 
-            d = Dict.from_kwargs(a=1, b=2)
-            assert d == Dict({"a": 1, "b": 2})
+            d = Dict.of(a=1, b=2)
+            assert d == Dict(a=1, b=2)
+            assert repr(d) == "Dict('a': 1, 'b': 2)"
             ```
         """
 
@@ -223,7 +224,7 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
 
             person = Person("Alice", 30)
             pyo_dict = Dict.from_object(person)
-            assert pyo_dict == Dict({"name": "Alice", "age": 30})
+            assert pyo_dict == Dict(name="Alice", age=30)
             assert pyo_dict.insert("name", "Bob") == Some("Alice")
             assert person == Person(name="Bob", age=30)
             ```
@@ -239,9 +240,9 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             ```python
             from pyochain import Dict
 
-            d1 = Dict({1: "a", 2: "b"})
+            d1 = Dict(a=1, b=2)
             d2 = d1.copy()
-            assert d2 == Dict({1: "a", 2: "b"})
+            assert d2 == Dict(a=1, b=2)
             assert d1 is not d2
             ```
         """
@@ -274,10 +275,10 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             ```python
             from pyochain import Dict
 
-            d1 = Dict({1: "a", 2: "b"})
-            d2 = Dict({2: "c", 3: "d"})
+            d1 = Dict(a=1, b=2)
+            d2 = Dict(c=2, d=3)
             d3 = d1.union(d2)
-            assert d3 == Dict({1: "a", 2: "c", 3: "d"})
+            assert d3 == Dict(a=1, b=2, c=2, d=3)
             assert d1 is not d3 and d2 is not d3
             ```
         """
@@ -305,15 +306,15 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             ```python
             from pyochain import Dict, Some
 
-            d1 = Dict({1: "a", 2: "b"})
-            d2 = Dict({2: "c", 3: "d"})
+            d1 = Dict(a=1, b=2)
+            d2 = Dict(c=2, d=3)
             d1.union_mut(d2)
-            assert d1 == Dict({1: "a", 2: "c", 3: "d"})
-            d1.union_mut(((4, "e"), (5, "f")))
-            assert d1 == Dict({1: "a", 2: "c", 3: "d", 4: "e", 5: "f"})
-            assert d1.insert(2, "z") == Some("c")
-            assert d1 == Dict({1: "a", 2: "z", 3: "d", 4: "e", 5: "f"})
-            assert d2 == Dict({2: "c", 3: "d"})
+            assert d1 == Dict(a=1, b=2, c=2, d=3)
+            d1.union_mut((("e", 4), ("f", 5)))
+            assert d1 == Dict(a=1, b=2, c=2, d=3, e=4, f=5)
+            assert d1.insert("b", 100) == Some(2)
+            assert d1 == Dict(a=1, b=100, c=2, d=3, e=4, f=5)
+            assert d2 == Dict(c=2, d=3)
             ```
         """
 

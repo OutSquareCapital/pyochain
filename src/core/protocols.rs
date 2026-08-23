@@ -1,7 +1,11 @@
 use pyo3::{
     PyClass,
+    exceptions::PyTypeError,
+    intern,
     prelude::*,
-    types::{PyDict, PyFrozenSet, PyIterator, PyList, PyNone, PySequence, PySet, PyTuple},
+    types::{
+        PyDict, PyFrozenSet, PyIterator, PyList, PyMapping, PyNone, PySequence, PySet, PyTuple,
+    },
 };
 use pyo3_ext::{
     iter::{CollectBoundIterator, TryCollectBoundIterator},
@@ -14,7 +18,7 @@ use tap::Pipe;
 use crate::{
     abc,
     collections::{self, StableSet},
-    core::{PyoVec, Seq, Set, SetMut, iterators},
+    core::{Dict, PyoVec, Seq, Set, SetMut, iterators},
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 #[pyclass(module = "pyochain.core", frozen, generic)]
@@ -32,8 +36,32 @@ pub trait FlexInitProtocol: Sized + PyClass {
     #[pyo3(signature = (*elements))]
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>>;
 }
-#[py_abc(Seq, PyoVec, Set, SetMut, collections::StableSet, iterators::Iter)]
-pub trait FlexWrapper: PyWrapper + FlexInitProtocol {
+#[py_abc(Dict)]
+pub trait FlexInitKwargsProtocol: Sized + PyClass {
+    #[pyo3(signature = (iterable = None,/, **kwargs))]
+    #[new]
+    fn new(
+        py: Python<'_>,
+        iterable: Option<Bound<'_, PyAny>>,
+        kwargs: Option<Bound<'_, PyDict>>,
+    ) -> PyResult<PyClassInitializer<Self>>;
+    #[pyo3(signature = (iterable, /))]
+    #[staticmethod]
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>>;
+    #[staticmethod]
+    #[pyo3(signature = (**kwargs))]
+    fn of<'py>(py: Python<'py>, kwargs: Option<Bound<'py, PyDict>>) -> PyResult<Bound<'py, Self>>;
+}
+#[py_abc(
+    Seq,
+    PyoVec,
+    Set,
+    SetMut,
+    collections::StableSet,
+    iterators::Iter,
+    Dict
+)]
+pub trait FlexWrapper: PyWrapper {
     #[pyo3(signature = (iterable, /))]
     #[staticmethod]
     fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>>;
@@ -59,8 +87,35 @@ macro_rules! impl_flex_wrapper {
         )*
     };
 }
-impl_flex_wrapper!(Set, SetMut, iterators::Iter, PyoVec, Seq);
-
+impl_flex_wrapper!(Set, SetMut, iterators::Iter, PyoVec, Seq, Dict);
+impl FlexInitKwargsProtocol for Dict {
+    fn new(
+        py: Python<'_>,
+        iterable: Option<Bound<'_, PyAny>>,
+        kwargs: Option<Bound<'_, PyDict>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
+        let dict = match (iterable, kwargs) {
+            (None, None) => PyDict::new(py),
+            (None, Some(kw)) => kw,
+            (Some(iterable), None) => into_dict(iterable)?,
+            (Some(iterable), Some(kw)) => {
+                let dict = into_dict(iterable)?;
+                dict.update(kw.as_mapping())?;
+                dict
+            }
+        };
+        dict.unbind()
+            .pipe(Self)
+            .pipe(|slf| abc::PyoMutableMapping::build_init().add_subclass(slf))
+            .pipe(Ok)
+    }
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        into_dict(iterable)?.into_pyochain()
+    }
+    fn of<'py>(py: Python<'py>, kwargs: Option<Bound<'py, PyDict>>) -> PyResult<Bound<'py, Self>> {
+        kwargs.unwrap_or_else(|| PyDict::new(py)).into_pyochain()
+    }
+}
 impl FlexInitProtocol for iterators::Iter {
     fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
         let iterator = match elements.len() {
@@ -298,5 +353,28 @@ impl FlexInitProtocol for SetMut {
             }
         }
         .into_pyochain()
+    }
+}
+
+#[inline]
+fn into_dict<'py>(obj: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
+    let py = obj.py();
+    try_cast_into! {
+        match obj {
+            Case::PyDict(dict) => Ok(dict),
+            Case::PyMapping(mapping) => PyDict::from_mapping(mapping),
+            supports_keys
+                if supports_keys.hasattr(intern!(py, "__getitem__"))?
+                    && supports_keys.hasattr(intern!(py, "keys"))? =>
+            {
+                unsafe { supports_keys.cast_into_unchecked::<PyMapping>() }
+                    .pipe(PyDict::from_mapping)
+            }
+            Case::PyIterable(iterable) => iterable.as_any().pipe(PyDict::from_sequence),
+            incorrect_type => Err(PyTypeError::new_err(format!(
+                "Cannot convert object of type {} to dict",
+                incorrect_type.get_type().name()?
+            ))),
+        }
     }
 }

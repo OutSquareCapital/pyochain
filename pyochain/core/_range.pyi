@@ -27,10 +27,10 @@ class Range(PyoSequence[int]):
             Range(0, 100)
             .iter()
             .zip(names)
-            .map_star(lambda i, n: (i, n.title()))
+            .map_star(lambda i, n: (n.title(), i))
             .collect(Dict)
         )
-        assert indexed_names == Dict({0: "Alice", 1: "Bob", 2: "Charlie", 3: "Dave"})
+        assert indexed_names == Dict(Alice=0, Bob=1, Charlie=2, Dave=3)
         ```
     """
 
