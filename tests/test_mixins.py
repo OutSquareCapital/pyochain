@@ -21,7 +21,7 @@ PARAMS_THEN_SOME: Vec[PyoSized] = Vec.from_ref([
     DATA_MAP.values(),
     DATA_MAP.items(),
     Range(1, 4),
-    Range(0, 0),
+    Range(0),
     SortedDict({"a": 1, "b": 2, "c": 3}),
     SortedDict[str, int](()),
     Deque(DATA),

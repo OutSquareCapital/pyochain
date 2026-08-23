@@ -105,7 +105,7 @@ def test_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
 
 
 def test_call_none(benchmark: BenchFixture) -> None:
-    data = Range(0, 100_000)
+    data = Range(100_000)
 
     def fn() -> Option[int]:
         return data.iter().map(lambda _: NONE).last()
@@ -115,14 +115,14 @@ def test_call_none(benchmark: BenchFixture) -> None:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_iter_some(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
+    data = Range(size)
     opt = Some(0)
     assert benchmark(_iter, data, opt).is_some()
 
 
 @pytest.mark.parametrize("size", SIZES)
 def test_iter_none(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
+    data = Range(size)
     opt = NONE
     assert benchmark(_iter, data, opt).is_none()
 
