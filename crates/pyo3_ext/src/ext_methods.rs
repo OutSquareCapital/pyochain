@@ -269,17 +269,9 @@ pub trait PyDictExtMethods<'py>: Sized {
     fn values_view(&self) -> Bound<'py, PyDictValues>;
     fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>>;
     fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PopResult<'py>;
-    fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<&Self>;
-    fn merge(self, other: &Bound<'_, PyAny>) -> PyResult<Self>;
+    fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<()>;
 }
 impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
-    // BUG, TODO: add SupportsKey or something like that Protocol type, bc iterables dom't work with this
-    fn merge(self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
-        match unsafe { ffi::PyDict_Merge(self.as_ptr(), other.as_ptr(), 0) } {
-            0 => Ok(self),
-            _ => Err(PyErr::fetch(self.py())),
-        }
-    }
     fn items_view(&self) -> Bound<'py, PyDictItems> {
         unsafe {
             self.call_method0(intern!(self.py(), "items"))
@@ -325,9 +317,9 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
             _ => PopResult::Err(PyErr::fetch(self.py())),
         }
     }
-    fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<&Self> {
+    fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<()> {
         match unsafe { ffi::PyDict_MergeFromSeq2(self.as_ptr(), seq.as_ptr(), 1) } {
-            0 => Ok(self),
+            0 => Ok(()),
             // Return code is -1 here, hence error
             _ => Err(PyErr::fetch(seq.py())),
         }

@@ -13,82 +13,7 @@ type IntoDict[K, V] = dict[K, V] | Dict[K, V]
 class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
-    Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.
-
     Implement the `MutableMapping` interface, so all standard dictionary operations are supported.
-
-    Args:
-        data (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.
-
-    See Also:
-        - [`Dict::from_ref`][from_ref]: Create a `Dict` from an existing dictionary, no-copy.
-        - [`Dict::from_kwargs`][from_kwargs]: Create a `Dict` from keyword arguments.
-        - [`Dict::from_object`][from_object]: Create a `Dict` from an object's `__dict__` attribute, no-copy.
-
-    Example:
-        The most straightforward way to create a `Dict` is from a standard Python `dict`.
-
-        This will copy the data, just like the built-in `dict` constructor.
-        ```python
-        from pyochain import Dict
-
-        py_dict = {1: "a", 2: "b"}
-        pyochain_dict = Dict(py_dict)
-        assert pyochain_dict == Dict({1: "a", 2: "b"})
-        ```
-        Another common case is when you have an iterable of key-value pairs, such as the one returned by `dict::items`, or an `Iterator` of tuples.
-        ```python
-        from pyochain import Dict, Iter, Seq
-
-        names = Seq("alice", "bob", "charlie", "dave")
-        ages = (30, 25, 35, 40)
-        records = names.iter().zip(ages).collect(Dict)
-        assert records == Dict({"alice": 30, "bob": 25, "charlie": 35, "dave": 40})
-        assert records.items().iter().collect(Seq) == (
-            ("alice", 30),
-            ("bob", 25),
-            ("charlie", 35),
-            ("dave", 40),
-        )
-        ```
-        Any object that implements the `Mapping` protocol can also be directly converted to a `Dict`:
-        ```python
-        from collections.abc import Mapping, Iterator, Iterable
-        from dataclasses import dataclass
-
-        @dataclass
-        class CustomMapping(Mapping[int, str]):
-            data: dict[int, str]
-
-            def __getitem__(self, key: int) -> str:
-                return self.data[key]
-
-            def __iter__(self) -> Iterator[int]:
-                return iter(self.data)
-
-            def __len__(self) -> int:
-                return len(self.data)
-
-        custom_mapping = CustomMapping({1: "a", 2: "b"})
-        assert Dict(custom_mapping) == Dict({1: "a", 2: "b"})
-        ```
-        But it can also be as minimal as an object that implements `__getitem__` and `keys`:
-        ```python
-        from pyochain import Dict
-
-        class MinimalDictLike:
-            def __init__(self, data: dict[int, str]) -> None:
-                self._data = data
-
-            def keys(self) -> Iterable[int]:
-                return iter(self._data)
-
-            def __getitem__(self, key: int) -> str:
-                return self._data[key]
-
-        minimal_dict_like = MinimalDictLike({1: "a", 2: "b"})
-        assert Dict(minimal_dict_like) == Dict({1: "a", 2: "b"})
-        ```
     """
     @overload
     def __new__(cls, iterable: DictConvertible[K, V], /) -> Dict[K, V]: ...
@@ -98,14 +23,85 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
     def __new__[K1, V1](
         cls, iterable: DictConvertible[str, V], **kwargs: V
     ) -> Dict[str, V]: ...
-    @overload
-    def __new__(cls, iterable: tuple[K, V], *elements: tuple[K, V]) -> Dict[K, V]: ...
-    def __new__(
-        cls,
-        iterable: DictConvertible[K, V] | tuple[K, V] = (),
-        *elements: tuple[K, V],
-        **kwargs: V,
-    ) -> Self: ...
+    def __new__(cls, iterable: DictConvertible[K, V] = (), **kwargs: V) -> Self:
+        """Create a new `Dict` instance.
+
+        Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.
+
+        Args:
+            iterable (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.
+            **kwargs (V): Additional key-value pairs to include in the Dict.
+
+        See Also:
+            - [`Dict::from_ref`][from_ref]: Create a `Dict` from an existing dictionary, no-copy.
+            - [`Dict::from_kwargs`][from_kwargs]: Create a `Dict` from keyword arguments.
+            - [`Dict::from_object`][from_object]: Create a `Dict` from an object's `__dict__` attribute, no-copy.
+
+        Example:
+            The most straightforward way to create a `Dict` is from a standard Python `dict`.
+
+            This will copy the data, just like the built-in `dict` constructor.
+            ```python
+            from pyochain import Dict
+
+            py_dict = {1: "a", 2: "b"}
+            pyochain_dict = Dict(py_dict)
+            assert pyochain_dict == Dict({1: "a", 2: "b"})
+            ```
+            Another common case is when you have an iterable of key-value pairs, such as the one returned by `dict::items`, or an `Iterator` of tuples.
+            ```python
+            from pyochain import Dict, Iter, Seq
+
+            names = Seq("alice", "bob", "charlie", "dave")
+            ages = (30, 25, 35, 40)
+            records = names.iter().zip(ages).collect(Dict)
+            assert records == Dict({"alice": 30, "bob": 25, "charlie": 35, "dave": 40})
+            assert records.items().iter().collect(Seq) == (
+                ("alice", 30),
+                ("bob", 25),
+                ("charlie", 35),
+                ("dave", 40),
+            )
+            ```
+            Any object that implements the `Mapping` protocol can also be directly converted to a `Dict`:
+            ```python
+            from collections.abc import Mapping, Iterator, Iterable
+            from dataclasses import dataclass
+
+            @dataclass
+            class CustomMapping(Mapping[int, str]):
+                data: dict[int, str]
+
+                def __getitem__(self, key: int) -> str:
+                    return self.data[key]
+
+                def __iter__(self) -> Iterator[int]:
+                    return iter(self.data)
+
+                def __len__(self) -> int:
+                    return len(self.data)
+
+            custom_mapping = CustomMapping({1: "a", 2: "b"})
+            assert Dict(custom_mapping) == Dict({1: "a", 2: "b"})
+            ```
+            But it can also be as minimal as an object that implements `__getitem__` and `keys`:
+            ```python
+            from pyochain import Dict
+
+            class MinimalDictLike:
+                def __init__(self, data: dict[int, str]) -> None:
+                    self._data = data
+
+                def keys(self) -> Iterable[int]:
+                    return iter(self._data)
+
+                def __getitem__(self, key: int) -> str:
+                    return self._data[key]
+
+            minimal_dict_like = MinimalDictLike({1: "a", 2: "b"})
+            assert Dict(minimal_dict_like) == Dict({1: "a", 2: "b"})
+            ```
+        """
     @override
     def __iter__(self) -> Iterator[K]: ...
     @override

@@ -808,6 +808,5 @@ def check_dict() -> None:
 
     _(Dict({"a": 1, "b": 2}))
     _(Dict([("a", 1), ("b", 2)]))
-    _(Dict(("a", 1), ("b", 2)))
     _(Dict(a=1, b=2))
     _(Dict({"a": 1}, b=2))

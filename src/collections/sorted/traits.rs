@@ -1120,11 +1120,13 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         let inner = self.get_inner().bind(py);
         if self.len(py) == 0 {
             if let Some(it) = m {
-                try_cast! {match it {
-                    CaseExact::PyDict(d) => inner.update(d.as_mapping())?,
-                    Case::PyMapping(m) => inner.update(m)?,
-                    iterable => {inner.update_from_sequence(&iterable)?;}
-                }}
+                try_cast! {
+                    match it {
+                        CaseExact::PyDict(d) => inner.update(d.as_mapping())?,
+                        Case::PyMapping(m) => inner.update(m)?,
+                        iterable => inner.update_from_sequence(&iterable)?,
+                    }
+                }
             }
             if let Some(kw) = kwargs {
                 inner.update(kw.as_mapping())?;
