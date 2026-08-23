@@ -32,6 +32,9 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             iterable (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.
             **kwargs (V): Additional key-value pairs to include in the Dict.
 
+        Returns:
+            Self: A new `Dict` instance containing the provided key-value pairs.
+
         See Also:
             - [`Dict::wrap`][wrap]: Create a `Dict` from an existing dictionary, no-copy.
             - [`Dict::of`][of]: Create a `Dict` from keyword arguments.
