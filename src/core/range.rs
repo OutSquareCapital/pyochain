@@ -79,18 +79,12 @@ impl Range {
         }
     }
 
-    fn __repr__(slf: Bound<'_, Self>) -> String {
-        let py = slf.py();
-        let name = slf.get_type().name().unwrap();
-        let inner = slf.get().inner_bind(py);
+    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
+        let name = slf.get_type().name()?;
+        let inner = slf.get().inner_bind(slf.py());
 
-        let params = format!(
-            "{}, {}, {}",
-            inner.start().unwrap(),
-            inner.stop().unwrap(),
-            inner.step().unwrap()
-        );
-        format!("{}({})", name, params)
+        let params = format!("{}, {}, {}", inner.start()?, inner.stop()?, inner.step()?);
+        Ok(format!("{}({})", name, params))
     }
 
     fn __eq__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -107,11 +101,9 @@ impl Range {
     }
     #[pyo3(signature = (value, /))]
     fn count<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        let py = value.py();
-        self.inner_bind(py).count(value)
+        self.inner_bind(value.py()).count(value)
     }
     fn index<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        let py = value.py();
-        self.inner_bind(py).index(value)
+        self.inner_bind(value.py()).index(value)
     }
 }
