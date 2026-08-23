@@ -19,8 +19,7 @@ class Set[T](PyoSet[T], FlexibleWrapper[T]):
     The underlying data structure is a `frozenset`.
 
     Tip:
-        - `Set(frozenset)` is a no-copy operation since Python optimizes this under the hood.
-        - If you have an existing `set`, consider using [`SetMut::wrap`][FlexibleWrapper.wrap] to avoid unnecessary copying.
+        `Set(frozenset)` is a no-copy operation since Python optimizes this under the hood.
     """
     @overload
     def __new__(cls, data: Iterable[T], /) -> Self: ...
@@ -293,8 +292,6 @@ class SetMut[T](PyoMutableSet[T], FlexibleWrapper[T]):
 
     Underlying data structure is a `set`.
 
-    Tip:
-        If you have an existing `set`, consider using [`SetMut::wrap`][FlexibleWrapper.wrap] to avoid unnecessary copying.
     """
     @overload
     def __new__(cls, data: Iterable[T], /) -> Self: ...

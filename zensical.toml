@@ -94,7 +94,9 @@ palette = [
     { media = "(prefers-color-scheme: dark)", scheme = "slate", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/moon", name = "Switch to light mode" } },
     { media = "(prefers-color-scheme: light)", scheme = "default", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/sun", name = "Switch to dark mode" } },
 ]
-paths = ["src"]
+
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["pyochain"]
 
 [project.plugins.mkdocstrings.handlers.python.options]
 docstring_style = "google"
