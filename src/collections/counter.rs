@@ -1,6 +1,6 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
-    core::{PyoVec, iterators},
+    core::{PyoVec, iterators, protocols::FlexWrapper},
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use either::Either;
@@ -40,13 +40,6 @@ impl PyoCounter {
         update_counter(&inner, iterable, kwargs)?;
         Ok(abc::PyoMutableMapping::build_init().add_subclass(Self(inner.unbind())))
     }
-    #[staticmethod]
-    fn from_ref(data: Bound<'_, PyDict>) -> PyResult<Bound<'_, Self>> {
-        let py = data.py();
-        let initializer = abc::PyoMutableMapping::build_init().add_subclass(Self(data.unbind()));
-        Bound::new(py, initializer)
-    }
-
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
         self.inner_bind(py).iter_py()
     }
@@ -219,7 +212,7 @@ impl PyoCounter {
                 result.set_item(elem, count)?;
             }
         }
-        Self::from_ref(result)
+        Self::wrap(result)
     }
 
     fn __sub__<'py>(&self, py: Python<'py>, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
@@ -237,7 +230,7 @@ impl PyoCounter {
                 result.set_item(elem, PyInt::new(py, 0).sub(count)?)?;
             }
         }
-        Self::from_ref(result)
+        Self::wrap(result)
     }
 
     fn __or__<'py>(&self, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
@@ -257,7 +250,7 @@ impl PyoCounter {
                 result.set_item(elem, count)?
             }
         }
-        Self::from_ref(result)
+        Self::wrap(result)
     }
 
     fn __and__<'py>(&self, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
@@ -271,7 +264,7 @@ impl PyoCounter {
                 result.set_item(elem, newcount)?;
             }
         }
-        Self::from_ref(result)
+        Self::wrap(result)
     }
 
     fn __pos__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -281,7 +274,7 @@ impl PyoCounter {
                 result.set_item(elem, count)?
             }
         }
-        Self::from_ref(result)
+        Self::wrap(result)
     }
 
     fn __neg__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -291,7 +284,7 @@ impl PyoCounter {
                 result.set_item(elem, count.neg()?)?;
             }
         }
-        Self::from_ref(result)
+        Self::wrap(result)
     }
 
     fn __iadd__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
@@ -452,7 +445,7 @@ impl PyoCounter {
                 result.set_item(elem, pylibs::builtins::abs(&count)?)?
             }
         }
-        Self::from_ref(result)
+        Self::wrap(result)
     }
 }
 impl ImplPyoReversible for PyoCounter {

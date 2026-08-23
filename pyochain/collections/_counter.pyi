@@ -77,6 +77,8 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     ```
 
     """
+    @staticmethod
+    def wrap[S](data: dict[S, int]) -> PyoCounter[S]: ...
     @overload
     def __new__(cls, /) -> Self: ...
     @overload

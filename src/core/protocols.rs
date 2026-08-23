@@ -16,8 +16,7 @@ use pyochain_macros::{py_abc, try_cast_into};
 use tap::Pipe;
 
 use crate::{
-    abc,
-    collections::{self, StableSet},
+    abc, collections,
     core::{Dict, PyoVec, Seq, Set, SetMut, iterators},
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
@@ -59,7 +58,8 @@ pub trait FlexInitKwargsProtocol: Sized + PyClass {
     SetMut,
     collections::StableSet,
     iterators::Iter,
-    Dict
+    Dict,
+    collections::PyoCounter
 )]
 pub trait FlexWrapper: PyWrapper {
     #[pyo3(signature = (iterable, /))]
@@ -69,11 +69,18 @@ pub trait FlexWrapper: PyWrapper {
 impl FlexWrapper for collections::StableSet {
     fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
         let py = iterable.py();
-        let initializer = iterable
+        let slf = iterable
             .unbind()
-            .pipe(StableSet)
+            .pipe(Self)
             .pipe(|slf| abc::PyoMutableSet::build_init().add_subclass(slf));
-        Bound::new(py, initializer)
+        Bound::new(py, slf)
+    }
+}
+impl FlexWrapper for collections::PyoCounter {
+    fn wrap(data: Bound<'_, PyDict>) -> PyResult<Bound<'_, Self>> {
+        let py = data.py();
+        let slf = abc::PyoMutableMapping::build_init().add_subclass(data.unbind().pipe(Self));
+        Bound::new(py, slf)
     }
 }
 macro_rules! impl_flex_wrapper {
