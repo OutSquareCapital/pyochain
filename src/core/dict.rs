@@ -112,10 +112,7 @@ impl Dict {
         match self.inner_bind(py).pop_or_err(&key) {
             PopResult::Ok(v) => Ok(v),
             PopResult::Err(e) => Err(e),
-            PopResult::KeyMissing => match default {
-                Some(d) => Ok(d),
-                None => Err(PyKeyError::new_err(key.to_string())),
-            },
+            PopResult::KeyMissing => default.ok_or_else(|| PyKeyError::new_err(key.to_string())),
         }
     }
 
