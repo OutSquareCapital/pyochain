@@ -336,10 +336,11 @@ impl PyoIterator {
     }
     #[pyo3(signature = (key=None))]
     fn all_equal(slf: &Bound<'_, Self>, key: Option<Bound<'_, PyAny>>) -> PyResult<bool> {
-        let slf = slf.try_iter()?;
-        let iterator = pylibs::itertools::group_by(&slf, key)?;
-        for _first in &iterator {
-            for _second in iterator {
+        let mut iterator = slf
+            .try_iter()
+            .and_then(|it| pylibs::itertools::group_by(&it, key))?;
+        if let Some(_first) = (&iterator).into_iter().next() {
+            if let Some(_second) = iterator.next() {
                 return Ok(false);
             }
             return Ok(true);
