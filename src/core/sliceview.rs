@@ -242,9 +242,7 @@ impl SliceView {
                         .get_item(slice)
                         .map(|r| unsafe { r.cast_into_unchecked::<PyRange>() })?;
                     if tr.step()?.abs() != 1 {
-                        let values = PyTuple::type_object(py)
-                            .call1((value,))
-                            .map(|t| unsafe { t.cast_into_unchecked::<PyTuple>() })?;
+                        let values = PyTuple::from_iterable(&value)?;
                         let values_len = values.len();
                         let tr_len = tr.len()?;
                         if values_len != tr_len {
