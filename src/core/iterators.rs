@@ -13,6 +13,7 @@ use pyo3::{
     types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple},
 };
 use pyo3_ext::prelude::*;
+use smallvec::SmallVec;
 use tap::prelude::*;
 //TODO: the double collect in `Vec` => `PyTuple` is a performance tax on large Vecs of funcs. Need to optimize.
 #[pyclass(module = "pyochain._iterators")]
@@ -192,7 +193,7 @@ impl Intersperse {
 #[pyclass(module = "pyochain._iterators")]
 pub struct MapWindow {
     iter: Py<PyIterator>,
-    prev: Vec<Py<PyAny>>,
+    prev: SmallVec<[Py<PyAny>; 16]>,
 }
 
 #[pymethods]
@@ -203,14 +204,14 @@ impl MapWindow {
         std::iter::once(Ok(py.None().into_any()))
             .chain(data.by_ref().map(|item| item.map(Bound::unbind)))
             .take(n)
-            .collect::<PyResult<Vec<Py<PyAny>>>>()
+            .collect::<PyResult<SmallVec<[Py<PyAny>; 16]>>>()
             .map(|prev| Self {
                 iter: data.unbind(),
                 prev,
             })
     }
 
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyTuple>>> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyTuple>>> {
         let py = slf.py();
         let item = match slf.iter.clone_ref(py).into_bound(py).next() {
             None => return Ok(None),
@@ -219,7 +220,7 @@ impl MapWindow {
         slf.prev.rotate_left(1);
         let last = slf.prev.len() - 1;
         slf.prev[last] = item;
-        Ok(Some(PyTuple::new(py, slf.prev.iter())?.into()))
+        Ok(Some(PyTuple::new(py, slf.prev.iter())?))
     }
 }
 #[pyclass(module = "pyochain._iterators")]
