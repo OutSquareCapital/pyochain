@@ -128,9 +128,7 @@ fn rewrite_pattern(pattern: &Pat) -> SynResult<(TokenStream2, Vec<Case>)> {
     }
 }
 
-fn rewrite_tuple_struct(
-    tuple_struct: &PatTupleStruct,
-) -> SynResult<(TokenStream2, Vec<Case>)> {
+fn rewrite_tuple_struct(tuple_struct: &PatTupleStruct) -> SynResult<(TokenStream2, Vec<Case>)> {
     match rewrite_case(tuple_struct)? {
         (pattern, cases) if !cases.is_empty() => Ok((pattern, cases)),
         _ => {
