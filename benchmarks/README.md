@@ -38,24 +38,18 @@ uv run pytest benchmarks/ --benchmark-only --benchmark-compare
 Advanced example:
 
 ```shell
-uv run pytest benchmarks/test_sequences.py::test_init --benchmark-only --benchmark-group-by=param:size --benchmark-group-by=name --benchmark-warmup=true --benchmark-disable-gc --benchmark-columns=median,mean,min,max,stddev --benchmark-compare
+uv run pytest benchmarks/test_sequences.py::test_init --benchmark-only --benchmark-group-by=param:size --benchmark-group-by=name --benchmark-warmup=true --benchmark-disable-gc --benchmark-columns=median,mean,min,max,stddev --benchmark-sort=mean --benchmark-compare
 ```
 
 Run a single test, grouped by size + name, compare against the last saved run, with warmup and GC disabled, and show only the median, mean, min, max, and stddev columns.
 
-## Useful options
+Also:
 
-- `--benchmark-min-time`: minimum time per round
-- `--benchmark-max-time`: max total time per benchmark
-- `--benchmark-min-rounds`: minimum number of rounds
-- `--benchmark-warmup` and `--benchmark-warmup-iterations`: warmup tuning
-- `--benchmark-disable-gc`: remove GC noise during measurement
-- `--benchmark-group-by=param:size`: useful when benchmarking several sizes
-- `--benchmark-time-unit=ns|us|ms|s`: force display units
-- `--benchmark-sort=min|mean|median|...`: choose table ordering
+```shell
+uv run pytest benchmarks/test_sequences.py::test_init -k "10-"--benchmark-only --benchmark-group-by=name --benchmark-warmup=true --benchmark-disable-gc --benchmark-columns=median,mean,min,max,stddev --benchmark-sort=mean --benchmark-compare
+```
 
-If you need fully fixed iterations and rounds instead of calibration, use
-`benchmark.pedantic(...)`.
+Here we add a `k` filter to only run the 10- element size, and group by name only.
 
 ## Saved format
 
