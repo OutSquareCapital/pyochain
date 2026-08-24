@@ -200,20 +200,14 @@ impl MapWindow {
     #[new]
     pub fn new(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Self> {
         let py = data.py();
-        let mut prev = (0..n)
-            .map(|_| py.None().into_any())
-            .collect::<Vec<Py<PyAny>>>();
-        for i in 1..n {
-            match data.next() {
-                None => break,
-                Some(item) => prev[i] = item?.unbind(),
-            }
-        }
-        Self {
-            iter: data.unbind(),
-            prev,
-        }
-        .pipe(Ok)
+        std::iter::once(Ok(py.None().into_any()))
+            .chain(data.by_ref().map(|item| item.map(Bound::unbind)))
+            .take(n)
+            .collect::<PyResult<Vec<Py<PyAny>>>>()
+            .map(|prev| Self {
+                iter: data.unbind(),
+                prev,
+            })
     }
 
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyTuple>>> {
