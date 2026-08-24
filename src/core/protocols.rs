@@ -90,18 +90,12 @@ impl FromPyIter for PyoVec {
 }
 impl FromPyIter for Set {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        let py = iterable.py();
         try_cast_into! {
             match iterable {
-                CaseExact::Self(inner) => inner
-                    .get()
-                    .inner_into_bound(py)
-                    .into_iter()
-                    .collect_bound(py)?,
-                any => PyFrozenSet::from_iterable(&any)?,
+                CaseExact::Self(slf) => Ok(slf),
+                any => PyFrozenSet::from_iterable(&any)?.into_pyochain(),
             }
         }
-        .into_pyochain()
     }
 }
 impl FromPyIter for SetMut {
@@ -262,11 +256,7 @@ impl FromPyArgs for Set {
         match elements.len() {
             0 => PyFrozenSet::empty(py)?,
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                CaseExact::Self(inner) => inner
-                    .get()
-                    .inner_into_bound(py)
-                    .into_iter()
-                    .collect_bound(py)?,
+                CaseExact::Self(inner) => inner.get().inner_into_bound(py),
                 Case::PyIterable(iterable) => PyFrozenSet::from_iterable(&iterable)?,
                 any => [any].into_iter().collect_bound(py)?,
             }},
