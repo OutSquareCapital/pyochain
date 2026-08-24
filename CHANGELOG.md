@@ -2,9 +2,13 @@
 
 ## [Unreleased]
 
-### 🆕 New features
+### 🏆 Highlights
 
 - `Vec`, `Seq` and `Deque` now have flexible constructors: instantiate with no arguments, variable number of positional elements, or a single iterable. For example, `Vec(1, 2, 3)` or `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()` or `Vec([])` will create an empty `Vec`. Same for `Seq`, `Iter`, and `Deque`. The latter has its `max_length` argument become keyword-only.
+
+### 💥 Breaking changes
+
+- `core::Peekable` can only be constructed from `PyoIterator::peekable`.
 
 ## [0.27.0] - 2026-08-19
 

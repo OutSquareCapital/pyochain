@@ -107,7 +107,6 @@ class Iter[T](PyoIterator[T], ArgsWrapper[T]):
 
 @final
 class Peekable[T](PyoIterator[T]):
-    def __init__(self, iterable: Iterable[T]) -> None: ...
     @override
     def __iter__(self) -> Self: ...
     @override

@@ -12,7 +12,7 @@ use tap::Pipe;
 use crate::{
     abc::{PyoIterable, traits::ImplPyoIterator},
     core::{PyNull, PySome, PyoErr, PyoOk, PyoVec, iterators},
-    traits::IntoPyochain,
+    traits::{IntoInit, IntoPyochain},
 };
 use pyo3_ext::{prelude::*, pylibs, types::pyitertools};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
@@ -1042,10 +1042,10 @@ impl PyoIterator {
             .unwrap_or_else(|| PyNull::get(py).into_bound_py_any(py))
     }
     fn peekable<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Peekable>> {
-        let py = slf.py();
-        slf.try_iter()
-            .and_then(iterators::Peekable::new)
-            .map(|x| x.into_bound(py))
+        slf.try_iter()?
+            .unbind()
+            .pipe(iterators::Peekable::new)
+            .into_bound(slf.py())
     }
     fn partition<'py>(
         slf: &Bound<'py, Self>,

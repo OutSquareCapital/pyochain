@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use crate::{
     abc,
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
-    traits::{IntoInit, IntoPyochain, PyWrapper},
+    traits::{IntoPyochain, PyWrapper},
 };
 use pyo3::{
     IntoPyObjectExt,
@@ -934,25 +934,15 @@ pub struct Peekable {
     peeked: Option<Py<PyAny>>,
 }
 impl Peekable {
-    /// New constructor for `Peekable` in rust.
-    /// We do this because `PyClassInitializer` can't be converted to pyobject directly, so we need to wrap it in a `Py` first.
-    pub fn new(data: Bound<'_, PyIterator>) -> PyResult<Py<Self>> {
-        let py = data.py();
-        let initializer = Self::py_new(data);
-        Py::new(py, initializer)
+    pub fn new(iterator: Py<PyIterator>) -> Self {
+        Self {
+            iterator,
+            peeked: None,
+        }
     }
 }
 #[pymethods]
 impl Peekable {
-    #[new]
-    fn py_new(iterable: Bound<'_, PyIterator>) -> PyClassInitializer<Self> {
-        Self {
-            iterator: iterable.unbind(),
-            peeked: None,
-        }
-        .init()
-    }
-
     fn __next__<'py>(&mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
         match self.peeked.take() {
             Some(value) => Ok(Some(value.into_bound(py))),
