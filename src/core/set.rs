@@ -175,15 +175,15 @@ impl Set {
     }
 
     fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
-        return self.inner_bind(item.py()).contains(item);
+        self.inner_bind(item.py()).contains(item)
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        return slf.get().inner_bind(slf.py()).iter_py();
+        slf.get().inner_bind(slf.py()).iter_py()
     }
 
     fn __len__(slf: Bound<'_, Self>) -> usize {
-        return slf.get().inner_bind(slf.py()).len();
+        slf.get().inner_bind(slf.py()).len()
     }
 
     fn __and__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {

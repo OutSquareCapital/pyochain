@@ -159,7 +159,7 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
                 return Ok(false).map(Either::Left);
             }
         }
-        return Ok(true).map(Either::Left);
+        Ok(true).map(Either::Left)
     }
 
     fn __ge__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
@@ -174,7 +174,7 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
                 return Ok(false).map(Either::Left);
             }
         }
-        return Ok(true).map(Either::Left);
+        Ok(true).map(Either::Left)
     }
 
     fn __lt__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {

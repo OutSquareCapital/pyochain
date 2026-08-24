@@ -160,7 +160,7 @@ impl PyoCounter {
     }
     fn __reduce__(slf: Bound<'_, Self>) -> (Bound<'_, PyType>, (Py<PyDict>,)) {
         let py = slf.py();
-        return (Self::type_object(py), (slf.get().inner().clone_ref(py),));
+        (Self::type_object(py), (slf.get().inner().clone_ref(py),))
     }
 
     fn __delitem__(&self, elem: Bound<'_, PyAny>) -> PyResult<()> {

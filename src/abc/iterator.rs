@@ -632,7 +632,7 @@ impl PyoIterator {
                 }
             }
         }
-        return PyoOk::new(accumulator).into_py_any(py);
+        PyoOk::new(accumulator).into_py_any(py)
     }
 
     fn try_reduce(slf: &Bound<'_, Self>, func: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
@@ -641,10 +641,10 @@ impl PyoIterator {
         let first = slf.next();
         match first {
             None => {
-                return PyNull::get(py)
+                PyNull::get(py)
                     .into_py_any(py)
                     .map(PyoOk::new)?
-                    .into_py_any(py);
+                    .into_py_any(py)
             }
             Some(first_val) => {
                 let mut accumulator = first_val?.to_owned().unbind();
