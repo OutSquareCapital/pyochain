@@ -76,7 +76,7 @@ type SeqFn[T] = Callable[[Iterable[T]], PyoCollection[T]]
 @pytest.mark.parametrize("obj", (Vec, Seq, Set, SetMut, StableSet, Deque))
 @pytest.mark.parametrize("size", SIZES)
 def test_init(benchmark: BenchFixture, obj: SeqFn[int], size: int) -> None:
-    data = obj(Range(size))
+    data = range(size)
 
     _ = benchmark(lambda: obj(data))
 
