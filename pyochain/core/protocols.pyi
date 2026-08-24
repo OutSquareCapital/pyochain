@@ -119,7 +119,7 @@ class Wrapper[T](ABC):
 
         Example:
             ```python
-            from pyochain import Vec, Seq, SetMut
+            from pyochain import Vec, Seq, SetMut, Dict
             from pyochain.collections import StableSet, Deque
             from collections import deque
 
@@ -156,7 +156,7 @@ class Wrapper[T](ABC):
             ref_dict = Dict.wrap(original_dict)
 
             assert ref_dict == Dict(a=1, b=2, c=3)
-            assert ref_dict.insert("a", 100) == Some(1)
+            assert ref_dict.insert("a", 100).unwrap() == 1
             assert original_dict == {"a": 100, "b": 2, "c": 3}
             ```
         """
