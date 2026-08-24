@@ -238,26 +238,32 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
     }
 }
 pub trait PyDictExtConstructors: PyTypeInfo {
-    fn from_keys<'py, T: PyTypeInfo>(
-        keys: Bound<'py, T>,
-        value: Option<Bound<'py, PyAny>>,
+    fn from_keys<'py, T: PyTypeInfo>(keys: &Bound<'py, T>) -> PyResult<Bound<'py, Self>>;
+    fn from_keys_with_default<'py, T: PyTypeInfo>(
+        keys: &Bound<'py, T>,
+        value: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>>;
     fn from_mapping(mapping: Bound<'_, PyMapping>) -> PyResult<Bound<'_, Self>>;
 }
 impl PyDictExtConstructors for PyDict {
-    fn from_keys<'py, T: PyTypeInfo>(
-        keys: Bound<'py, T>,
-        value: Option<Bound<'py, PyAny>>,
+    fn from_keys<'py, T: PyTypeInfo>(keys: &Bound<'py, T>) -> PyResult<Bound<'py, Self>> {
+        fromkeys(keys.py(), (keys,))
+    }
+    fn from_keys_with_default<'py, T: PyTypeInfo>(
+        keys: &Bound<'py, T>,
+        value: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        let py = keys.py();
-        Self::type_object(py)
-            .call_method1(intern!(py, "fromkeys"), (keys, value))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyDict>() })
+        fromkeys(keys.py(), (keys, value))
     }
     fn from_mapping(mapping: Bound<'_, PyMapping>) -> PyResult<Bound<'_, Self>> {
         let dict = PyDict::new(mapping.py());
         dict.update(&mapping).map(|_| dict)
     }
+}
+fn fromkeys<'py, A: PyCallArgs<'py>>(py: Python<'py>, args: A) -> PyResult<Bound<'py, PyDict>> {
+    PyDict::type_object(py)
+        .call_method1(intern!(py, "fromkeys"), args)
+        .map(|x| unsafe { x.cast_into_unchecked::<PyDict>() })
 }
 #[allow(unused)]
 pub trait PyDictExtMethods<'py>: Sized {

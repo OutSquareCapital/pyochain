@@ -25,7 +25,12 @@ impl Dict {
         keys: Bound<'py, PyAny>,
         value: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>> {
-        PyDict::from_keys(keys, value)?.into_pyochain()
+        value
+            .map_or_else(
+                || PyDict::from_keys(&keys),
+                |v| PyDict::from_keys_with_default(&keys, v),
+            )
+            .and_then(Bound::into_pyochain)
     }
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {

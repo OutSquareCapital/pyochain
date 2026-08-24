@@ -86,11 +86,10 @@ impl FromPyIter for SetMut {
 }
 impl FromPyIter for collections::StableSet {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        let py = iterable.py();
-        PyDict::from_keys(iterable, None)?
+        PyDict::from_keys(&iterable)?
             .unbind()
             .pipe(Self)
-            .into_bound(py)
+            .into_bound(iterable.py())
     }
 }
 impl FromPyKwargs for Dict {
@@ -166,9 +165,6 @@ impl FromPyArgs for PyoVec {
         match elements.len() {
             0 => PyList::empty(py),
             1 => try_cast_into! {match unsafe {elements.get_item_unchecked(0)} {
-                CaseExact::Self(inner) => {
-                    inner.get().inner_into_bound(py).as_sequence().to_list()?
-                }
                 Case::PyIterable(iterable) => PyList::from_iterable(&iterable)?,
                 any => PyList::new(py, [any])?,
             }},
@@ -190,14 +186,14 @@ impl FromPyArgs for collections::StableSet {
             0 => PyDict::new(py),
             1 => {
                 try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                Case::PyIterable(iterable) => PyDict::from_keys(iterable, None)?,
+                Case::PyIterable(iterable) => PyDict::from_keys(&iterable)?,
                 any => {
                     let dict = PyDict::new(py);
                     dict.set_item(any, PyNone::get(py))?;
                     dict
                 }}}
             }
-            _ => PyDict::from_keys(elements.into_any(), None)?,
+            _ => PyDict::from_keys(elements.as_any())?,
         }
         .unbind()
         .pipe(Self)
@@ -205,13 +201,12 @@ impl FromPyArgs for collections::StableSet {
         .pipe(Ok)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
-        let py = elements.py();
         elements
-            .into_any()
-            .pipe(|any| PyDict::from_keys(any, None))
+            .as_any()
+            .pipe(PyDict::from_keys)
             .map(Bound::unbind)
             .map(Self)
-            .and_then(|slf| slf.into_bound(py))
+            .and_then(|slf| slf.into_bound(elements.py()))
     }
 }
 impl FromPyArgs for Set {
@@ -245,11 +240,6 @@ impl FromPyArgs for SetMut {
         match elements.len() {
             0 => PySet::empty(py)?,
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                CaseExact::Self(inner) => inner
-                    .get()
-                    .inner_into_bound(py)
-                    .into_iter()
-                    .collect_bound(py)?,
                 Case::PyIterable(iterable) => PySet::from_iterable(&iterable)?,
                 any => PySet::new(py, [any])?,
             }},

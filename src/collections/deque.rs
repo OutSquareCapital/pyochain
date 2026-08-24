@@ -26,7 +26,7 @@ impl Deque {
         max_length: Option<Bound<'_, PyInt>>,
     ) -> PyResult<PyClassInitializer<Self>> {
         let py = elements.py();
-        let deque = match elements.len() {
+        match elements.len() {
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
                 Case::PyIterable(iterable) => PyDeque::new(iterable.into_any(), max_length)?,
                 any => PyTuple::new(py, [any])
@@ -34,8 +34,11 @@ impl Deque {
                     .and_then(|iterable| PyDeque::new(iterable, max_length))?,
             }},
             _ => PyDeque::new(elements.into_any(), max_length)?,
-        };
-        deque.unbind().pipe(Self).init().pipe(Ok)
+        }
+        .unbind()
+        .pipe(Self)
+        .init()
+        .pipe(Ok)
     }
 
     #[pyo3(signature = (iterable, /, max_length=None))]
