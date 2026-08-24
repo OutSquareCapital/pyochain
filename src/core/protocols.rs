@@ -56,77 +56,41 @@ pub trait FromPyKwargs: Sized + PyClass + FromPyIter {
 }
 impl FromPyIter for Dict {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        into_dict(iterable)?.into_pyochain()
+        into_dict(iterable).and_then(Bound::into_pyochain)
     }
 }
 impl FromPyIter for iterators::Iter {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        iterable.try_iter()?.into_pyochain()
+        iterable.try_iter().and_then(Bound::into_pyochain)
     }
 }
 impl FromPyIter for Seq {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        try_cast_into! {
-            match iterable {
-                CaseExact::Self(slf) => Ok(slf),
-                iterable => PyTuple::from_iterable(&iterable).and_then(Bound::into_pyochain),
-            }
-        }
+        PyTuple::from_iterable(&iterable).and_then(Bound::into_pyochain)
     }
 }
 impl FromPyIter for PyoVec {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        let py = iterable.py();
-        try_cast_into! {
-            match iterable {
-                CaseExact::Self(inner) => {
-                    inner.get().inner_into_bound(py).as_sequence().to_list()?
-                }
-                iterable => PyList::from_iterable(&iterable)?,
-            }
-        }
-        .into_pyochain()
+        PyList::from_iterable(&iterable).and_then(Bound::into_pyochain)
     }
 }
 impl FromPyIter for Set {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        try_cast_into! {
-            match iterable {
-                CaseExact::Self(slf) => Ok(slf),
-                any => PyFrozenSet::from_iterable(&any)?.into_pyochain(),
-            }
-        }
+        PyFrozenSet::from_iterable(&iterable).and_then(Bound::into_pyochain)
     }
 }
 impl FromPyIter for SetMut {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        let py = iterable.py();
-        try_cast_into! {
-            match iterable {
-                CaseExact::Self(inner) => inner
-                    .get()
-                    .inner_into_bound(py)
-                    .into_iter()
-                    .collect_bound(py)?,
-                any => PySet::from_iterable(&any)?,
-            }
-        }
-        .into_pyochain()
+        PySet::from_iterable(&iterable).and_then(Bound::into_pyochain)
     }
 }
 impl FromPyIter for collections::StableSet {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
         let py = iterable.py();
-        try_cast_into! {
-            match iterable {
-                CaseExact::PyDict(dict) => dict,
-                CaseExact::Self(inner) => inner.get().inner_into_bound(py),
-                iterable => PyDict::from_keys(iterable, None)?,
-            }
-        }
-        .unbind()
-        .pipe(Self)
-        .into_bound(py)
+        PyDict::from_keys(iterable, None)?
+            .unbind()
+            .pipe(Self)
+            .into_bound(py)
     }
 }
 impl FromPyKwargs for Dict {
