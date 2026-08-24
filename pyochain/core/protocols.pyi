@@ -23,7 +23,7 @@ class FromIter[T](ABC):
         """Create the instance from an `Iterable`.
 
         Tip:
-            For converting a literal tuple to a `Seq`, `FlexibleInit::of` is more efficient since it directly constructs the instance from the `*elements` tuple.
+            For converting a literal `tuple[T, ...]` to a `Seq[T]`, [`of`][FromArgs.of] is more efficient since it directly constructs the instance from the `*elements` tuple.
 
             Keep in mind that it's an exception rather than the rule.
 
@@ -68,22 +68,25 @@ class FromArgs[T](FromIter[T], ABC):
         """
 
 @type_check_only
-class FromKwargs[T](FromIter[T], ABC):
+class FromKwargs[K, V](FromIter[tuple[K, V]], ABC):
     @staticmethod
     @abstractmethod
-    def of[E](**elements: E) -> FromKwargs[E]:
+    def of[E](**elements: E) -> FromKwargs[str, E]:
         """Create the instance from a variable number of keyword arguments.
 
         Args:
             **elements (E): The elements to create the instance from.
 
         Returns:
-            FromKwargs[E]: A new instance containing the provided `elements`.
+            FromKwargs[str, E]: A new instance containing the provided `elements`.
 
         Example:
             ```python
             from pyochain import Dict
 
+            d = Dict.of(a=1, b=2)
+            assert d == Dict(a=1, b=2)
+            assert repr(d) == "Dict('a': 1, 'b': 2)"
             assert Dict.of(a=1, b=2, c=3) == Dict({"a": 1, "b": 2, "c": 3})
             ```
         """
@@ -148,8 +151,15 @@ class Wrapper[T](ABC):
             assert set_obj == SetMut(1, 2, 3)
             original_set.add(4)
             assert set_obj == SetMut(1, 2, 3, 4)
+
+            original_dict = {"a": 1, "b": 2, "c": 3}
+            ref_dict = Dict.wrap(original_dict)
+
+            assert ref_dict == Dict(a=1, b=2, c=3)
+            assert ref_dict.insert("a", 100) == Some(1)
+            assert original_dict == {"a": 100, "b": 2, "c": 3}
             ```
         """
 
 class ArgsWrapper[T](FromArgs[T], Wrapper[T], ABC): ...
-class KwargsWrapper[T](FromKwargs[T], Wrapper[T], ABC): ...
+class KwargsWrapper[K, V](FromKwargs[K, V], Wrapper[K], ABC): ...

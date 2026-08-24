@@ -4,13 +4,14 @@ from typing import Self, overload, override
 from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
 from pyochain.abc import PyoMutableMapping, PyoReversible
+from pyochain.core.protocols import KwargsWrapper
 
 type DictConvertible[K, V] = (
     Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
 )
 type IntoDict[K, V] = dict[K, V] | Dict[K, V]
 
-class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
+class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K], KwargsWrapper[K, V]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
     Implement the `MutableMapping` interface, so all standard dictionary operations are supported.
@@ -105,6 +106,7 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             assert Dict(minimal_dict_like) == Dict({1: "a", 2: "b"})
             ```
         """
+
     @override
     def __iter__(self) -> Iterator[K]: ...
     @override
@@ -150,54 +152,15 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             ```
         """
 
+    @override
     @staticmethod
-    def wrap[K1, V1](data: dict[K1, V1]) -> Dict[K1, V1]:
-        """Wrap an existing Python builtin `dict` without copying.
-
-        This is the recommended way to create a `Dict` from foreign functions that return a standard Python `dict`.
-
-        Warning:
-            Any modifications made to this `Dict` will also affect the original data structure, and vice versa.
-
-        Args:
-            data (dict[K1, V1]): The dictionary to wrap.
-
-        Returns:
-            Dict[K1, V1]: A new `Dict` instance wrapping the provided dictionary.
-
-        Example:
-            ```python
-            from pyochain import Dict, Some
-
-            original_dict = {"a": 1, "b": 2, "c": 3}
-            ref_dict = Dict.wrap(original_dict)
-
-            assert ref_dict == Dict(a=1, b=2, c=3)
-            assert ref_dict.insert("a", 100) == Some(1)
-            assert original_dict == {"a": 100, "b": 2, "c": 3}
-            ```
-        """
-
+    def from_iter(iterable: Iterable[tuple[K, V]], /) -> Dict[K, V]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
     @staticmethod
-    def of[U](**kwargs: U) -> Dict[str, U]:
-        """Create a `Dict` from keyword arguments.
-
-        Args:
-            **kwargs (U): Key-value pairs to initialize the Dict.
-
-        Returns:
-            Dict[str, U]: A new Dict instance containing the provided key-value pairs.
-
-        Example:
-            ```python
-            from pyochain import Dict
-
-            d = Dict.of(a=1, b=2)
-            assert d == Dict(a=1, b=2)
-            assert repr(d) == "Dict('a': 1, 'b': 2)"
-            ```
-        """
-
+    def wrap[K1, V1](data: dict[K1, V1]) -> Dict[K1, V1]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    @staticmethod
+    def of[U](**kwargs: U) -> Dict[str, U]: ...
     @staticmethod
     def from_object(obj: object) -> Dict[str, object]:
         """Create a `Dict` from an object `__dict__` attribute.
