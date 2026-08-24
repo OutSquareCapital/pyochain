@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Range, Seq
+from pyochain import Range, Seq, Set, SetMut, Vec
+from pyochain.abc import PyoCollection
+from pyochain.collections import Deque, StableSet
 
 from ._utils import SIZES
 
@@ -67,16 +70,15 @@ def _get(data: PyoSequence[int], idx: int) -> Option[int]:
     return data.get(idx)
 
 
+type SeqFn[T] = Callable[[Iterable[T]], PyoCollection[T]]
+
+
+@pytest.mark.parametrize("obj", (Vec, Seq, Set, SetMut, StableSet, Deque))
 @pytest.mark.parametrize("size", SIZES)
-def test_init_seq(benchmark: BenchFixture, size: int) -> None:
-    data = Range(size)
-    assert benchmark(_init_seq, data, size).first() == data.first()
+def test_init(benchmark: BenchFixture, obj: SeqFn[int], size: int) -> None:
+    data = obj(Range(size))
 
-
-def _init_seq(data: PyoSequence[int], size: int) -> Seq[int]:
-    for _ in range(SIZES[size]):
-        _ = Seq(data)
-    return Seq(data)
+    _ = benchmark(lambda: obj(data))
 
 
 @pytest.mark.parametrize("size", SIZES)
