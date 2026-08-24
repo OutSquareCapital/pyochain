@@ -141,7 +141,7 @@ impl PySome {
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<bool> {
         predicate
-            .concat(&self.value.bind(predicate.py()), args, kwargs)?
+            .concat(self.value.bind(predicate.py()), args, kwargs)?
             .is_truthy()
     }
 
@@ -152,7 +152,7 @@ impl PySome {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<bool> {
-        func.concat(&self.value.bind(func.py()), args, kwargs)?
+        func.concat(self.value.bind(func.py()), args, kwargs)?
             .is_truthy()
     }
 
@@ -178,7 +178,7 @@ impl PySome {
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         let py = func.py();
-        func.concat(&self.value.bind(py), args, kwargs)?
+        func.concat(self.value.bind(py), args, kwargs)?
             .unbind()
             .pipe(Self::new)
             .into_py_any(py)
@@ -199,7 +199,7 @@ impl PySome {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
-        func.concat(&self.value.bind(func.py()), args, kwargs)?
+        func.concat(self.value.bind(func.py()), args, kwargs)?
             .unbind()
             .pipe(Ok)
     }
@@ -225,7 +225,7 @@ impl PySome {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
-        f.concat(&self.value.bind(default.py()), args, kwargs)?
+        f.concat(self.value.bind(default.py()), args, kwargs)?
             .unbind()
             .pipe(Ok)
     }
@@ -244,7 +244,7 @@ impl PySome {
     ) -> PyResult<Py<PyAny>> {
         let py = predicate.py();
         if predicate
-            .concat(&self.value.bind(py), args, kwargs)?
+            .concat(self.value.bind(py), args, kwargs)?
             .is_truthy()?
         {
             self.value.clone_ref(py).pipe(Self::new).into_py_any(py)
@@ -265,7 +265,7 @@ impl PySome {
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         let py = f.py();
-        f.concat(&self.value.bind(py), args, kwargs)?;
+        f.concat(self.value.bind(py), args, kwargs)?;
         self.value.clone_ref(py).pipe(Self::new).into_py_any(py)
     }
 

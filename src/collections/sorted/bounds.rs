@@ -186,7 +186,7 @@ impl Bounds {
             None => Pos::default(),
             Some(minimum) => {
                 if inclusive.0 {
-                    let min_pos = bisect::left(&maxes, &minimum)?;
+                    let min_pos = bisect::left(maxes, &minimum)?;
 
                     if min_pos == maxes.len() {
                         return Ok(None);
@@ -195,7 +195,7 @@ impl Bounds {
                     let min_idx = bisect::left(&lists[min_pos], &minimum)?;
                     Pos::new(min_pos, min_idx)
                 } else {
-                    let min_pos = bisect::right(&maxes, &minimum)?;
+                    let min_pos = bisect::right(maxes, &minimum)?;
 
                     if min_pos == maxes.len() {
                         return Ok(None);
@@ -212,7 +212,7 @@ impl Bounds {
         bounds.max = maximum
             .map(|m| {
                 if inclusive.1 {
-                    let mut max_pos = bisect::right(&maxes, &m)?;
+                    let mut max_pos = bisect::right(maxes, &m)?;
 
                     let max_idx = if max_pos == maxes.len() {
                         max_pos -= 1;
@@ -222,7 +222,7 @@ impl Bounds {
                     };
                     Ok::<_, PyErr>(Pos::new(max_pos, max_idx))
                 } else {
-                    let mut max_pos = bisect::left(&maxes, &m)?;
+                    let mut max_pos = bisect::left(maxes, &m)?;
 
                     let max_idx = if max_pos == maxes.len() {
                         max_pos -= 1;

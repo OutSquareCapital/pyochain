@@ -100,7 +100,7 @@ impl SortedCollection for SortedKeyList {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         self.get_data()
             .as_pyovec(py)
-            .and_then(|x| PyTuple::new(py, [x.as_any(), &self.key.bind(py)]))
+            .and_then(|x| PyTuple::new(py, [x.as_any(), self.key.bind(py)]))
             .map(|tup| (Self::type_object(py), tup))
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -113,7 +113,7 @@ impl SortedCollection for SortedKeyList {
             ops::Maxes::LenNEPos => {
                 let keys = self.get_keys();
                 let v = &keys[bound.pos];
-                bound.idx = bisect::left(&v, &key)?;
+                bound.idx = bisect::left(v, &key)?;
                 let len_keys = keys.len();
                 let mut len_sublist = keys[bound.pos].len();
 
@@ -121,7 +121,7 @@ impl SortedCollection for SortedKeyList {
                     if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
                         return Ok(false);
                     }
-                    if data.get_value(&bound).bind(py).eq(&value)? {
+                    if data.get_value(&bound).bind(py).eq(value)? {
                         return Ok(true);
                     }
                     bound.idx += 1;
@@ -151,7 +151,7 @@ impl SortedCollection for SortedKeyList {
             .call1((value,))
             .and_then(|x| self.bisect_key_right(x))
     }
-    fn clear(&self, _py: Python<'_>) -> () {
+    fn clear(&self, _py: Python<'_>) {
         self.get_data().clear();
         self.get_keys().clear();
     }
@@ -180,7 +180,7 @@ impl SortedCollection for SortedKeyList {
                     indexes.stop -= 1;
                     let keys = self.get_keys();
                     let v_left = &keys[bound.pos];
-                    bound.idx = bisect::left(&v_left, &key)?;
+                    bound.idx = bisect::left(v_left, &key)?;
                     let len_keys = keys.len();
                     let mut len_sublist = v_left.len();
 
@@ -260,7 +260,7 @@ impl BaseSortedListSet for SortedKeyList {
             }
             ops::Maxes::LenNEPos => {
                 let v = &keys[bound.pos];
-                bound.idx = bisect::right(&v, &key)?;
+                bound.idx = bisect::right(v, &key)?;
                 data.lists[bound.pos].insert(bound.idx, value);
                 keys[bound.pos].insert(bound.idx, key.unbind());
                 drop(keys);
@@ -320,7 +320,7 @@ impl BaseSortedListSet for SortedKeyList {
             ops::Maxes::LenNEPos => {
                 let keys = self.get_keys();
                 let v = &keys[bound.pos];
-                bound.idx = bisect::left(&v, &key)?;
+                bound.idx = bisect::left(v, &key)?;
                 let len_keys = keys.len();
                 let mut len_sublist = keys[bound.pos].len();
 
@@ -328,7 +328,7 @@ impl BaseSortedListSet for SortedKeyList {
                     if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
                         return errors::not_in_list_err(value);
                     }
-                    if data.get_value(&bound).bind(py).eq(&value)? {
+                    if data.get_value(&bound).bind(py).eq(value)? {
                         drop(keys);
                         self.delete(py, &mut data, &mut bound)?;
                         break;
@@ -455,7 +455,7 @@ impl BaseSortedList for SortedKeyList {
             ops::Maxes::LenNEPos => {
                 let keys = self.get_keys();
                 let v_left = &keys[bound.pos];
-                bound.idx = bisect::left(&v_left, &key)?;
+                bound.idx = bisect::left(v_left, &key)?;
                 let mut total = 0;
                 let len_keys = keys.len();
                 let mut len_sublist = keys[bound.pos].len();

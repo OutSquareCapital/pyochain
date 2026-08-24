@@ -51,7 +51,7 @@ impl PyoMutableSet {
         } else {
             let pyset = try_cast! {
                 match it {
-                    Case::PyAbstractSet(x) => py_from_iterable(&slf, &x)?.into_any(),
+                    Case::PyAbstractSet(x) => py_from_iterable(&slf, x)?.into_any(),
                     iterable => iterable,
                 }
             };

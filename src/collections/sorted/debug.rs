@@ -28,7 +28,7 @@ pub fn check_sorted_dict(
     fn check_dict(x: &impl BaseSortedDict, py: Python<'_>) -> PyResult<()> {
         x.get_list()
             .get()
-            .pipe(|list| run_checks(py, list).inspect_err(move |e| show_list(py, &e, list)))?;
+            .pipe(|list| run_checks(py, list).inspect_err(move |e| show_list(py, e, list)))?;
         let data = x.get_list().get().get_data();
         pyassert!(x.len(py) == data.len);
         pyassert!(data.iter().all(|item| {
@@ -48,7 +48,7 @@ pub fn check_sorted_set(
     data: Either<Py<SortedSet>, Py<SortedKeySet>>,
 ) -> PyResult<()> {
     fn check_list(x: &impl SortedListGetters, py: Python<'_>) -> PyResult<()> {
-        run_checks(py, x).inspect_err(move |e| show_list(py, &e, x))
+        run_checks(py, x).inspect_err(move |e| show_list(py, e, x))
     }
     fn check_len(x: &impl BaseSortedSet, py: Python<'_>) -> PyResult<()> {
         check_list(x.get_list().get(), py)?;
@@ -84,14 +84,14 @@ pub fn check_sorted_list(
     data: Either<Py<SortedList>, Py<SortedKeyList>>,
 ) -> PyResult<()> {
     fn check_list(x: &impl SortedListGetters, py: Python<'_>) -> PyResult<()> {
-        run_checks(py, x).inspect_err(move |e| show_list(py, &e, x))
+        run_checks(py, x).inspect_err(move |e| show_list(py, e, x))
     }
     data.map_either(|x| check_list(x.get(), py), |x| check_list(x.get(), py))
         .into_inner()
 }
 #[pyfunction]
 pub fn check_sorted_key_list(py: Python<'_>, data: Py<SortedKeyList>) -> PyResult<()> {
-    run_key_checks(py, data.get()).inspect_err(move |e| show_key_list(py, &e, data.get()))
+    run_key_checks(py, data.get()).inspect_err(move |e| show_key_list(py, e, data.get()))
 }
 
 fn run_checks(py: Python<'_>, data: &impl SortedListGetters) -> PyResult<()> {
@@ -115,7 +115,7 @@ fn run_checks(py: Python<'_>, data: &impl SortedListGetters) -> PyResult<()> {
 
     // Check all sublists are sorted.
 
-    for sublist in lst_data.lists.iter().map(|x| x) {
+    for sublist in lst_data.lists.iter() {
         for pos in 1..sublist.len() {
             (sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?)
                 .then_some(())
@@ -243,7 +243,7 @@ fn run_key_checks(py: Python<'_>, data: &SortedKeyList) -> PyResult<()> {
         pyassert!(val_sublist.len() == key_sublist.len());
         for (val, key) in val_sublist.iter().zip(key_sublist.iter()) {
             {
-                pyassert!(key_fn.call1((&val,))?.eq(&key)?);
+                pyassert!(key_fn.call1((&val,))?.eq(key)?);
             }
         }
     }
@@ -299,7 +299,7 @@ fn run_key_checks(py: Python<'_>, data: &SortedKeyList) -> PyResult<()> {
     Ok(())
 }
 
-fn show_key_list(py: Python<'_>, err: &PyErr, data: &SortedKeyList) -> () {
+fn show_key_list(py: Python<'_>, err: &PyErr, data: &SortedKeyList) {
     show_list(py, err, data);
     let keys = data.get_keys();
     let infos = [
@@ -308,7 +308,7 @@ fn show_key_list(py: Python<'_>, err: &PyErr, data: &SortedKeyList) -> () {
     ];
     err.add_note(py, infos.join("\n")).unwrap()
 }
-fn show_list(py: Python<'_>, err: &PyErr, data: &impl SortedListGetters) -> () {
+fn show_list(py: Python<'_>, err: &PyErr, data: &impl SortedListGetters) {
     let lst_data = data.get_data();
     let infos = [
         format!("len: {}", lst_data.len),

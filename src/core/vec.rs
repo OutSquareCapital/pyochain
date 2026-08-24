@@ -47,8 +47,8 @@ impl PyoVec {
         let inner = self.inner_bind(py);
         try_cast! {
             match other {
-                Case::PyList(list) => inner.eq(&list).map(Either::Left),
-                CaseExact::PyoVec(vec) => inner.eq(&vec.get().inner_bind(py)).map(Either::Left),
+                Case::PyList(list) => inner.eq(list).map(Either::Left),
+                CaseExact::PyoVec(vec) => inner.eq(vec.get().inner_bind(py)).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
             }
         }
@@ -210,7 +210,7 @@ impl PyoVec {
         }
     }
 
-    pub fn clear(&self, py: Python<'_>) -> () {
+    pub fn clear(&self, py: Python<'_>) {
         self.inner_bind(py).clear()
     }
 
@@ -241,7 +241,7 @@ impl PyoVec {
 
     fn concat<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        Self::extract_union(&other)?
+        Self::extract_union(other)?
             .pipe(|other| {
                 self.inner_bind(py)
                     .as_sequence()

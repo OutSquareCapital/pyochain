@@ -112,7 +112,7 @@ impl PyoOk {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Self> {
-        func.concat(&self.value.bind(func.py()), args, kwargs)?
+        func.concat(self.value.bind(func.py()), args, kwargs)?
             .unbind()
             .pipe(Self::new)
             .pipe(Ok)
@@ -133,7 +133,7 @@ impl PyoOk {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
-        func.concat(&self.value.bind(func.py()), args, kwargs)?
+        func.concat(self.value.bind(func.py()), args, kwargs)?
             .unbind()
             .pipe(Ok)
     }
@@ -195,7 +195,7 @@ impl PyoOk {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<bool> {
-        pred.concat(&self.value.bind(pred.py()), args, kwargs)?
+        pred.concat(self.value.bind(pred.py()), args, kwargs)?
             .is_truthy()
     }
 
@@ -251,7 +251,7 @@ impl PyoOk {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
-        func.concat(&self.value.bind(default.py()), args, kwargs)?
+        func.concat(self.value.bind(default.py()), args, kwargs)?
             .unbind()
             .pipe(Ok)
     }
@@ -271,7 +271,7 @@ impl PyoOk {
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Self> {
         let py = f.py();
-        f.concat(&self.value.bind(py), args, kwargs)?;
+        f.concat(self.value.bind(py), args, kwargs)?;
         self.value.clone_ref(py).pipe(Self::new).pipe(Ok)
     }
 }
@@ -316,7 +316,7 @@ impl PyoErr {
     }
 
     fn unwrap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let err_repr = format_err_value(&self.error.bind(py))?;
+        let err_repr = format_err_value(self.error.bind(py))?;
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
             "called `unwrap` on an `Err`: {}",
             err_repr
@@ -324,7 +324,7 @@ impl PyoErr {
     }
 
     fn expect(&self, msg: &Bound<'_, PyString>) -> PyResult<Py<PyAny>> {
-        let err_repr = format_err_value(&self.error.bind(msg.py()))?;
+        let err_repr = format_err_value(self.error.bind(msg.py()))?;
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
             "{}: {}",
             msg, err_repr
@@ -403,7 +403,7 @@ impl PyoErr {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<bool> {
-        pred.concat(&self.error.bind(pred.py()), args, kwargs)?
+        pred.concat(self.error.bind(pred.py()), args, kwargs)?
             .is_truthy()
     }
 
@@ -414,7 +414,7 @@ impl PyoErr {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Self> {
-        func.concat(&self.error.bind(func.py()), args, kwargs)?
+        func.concat(self.error.bind(func.py()), args, kwargs)?
             .unbind()
             .pipe(PyoErr::new)
             .pipe(Ok)
@@ -428,7 +428,7 @@ impl PyoErr {
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Self> {
         let py = func.py();
-        func.concat(&self.error.bind(py), args, kwargs)?;
+        func.concat(self.error.bind(py), args, kwargs)?;
         self.error.clone_ref(py).pipe(Self::new).pipe(Ok)
     }
 

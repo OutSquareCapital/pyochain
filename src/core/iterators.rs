@@ -458,7 +458,7 @@ impl Drain {
 
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
-        if &slf.current >= &slf.end {
+        if slf.current >= slf.end {
             slf.finish(py)?;
             Ok(None)
         } else {
@@ -738,10 +738,7 @@ impl Unzip {
             .unwrap()
             .pipe(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
             .unbind();
-        Self {
-            iterator: iterator,
-            n,
-        }
+        Self { iterator, n }
     }
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
         let py = slf.py();
@@ -875,7 +872,7 @@ impl Iter {
 }
 #[pymethods]
 impl Iter {
-    fn __iter__<'py>(&self, py: Python<'_>) -> Py<PyIterator> {
+    fn __iter__(&self, py: Python<'_>) -> Py<PyIterator> {
         self.inner().clone_ref(py)
     }
 

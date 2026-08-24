@@ -100,12 +100,12 @@ impl ListsData {
         }
         let mut bound = Pos::new(0, 0);
 
-        bound.pos = bisect::right(&self.maxes, &value)?;
+        bound.pos = bisect::right(&self.maxes, value)?;
 
         if bound.pos == self.maxes.len() {
             return Ok(self.len as isize);
         }
-        bound.idx = bisect::right(&lists.unwrap_or(&self.lists)[bound.pos], &value)?;
+        bound.idx = bisect::right(&lists.unwrap_or(&self.lists)[bound.pos], value)?;
         bound.loc(self)
     }
 
@@ -182,14 +182,14 @@ impl ListsData {
                     (false, true) => {
                         bounds.max.pos = self.lists.len() - 1;
                         bounds.max.idx = (&self.lists)[bounds.max.pos].len();
-                        get_slice(&self, bounds)
+                        get_slice(self, bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                             .pipe(Ok)
                     }
                     (false, false) => {
                         bounds.max.set_from_pos(stop, self)?;
-                        get_slice(&self, bounds)
+                        get_slice(self, bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                             .pipe(Ok)
@@ -323,7 +323,7 @@ impl ListsData {
         self.lists[prev].append(removed.as_mut());
         self.remove_pos(bounds);
     }
-    pub(super) fn delete_on_idx(&mut self, bounds: &Pos, max_at_pos: Py<PyAny>) -> () {
+    pub(super) fn delete_on_idx(&mut self, bounds: &Pos, max_at_pos: Py<PyAny>) {
         self.maxes[bounds.pos] = max_at_pos;
 
         if !self.idx.is_empty() {

@@ -66,7 +66,7 @@ impl SliceView {
             .lock()
             .expect("Re-entrant error: SliceView::range is already used")
     }
-    fn set_range(&self, range: Either<Py<PyRange>, OpenRange>) -> () {
+    fn set_range(&self, range: Either<Py<PyRange>, OpenRange>) {
         *self.get_range() = range;
     }
 

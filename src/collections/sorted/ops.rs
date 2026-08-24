@@ -24,7 +24,7 @@ impl Maxes {
         if maxes.is_empty() {
             Ok(Self::Empty)
         } else {
-            bound.pos = func(&maxes, &value)?;
+            bound.pos = func(maxes, value)?;
             if bound.pos == maxes.len() {
                 Ok(Self::LenEQPos)
             } else {

@@ -55,10 +55,10 @@ impl SortedCollection for SortedList {
         let py = value.py();
         let data = self.get_data();
         let mut bound = Pos::default();
-        match ops::Maxes::new(&data.maxes, &mut bound, &value, bisect::left)? {
+        match ops::Maxes::new(&data.maxes, &mut bound, value, bisect::left)? {
             ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(false),
             ops::Maxes::LenNEPos => {
-                bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
+                bound.idx = bisect::left(&data.lists[bound.pos], value)?;
                 data.get_value(&bound).bind(py).eq(value)
             }
         }
@@ -70,7 +70,7 @@ impl SortedCollection for SortedList {
             .and_then(|x| PyTuple::new(py, [x]))
             .map(|tup| (Self::type_object(py), tup))
     }
-    fn clear(&self, _py: Python<'_>) -> () {
+    fn clear(&self, _py: Python<'_>) {
         self.get_data().clear()
     }
 
@@ -165,7 +165,7 @@ impl BaseSortedListSet for SortedList {
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
         let mut bound = Pos::default();
         let mut data = self.get_data();
-        match ops::Maxes::new(&data.maxes, &mut bound, &value.bind(py), bisect::right)? {
+        match ops::Maxes::new(&data.maxes, &mut bound, value.bind(py), bisect::right)? {
             ops::Maxes::Empty => {
                 data.lists.push(vec![value.clone_ref(py)]);
                 data.maxes.push(value);
@@ -177,7 +177,7 @@ impl BaseSortedListSet for SortedList {
                 self.expand(py, &mut data, bound.pos)?;
             }
             ops::Maxes::LenNEPos => {
-                let res = bisect::right(&data.lists[bound.pos], &value.bind(py))?;
+                let res = bisect::right(&data.lists[bound.pos], value.bind(py))?;
                 data.lists[bound.pos].insert(res, value.clone_ref(py));
                 self.expand(py, &mut data, bound.pos)?;
             }
@@ -207,11 +207,11 @@ impl BaseSortedListSet for SortedList {
         let py = value.py();
         let mut data = self.get_data();
         let mut bound = Pos::default();
-        match ops::Maxes::new(&data.maxes, &mut bound, &value, bisect::left)? {
+        match ops::Maxes::new(&data.maxes, &mut bound, value, bisect::left)? {
             ops::Maxes::Empty | ops::Maxes::LenEQPos => errors::not_in_list_err(value),
             ops::Maxes::LenNEPos => {
-                bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
-                if data.get_value(&bound).bind(py).eq(&value)? {
+                bound.idx = bisect::left(&data.lists[bound.pos], value)?;
+                if data.get_value(&bound).bind(py).eq(value)? {
                     self.delete(py, &mut data, &mut bound)
                 } else {
                     errors::not_in_list_err(value)

@@ -29,7 +29,7 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_submodule(&collections_mod)?;
     collections_mod.add_submodule(&sorted_mod)?;
     // NOTE: We need to do this two times to handle both relative imports, e.g `from pyochain import Vec` and direct import paths, e.g `import pyochain.core.Vec`
-    populate_core(&m, py)?;
+    populate_core(m, py)?;
     populate_core(&core_mod, py)?;
     populate_abc(&abc_mod)?;
     populate_collections(&collections_mod)?;

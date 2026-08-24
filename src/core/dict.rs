@@ -146,7 +146,7 @@ impl Dict {
             .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
     }
 
-    fn clear(slf: Bound<'_, Self>) -> () {
+    fn clear(slf: Bound<'_, Self>) {
         slf.get().inner_bind(slf.py()).clear()
     }
     #[pyo3(signature = (m=None, /, **kwargs))]

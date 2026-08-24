@@ -211,7 +211,7 @@ impl PyoMutableMapping {
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
         let previous = slf.get_item(key);
-        slf.set_item(&key, &value)?;
+        slf.set_item(key, value)?;
         previous
             .map(|x| PySome::new(x.unbind()).into_bound_py_any(py))
             .unwrap_or_else(|_| PyNull::get(py).into_bound_py_any(py))
@@ -223,18 +223,18 @@ impl PyoMutableMapping {
         value: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
-        if slf.contains(&key)? {
+        if slf.contains(key)? {
             PyoErr::new(
                 PyKeyError::new_err(format!(
                     "Key {} already exists with value {}.",
                     key,
-                    slf.get_item(&key)?
+                    slf.get_item(key)?
                 ))
                 .into_py_any(py)?,
             )
             .into_bound_py_any(py)
         } else {
-            slf.set_item(&key, &value)?;
+            slf.set_item(key, &value)?;
             value.unbind().pipe(PyoOk::new).into_bound_py_any(py)
         }
     }

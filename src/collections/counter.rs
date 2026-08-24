@@ -140,7 +140,7 @@ impl PyoCounter {
         kwargs: Option<Kwargs<'_>>,
     ) -> PyResult<()> {
         let inner = self.inner_bind(py);
-        update_counter(&inner, iterable, kwargs)
+        update_counter(inner, iterable, kwargs)
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
     fn subtract(
@@ -295,7 +295,7 @@ impl PyoCounter {
             let new_count = self.__getitem__(&elem)?.add(count)?;
             inner.set_item(elem, new_count)?;
         }
-        keep_positive(&inner)
+        keep_positive(inner)
     }
 
     fn __isub__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
@@ -306,7 +306,7 @@ impl PyoCounter {
             let new_count = self.__getitem__(&elem)?.sub(count)?;
             inner.set_item(elem, new_count)?;
         }
-        keep_positive(&inner)
+        keep_positive(inner)
     }
 
     fn __ior__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
@@ -319,7 +319,7 @@ impl PyoCounter {
                 inner.set_item(elem, other_count)?;
             }
         }
-        keep_positive(&inner)
+        keep_positive(inner)
     }
 
     fn __iand__(&self, other: Bound<'_, PyMapping>) -> PyResult<()> {
@@ -331,7 +331,7 @@ impl PyoCounter {
                 inner.set_item(elem, other_count)?;
             }
         }
-        keep_positive(&inner)
+        keep_positive(inner)
     }
 
     fn __ixor__<'py>(&self, other: Bound<'py, Self>) -> PyResult<()> {
@@ -347,7 +347,7 @@ impl PyoCounter {
                 inner.set_item(elem, pylibs::builtins::abs(&count)?)?
             }
         }
-        keep_positive(&inner)
+        keep_positive(inner)
     }
     fn __eq__<'py>(&self, other: &Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         let py = other.py();
@@ -424,7 +424,7 @@ impl PyoCounter {
 
     fn __gt__<'py>(&self, other: &Bound<'py, Self>) -> PyCmpOut<bool, 'py> {
         let is_ge = self.__ge__(other)?;
-        self.__ne__(&other)?
+        self.__ne__(other)?
             .map_left(|is_ne| is_ge && is_ne)
             .pipe(Ok)
     }
@@ -589,7 +589,7 @@ fn keep_positive(inner: &Bound<'_, PyDict>) -> PyResult<()> {
         .map(|x| x?.extract::<(Bound<'_, PyAny>, isize)>())
         .filter_map(|kv| match kv {
             Ok((elem, count)) => {
-                if !(count > 0) {
+                if count <= 0 {
                     Some(Ok(elem))
                 } else {
                     None

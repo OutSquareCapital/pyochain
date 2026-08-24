@@ -1208,10 +1208,7 @@ impl<'a, 'py> SortedDictIter<'a, 'py> {
 impl<'a, 'py> Iterator for SortedDictIter<'a, 'py> {
     type Item = PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>;
     fn next(&mut self) -> Option<PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>> {
-        let index = match self.range.next() {
-            Some(i) => i,
-            None => return None,
-        };
+        let index = self.range.next()?;
         // NOTE: I tried to avoid double match here, but the `get_item` error caused reference issues.
         match self.mapping_list.getitem_from_int(self.py, index) {
             Ok(key) => {

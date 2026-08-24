@@ -640,12 +640,10 @@ impl PyoIterator {
         let py = slf.py();
         let first = slf.next();
         match first {
-            None => {
-                PyNull::get(py)
-                    .into_py_any(py)
-                    .map(PyoOk::new)?
-                    .into_py_any(py)
-            }
+            None => PyNull::get(py)
+                .into_py_any(py)
+                .map(PyoOk::new)?
+                .into_py_any(py),
             Some(first_val) => {
                 let mut accumulator = first_val?.to_owned().unbind();
 

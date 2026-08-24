@@ -292,7 +292,7 @@ impl SortedCollection for SortedDict {
         self.get_list().get().reset(py, load)
     }
 
-    fn clear(&self, py: Python<'_>) -> () {
+    fn clear(&self, py: Python<'_>) {
         self.get_inner().bind(py).clear();
         self.get_list().get().clear(py);
     }
@@ -356,7 +356,7 @@ impl SortedCollection for SortedKeyDict {
         self.get_list().get().reset(py, load)
     }
 
-    fn clear(&self, py: Python<'_>) -> () {
+    fn clear(&self, py: Python<'_>) {
         self.get_inner().bind(py).clear();
         self.get_list().get().clear(py);
     }

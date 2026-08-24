@@ -24,11 +24,7 @@ pub(super) struct BoundedIter<T: BaseSortedList> {
 
 impl<T: BaseSortedList> BoundedIter<T> {
     pub fn new(owner: Py<T>, bounds: Bounds, dir: Dir) -> Self {
-        Self {
-            owner,
-            bounds: bounds,
-            dir,
-        }
+        Self { owner, bounds, dir }
     }
 
     pub fn full(owner: Py<T>, dir: Dir) -> Self {
@@ -47,11 +43,11 @@ impl<T: BaseSortedList> BoundedIter<T> {
             match self.dir {
                 Dir::Fwd => {
                     let item = lists[self.bounds.min.pos][self.bounds.min.idx].clone_ref(py);
-                    increment(&mut self.bounds.min, &lists);
+                    increment(&mut self.bounds.min, lists);
                     Some(item)
                 }
                 Dir::Bwd => {
-                    decrement(&mut self.bounds.max, &lists);
+                    decrement(&mut self.bounds.max, lists);
                     Some(lists[self.bounds.max.pos][self.bounds.max.idx].clone_ref(py))
                 }
             }
@@ -59,7 +55,7 @@ impl<T: BaseSortedList> BoundedIter<T> {
     }
 }
 
-fn increment(bound: &mut Pos, lists: &[Vec<Py<PyAny>>]) -> () {
+fn increment(bound: &mut Pos, lists: &[Vec<Py<PyAny>>]) {
     if bound.pos + 1 < lists.len() && bound.idx + 1 >= lists[bound.pos].len() {
         bound.pos += 1;
         bound.idx = 0;
@@ -68,7 +64,7 @@ fn increment(bound: &mut Pos, lists: &[Vec<Py<PyAny>>]) -> () {
     }
 }
 
-fn decrement(bound: &mut Pos, lists: &[Vec<Py<PyAny>>]) -> () {
+fn decrement(bound: &mut Pos, lists: &[Vec<Py<PyAny>>]) {
     if bound.idx > 0 {
         bound.idx -= 1;
     } else {
