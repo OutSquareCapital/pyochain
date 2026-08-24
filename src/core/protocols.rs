@@ -1,7 +1,5 @@
 use pyo3::{
-    PyClass,
-    exceptions::PyTypeError,
-    intern,
+    PyClass, intern,
     prelude::*,
     types::{
         PyDict, PyFrozenSet, PyIterator, PyList, PyMapping, PyNone, PySequence, PySet, PyTuple,
@@ -352,15 +350,7 @@ fn into_dict<'py>(obj: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
                 unsafe { supports_keys.cast_into_unchecked::<PyMapping>() }
                     .pipe(PyDict::from_mapping)
             }
-            Case::PyIterable(iterable) => iterable.as_any().pipe(PyDict::from_sequence),
-            incorrect_type => {
-                let error = incorrect_type
-                    .get_type()
-                    .name()
-                    .map(|name| format!("Cannot convert object of type {} to dict", name))
-                    .map(PyTypeError::new_err)?;
-                Err(error)
-            }
+            iterable => iterable.as_any().pipe(PyDict::from_sequence),
         }
     }
 }
