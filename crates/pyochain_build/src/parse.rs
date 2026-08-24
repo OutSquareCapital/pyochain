@@ -181,16 +181,14 @@ impl RegisteredClassVisitor {
 }
 impl<'ast> Visit<'ast> for RegisteredClassVisitor {
     fn visit_expr_method_call(&mut self, expression: &'ast syn::ExprMethodCall) {
-        if expression.method == "add_class" {
-            if let Some(syn::GenericArgument::Type(syn::Type::Path(path))) = expression
+        if expression.method == "add_class"
+            && let Some(syn::GenericArgument::Type(syn::Type::Path(path))) = expression
                 .turbofish
                 .as_ref()
                 .and_then(|turbofish| turbofish.args.first())
-            {
-                if let Some(segment) = path.path.segments.last() {
-                    self.classes.insert(segment.ident.to_string());
-                }
-            }
+            && let Some(segment) = path.path.segments.last()
+        {
+            self.classes.insert(segment.ident.to_string());
         }
         syn::visit::visit_expr_method_call(self, expression);
     }

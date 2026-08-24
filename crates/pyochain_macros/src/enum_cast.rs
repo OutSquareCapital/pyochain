@@ -51,7 +51,7 @@ fn get_arms_and_names(
             let field = match &variant.fields {
                 Fields::Unnamed(f) if f.unnamed.len() == 1 => Ok(f.unnamed.iter().next().unwrap()),
                 _ => Err(syn::Error::new_spanned(
-                    &variant,
+                    variant,
                     "variants must contain exactly one field",
                 )),
             }?;

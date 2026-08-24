@@ -214,7 +214,7 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
         self.del_item(index)?;
         Ok(v)
     }
-    fn clear(&self) -> () {
+    fn clear(&self) {
         unsafe { ffi::PyList_Clear(self.as_ptr()) };
     }
 

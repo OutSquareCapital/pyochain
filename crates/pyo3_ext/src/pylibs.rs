@@ -509,8 +509,8 @@ pub mod functools {
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = function.py();
         let args = match initial {
-            Some(initial) => PyTuple::new(py, &[function, iterable, initial])?,
-            None => PyTuple::new(py, &[function, iterable])?,
+            Some(initial) => PyTuple::new(py, [function, iterable, initial])?,
+            None => PyTuple::new(py, [function, iterable])?,
         };
         REDUCE.import(py, FUNCTOOLS, "reduce")?.call1(args)
     }

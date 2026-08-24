@@ -74,14 +74,14 @@ impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
         match args_len {
             0 => self.call((value,), kwargs),
             _ => self.call(
-                unsafe { concat_val_with_args(&value, args, args_len) },
+                unsafe { concat_val_with_args(value, args, args_len) },
                 kwargs,
             ),
         }
     }
     #[inline]
     fn concat1(self, value: &Bound<'py, PyAny>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.call1(unsafe { concat_val_with_args(&value, args, args.len()) })
+        self.call1(unsafe { concat_val_with_args(value, args, args.len()) })
     }
     #[inline]
     fn concat_star(

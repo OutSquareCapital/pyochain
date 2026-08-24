@@ -37,7 +37,7 @@ pub(crate) fn generate(
         .iter_mut()
         .filter_map(|item| match item {
             TraitItem::Fn(method) => std::mem::take(&mut method.attrs)
-                .pipe(|attrs| generate_method(&item_trait.ident, &method, attrs))
+                .pipe(|attrs| generate_method(&item_trait.ident, method, attrs))
                 .transpose(),
             _ => None,
         })
