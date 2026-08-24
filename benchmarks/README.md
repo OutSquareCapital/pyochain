@@ -35,6 +35,14 @@ Compare against the latest saved run:
 uv run pytest benchmarks/ --benchmark-only --benchmark-compare
 ```
 
+Advanced example:
+
+```shell
+uv run pytest benchmarks/test_sequences.py::test_init --benchmark-only --benchmark-group-by=param:size --benchmark-group-by=name --benchmark-warmup=true --benchmark-disable-gc --benchmark-columns=median,mean,min,max,stddev --benchmark-compare
+```
+
+Run a single test, grouped by size + name, compare against the last saved run, with warmup and GC disabled, and show only the median, mean, min, max, and stddev columns.
+
 ## Useful options
 
 - `--benchmark-min-time`: minimum time per round
