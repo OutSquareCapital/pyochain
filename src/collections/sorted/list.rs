@@ -12,7 +12,7 @@ use crate::{
         },
     },
     core::iterators,
-    traits::PyoABC,
+    traits::IntoInit,
 };
 use pyo3::{PyTypeInfo, prelude::*, types::PyTuple};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
@@ -36,12 +36,6 @@ impl SortedList {
         let new_inst = Self::new();
         new_inst.update(py, values).map(|_| new_inst)
     }
-    #[inline]
-    pub(super) fn into_bound<'py>(self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        abc::PyoMutableSequence::build_init()
-            .add_subclass(self)
-            .pipe(|x| Bound::new(py, x))
-    }
 }
 #[pymethods]
 impl SortedList {
@@ -53,9 +47,7 @@ impl SortedList {
             data.py_update(&values)?;
         };
 
-        abc::PyoMutableSequence::build_init()
-            .add_subclass(data)
-            .pipe(Ok)
+        data.init().pipe(Ok)
     }
 }
 impl SortedCollection for SortedList {

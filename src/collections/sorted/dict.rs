@@ -8,7 +8,7 @@ use crate::{
             views::{SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView},
         },
     },
-    traits::PyoABC,
+    traits::IntoInit,
 };
 use pyo3::{
     PyTypeInfo, ffi,
@@ -24,11 +24,6 @@ pub struct SortedDict {
     inner: Py<PyDict>,
 }
 impl SortedDict {
-    pub(super) fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-        abc::PyoMutableMapping::build_init()
-            .add_subclass(self)
-            .pipe(|init| Bound::new(py, init))
-    }
     pub fn try_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
         py: Python<'py>,
         v: I,
@@ -64,14 +59,12 @@ impl SortedDict {
         iterable: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let init = Self {
+        let slf = Self {
             list: SortedList::new().into_bound(py)?.unbind(),
             inner: PyDict::new(py).unbind(),
         };
-        init.update(py, iterable, kwargs)?;
-        abc::PyoMutableMapping::build_init()
-            .add_subclass(init)
-            .pipe(Ok)
+        slf.update(py, iterable, kwargs)?;
+        slf.init().pipe(Ok)
     }
 }
 impl BaseSortedDict for SortedDict {
@@ -118,11 +111,6 @@ pub struct SortedKeyDict {
     inner: Py<PyDict>,
 }
 impl SortedKeyDict {
-    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-        abc::PyoMutableMapping::build_init()
-            .add_subclass(self)
-            .pipe(|init| Bound::new(py, init))
-    }
     pub fn try_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
         py: Python<'py>,
         v: I,
@@ -158,15 +146,13 @@ impl SortedKeyDict {
         let list = SortedKeyList::new(key.clone_ref(py))
             .into_bound(py)?
             .unbind();
-        let init = Self {
+        let slf = Self {
             key,
             list,
             inner: PyDict::new(py).unbind(),
         };
-        init.update(py, iterable, kwargs)?;
-        abc::PyoMutableMapping::build_init()
-            .add_subclass(init)
-            .pipe(Ok)
+        slf.update(py, iterable, kwargs)?;
+        slf.init().pipe(Ok)
     }
 
     #[getter]

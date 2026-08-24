@@ -1,8 +1,8 @@
 use crate::{
     abc::{self},
-    core::{SetMut, protocols::FlexWrapper},
+    core::SetMut,
     display::get_repr,
-    traits::{IntoPyochain, PyWrapper},
+    traits::{FlexWrapper, IntoPyochain, PyWrapper},
 };
 use either::Either;
 use pyo3::{

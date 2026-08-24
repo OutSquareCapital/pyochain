@@ -8,7 +8,7 @@ use crate::{
         SortedList,
         traits::{BaseSortedSet, IntoUpdate, ListGetter, SortedListGetters},
     },
-    traits::PyoABC,
+    traits::IntoInit,
 };
 
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
@@ -19,12 +19,9 @@ pub struct SortedSet {
 impl SortedSet {
     fn new(set: Bound<'_, PySet>, list: SortedList) -> Self {
         let py = set.py();
-        let list = abc::PyoMutableSequence::build_init()
-            .add_subclass(list)
-            .pipe(|cls| Py::new(py, cls))
-            .expect(
-                "Failed to create SortedList instance from PyClassInitializer in SortedSet::new",
-            );
+        let list = list.init().pipe(|cls| Py::new(py, cls)).expect(
+            "Failed to create SortedList instance from PyClassInitializer in SortedSet::new",
+        );
         Self {
             set: set.unbind(),
             list,
@@ -37,11 +34,6 @@ impl SortedSet {
         init.update(py, IntoUpdate::from_any(iterable))?;
         Ok(init)
     }
-    pub fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-        abc::PyoMutableSet::build_init()
-            .add_subclass(self)
-            .pipe(|x| Bound::new(py, x))
-    }
 }
 #[pymethods]
 impl SortedSet {
@@ -51,11 +43,11 @@ impl SortedSet {
         py: Python<'_>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let init = Self::new(PySet::empty(py).unwrap(), SortedList::new());
+        let slf = Self::new(PySet::empty(py).unwrap(), SortedList::new());
         if let Some(iterable) = iterable {
-            init.update(py, IntoUpdate::from_any(iterable))?;
+            slf.update(py, IntoUpdate::from_any(iterable))?;
         }
-        abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
+        slf.init().pipe(Ok)
     }
 }
 impl ListGetter for SortedSet {

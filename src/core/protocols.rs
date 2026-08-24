@@ -16,9 +16,9 @@ use pyochain_macros::{py_abc, try_cast_into};
 use tap::Pipe;
 
 use crate::{
-    abc, collections,
+    collections,
     core::{Dict, PyoVec, Seq, Set, SetMut, iterators},
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    traits::{IntoInit, IntoPyochain, PyWrapper},
 };
 #[pyclass(module = "pyochain.core", frozen, generic)]
 pub struct FlexibleInit;
@@ -51,50 +51,6 @@ pub trait FlexInitKwargsProtocol: Sized + PyClass {
     #[pyo3(signature = (**kwargs))]
     fn of<'py>(py: Python<'py>, kwargs: Option<Bound<'py, PyDict>>) -> PyResult<Bound<'py, Self>>;
 }
-#[py_abc(
-    Seq,
-    PyoVec,
-    Set,
-    SetMut,
-    collections::StableSet,
-    iterators::Iter,
-    Dict,
-    collections::PyoCounter
-)]
-pub trait FlexWrapper: PyWrapper {
-    #[pyo3(signature = (iterable, /))]
-    #[staticmethod]
-    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>>;
-}
-impl FlexWrapper for collections::StableSet {
-    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-        let py = iterable.py();
-        let slf = iterable
-            .unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableSet::build_init().add_subclass(slf));
-        Bound::new(py, slf)
-    }
-}
-impl FlexWrapper for collections::PyoCounter {
-    fn wrap(data: Bound<'_, PyDict>) -> PyResult<Bound<'_, Self>> {
-        let py = data.py();
-        let slf = abc::PyoMutableMapping::build_init().add_subclass(data.unbind().pipe(Self));
-        Bound::new(py, slf)
-    }
-}
-macro_rules! impl_flex_wrapper {
-    ($($ty:ty),*) => {
-        $(
-            impl FlexWrapper for $ty {
-                fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-                    iterable.into_pyochain()
-                }
-            }
-        )*
-    };
-}
-impl_flex_wrapper!(Set, SetMut, iterators::Iter, PyoVec, Seq, Dict);
 impl FlexInitKwargsProtocol for Dict {
     fn new(
         py: Python<'_>,
@@ -111,10 +67,7 @@ impl FlexInitKwargsProtocol for Dict {
                 dict
             }
         };
-        dict.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableMapping::build_init().add_subclass(slf))
-            .pipe(Ok)
+        dict.unbind().pipe(Self).init().pipe(Ok)
     }
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
         into_dict(iterable)?.into_pyochain()
@@ -133,11 +86,7 @@ impl FlexInitProtocol for iterators::Iter {
             }},
             _ => elements.iter_py(),
         };
-        iterator
-            .unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoIterator::build_init().add_subclass(slf))
-            .pipe(Ok)
+        iterator.unbind().pipe(Self).init().pipe(Ok)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
         elements.iter_py().into_pyochain()
@@ -164,10 +113,7 @@ impl FlexInitProtocol for Seq {
                 _ => elements,
             }
         };
-        tup.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoSequence::build_init().add_subclass(slf))
-            .pipe(Ok)
+        tup.unbind().pipe(Self).init().pipe(Ok)
     }
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
         let py = iterable.py();
@@ -203,10 +149,7 @@ impl FlexInitProtocol for PyoVec {
             }},
             _ => elements.to_list(),
         };
-        list.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableSequence::build_init().add_subclass(slf))
-            .pipe(Ok)
+        list.unbind().pipe(Self).init().pipe(Ok)
     }
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
         let py = iterable.py();
@@ -242,10 +185,7 @@ impl FlexInitProtocol for collections::StableSet {
             }
             _ => PyDict::from_keys(elements.into_any(), None)?,
         };
-        dict.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
-            .pipe(Ok)
+        dict.unbind().pipe(Self).init().pipe(Ok)
     }
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
         let py = iterable.py();
@@ -256,10 +196,7 @@ impl FlexInitProtocol for collections::StableSet {
                 iterable => PyDict::from_keys(iterable, None)?,
             }
         };
-        dict.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
-            .pipe(|slf| Bound::new(py, slf))
+        dict.unbind().pipe(Self).into_bound(py)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
         let py = elements.py();
@@ -268,8 +205,7 @@ impl FlexInitProtocol for collections::StableSet {
             .pipe(|any| PyDict::from_keys(any, None))
             .map(Bound::unbind)
             .map(Self)
-            .map(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
-            .and_then(|slf| Bound::new(py, slf))
+            .and_then(|slf| slf.into_bound(py))
     }
 }
 impl FlexInitProtocol for Set {
@@ -289,10 +225,7 @@ impl FlexInitProtocol for Set {
             }},
             _ => elements.into_iter().collect_bound::<PyFrozenSet>(py)?,
         };
-        set.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoSet::build_init().add_subclass(slf))
-            .pipe(Ok)
+        set.unbind().pipe(Self).init().pipe(Ok)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
         let py = elements.py();
@@ -334,10 +267,7 @@ impl FlexInitProtocol for SetMut {
             }},
             _ => elements.into_iter().collect_bound::<PySet>(py)?,
         };
-        set.unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableSet::build_init().add_subclass(slf))
-            .pipe(Ok)
+        set.unbind().pipe(Self).init().pipe(Ok)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
         let py = elements.py();

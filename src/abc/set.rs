@@ -1,4 +1,4 @@
-use crate::{abc::PyoCollection, collections::sorted, hasher, traits::PyoABC};
+use crate::{abc::PyoCollection, collections::sorted, hasher};
 use either::Either;
 use pyo3::{
     PyClass, PyTypeInfo, intern,
@@ -265,11 +265,6 @@ pub enum IntoSetComp<'py> {
 pub struct PyoSet;
 #[pymethods]
 impl PyoSet {
-    #[pyo3(signature = (*_args, **_kwargs))]
-    #[new]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        Self::build_init()
-    }
     #[classmethod]
     fn _from_iterable<'py>(
         cls: &Bound<'py, PyType>,

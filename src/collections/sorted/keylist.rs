@@ -12,7 +12,7 @@ use crate::{
         },
     },
     core::iterators,
-    traits::PyoABC,
+    traits::IntoInit,
 };
 use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyTuple};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
@@ -45,11 +45,6 @@ impl SortedKeyList {
     ) -> PyResult<Self> {
         let new_inst = Self::new(key.clone_ref(py));
         new_inst.update(py, values).map(|_| new_inst)
-    }
-    pub(super) fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-        abc::PyoMutableSequence::build_init()
-            .add_subclass(self)
-            .pipe(|x| Bound::new(py, x))
     }
 }
 #[pymethods]
@@ -91,9 +86,7 @@ impl SortedKeyList {
         if let Some(iterable) = iterable {
             slf.py_update(&iterable)?;
         }
-        abc::PyoMutableSequence::build_init()
-            .add_subclass(slf)
-            .pipe(Ok)
+        slf.init().pipe(Ok)
     }
 
     pub(super) fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {

@@ -10,23 +10,15 @@ use tap::Pipe;
 use crate::{
     abc::{PyoCollection, PyoIterable},
     core::{PyNull, PySome, iterators},
-    traits::{IntoPyochain, PyoABC},
+    traits::IntoPyochain,
 };
-use pyo3_ext::{
-    args::{Args, Kwargs},
-    pylibs,
-};
+use pyo3_ext::pylibs;
 
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoReversible;
 
 #[pymethods]
 impl PyoReversible {
-    #[pyo3(signature = (*_args, **_kwargs))]
-    #[new]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyoIterable::build_init().add_subclass(Self)
-    }
     /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
     fn rev(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Iter>> {
         slf.as_any()
@@ -38,11 +30,6 @@ impl PyoReversible {
 pub struct PyoSequence;
 #[pymethods]
 impl PyoSequence {
-    #[pyo3(signature = (*_args, **_kwargs))]
-    #[new]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        Self::build_init()
-    }
     fn __iter__(slf: Bound<'_, Self>) -> iterators::SequenceIterator {
         slf.pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
             .pipe(iterators::SequenceIterator::new)
@@ -138,12 +125,6 @@ impl PyoSequence {
 pub struct PyoMutableSequence;
 #[pymethods]
 impl PyoMutableSequence {
-    #[pyo3(signature = (*_args, **_kwargs))]
-    #[new]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        Self::build_init()
-    }
-
     fn __iadd__(slf: Bound<'_, Self>, values: &Bound<'_, PyAny>) -> PyResult<()> {
         slf.call_method1(intern!(slf.py(), "extend"), (values,))?;
         Ok(())

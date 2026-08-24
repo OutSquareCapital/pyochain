@@ -11,21 +11,12 @@ use tap::Pipe;
 use crate::{
     abc::{PyoCollection, PyoItemsView, PyoKeysView, PyoValuesView},
     core::{PyNull, PySome, PyoErr, PyoOk},
-    traits::PyoABC,
 };
-use pyo3_ext::{
-    args::{Args, Kwargs},
-    types::{FromCmp, PyCmpOut},
-};
+use pyo3_ext::types::{FromCmp, PyCmpOut};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, mapping, extends=PyoCollection)]
 pub struct PyoMapping;
 #[pymethods]
 impl PyoMapping {
-    #[pyo3(signature = (*_args, **_kwargs))]
-    #[new]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        Self::build_init()
-    }
     fn __contains__(slf: Bound<'_, Self>, key: Bound<'_, PyAny>) -> PyResult<bool> {
         slf.get_item(key).map(|_| true).or_else(|err| {
             if err.is_instance_of::<PyKeyError>(slf.py()) {
@@ -112,11 +103,6 @@ pub struct PyoMutableMapping;
 
 #[pymethods]
 impl PyoMutableMapping {
-    #[pyo3(signature = (*_args, **_kwargs))]
-    #[new]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        Self::build_init()
-    }
     #[pyo3(signature = (key, default=None))]
     fn pop<'py>(
         slf: Bound<'py, Self>,

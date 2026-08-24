@@ -7,7 +7,7 @@ use crate::{
         SortedKeyList, SortedList,
         sorted::bounds::{Bounds, Pos},
     },
-    traits::PyoABC,
+    traits::IntoInit,
 };
 use pyo3::{PyClass, PyTypeInfo, prelude::*};
 use tap::Pipe;
@@ -119,9 +119,5 @@ fn build_iter<S: PyClass<BaseType = abc::PyoIterator> + PyTypeInfo>(
     py: Python<'_>,
     s: S,
 ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-    abc::PyoIterator::build_init()
-        .add_subclass(s)
-        .pipe(|x| Bound::new(py, x))?
-        .into_super()
-        .pipe(Ok)
+    s.into_bound(py)?.into_super().pipe(Ok)
 }

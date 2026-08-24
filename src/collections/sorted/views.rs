@@ -13,9 +13,8 @@ use crate::{
         SortedDict, SortedKeyDict, SortedSet,
         sorted::traits::{BaseSortedDict, BaseSortedList, ListGetter, ObjOrVec, SortedListGetters},
     },
-    traits::{IntoPyochain, PyoABC},
+    traits::{IntoInit, IntoPyochain},
 };
-use tap::prelude::*;
 #[py_abc(
     SortedItemsView,
     SortedKeysView,
@@ -31,12 +30,6 @@ where
 {
     #[skip]
     fn new(mapping: Bound<'_, Self::M>) -> Self;
-    #[skip]
-    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-        abc::PyoSequence::build_init()
-            .add_subclass(self)
-            .pipe(|initializer| Bound::new(py, initializer))
-    }
     fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
         let py = index.py();
@@ -116,11 +109,6 @@ macro_rules! impl_base_sorted_view_for_values {
             impl BaseSortedView for $t {
                 fn new(mapping: Bound<'_, Self::M>) -> Self {
                     Self(mapping.unbind())
-                }
-                fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-                    abc::PyoSequence::build_init()
-                        .add_subclass(self)
-                        .pipe(|initializer| Bound::new(py, initializer))
                 }
             fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
                 get_item_for_values_view(self, index)

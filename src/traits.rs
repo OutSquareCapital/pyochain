@@ -11,6 +11,8 @@ use pyo3::{
     },
 };
 use pyo3_ext::types::PyDeque;
+use pyochain_macros::py_abc;
+use tap::Pipe;
 pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync {
     type Wrapped: PyTypeInfo + DerefToPyAny;
     fn inner(&self) -> &Py<Self::Wrapped>;
@@ -21,7 +23,6 @@ pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Syn
     fn into_inner_bound<'py>(&self, py: Python<'py>) -> Bound<'py, Self::Wrapped> {
         self.inner().clone_ref(py).into_bound(py)
     }
-
     /// Extracts the inner type of `Self` from an arbitrary python object.\
     /// For example, if `Self` is `seq::Seq`, this will extract the inner `PyTuple` from a `seq::Seq` or a `PyTuple`.
     #[inline]
@@ -86,138 +87,150 @@ impl PyWrapper for SliceView {
 /// Trait to convert a `Bound` of a Python type into a `Bound` of a PyoChain type, with the same underlying data.\
 /// Useful for no-copy conversions, when the type is known at compile time.\
 /// For example, this avoid checking the type of a `PyTuple` at runtime to convert it into a `Seq`.
-pub trait IntoPyochain<'py, T: PyTypeInfo> {
+pub trait IntoPyochain<'py, T: PyTypeInfo + IntoInit> {
     /// Convert a given Python type `T` (wrapped in a `Py` or `Bound`) into the corresponding pyochain wrapper type.\
     /// This will create the class and bind it to the python interpreter.\
     /// As such, prefer using `new` (or alike) methods if you simply want to use the struct in Rust.\
     /// That being said, prefer using the underlying Python type, as pyochain wrapper are, well, wrappers. There's not much to gain from using them in Rust.
     fn into_pyochain(self) -> PyResult<Bound<'py, T>>;
 }
-
-impl<'py> IntoPyochain<'py, Seq> for Bound<'py, PyTuple> {
-    #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, Seq>> {
-        let py = self.py();
-        let initializer = abc::PyoSequence::build_init().add_subclass(Seq(self.unbind()));
-        Bound::new(py, initializer)
-    }
-}
-impl<'py> IntoPyochain<'py, PyoVec> for Bound<'py, PyList> {
-    #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, PyoVec>> {
-        let py = self.py();
-        let initializer = abc::PyoMutableSequence::build_init().add_subclass(PyoVec(self.unbind()));
-        Bound::new(py, initializer)
-    }
-}
-impl<'py> IntoPyochain<'py, Range> for Bound<'py, PyRange> {
-    #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, Range>> {
-        let py = self.py();
-        let initializer = abc::PyoSequence::build_init().add_subclass(Range(self.unbind()));
-        Bound::new(py, initializer)
-    }
-}
-impl<'py> IntoPyochain<'py, Set> for Bound<'py, PyFrozenSet> {
-    #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, Set>> {
-        let py = self.py();
-        let initializer = abc::PyoSet::build_init().add_subclass(Set(self.unbind()));
-        Bound::new(py, initializer)
-    }
-}
-impl<'py> IntoPyochain<'py, SetMut> for Bound<'py, PySet> {
-    #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, SetMut>> {
-        let py = self.py();
-        let initializer = abc::PyoMutableSet::build_init().add_subclass(SetMut(self.unbind()));
-        Bound::new(py, initializer)
-    }
-}
-impl<'py> IntoPyochain<'py, Dict> for Bound<'py, PyDict> {
-    #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, Dict>> {
-        let py = self.py();
-        let initializer = abc::PyoMutableMapping::build_init().add_subclass(Dict(self.unbind()));
-        Bound::new(py, initializer)
-    }
-}
-impl<'py> IntoPyochain<'py, Iter> for Bound<'py, PyIterator> {
-    #[inline]
-    /// Convert a generic `PyIterator` into `Iter`, the generic wrapper for arbitrary iterators.
-    fn into_pyochain(self) -> PyResult<Bound<'py, Iter>> {
-        let py = self.py();
-        let initializer = abc::PyoIterator::build_init().add_subclass(Iter(self.unbind()));
-        Bound::new(py, initializer)
-    }
-}
-impl<'py> IntoPyochain<'py, collections::Deque> for Bound<'py, PyDeque> {
-    #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, collections::Deque>> {
-        let py = self.py();
-        let initializer =
-            abc::PyoMutableSequence::build_init().add_subclass(collections::Deque(self.unbind()));
-        Bound::new(py, initializer)
-    }
+macro_rules! impl_into_pyochain {
+    ($($py:ty => $pyochain:path),* $(,)?) => {
+        $(
+            impl<'py> IntoPyochain<'py, $pyochain> for Bound<'py, $py> {
+                #[inline]
+                fn into_pyochain(self) -> PyResult<Bound<'py, $pyochain>> {
+                    Bound::new(self.py(), $pyochain(self.unbind()).init())
+                }
+            }
+        )*
+    };
 }
 
-pub trait PyoABC: PyTypeInfo + PyClass {
+impl_into_pyochain!(
+    PyTuple => Seq,
+    PyList => PyoVec,
+    PyFrozenSet => Set,
+    PySet => SetMut,
+    PyRange => Range,
+    PyDict => Dict,
+    PyIterator => Iter,
+    PyDeque => collections::Deque
+
+);
+#[py_abc(
+    abc::PyoIterable,
+    abc::PyoSized,
+    abc::PyoIterator,
+    abc::PyoCollection,
+    abc::PyoSequence,
+    abc::PyoSet,
+    abc::PyoMutableSet,
+    abc::PyoMutableSequence,
+    abc::PyoMapping,
+    abc::PyoMutableMapping,
+    abc::PyoReversible
+)]
+trait PyoABC:
+    PyTypeInfo + PyClass + pyo3::impl_::pyclass::PyClassBaseType<Initializer = PyClassInitializer<Self>>
+{
+    #[skip]
     fn build_init() -> PyClassInitializer<Self>;
+
+    #[pyo3(signature = (*_args, **_kwargs))]
+    #[new]
+    fn new(
+        _args: &Bound<'_, PyTuple>,
+        _kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyClassInitializer<Self> {
+        Self::build_init()
+    }
+}
+macro_rules! impl_pyoabc {
+    ($($base:ty => $sub:ty),* $(,)?) => {
+        $(
+            impl PyoABC for $sub {
+                fn build_init() -> PyClassInitializer<Self> {
+                    <$base as PyoABC>::build_init().add_subclass(Self)
+                }
+            }
+        )*
+    };
 }
 
-impl PyoABC for abc::PyoIterable {
+impl_pyoabc! {
+    abc::Checkable => abc::PyoSized,
+    abc::Checkable => abc::PyoIterable,
+    abc::PyoIterable => abc::PyoReversible,
+    abc::PyoIterable => abc::PyoIterator,
+    abc::PyoIterable => abc::PyoCollection,
+    abc::PyoCollection => abc::PyoSequence,
+    abc::PyoCollection => abc::PyoSet,
+    abc::PyoSet => abc::PyoMutableSet,
+    abc::PyoSequence => abc::PyoMutableSequence,
+    abc::PyoCollection => abc::PyoMapping,
+    abc::PyoMapping => abc::PyoMutableMapping,
+    abc::PyoMutableSequence => collections::Heap,
+}
+impl PyoABC for abc::Checkable {
     fn build_init() -> PyClassInitializer<Self> {
-        PyClassInitializer::from(abc::Checkable).add_subclass(Self)
+        PyClassInitializer::from(abc::Checkable)
+    }
+}
+pub trait IntoInit: PyTypeInfo + PyClass {
+    fn init(self) -> PyClassInitializer<Self>;
+
+    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
+        Bound::new(py, self.init())
     }
 }
 
-impl PyoABC for abc::PyoSized {
-    fn build_init() -> PyClassInitializer<Self> {
-        PyClassInitializer::from(abc::Checkable).add_subclass(Self)
+impl<
+    T: PyClass<BaseType = I>,
+    I: PyoABC + pyo3::impl_::pyclass::PyClassBaseType<Initializer = PyClassInitializer<I>>,
+> IntoInit for T
+{
+    fn init(self) -> PyClassInitializer<Self> {
+        I::build_init().add_subclass(self)
     }
 }
-impl PyoABC for abc::PyoIterator {
-    fn build_init() -> PyClassInitializer<Self> {
-        abc::PyoIterable::build_init().add_subclass(Self)
+
+#[py_abc(
+    Seq,
+    PyoVec,
+    Set,
+    SetMut,
+    collections::StableSet,
+    Iter,
+    Dict,
+    collections::PyoCounter
+)]
+pub trait FlexWrapper: PyWrapper {
+    #[pyo3(signature = (iterable, /))]
+    #[staticmethod]
+    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>>;
+}
+impl FlexWrapper for collections::StableSet {
+    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
+        let py = iterable.py();
+        iterable.unbind().pipe(Self).into_bound(py)
     }
 }
-impl PyoABC for abc::PyoCollection {
-    fn build_init() -> PyClassInitializer<Self> {
-        abc::PyoIterable::build_init().add_subclass(Self)
+impl FlexWrapper for collections::PyoCounter {
+    fn wrap(data: Bound<'_, PyDict>) -> PyResult<Bound<'_, Self>> {
+        let py = data.py();
+        data.unbind().pipe(Self).into_bound(py)
     }
 }
-impl PyoABC for abc::PyoSequence {
-    fn build_init() -> PyClassInitializer<Self> {
-        abc::PyoCollection::build_init().add_subclass(Self)
-    }
+macro_rules! impl_flex_wrapper {
+    ($($ty:ty),*) => {
+        $(
+            impl FlexWrapper for $ty {
+                fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
+                    iterable.into_pyochain()
+                }
+            }
+        )*
+    };
 }
-impl PyoABC for abc::PyoSet {
-    fn build_init() -> PyClassInitializer<Self> {
-        abc::PyoCollection::build_init().add_subclass(Self)
-    }
-}
-impl PyoABC for abc::PyoMutableSet {
-    fn build_init() -> PyClassInitializer<Self> {
-        abc::PyoSet::build_init().add_subclass(Self)
-    }
-}
-impl PyoABC for abc::PyoMutableSequence {
-    fn build_init() -> PyClassInitializer<Self> {
-        abc::PyoSequence::build_init().add_subclass(Self)
-    }
-}
-impl PyoABC for abc::PyoMapping {
-    fn build_init() -> PyClassInitializer<Self> {
-        abc::PyoCollection::build_init().add_subclass(Self)
-    }
-}
-impl PyoABC for abc::PyoMutableMapping {
-    fn build_init() -> PyClassInitializer<Self> {
-        abc::PyoMapping::build_init().add_subclass(Self)
-    }
-}
-impl PyoABC for collections::Heap {
-    fn build_init() -> PyClassInitializer<Self> {
-        abc::PyoMutableSequence::build_init().add_subclass(Self)
-    }
-}
+impl_flex_wrapper!(Set, SetMut, Iter, PyoVec, Seq, Dict);

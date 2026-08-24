@@ -9,7 +9,7 @@ use tap::Pipe;
 use crate::{
     abc::{Checkable, PyoSet, PyoSized, traits::MappingView},
     core::{SetMut, iterators},
-    traits::{IntoPyochain, PyoABC},
+    traits::{IntoInit, IntoPyochain},
 };
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSized)]
 pub struct PyoMappingView(pub Py<PyAny>);
@@ -29,7 +29,7 @@ pub struct PyoValuesView(pub Py<PyAny>);
 impl PyoValuesView {
     #[new]
     fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
-        PyoSet::build_init().add_subclass(Self(mapping.unbind()))
+        Self(mapping.unbind()).init()
     }
 
     fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -62,7 +62,7 @@ pub struct PyoKeysView(pub Py<PyAny>);
 impl PyoKeysView {
     #[new]
     fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
-        PyoSet::build_init().add_subclass(Self(mapping.unbind()))
+        Self(mapping.unbind()).init()
     }
 
     #[classmethod]
@@ -120,7 +120,7 @@ pub struct PyoItemsView(pub Py<PyAny>);
 impl PyoItemsView {
     #[new]
     fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
-        PyoSet::build_init().add_subclass(Self(mapping.unbind()))
+        Self(mapping.unbind()).init()
     }
 
     #[classmethod]

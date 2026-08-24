@@ -5,20 +5,12 @@ use pyo3_ext::{
 };
 use pyochain_macros::try_cast;
 
-use crate::{
-    abc::{PyoSet, set::py_from_iterable},
-    traits::PyoABC,
-};
+use crate::abc::{PyoSet, set::py_from_iterable};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
 pub struct PyoMutableSet;
 
 #[pymethods]
 impl PyoMutableSet {
-    #[pyo3(signature = (*_args, **_kwargs))]
-    #[new]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        Self::build_init()
-    }
     fn into_mutable_set(slf: Bound<'_, Self>) -> Bound<'_, PyMutableSet> {
         unsafe { slf.cast_into_unchecked::<PyMutableSet>() }
     }

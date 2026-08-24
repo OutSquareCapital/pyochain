@@ -1,7 +1,7 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
-    core::{PyoVec, iterators, protocols::FlexWrapper},
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    core::{PyoVec, iterators},
+    traits::{FlexWrapper, IntoInit, IntoPyochain, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -38,7 +38,7 @@ impl PyoCounter {
         let inner = PyDict::new(py);
 
         update_counter(&inner, iterable, kwargs)?;
-        Ok(abc::PyoMutableMapping::build_init().add_subclass(Self(inner.unbind())))
+        Self(inner.unbind()).init().pipe(Ok)
     }
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
         self.inner_bind(py).iter_py()

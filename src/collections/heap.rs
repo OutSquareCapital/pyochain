@@ -1,7 +1,7 @@
 use crate::{
     abc,
     core::{PyoVec, iterators},
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    traits::{IntoInit, IntoPyochain, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -168,22 +168,14 @@ trait HeapType: Sized + PyWrapper<Wrapped = PyList> {
 pub struct Heap;
 #[pyclass(module = "pyochain.collections",frozen, generic, sequence, extends = Heap)]
 pub struct HeapMin(pub Py<PyList>);
-#[pymethods]
-impl Heap {
-    #[allow(unused_variables)]
-    #[new]
-    fn new(data: Bound<'_, PyList>) -> PyClassInitializer<Self> {
-        Self::build_init()
-    }
-}
 impl HeapType for HeapMin {
     fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>> {
         data.convert(pylibs::heapq::heapify)
-            .map(|inner| Heap::build_init().add_subclass(Self(inner)))
+            .map(Self)
+            .map(IntoInit::init)
     }
     fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>> {
-        let initializer = Heap::build_init().add_subclass(Self(data.unbind()));
-        Bound::new(py, initializer)
+        Self(data.unbind()).into_bound(py)
     }
     fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()> {
         pylibs::heapq::heappush(self.inner_bind(item.py()), item)
@@ -209,11 +201,11 @@ pub struct HeapMax(pub Py<PyList>);
 impl HeapType for HeapMax {
     fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>> {
         data.convert(pylibs::heapq::heapify_max)
-            .map(|inner| Heap::build_init().add_subclass(Self(inner)))
+            .map(Self)
+            .map(IntoInit::init)
     }
     fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>> {
-        let initializer = Heap::build_init().add_subclass(Self(data.unbind()));
-        Bound::new(py, initializer)
+        Self(data.unbind()).into_bound(py)
     }
     fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()> {
         let py = item.py();

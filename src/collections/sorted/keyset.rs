@@ -7,7 +7,7 @@ use crate::{
         SortedKeyList,
         sorted::traits::{BaseSortedSet, IntoUpdate, ListGetter, PyIdentity, SortedListGetters},
     },
-    traits::PyoABC,
+    traits::IntoInit,
 };
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedKeySet {
@@ -18,21 +18,14 @@ pub struct SortedKeySet {
 impl SortedKeySet {
     fn new(set: Bound<'_, PySet>, list: SortedKeyList, key: Py<PyAny>) -> Self {
         let py = set.py();
-        let list = abc::PyoMutableSequence::build_init()
-            .add_subclass(list)
-            .pipe(|cls| Py::new(py, cls))
-            .expect("Failed to create SortedKeyList instance from PyClassInitializer in SortedKeySet::new");
+        let list = list.init().pipe(|cls| Py::new(py, cls)).expect(
+            "Failed to create SortedKeyList instance from PyClassInitializer in SortedKeySet::new",
+        );
         Self {
             set: set.unbind(),
             list,
             key,
         }
-    }
-
-    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-        abc::PyoMutableSet::build_init()
-            .add_subclass(self)
-            .pipe(|x| Bound::new(py, x))
     }
 }
 #[pymethods]
@@ -48,12 +41,12 @@ impl SortedKeySet {
             .map(Bound::unbind)
             .unwrap_or_else(|| PyIdentity.into_py_any(py).unwrap());
         let list = SortedKeyList::new(key_fn.clone_ref(py));
-        let init = Self::new(PySet::empty(py).unwrap(), list, key_fn);
+        let slf = Self::new(PySet::empty(py).unwrap(), list, key_fn);
 
         if let Some(iterable) = iterable {
-            init.update(py, IntoUpdate::from_any(iterable))?;
+            slf.update(py, IntoUpdate::from_any(iterable))?;
         }
-        abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
+        slf.init().pipe(Ok)
     }
     #[getter]
     fn get_key<'py>(&self, py: Python<'py>) -> &Bound<'py, PyAny> {

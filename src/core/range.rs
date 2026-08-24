@@ -1,6 +1,6 @@
 use crate::{
     abc,
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    traits::{IntoInit, IntoPyochain, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -44,11 +44,7 @@ impl Range {
             ))),
         }?;
 
-        inner
-            .unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoSequence::build_init().add_subclass(slf))
-            .pipe(Ok)
+        inner.unbind().pipe(Self).init().pipe(Ok)
     }
     pub fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
         self.inner_bind(py).iter_py()

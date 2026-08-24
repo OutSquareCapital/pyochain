@@ -1,7 +1,4 @@
-use crate::{
-    abc::{Checkable, PyoIterable},
-    traits::PyoABC,
-};
+use crate::abc::{Checkable, PyoIterable};
 use pyo3::prelude::*;
 use pyo3_ext::args::{Args, Kwargs};
 
@@ -26,11 +23,6 @@ pub struct PyoSized;
 
 #[pymethods]
 impl PyoSized {
-    #[pyo3(signature = (*_args, **_kwargs))]
-    #[new]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable).add_subclass(Self)
-    }
     #[pyo3(name = "len")]
     fn pyo_len(slf: Bound<'_, Self>) -> PyResult<usize> {
         slf.len()
@@ -46,11 +38,6 @@ pub struct PyoCollection;
 
 #[pymethods]
 impl PyoCollection {
-    #[pyo3(signature = (*_args, **_kwargs))]
-    #[new]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        Self::build_init()
-    }
     #[pyo3(name = "contains")]
     fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.contains(value)

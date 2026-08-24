@@ -12,7 +12,7 @@ use tap::Pipe;
 use crate::{
     abc::{PyoIterable, traits::ImplPyoIterator},
     core::{PyNull, PySome, PyoErr, PyoOk, PyoVec, iterators},
-    traits::{IntoPyochain, PyoABC},
+    traits::IntoPyochain,
 };
 use pyo3_ext::{prelude::*, pylibs, types::pyitertools};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
@@ -20,11 +20,6 @@ pub struct PyoIterator;
 
 #[pymethods]
 impl PyoIterator {
-    #[new]
-    #[pyo3(signature = (*_args, **_kwargs))]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        Self::build_init()
-    }
     #[classmethod]
     pub fn once<'py>(
         cls: &Bound<'py, PyType>,

@@ -13,7 +13,7 @@ use crate::{
         },
     },
     core::PyoVec,
-    traits::IntoPyochain,
+    traits::{IntoInit, IntoPyochain},
 };
 use either::Either;
 use pyo3::{

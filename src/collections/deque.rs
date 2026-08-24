@@ -1,6 +1,6 @@
 use crate::{
     abc,
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    traits::{IntoInit, IntoPyochain, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -35,11 +35,7 @@ impl Deque {
             }},
             _ => PyDeque::new(elements.into_any(), max_length)?,
         };
-        deque
-            .unbind()
-            .pipe(Self)
-            .pipe(|slf| abc::PyoMutableSequence::build_init().add_subclass(slf))
-            .pipe(Ok)
+        deque.unbind().pipe(Self).init().pipe(Ok)
     }
 
     #[pyo3(signature = (iterable, /, max_length=None))]

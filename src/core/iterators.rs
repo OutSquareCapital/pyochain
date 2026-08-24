@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use crate::{
     abc,
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
-    traits::{IntoPyochain, PyWrapper, PyoABC},
+    traits::{IntoInit, IntoPyochain, PyWrapper},
 };
 use pyo3::{
     IntoPyObjectExt,
@@ -954,10 +954,11 @@ impl Peekable {
 impl Peekable {
     #[new]
     fn py_new(iterable: Bound<'_, PyIterator>) -> PyClassInitializer<Self> {
-        abc::PyoIterator::build_init().add_subclass(Self {
+        Self {
             iterator: iterable.unbind(),
             peeked: None,
-        })
+        }
+        .init()
     }
 
     fn __next__<'py>(&mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {

@@ -1,8 +1,8 @@
 use std::sync::{Mutex, MutexGuard};
 
 use crate::{
-    abc::{self, PyoSequence},
-    traits::{PyWrapper, PyoABC},
+    abc,
+    traits::{IntoInit, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -110,12 +110,12 @@ impl SliceView {
                 .pipe(Either::Left)
         };
 
-        PyoSequence::build_init()
-            .add_subclass(Self {
-                inner: base.unbind(),
-                range: Mutex::new(range),
-            })
-            .pipe(Ok)
+        Self {
+            inner: base.unbind(),
+            range: Mutex::new(range),
+        }
+        .init()
+        .pipe(Ok)
     }
     fn __iter__(&self, py: Python<'_>) -> PyResult<SliceViewIterator> {
         SliceViewIterator::new(self.current_range(py)?, self.inner().clone_ref(py))
@@ -126,12 +126,11 @@ impl SliceView {
         inner: Py<PySequence>,
         range: Py<PyRange>,
     ) -> PyResult<Bound<'_, Self>> {
-        PyoSequence::build_init()
-            .add_subclass(Self {
-                inner,
-                range: Mutex::new(Either::Left(range)),
-            })
-            .pipe(|initializer| Bound::new(py, initializer))
+        Self {
+            inner,
+            range: Mutex::new(Either::Left(range)),
+        }
+        .into_bound(py)
     }
 
     fn __contains__(slf: Bound<'_, Self>, item: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -206,13 +205,12 @@ impl SliceView {
                     .map(|r| unsafe { r.cast_into_unchecked::<PyRange>() })?
                     .unbind()
                     .pipe(Either::Left);
-                PyoSequence::build_init()
-                    .add_subclass(Self {
-                        inner,
-                        range: Mutex::new(range),
-                    })
-                    .pipe(|initializer| Bound::new(py, initializer))
-                    .map(Either::Left)
+                Self {
+                    inner,
+                    range: Mutex::new(range),
+                }
+                .into_bound(py)
+                .map(Either::Left)
             }
             Err(_) => {
                 let length = current_range.len()? as isize;
