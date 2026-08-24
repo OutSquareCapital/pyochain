@@ -7,7 +7,7 @@ use pyo3::{
 };
 use pyo3_ext::{
     iter::{CollectBoundIterator, TryCollectBoundIterator},
-    prelude::{IntoPyIterator, PyDictExtConstructors},
+    prelude::{IntoPyIterator, PyDictExtConstructors, PyTupleExtConstructors},
     types::PyIterable,
 };
 use pyochain_macros::{py_abc, try_cast_into};
@@ -68,17 +68,10 @@ impl FromPyIter for iterators::Iter {
 }
 impl FromPyIter for Seq {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        let py = iterable.py();
         try_cast_into! {
             match iterable {
-                CaseExact::PyTuple(tuple) => tuple.into_pyochain(),
-                CaseExact::Self(inner) => Ok(inner),
-                Case::PySequence(sequence) => sequence.to_tuple()?.into_pyochain(),
-                iterable => iterable
-                    .try_iter()?
-                    .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
-                    .pipe(|x| PyTuple::new(py, x))?
-                    .into_pyochain(),
+                CaseExact::Self(slf) => Ok(slf),
+                iterable => PyTuple::from_iterable(&iterable).and_then(Bound::into_pyochain),
             }
         }
     }
@@ -199,13 +192,8 @@ impl FromPyArgs for Seq {
         {
             match elements.len() {
                 1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                    CaseExact::PyTuple(tuple) => tuple,
                     CaseExact::Self(inner) => inner.get().inner_into_bound(py),
-                    Case::PySequence(sequence) => sequence.to_tuple()?,
-                    Case::PyIterable(iterable) => iterable
-                        .try_iter()?
-                        .collect::<PyResult<Vec<Bound<'_, PyAny>>>>()?
-                        .pipe(|x| PyTuple::new(py, x))?,
+                    Case::PyIterable(iterable) => PyTuple::from_iterable(&iterable)?,
                     any => PyTuple::new(py, [any])?,
                 }},
                 _ => elements,
