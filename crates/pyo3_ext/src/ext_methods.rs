@@ -325,13 +325,15 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
         }
     }
 }
-pub trait PyTupleExtConstructors: Sized {
-    fn from_iterable<'py, T: PyTypeInfo>(iterable: &Bound<'py, T>) -> PyResult<Bound<'py, Self>>;
-}
-impl PyTupleExtConstructors for PyTuple {
+pub trait PyExtConstructors: Sized + PyTypeInfo {
     fn from_iterable<'py, T: PyTypeInfo>(iterable: &Bound<'py, T>) -> PyResult<Bound<'py, Self>> {
         Self::type_object(iterable.py())
             .call1((iterable,))
             .map(|t| unsafe { t.cast_into_unchecked::<Self>() })
     }
 }
+impl PyExtConstructors for PyTuple {}
+impl PyExtConstructors for PyList {}
+impl PyExtConstructors for PySet {}
+impl PyExtConstructors for PyFrozenSet {}
+impl PyExtConstructors for PyDeque {}
