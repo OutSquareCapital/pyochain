@@ -1,48 +1,25 @@
+"""These ABCs are used to define a common interface for pyochain collection types with a flexible constructor.
+
+The "flexible constructor", is, generally speaking, a `__new__(data, *elements)` method, where `data` can be an `Iterable[T]` or a single element `T`, and `*elements` are any number of `T` to include in the collection.
+
+This means that said constructor can handle a lot of different situations.
+
+This flexibility, while great for ergonomics, has unfortunately a cost: runtime checks and branching, which may not be desirable in performance-critical code.
+
+Thus, this protocol provides various alternatives, with constructors for each use case.
+
+That way, user who want to prioritize performance or explicitely named methods can use these alternative constructors,
+while still having the flexibility of `__new__` for more generic use cases.
+"""
+
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from typing import type_check_only
 
-from pyochain.abc import PyoIterable
-
-@type_check_only
-class FlexibleInit[T](PyoIterable[T], ABC):
-    """This ABC is used to define a common interface for pyochain collection types with a flexible constructor.
-
-    The "flexible constructor", is, generally speaking, a `__new__(data, *elements)` method, where `data` can be an `Iterable[T]` or a single element `T`, and `*elements` are any number of `T` to include in the collection.
-
-    This means that said constructor can handle a lot of different situations.
-
-    This flexibility, while great for ergonomics, has unfortunately a cost: runtime checks and branching, which may not be desirable in performance-critical code.
-
-    Thus, this protocol provides various alternatives, with constructors for each use case.
-
-    That way, user who want to prioritize performance or explicitely named methods can use these alternative constructors,
-    while still having the flexibility of `__new__` for more generic use cases.
-    """
+class FromIter[T](ABC):
     @staticmethod
     @abstractmethod
-    def of[E](*elements: E) -> FlexibleInit[E]:
-        """Create the instance from a variable number of single elements `E`.
-
-        Args:
-            *elements (E): The elements to create the instance from.
-
-        Returns:
-            FlexibleInit[E]: A new instance containing the provided `elements`.
-
-        Example:
-            ```python
-            from pyochain import Vec, Seq
-
-            assert Vec.of(1, 2, 3) == Vec(1, 2, 3)
-            assert Seq.of(1, 2, 3) == Seq(1, 2, 3)
-            assert Seq.of([1, 2], 3) == Seq([1, 2], 3) == Seq.from_iter([[1, 2], 3])
-            assert Seq.of("h", "e", "l", "l", "o") == Seq("h", "e", "l", "l", "o")
-            ```
-        """
-    @staticmethod
-    @abstractmethod
-    def from_iter[I](iterable: Iterable[I], /) -> FlexibleInit[I]:
+    def from_iter[I](iterable: Iterable[I], /) -> FromIter[I]:
         """Create the instance from an `Iterable`.
 
         Tip:
@@ -54,7 +31,7 @@ class FlexibleInit[T](PyoIterable[T], ABC):
             iterable (Iterable[I]): The iterable to create the instance from.
 
         Returns:
-            FlexibleInit[I]: A new instance containing the elements from the provided `iterable`.
+            FromIter[I]: A new instance containing the elements from the provided `iterable`.
 
         Example:
             ```python
@@ -67,10 +44,55 @@ class FlexibleInit[T](PyoIterable[T], ABC):
         """
 
 @type_check_only
-class FlexibleWrapper[T](FlexibleInit[T], ABC):
+class FromArgs[T](FromIter[T], ABC):
     @staticmethod
     @abstractmethod
-    def wrap[W](wrapped: Iterable[W], /) -> FlexibleWrapper[W]:
+    def of[E](*elements: E) -> FromArgs[E]:
+        """Create the instance from a variable number of single elements `E`.
+
+        Args:
+            *elements (E): The elements to create the instance from.
+
+        Returns:
+            FromArgs[E]: A new instance containing the provided `elements`.
+
+        Example:
+            ```python
+            from pyochain import Vec, Seq
+
+            assert Vec.of(1, 2, 3) == Vec(1, 2, 3)
+            assert Seq.of(1, 2, 3) == Seq(1, 2, 3)
+            assert Seq.of([1, 2], 3) == Seq([1, 2], 3) == Seq.from_iter([[1, 2], 3])
+            assert Seq.of("h", "e", "l", "l", "o") == Seq("h", "e", "l", "l", "o")
+            ```
+        """
+
+@type_check_only
+class FromKwargs[T](FromIter[T], ABC):
+    @staticmethod
+    @abstractmethod
+    def of[E](**elements: E) -> FromKwargs[E]:
+        """Create the instance from a variable number of keyword arguments.
+
+        Args:
+            **elements (E): The elements to create the instance from.
+
+        Returns:
+            FromKwargs[E]: A new instance containing the provided `elements`.
+
+        Example:
+            ```python
+            from pyochain import Dict
+
+            assert Dict.of(a=1, b=2, c=3) == Dict({"a": 1, "b": 2, "c": 3})
+            ```
+        """
+
+@type_check_only
+class Wrapper[T](ABC):
+    @staticmethod
+    @abstractmethod
+    def wrap[W](wrapped: Iterable[W], /) -> Wrapper[W]:
         """Create the instance from a reference to an existing data structure corresponding to this pyochain type.
 
         E.g, `Vec.wrap(list)` or `Dict.wrap(dict)`.
@@ -90,7 +112,7 @@ class FlexibleWrapper[T](FlexibleInit[T], ABC):
             wrapped (Iterable[W]): The object to wrap.
 
         Returns:
-            FlexibleWrapper[W]: A new instance wrapping the provided `wrapped` object.
+            Wrapper[W]: A new instance wrapping the provided `wrapped` object.
 
         Example:
             ```python
@@ -128,3 +150,6 @@ class FlexibleWrapper[T](FlexibleInit[T], ABC):
             assert set_obj == SetMut(1, 2, 3, 4)
             ```
         """
+
+class ArgsWrapper[T](FromArgs[T], Wrapper[T], ABC): ...
+class KwargsWrapper[T](FromKwargs[T], Wrapper[T], ABC): ...

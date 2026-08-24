@@ -3,14 +3,12 @@ from collections.abc import Iterable, Iterator
 from typing import Final, Self, SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoMutableSequence
-from pyochain.core._protocols import (  # ruff: ignore[import-private-name]
-    FlexibleWrapper,
-)
+from pyochain.core.protocols import ArgsWrapper
 
 type IntoDeque[T] = deque[T] | Deque[T]
 
 @final
-class Deque[T](PyoMutableSequence[T], FlexibleWrapper[T]):
+class Deque[T](PyoMutableSequence[T], ArgsWrapper[T]):
     """Deques are a generalization of stacks and queues (the name is pronounced “deck” and is short for “double-ended queue”).
 
     Deques support thread-safe, memory efficient appends and pops from either side of the deque with approximately the same O(1) performance in either direction.

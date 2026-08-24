@@ -3,12 +3,12 @@ from typing import Any, Self, SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoSequence
 
-from ._protocols import FlexibleWrapper
+from .protocols import ArgsWrapper
 
 type IntoSeq[T] = Seq[T] | tuple[T, ...]
 
 @final
-class Seq[T](PyoSequence[T], FlexibleWrapper[T]):
+class Seq[T](PyoSequence[T], ArgsWrapper[T]):
     """Represent an in memory `Sequence`.
 
     Implements the `Sequence` Protocol from `collections.abc`, as well as `PyoSequence`.

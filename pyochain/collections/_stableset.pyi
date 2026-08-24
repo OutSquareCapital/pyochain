@@ -3,11 +3,9 @@ from typing import Any, Self, override
 
 from pyochain import SetMut
 from pyochain.abc import PyoMutableSet
-from pyochain.core._protocols import (  # ruff: ignore[import-private-name]
-    FlexibleWrapper,
-)
+from pyochain.core.protocols import ArgsWrapper
 
-class StableSet[T](PyoMutableSet[T], FlexibleWrapper[T]):
+class StableSet[T](PyoMutableSet[T], ArgsWrapper[T]):
     """A mutable collection of unique elements which remember their insertion order.
 
     Uses a `dict` as the underlying data structure to maintain insertion order while ensuring uniqueness of elements.

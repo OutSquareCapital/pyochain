@@ -5,12 +5,12 @@ from _typeshed import SupportsRichComparison
 
 from pyochain.abc import PyoMutableSequence
 
-from ._protocols import FlexibleWrapper
+from .protocols import ArgsWrapper
 
 type IntoVec[T] = Vec[T] | list[T]
 
 @final
-class Vec[T](PyoMutableSequence[T], FlexibleWrapper[T]):
+class Vec[T](PyoMutableSequence[T], ArgsWrapper[T]):
     """Represent a mutable sequence of elements.
 
     Implement `collections::abc::MutableSequence`, and pyochain's `PyoMutableSequence` ABC.

@@ -3,12 +3,11 @@ from typing import Self, final, override
 
 from pyochain import Option, Result
 from pyochain.abc import PyoIterator
-from pyochain.core._protocols import (  # ruff: ignore[import-private-name]
-    FlexibleWrapper,
-)
+
+from .protocols import ArgsWrapper
 
 @final
-class Iter[T](PyoIterator[T], FlexibleWrapper[T]):
+class Iter[T](PyoIterator[T], ArgsWrapper[T]):
     """Concrete implementation for `abc::PyoIterator`.
 
     Can be instantiated from any `Iterable` (like lists, sets, generators, etc.) efficiently (it only calls the builtin `iter()` on the input).

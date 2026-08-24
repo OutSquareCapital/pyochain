@@ -3,15 +3,14 @@ from collections.abc import Set as AbstractSet
 from typing import Self, overload, override
 
 from pyochain.abc import PyoMutableSet, PyoSet
-from pyochain.core._protocols import (  # ruff: ignore[import-private-name]
-    FlexibleWrapper,
-)
+
+from .protocols import ArgsWrapper
 
 # TODO: address the following note from official python docs regarding Set performance, with benchmarks:
 # To override the comparisons (presumably for speed, as the semantics are fixed),
 # redefine __le__() and __ge__(), then the other operations will automatically follow suit.
 
-class Set[T](PyoSet[T], FlexibleWrapper[T]):
+class Set[T](PyoSet[T], ArgsWrapper[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
     Implements the `collections::abc::Collection` Protocol, so it can be used as a standard immutable collection.
@@ -283,7 +282,7 @@ class Set[T](PyoSet[T], FlexibleWrapper[T]):
     @override
     def symmetric_difference[S](self, other: Iterable[S]) -> Set[T | S]: ...
 
-class SetMut[T](PyoMutableSet[T], FlexibleWrapper[T]):
+class SetMut[T](PyoMutableSet[T], ArgsWrapper[T]):
     """A mutable, unordered collection of unique elements.
 
     Unlike [`Set`][Set] which is immutable, `SetMut` allows in-place modification of elements.
