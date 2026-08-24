@@ -1,13 +1,11 @@
 use pyo3::{
     PyClass, intern,
     prelude::*,
-    types::{
-        PyDict, PyFrozenSet, PyIterator, PyList, PyMapping, PyNone, PySequence, PySet, PyTuple,
-    },
+    types::{PyDict, PyFrozenSet, PyIterator, PyList, PyMapping, PyNone, PySet, PyTuple},
 };
 use pyo3_ext::{
-    iter::{CollectBoundIterator, TryCollectBoundIterator},
-    prelude::{IntoPyIterator, PyDictExtConstructors, PyTupleExtConstructors},
+    iter::CollectBoundIterator,
+    prelude::{IntoPyIterator, PyDictExtConstructors, PyExtConstructors},
     types::PyIterable,
 };
 use pyochain_macros::{py_abc, try_cast_into};
@@ -81,12 +79,10 @@ impl FromPyIter for PyoVec {
         let py = iterable.py();
         try_cast_into! {
             match iterable {
-                CaseExact::PyList(list) => list.as_sequence().to_list()?,
                 CaseExact::Self(inner) => {
                     inner.get().inner_into_bound(py).as_sequence().to_list()?
                 }
-                Case::PySequence(sequence) => sequence.to_list()?,
-                iterable => iterable.try_iter()?.try_collect_bound(py)?,
+                iterable => PyList::from_iterable(&iterable)?,
             }
         }
         .into_pyochain()
@@ -97,13 +93,12 @@ impl FromPyIter for Set {
         let py = iterable.py();
         try_cast_into! {
             match iterable {
-                CaseExact::PyFrozenSet(set) => set,
                 CaseExact::Self(inner) => inner
                     .get()
                     .inner_into_bound(py)
                     .into_iter()
                     .collect_bound(py)?,
-                any => any.try_iter()?.try_collect_bound(py)?,
+                any => PyFrozenSet::from_iterable(&any)?,
             }
         }
         .into_pyochain()
@@ -114,13 +109,12 @@ impl FromPyIter for SetMut {
         let py = iterable.py();
         try_cast_into! {
             match iterable {
-                CaseExact::PySet(set) => set.into_iter().collect_bound(py)?,
                 CaseExact::Self(inner) => inner
                     .get()
                     .inner_into_bound(py)
                     .into_iter()
                     .collect_bound(py)?,
-                any => any.try_iter()?.try_collect_bound(py)?,
+                any => PySet::from_iterable(&any)?,
             }
         }
         .into_pyochain()
@@ -217,8 +211,7 @@ impl FromPyArgs for PyoVec {
                 CaseExact::Self(inner) => {
                     inner.get().inner_into_bound(py).as_sequence().to_list()?
                 }
-                Case::PySequence(sequence) => sequence.to_list()?,
-                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
+                Case::PyIterable(iterable) => PyList::from_iterable(&iterable)?,
                 any => PyList::new(py, [any])?,
             }},
             _ => elements.to_list(),
@@ -269,13 +262,12 @@ impl FromPyArgs for Set {
         match elements.len() {
             0 => PyFrozenSet::empty(py)?,
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                CaseExact::PyFrozenSet(set) => set,
                 CaseExact::Self(inner) => inner
                     .get()
                     .inner_into_bound(py)
                     .into_iter()
                     .collect_bound(py)?,
-                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
+                Case::PyIterable(iterable) => PyFrozenSet::from_iterable(&iterable)?,
                 any => [any].into_iter().collect_bound(py)?,
             }},
             _ => elements.into_iter().collect_bound::<PyFrozenSet>(py)?,
@@ -299,13 +291,12 @@ impl FromPyArgs for SetMut {
         match elements.len() {
             0 => PySet::empty(py)?,
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                CaseExact::PySet(set) => set.into_iter().collect_bound(py)?,
                 CaseExact::Self(inner) => inner
                     .get()
                     .inner_into_bound(py)
                     .into_iter()
                     .collect_bound(py)?,
-                Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
+                Case::PyIterable(iterable) => PySet::from_iterable(&iterable)?,
                 any => PySet::new(py, [any])?,
             }},
             _ => elements.into_iter().collect_bound::<PySet>(py)?,

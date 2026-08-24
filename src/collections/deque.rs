@@ -54,6 +54,7 @@ impl Deque {
     ) -> PyResult<Bound<'py, Self>> {
         PyDeque::new(elements.into_any(), max_length)?.into_pyochain()
     }
+    #[pyo3(signature = (data, /))]
     #[staticmethod]
     fn wrap(data: Bound<'_, PyDeque>) -> PyResult<Bound<'_, Self>> {
         data.into_pyochain()
