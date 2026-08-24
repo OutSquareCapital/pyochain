@@ -59,8 +59,9 @@ impl PyoIterator {
         obj: &Bound<'py, PyAny>,
         n: Option<&Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, Self>> {
-        pyitertools::PyRepeat::new(obj, n)?
-            .into_pyochain()
+        pyitertools::PyRepeat::new(obj, n)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+            .and_then(Bound::into_pyochain)
             .map(Bound::into_super)
     }
     #[classmethod]
@@ -733,21 +734,24 @@ impl PyoIterator {
             }),
         }
     }
-    fn find(slf: &Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        let slf = slf.try_iter()?;
+    fn find(slf: Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
-        slf.filter(|x| {
-            predicate
-                .call1((x
-                    .as_ref()
-                    .expect("Error occurred while unwrapping item in `PyoIterator::find`"),))
-                .expect("Error occurred while calling predicate function in `PyoIterator::find`")
-                .is_truthy()
-                .expect("Error occurred while evaluating predicate output in `PyoIterator::find`")
-        })
-        .next()
-        .map(|x| x?.unbind().pipe(PySome::new).into_py_any(py))
-        .unwrap_or_else(|| PyNull::get_any_ok(py))
+        slf.try_iter()?
+            .find(|x| {
+                predicate
+                    .call1((x
+                        .as_ref()
+                        .expect("Error occurred while unwrapping item in `PyoIterator::find`"),))
+                    .expect(
+                        "Error occurred while calling predicate function in `PyoIterator::find`",
+                    )
+                    .is_truthy()
+                    .expect(
+                        "Error occurred while evaluating predicate output in `PyoIterator::find`",
+                    )
+            })
+            .map(|x| x?.unbind().pipe(PySome::new).into_py_any(py))
+            .unwrap_or_else(|| PyNull::get_any_ok(py))
     }
     fn intersperse<'py>(
         slf: &Bound<'py, Self>,

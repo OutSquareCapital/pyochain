@@ -7,10 +7,8 @@ use crate::{
         SortedKeyList, SortedList,
         sorted::bounds::{Bounds, Pos},
     },
-    traits::IntoInit,
 };
-use pyo3::{PyClass, PyTypeInfo, prelude::*};
-use tap::Pipe;
+use pyo3::prelude::*;
 
 pub enum Dir {
     Fwd,
@@ -77,12 +75,9 @@ pub struct SortedIter {
     inner: Mutex<BoundedIter<SortedList>>,
 }
 impl SortedIter {
-    pub(super) fn new<'py>(
-        py: Python<'py>,
-        inner: BoundedIter<SortedList>,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    pub(super) fn new(inner: BoundedIter<SortedList>) -> Self {
         let inner = Mutex::new(inner);
-        build_iter(py, Self { inner })
+        Self { inner }
     }
 }
 #[pymethods]
@@ -97,12 +92,9 @@ pub struct SortedIterKey {
     inner: Mutex<BoundedIter<SortedKeyList>>,
 }
 impl SortedIterKey {
-    pub(super) fn new<'py>(
-        py: Python<'py>,
-        inner: BoundedIter<SortedKeyList>,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    pub(super) fn new(inner: BoundedIter<SortedKeyList>) -> Self {
         let inner = Mutex::new(inner);
-        build_iter(py, Self { inner })
+        Self { inner }
     }
 }
 #[pymethods]
@@ -110,10 +102,4 @@ impl SortedIterKey {
     fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
         self.inner.lock().expect("poisoned").next(py)
     }
-}
-fn build_iter<S: PyClass<BaseType = abc::PyoIterator> + PyTypeInfo>(
-    py: Python<'_>,
-    s: S,
-) -> PyResult<Bound<'_, abc::PyoIterator>> {
-    s.into_bound(py)?.into_super().pipe(Ok)
 }

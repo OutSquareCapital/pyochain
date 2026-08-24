@@ -15,8 +15,8 @@ pub(super) enum Maxes {
 }
 impl Maxes {
     #[inline(always)]
-    pub fn new<F: Fn(&Vec<Py<PyAny>>, &Bound<'_, PyAny>) -> PyResult<usize>>(
-        maxes: &Vec<Py<PyAny>>,
+    pub fn new<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
+        maxes: &[Py<PyAny>],
         bound: &mut Pos,
         value: &Bound<'_, PyAny>,
         func: F,
@@ -42,7 +42,7 @@ pub(super) enum Expand {
 }
 impl Expand {
     #[inline(always)]
-    pub fn new(lists_len: usize, load: usize, idx: &Vec<usize>) -> Self {
+    pub fn new(lists_len: usize, load: usize, idx: &[usize]) -> Self {
         if lists_len > load << 1 {
             Self::PosLenGtLoad
         } else if !idx.is_empty() {
@@ -61,7 +61,7 @@ pub(super) enum Delete {
 }
 impl Delete {
     #[inline(always)]
-    pub fn new<T>(lists: &Vec<Vec<T>>, load: usize, bounds: &Pos) -> Self {
+    pub fn new<T>(lists: &[Vec<T>], load: usize, bounds: &Pos) -> Self {
         let len_pos = lists[bounds.pos].len();
         if len_pos > (load >> 1) {
             Self::PosSupToLoad
@@ -81,7 +81,7 @@ pub(super) enum Update {
 }
 impl Update {
     #[inline(always)]
-    pub fn new<T, U>(maxes: &Vec<T>, length: usize, values: &Vec<U>) -> Self {
+    pub fn new<T, U>(maxes: &[T], length: usize, values: &[U]) -> Self {
         if maxes.is_empty() {
             Self::EmptyMaxes
         } else {

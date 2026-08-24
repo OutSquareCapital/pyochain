@@ -441,14 +441,14 @@ pub mod pyitertools {
         pub fn new<'py>(
             obj: &Bound<'py, PyAny>,
             n: Option<&Bound<'py, PyInt>>,
-        ) -> PyResult<Bound<'py, PyIterator>> {
+        ) -> PyResult<Bound<'py, Self>> {
             let py = obj.py();
             Self::type_object(py)
                 .pipe(|func| match n {
                     Some(n) => func.call1((obj, n)),
                     None => func.call1((obj,)),
                 })
-                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+                .map(|obj| unsafe { obj.cast_into_unchecked::<Self>() })
         }
     }
 }

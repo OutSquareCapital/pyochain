@@ -84,46 +84,6 @@ impl Pos {
         Ok(())
     }
 
-    ///Convert an index pair (lists index, sublist index) into a single index number.
-
-    ///This number corresponds to the position of the value in the sorted list.
-
-    ///Many queries require the index be built.
-    /// Details of the index are described in ``SortedList._build_index``.
-
-    ///Indexing requires traversing the tree from a leaf node to the root.
-    ///The parent of each node is easily computable at ``(pos - 1) // 2``.
-
-    ///Left-child nodes are always at odd indices and right-child nodes are always at even indices.
-
-    ///When traversing up from a right-child node, increment the total by the left-child node.
-
-    ///The final index is the sum from traversal and the index in the sublist.
-
-    ///For example, using the index from `SortedList._build_index`:
-
-    ///    _index = 14 5 9 3 2 4 5
-    ///    _offset = 3
-
-    ///Tree::
-
-    ///            14
-    ///        5      9
-    ///    3   2  4   5
-
-    ///Converting an index pair (2, 3) into a single index involves iterating like so:
-
-    ///1. Starting at the leaf node: offset + alpha = 3 + 2 = 5. We identify
-    ///    the node as a left-child node. At such nodes, we simply traverse to
-    ///    the parent.
-
-    ///2. At node 9, position 2, we recognize the node as a right-child node
-    ///    and accumulate the left-child in our total. Total is now 5 and we
-    ///    traverse to the parent at position 0.
-
-    ///3. Iteration ends at the root.
-
-    ///The index is then the sum of the total and sublist index: 5 + 3 = 8.
     pub(crate) fn loc(&self, data: &mut ListsData) -> PyResult<isize> {
         if self.pos == 0 {
             Ok(self.idx as isize)
@@ -140,7 +100,7 @@ impl Pos {
                     // Right-child nodes are at even indices. At such indices
                     // account the total below the left child node.
 
-                    if pos % 2 == 0 {
+                    if pos.is_multiple_of(2) {
                         total += idx[pos - 1] as isize;
                     }
 
@@ -169,8 +129,8 @@ impl Bounds {
         }
     }
     pub(super) fn get_irange_specs(
-        lists: &Vec<Vec<Py<PyAny>>>,
-        maxes: &Vec<Py<PyAny>>,
+        lists: &[Vec<Py<PyAny>>],
+        maxes: &[Py<PyAny>],
         minimum: Option<Bound<'_, PyAny>>,
         maximum: Option<Bound<'_, PyAny>>,
         inclusive: (bool, bool),
@@ -178,11 +138,8 @@ impl Bounds {
         if maxes.is_empty() {
             return Ok(None);
         }
-        let mut bounds = Bounds::default();
 
-        // Calculate the minimum (pos, idx) pair. By default this location
-        // will be inclusive in our calculation.
-        bounds.min = match minimum {
+        let min = match minimum {
             None => Pos::default(),
             Some(minimum) => {
                 if inclusive.0 {
@@ -209,7 +166,7 @@ impl Bounds {
 
         // Calculate the maximum (pos, idx) pair. By default this location
         // will be exclusive in our calculation.
-        bounds.max = maximum
+        let max = maximum
             .map(|m| {
                 if inclusive.1 {
                     let mut max_pos = bisect::right(maxes, &m)?;
@@ -239,12 +196,10 @@ impl Bounds {
                 Ok(Pos::new(max_pos, max_idx))
             })?;
 
-        if bounds.min.pos > bounds.max.pos
-            || (bounds.min.pos == bounds.max.pos && bounds.min.idx >= bounds.max.idx)
-        {
+        if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
             Ok(None)
         } else {
-            Ok(Some(bounds))
+            Ok(Some(Bounds { min, max }))
         }
     }
 

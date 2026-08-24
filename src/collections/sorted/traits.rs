@@ -97,7 +97,7 @@ pub(super) trait SortedCollection:
         stop: Option<isize>,
     ) -> PyResult<isize>;
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()>;
-    fn clear(&self, py: Python<'_>) -> ();
+    fn clear(&self, py: Python<'_>);
 }
 
 #[py_abc(SortedList, SortedKeyList, SortedSet, SortedKeySet)]
@@ -181,7 +181,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         match index {
             -1 => {
                 bounds.pos = data.lists.len() - 1;
-                bounds.idx = data.lists[bounds.pos].len() - 1 as usize;
+                bounds.idx = data.lists[bounds.pos].len() - 1_usize;
             }
             _ if 0 <= index && index < data.lists[0].len() as isize => {
                 bounds.idx = index as usize;
@@ -499,7 +499,7 @@ pub(super) trait ListGetter {
 pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     #[inline(always)]
     #[skip]
-    fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
+    fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
     #[getter]
     fn get_set(&self) -> &Py<PySet>;
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
@@ -530,7 +530,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         self.get_set()
             .bind(py)
             .difference(iterables)
-            .and_then(|diff| self.from_set(diff))
+            .and_then(|diff| self.wrap(diff))
     }
     #[skip]
     fn intersection<'py, O: PyCallArgs<'py>>(
@@ -541,7 +541,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         self.get_set()
             .bind(py)
             .intersection(iterables)
-            .and_then(|intersect| self.from_set(intersect))
+            .and_then(|intersect| self.wrap(intersect))
     }
     #[skip]
     fn union<'py, O: PyCallArgs<'py>>(
@@ -552,7 +552,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         self.get_set()
             .bind(py)
             .union(iterables)
-            .and_then(|u| self.from_set(u))
+            .and_then(|u| self.wrap(u))
     }
     #[skip]
     fn difference_update<'py>(&self, py: Python<'_>, iterables: IntoUpdate<'py>) -> PyResult<()> {
@@ -812,7 +812,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         self.get_set()
             .bind(other.py())
             .symmetric_difference(other)
-            .and_then(|diff| self.from_set(diff))
+            .and_then(|diff| self.wrap(diff))
     }
     fn __xor__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.symmetric_difference(other)
@@ -957,7 +957,7 @@ macro_rules! impl_sorted_collection_for_set {
                 self.get_list().get().remove(value)
             }
             fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-                PySet::new(py, self.get_set().bind(py).iter()).and_then(|x| self.from_set(x))
+                PySet::new(py, self.get_set().bind(py).iter()).and_then(|x| self.wrap(x))
             }
         }
     };

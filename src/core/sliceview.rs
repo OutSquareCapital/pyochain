@@ -34,8 +34,8 @@ impl OpenRange {
     }
 }
 
-/// TODO: See if it make sense to separate mutable vs immutable slices
-/// TODO: See if collections should have dedicated slice views methods
+// TODO: See if it make sense to separate mutable vs immutable slices
+// TODO: See if collections should have dedicated slice views methods
 
 trait PyInit<'py, T: PyTypeInfo, A: PyCallArgs<'py>> {
     fn init(py: Python<'py>, args: A) -> PyResult<Bound<'py, T>>;

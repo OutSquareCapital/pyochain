@@ -716,7 +716,7 @@ impl ZipLongest {
                 // SAFETY: we know the passed `PyIterator` is from `itertools::zip_longest`, which yields tuples, so we can safely cast the result to a `PyTuple`.
                 .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })?
                 .iter()
-                .map(|x| PyochainOption::new(&x))
+                .map(|x| PyochainOption::dispatch(&x))
                 .collect::<PyResult<Vec<_>>>()
                 .and_then(|v| PyTuple::new(py, v))
                 .map(Bound::unbind)
@@ -877,13 +877,13 @@ impl Iter {
     }
 
     fn __next__<'py>(slf: &Bound<'py, Self>) -> PyResult<Option<Bound<'py, PyAny>>> {
-        slf.get().into_inner_bound(slf.py()).next().transpose()
+        slf.get().inner_into_bound(slf.py()).next().transpose()
     }
 
     fn __repr__(slf: &Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
         let name = slf.get_type().name();
-        let inner_repr = slf.get().into_inner_bound(py).repr()?;
+        let inner_repr = slf.get().inner_into_bound(py).repr()?;
         Ok(format!("{:?}({:?})", name, inner_repr))
     }
 }

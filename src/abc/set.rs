@@ -142,7 +142,7 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
         match other {
             IntoSetComp::Set(other_set) => {
                 let out = slf.len()? == other_set.len()? && slf.le(&other_set)?;
-                Ok(out).map(Either::Left)
+                Ok(Either::Left(out))
             }
             _ => PyNotImplemented::from_cmp(slf.py()),
         }
@@ -152,14 +152,14 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
             return PyNotImplemented::from_cmp(slf.py());
         }
         if slf.len()? > other.len()? {
-            return Ok(false).map(Either::Left);
+            return Ok(Either::Left(false));
         }
         for elem in slf.try_iter()? {
             if !other.contains(elem?)? {
-                return Ok(false).map(Either::Left);
+                return Ok(Either::Left(false));
             }
         }
-        Ok(true).map(Either::Left)
+        Ok(Either::Left(true))
     }
 
     fn __ge__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
@@ -167,19 +167,19 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
             return PyNotImplemented::from_cmp(slf.py());
         }
         if slf.len()? < other.len()? {
-            return Ok(false).map(Either::Left);
+            return Ok(Either::Left(false));
         }
         for elem in other.try_iter()? {
             if !slf.contains(elem?)? {
-                return Ok(false).map(Either::Left);
+                return Ok(Either::Left(false));
             }
         }
-        Ok(true).map(Either::Left)
+        Ok(Either::Left(true))
     }
 
     fn __lt__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if other.is_instance_of::<PyAbstractSet>() {
-            Ok(slf.len()? < other.len()? && slf.le(other)?).map(Either::Left)
+            Ok(Either::Left(slf.len()? < other.len()? && slf.le(other)?))
         } else {
             PyNotImplemented::from_cmp(slf.py())
         }
@@ -187,7 +187,7 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
 
     fn __gt__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if other.is_instance_of::<PyAbstractSet>() {
-            Ok(slf.len()? > other.len()? && slf.ge(other)?).map(Either::Left)
+            Ok(Either::Left(slf.len()? > other.len()? && slf.ge(other)?))
         } else {
             PyNotImplemented::from_cmp(slf.py())
         }
@@ -272,12 +272,11 @@ impl PyoSet {
     ) -> PyResult<Bound<'py, Self>> {
         cls.call1((it,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
-            .map_err(|e| {
+            .inspect_err(|e| {
                 let name = cls.name().unwrap();
                 let msg = format!("hint: As a `PyoSet` subclass, `{}::__init__` must accept a single `Iterable` argument.\n
                 If you override it, make sure to override `PyoSet::_from_iterable` as well.", name);
                 e.add_note(cls.py(), msg).unwrap();
-                e
             })
     }
 }

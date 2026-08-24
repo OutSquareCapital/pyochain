@@ -222,30 +222,20 @@ impl ListsData {
 
     /// Build a positional index for indexing the sorted list.
     /// Indexes are represented as binary trees in a dense array notation similar to a binary heap.
-
-    /// For example, given a lists representation storing integers:
-
+    /// For example, given a lists representation storing integers:\
     ///     0: [1, 2, 3]
     ///     1: [4, 5]
     ///     2: [6, 7, 8, 9]
     ///     3: [10, 11, 12, 13, 14]
-
     /// The first transformation maps the sub-lists by their length.\
     /// The first row of the index is the length of the sub-lists::
-
     ///     0: [3, 2, 4, 5]
-
     /// Each row after that is the sum of consecutive pairs of the previous row:
-
     ///     1: [5, 9]
     ///     2: [14]
-
     /// Finally, the index is built by concatenating these lists together:
-
     ///     _index = [14, 5, 9, 3, 2, 4, 5]
-
     /// An offset storing the start of the first row is also stored:
-
     ///     _offset = 3
     /// When built, the index can be used for efficient indexing into the list.
     pub(crate) fn build_index(&mut self) -> PyResult<()> {
@@ -292,10 +282,10 @@ impl ListsData {
     pub(super) fn expand_on_empty_idx(&mut self, pos: usize) -> PyResult<()> {
         let mut child = self.offset + pos;
         while child != 0 {
-            self.idx[child] = self.idx[child] + 1;
+            self.idx[child] += 1;
             child = (child - 1) >> 1;
         }
-        self.idx[0] = self.idx[0] + 1;
+        self.idx[0] += 1;
         Ok(())
     }
     pub(super) fn remove_pos(&mut self, bound: &Pos) {
@@ -329,10 +319,10 @@ impl ListsData {
         if !self.idx.is_empty() {
             let mut child = self.offset + bounds.pos;
             while child > 0 {
-                self.idx[child] = self.idx[child] - 1;
+                self.idx[child] -= 1;
                 child = (child - 1) >> 1;
             }
-            self.idx[0] = self.idx[0] - 1;
+            self.idx[0] -= 1;
         }
     }
 }

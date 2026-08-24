@@ -1,4 +1,4 @@
-///! Traits extending the functionality of various pre-existing Pyo3 types
+//! Traits extending the functionality of various pre-existing Pyo3 types
 use pyo3::{
     PyTypeInfo,
     call::PyCallArgs,

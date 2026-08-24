@@ -20,7 +20,7 @@ pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Syn
         self.inner().bind(py)
     }
     #[inline(always)]
-    fn into_inner_bound<'py>(&self, py: Python<'py>) -> Bound<'py, Self::Wrapped> {
+    fn inner_into_bound<'py>(&self, py: Python<'py>) -> Bound<'py, Self::Wrapped> {
         self.inner().clone_ref(py).into_bound(py)
     }
     /// Extracts the inner type of `Self` from an arbitrary python object.\

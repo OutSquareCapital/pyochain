@@ -100,8 +100,10 @@ impl SortedCollection for SortedList {
             if indexes.stop <= indexes.start {
                 errors::not_in_list_err(&value)
             } else {
-                let mut bound = Pos::default();
-                bound.pos = bisect::left(&data.maxes, &value)?;
+                let mut bound = Pos {
+                    pos: bisect::left(&data.maxes, &value)?,
+                    idx: 0,
+                };
                 if bound.pos == data.maxes.len() {
                     errors::not_in_list_err(&value)
                 } else {
@@ -182,7 +184,7 @@ impl BaseSortedListSet for SortedList {
                 self.expand(py, &mut data, bound.pos)?;
             }
         }
-        data.len = data.len + 1;
+        data.len += 1;
         Ok(())
     }
 
@@ -252,7 +254,9 @@ impl BaseSortedList for SortedList {
         py: Python<'py>,
         inner: iter::BoundedIter<Self>,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        iter::SortedIter::new(py, inner)
+        iter::SortedIter::new(inner)
+            .into_bound(py)
+            .map(Bound::into_super)
     }
     fn expand(
         &self,
@@ -281,7 +285,7 @@ impl BaseSortedList for SortedList {
         bounds: &mut Pos,
     ) -> PyResult<()> {
         data.lists[bounds.pos].remove(bounds.idx);
-        data.len = data.len - 1;
+        data.len -= 1;
         match ops::Delete::new(&data.lists, self.get_load(), bounds) {
             ops::Delete::PosSupToLoad => {
                 let max_at_pos = data.lists[bounds.pos].last().unwrap().clone_ref(py);
@@ -291,7 +295,7 @@ impl BaseSortedList for SortedList {
                 if bounds.pos == 0 {
                     bounds.pos += 1;
                 }
-                let prev = (bounds.pos - 1) as usize;
+                let prev = bounds.pos - 1;
                 data.set_prev_from_removed(py, bounds, prev);
                 data.maxes[prev] = data.lists[prev].last().unwrap().clone_ref(py);
                 self.expand(py, data, prev)?

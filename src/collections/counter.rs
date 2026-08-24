@@ -362,11 +362,11 @@ impl PyoCounter {
                             if self.__getitem__(&e)?.eq(o.__getitem__(&e)?)? {
                                 continue;
                             } else {
-                                return Ok(false).map(Either::Left);
+                                return Ok(Either::Left(false));
                             }
                         }
                     }
-                    Ok(true).map(Either::Left)
+                    Ok(Either::Left(true))
 
                 },
                 Case::PyDict(d) => inner.eq(d).map(Either::Left),

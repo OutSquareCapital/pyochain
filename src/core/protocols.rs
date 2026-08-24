@@ -92,7 +92,7 @@ impl FromPyIter for PyoVec {
             match iterable {
                 CaseExact::PyList(list) => list.as_sequence().to_list()?,
                 CaseExact::Self(inner) => {
-                    inner.get().into_inner_bound(py).as_sequence().to_list()?
+                    inner.get().inner_into_bound(py).as_sequence().to_list()?
                 }
                 Case::PySequence(sequence) => sequence.to_list()?,
                 iterable => iterable.try_iter()?.try_collect_bound(py)?,
@@ -109,7 +109,7 @@ impl FromPyIter for Set {
                 CaseExact::PyFrozenSet(set) => set,
                 CaseExact::Self(inner) => inner
                     .get()
-                    .into_inner_bound(py)
+                    .inner_into_bound(py)
                     .into_iter()
                     .collect_bound(py)?,
                 any => any.try_iter()?.try_collect_bound(py)?,
@@ -126,7 +126,7 @@ impl FromPyIter for SetMut {
                 CaseExact::PySet(set) => set.into_iter().collect_bound(py)?,
                 CaseExact::Self(inner) => inner
                     .get()
-                    .into_inner_bound(py)
+                    .inner_into_bound(py)
                     .into_iter()
                     .collect_bound(py)?,
                 any => any.try_iter()?.try_collect_bound(py)?,
@@ -141,7 +141,7 @@ impl FromPyIter for collections::StableSet {
         try_cast_into! {
             match iterable {
                 CaseExact::PyDict(dict) => dict,
-                CaseExact::Self(inner) => inner.get().into_inner_bound(py),
+                CaseExact::Self(inner) => inner.get().inner_into_bound(py),
                 iterable => PyDict::from_keys(iterable, None)?,
             }
         }
@@ -202,7 +202,7 @@ impl FromPyArgs for Seq {
             match elements.len() {
                 1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
                     CaseExact::PyTuple(tuple) => tuple,
-                    CaseExact::Self(inner) => inner.get().into_inner_bound(py),
+                    CaseExact::Self(inner) => inner.get().inner_into_bound(py),
                     Case::PySequence(sequence) => sequence.to_tuple()?,
                     Case::PyIterable(iterable) => iterable
                         .try_iter()?
@@ -229,7 +229,7 @@ impl FromPyArgs for PyoVec {
             0 => PyList::empty(py),
             1 => try_cast_into! {match unsafe {elements.get_item_unchecked(0)} {
                 CaseExact::Self(inner) => {
-                    inner.get().into_inner_bound(py).as_sequence().to_list()?
+                    inner.get().inner_into_bound(py).as_sequence().to_list()?
                 }
                 Case::PySequence(sequence) => sequence.to_list()?,
                 Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
@@ -286,7 +286,7 @@ impl FromPyArgs for Set {
                 CaseExact::PyFrozenSet(set) => set,
                 CaseExact::Self(inner) => inner
                     .get()
-                    .into_inner_bound(py)
+                    .inner_into_bound(py)
                     .into_iter()
                     .collect_bound(py)?,
                 Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,
@@ -316,7 +316,7 @@ impl FromPyArgs for SetMut {
                 CaseExact::PySet(set) => set.into_iter().collect_bound(py)?,
                 CaseExact::Self(inner) => inner
                     .get()
-                    .into_inner_bound(py)
+                    .inner_into_bound(py)
                     .into_iter()
                     .collect_bound(py)?,
                 Case::PyIterable(iterable) => iterable.try_iter()?.try_collect_bound(py)?,

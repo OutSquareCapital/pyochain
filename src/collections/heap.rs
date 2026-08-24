@@ -37,7 +37,7 @@ impl IntoHeap<'_> {
             }
             Self::Vec(vec) => {
                 let py = vec.py();
-                let inner = vec.get().into_inner_bound(py);
+                let inner = vec.get().inner_into_bound(py);
                 func(&inner)?;
                 Ok(inner)
             }
@@ -134,7 +134,7 @@ trait HeapType: Sized + PyWrapper<Wrapped = PyList> {
     ) -> PyResult<Bound<'py, iterators::Iter>> {
         let py = others.py();
         let args = self
-            .into_inner_bound(py)
+            .inner_into_bound(py)
             .into_any()
             .pipe(std::iter::once)
             .chain(others.iter())

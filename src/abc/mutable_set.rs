@@ -112,5 +112,5 @@ fn new_pop_result<'py>(slf: &Bound<'py, PyAny>) -> PopResult<'py> {
             Some(Ok(v)) => PopResult::Ok(v),
             Some(Err(e)) => PopResult::Err(e),
         })
-        .unwrap_or_else(|e| PopResult::Err(e))
+        .unwrap_or_else(PopResult::Err)
 }

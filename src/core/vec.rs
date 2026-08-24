@@ -33,7 +33,7 @@ impl PyoVec {
         let name = slf.get_type().name()?;
 
         slf.get()
-            .into_inner_bound(py)
+            .inner_into_bound(py)
             .pipe(get_repr)
             .map(|repr| format!("{}({})", name, repr))
     }

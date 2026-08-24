@@ -1,7 +1,7 @@
-///! This module contains Python built-in functions and objects, as well as functions and objects from the `itertools` and `functools` modules.
-///! Each submodule declares a const string with the name of the module, and a const `PyOnceLock` + associated fn for each function or object that is imported from that module.
-///! This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
-///! We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
+//! This module contains Python built-in functions and objects, as well as functions and objects from the `itertools` and `functools` modules.\
+//! Each submodule declares a const string with the name of the module, and a const `PyOnceLock` + associated fn for each function or object that is imported from that module.\
+//! This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
+//! We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::{
     intern,
     prelude::*,
@@ -18,19 +18,19 @@ pub mod builtins {
     use pyo3::{call::PyCallArgs, ffi};
 
     const BUILTINS: &str = "builtins";
-    const ID: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const ABS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const MAX: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const MIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const SUM: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const ENUMERATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const MAP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const FILTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const SORTED: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const ZIP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ID: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ABS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static MAX: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static MIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static SUM: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ENUMERATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static MAP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static FILTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static SORTED: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ZIP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     /// Create a unique sentinel object. Equivalent to `object()` in Python. On >=3.15, this will become unneded thanks to the new sentinel builtin.
     #[inline(always)]
     pub fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
@@ -203,7 +203,7 @@ pub mod builtins {
 pub mod operator {
     use super::*;
     const OPERATOR: &str = "operator";
-    const ITEMGETTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ITEMGETTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
     #[inline(always)]
     pub fn itemgetter<'py>(py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
@@ -219,30 +219,30 @@ pub mod itertools {
     use super::*;
 
     const ITERTOOLS: &str = "itertools";
-    const ACCUMULATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const BATCHED: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const TEE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const GROUP_BY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const ZIP_LONGEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const FILTER_FALSE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const MAP_STAR: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const COUNT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const TAKE_WHILE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const DROP_WHILE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const COMBINATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const COMBINATIONS_WITH_REPLACEMENT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const COMPRESS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const CYCLE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const PAIRWISE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const PRODUCT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const PERMUTATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const ISLICE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ACCUMULATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static BATCHED: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static TEE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static GROUP_BY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ZIP_LONGEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static FILTER_FALSE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static MAP_STAR: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static COUNT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static TAKE_WHILE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static DROP_WHILE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static COMBINATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static COMBINATIONS_WITH_REPLACEMENT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static COMPRESS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static CYCLE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static PAIRWISE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static PRODUCT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static PERMUTATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ISLICE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
     /// `itertools::chain` class.
     pub mod chain {
 
         use super::*;
-        const CHAIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+        static CHAIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
         #[inline(always)]
         pub fn new<'py>(iterables: &Args<'py>) -> PyResult<Bound<'py, PyIterator>> {
@@ -500,7 +500,7 @@ pub mod itertools {
 pub mod functools {
     use super::*;
     const FUNCTOOLS: &str = "functools";
-    const REDUCE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static REDUCE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     #[inline(always)]
     pub fn reduce<'py>(
         function: &Bound<'py, PyAny>,
@@ -520,15 +520,15 @@ pub mod heapq {
 
     use super::*;
     const HEAPQ: &str = "heapq";
-    const MERGE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const NLARGEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const NSMALLEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const HEAPIFY_MAX: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const HEAPIFY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const HEAPPOP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const HEAPPUSH: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const HEAPPUSHPOP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const HEAPREPLACE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static MERGE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static NLARGEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static NSMALLEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static HEAPIFY_MAX: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static HEAPIFY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static HEAPPOP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static HEAPPUSH: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static HEAPPUSHPOP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static HEAPREPLACE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     #[inline(always)]
     pub fn merge<'py, A: PyCallArgs<'py>>(
         py: Python<'py>,

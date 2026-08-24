@@ -15,11 +15,11 @@ use tap::prelude::*;
 static NONE: PyOnceLock<Py<PyNull>> = PyOnceLock::new();
 /// Trait to check if a PyAny is the NONE singleton
 pub trait IsNull<'py> {
-    fn is_null(self) -> bool;
+    fn is_null(&self) -> bool;
 }
-impl IsNull<'_> for &Bound<'_, PyAny> {
+impl IsNull<'_> for Bound<'_, PyAny> {
     #[inline]
-    fn is_null(self) -> bool {
+    fn is_null(&self) -> bool {
         self.as_ptr()
             == NONE
                 .get(self.py())
@@ -32,7 +32,7 @@ impl IsNull<'_> for &Bound<'_, PyAny> {
 pub struct PyochainOption;
 
 impl PyochainOption {
-    pub fn new(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    pub fn dispatch(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = value.py();
         if value.is_none() {
             PyNull::get_any_ok(py)
@@ -78,7 +78,7 @@ impl OptionUnwrapError {
 pub struct PyochainOptionType;
 #[pyfunction(name = "option")]
 pub fn new_option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-    PyochainOption::new(value)
+    PyochainOption::dispatch(value)
 }
 
 #[pyfunction]

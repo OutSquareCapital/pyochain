@@ -172,8 +172,10 @@ impl SortedCollection for SortedKeyList {
                 errors::not_in_list_err(&value)
             } else {
                 let key = self.key.bind(py).call1((&value,))?;
-                let mut bound = Pos::default();
-                bound.pos = bisect::left(&data.maxes, &key)?;
+                let mut bound = Pos {
+                    pos: bisect::left(&data.maxes, &key)?,
+                    idx: Default::default(),
+                };
                 if bound.pos == data.maxes.len() {
                     errors::not_in_list_err(&value)
                 } else {
@@ -267,7 +269,7 @@ impl BaseSortedListSet for SortedKeyList {
                 self.expand(py, &mut data, bound.pos)?;
             }
         };
-        data.len = data.len + 1;
+        data.len += 1;
         Ok(())
     }
 
@@ -382,7 +384,9 @@ impl BaseSortedList for SortedKeyList {
         py: Python<'py>,
         inner: iter::BoundedIter<Self>,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        iter::SortedIterKey::new(py, inner)
+        iter::SortedIterKey::new(inner)
+            .into_bound(py)
+            .map(Bound::into_super)
     }
     fn delete(
         &self,
@@ -394,7 +398,7 @@ impl BaseSortedList for SortedKeyList {
 
         keys[bounds.pos].remove(bounds.idx);
         data.lists[bounds.pos].remove(bounds.idx);
-        data.len = data.len - 1;
+        data.len -= 1;
         match ops::Delete::new(&keys, self.get_load(), bounds) {
             ops::Delete::PosSupToLoad => {
                 let max_at_pos = keys[bounds.pos].last().unwrap().clone_ref(py);
@@ -406,7 +410,7 @@ impl BaseSortedList for SortedKeyList {
                 }
                 let prev = bounds.pos - 1;
                 let (left, right) = keys.split_at_mut(bounds.pos);
-                left[prev].extend(right[0].drain(..));
+                left[prev].append(&mut right[0]);
                 data.set_prev_from_removed(py, bounds, prev);
                 data.maxes[prev] = left[prev].last().unwrap().clone_ref(py);
                 keys.remove(bounds.pos);

@@ -86,7 +86,7 @@ impl BaseSortedSet for SortedKeySet {
     fn get_set(&self) -> &Py<PySet> {
         &self.set
     }
-    fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
+    fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
         let py = values.py();
         let list =
             SortedKeyList::from_vec(py, values.iter().map(Bound::unbind).collect(), &self.key)?;

@@ -62,7 +62,7 @@ impl BaseSortedSet for SortedSet {
     fn get_set(&self) -> &Py<PySet> {
         &self.set
     }
-    fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
+    fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
         let py = values.py();
         let list = SortedList::from_vec(py, values.iter().map(Bound::unbind).collect())?;
         Self::new(values, list).into_bound(py)
