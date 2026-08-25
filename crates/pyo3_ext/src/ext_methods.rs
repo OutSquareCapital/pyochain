@@ -6,7 +6,7 @@ use pyo3::{
     prelude::*,
     types::{
         PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator,
-        PyList, PyMapping, PyRange, PySequence, PySet, PyTuple,
+        PyList, PyMapping, PyRange, PySet, PyTuple,
     },
 };
 
@@ -31,40 +31,6 @@ impl ABCRegister<'_> for PyMutableSet {}
 impl ABCRegister<'_> for PyIterator {}
 impl ABCRegister<'_> for PyMappingView {}
 
-/// Trait for types that we know can safely be converted into a `PyIterator` (i.e. they implement the `__iter__` method in Python).
-pub trait IntoPyIterator<'py> {
-    fn iter_py(&self) -> Bound<'py, PyIterator>;
-}
-impl<'py> IntoPyIterator<'py> for Bound<'py, PyIterator> {
-    fn iter_py(&self) -> Bound<'py, PyIterator> {
-        self.to_owned()
-    }
-}
-macro_rules! impl_into_py_iterator_for_iterable {
-    ($($t:ty),* $(,)?) => {
-        $(
-            impl<'py> IntoPyIterator<'py> for Bound<'py, $t> {
-                /// Returns a `PyIterator` with `unwrap_unchecked`, as we know that the type implements `__iter__` and thus can be safely converted into a `PyIterator`.
-                fn iter_py(&self) -> Bound<'py, PyIterator> {
-                    unsafe { self.try_iter().unwrap_unchecked() }
-                }
-            }
-        )*
-    };
-}
-impl_into_py_iterator_for_iterable!(
-    PyTuple,
-    PyList,
-    PySet,
-    PyDict,
-    PyFrozenSet,
-    PyRange,
-    PyDeque,
-    PyDictKeys,
-    PyDictValues,
-    PyDictItems,
-    PySequence,
-);
 pub trait PySequenceExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
 
@@ -331,31 +297,3 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
         }
     }
 }
-pub trait TryFromPy: Sized + PyTypeInfo {
-    #[inline(always)]
-    fn try_from_py<'py, T: PyTypeInfo>(iterable: &Bound<'py, T>) -> PyResult<Bound<'py, Self>> {
-        Self::type_object(iterable.py())
-            .call1((iterable,))
-            .map(|t| unsafe { t.cast_into_unchecked::<Self>() })
-    }
-}
-pub trait TryIntoPy<'py> {
-    fn try_as_py<I: TryFromPy + PyTypeInfo>(&self) -> PyResult<Bound<'py, I>>;
-    fn try_into_py<I: TryFromPy + PyTypeInfo>(self) -> PyResult<Bound<'py, I>>;
-}
-impl<'py, T: Sized + PyTypeInfo> TryIntoPy<'py> for Bound<'py, T> {
-    #[inline(always)]
-    fn try_as_py<I: TryFromPy + PyTypeInfo>(&self) -> PyResult<Bound<'py, I>> {
-        I::try_from_py(self)
-    }
-    #[inline(always)]
-    fn try_into_py<I: TryFromPy + PyTypeInfo>(self) -> PyResult<Bound<'py, I>> {
-        I::try_from_py(&self)
-    }
-}
-impl TryFromPy for PyTuple {}
-impl TryFromPy for PyList {}
-impl TryFromPy for PySet {}
-impl TryFromPy for PyFrozenSet {}
-impl TryFromPy for PyDeque {}
-impl TryFromPy for PyDict {}

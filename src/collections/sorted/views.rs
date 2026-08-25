@@ -4,7 +4,7 @@ use pyo3::{
     prelude::*,
     types::{PyList, PySlice, PyTuple, PyType},
 };
-use pyo3_ext::iter::{CollectBoundIterator, TryCollectBoundIterator};
+use pyo3_ext::prelude::*;
 use pyochain_macros::{py_abc, try_cast_into};
 
 use crate::{

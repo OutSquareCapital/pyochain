@@ -3,7 +3,7 @@ use pyo3::{
     prelude::*,
     types::{PyList, PySlice, PySliceIndices, PyString},
 };
-use pyo3_ext::iter::CollectBoundIterator;
+use pyo3_ext::prelude::*;
 use std::cmp::Ordering;
 use tap::prelude::*;
 

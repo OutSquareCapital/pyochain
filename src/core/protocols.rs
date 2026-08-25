@@ -3,7 +3,7 @@ use pyo3::{
     prelude::*,
     types::{PyDict, PyFrozenSet, PyIterator, PyList, PyNone, PySet, PyTuple},
 };
-use pyo3_ext::{iter::CollectBoundIterator, prelude::*, types::PyIterable};
+use pyo3_ext::{prelude::*, types::PyIterable};
 use pyochain_macros::{py_abc, try_cast_into};
 use tap::Pipe;
 
@@ -57,7 +57,7 @@ macro_rules! impl_from_py_iter {
 
                 #[inline(always)]
                 fn from_iter<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, $T>> {
-                    iterable.try_as_py::<$wrapped>().and_then(Bound::into_pyochain)
+                    iterable.try_as::<$wrapped>().and_then(Bound::into_pyochain)
                 }
             }
         )*

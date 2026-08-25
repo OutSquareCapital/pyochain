@@ -1,8 +1,8 @@
 pub use super::args::{Args, ConcatWith, Concatenate, Kwargs};
+pub use super::conversions::{IntoPyIterator, TryFromPy, TryIntoPy};
 pub use super::ext_methods::{
-    ABCRegister, IntoPyIterator, PyDictExtConstructors, PyDictExtMethods, PyListExtMethods,
-    PyRangeExtMethods, PySequenceExtMethods, PySetExtMethods, PySetExtMethodsMut, TryFromPy,
-    TryIntoPy,
+    ABCRegister, PyDictExtConstructors, PyDictExtMethods, PyListExtMethods, PyRangeExtMethods,
+    PySequenceExtMethods, PySetExtMethods, PySetExtMethodsMut,
 };
 pub use super::iter::{CollectBoundIterator, TryCollectBoundIterator, TryFromBoundIterator};
 pub use super::pyany::PyAnyInPlaceMethods;
