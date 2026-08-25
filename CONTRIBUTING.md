@@ -155,7 +155,7 @@ uv run pydoclint pyochain/**/*.pyi
 If you need to fix a single lint rule for rust:
 
 ```shell
-uv run cargo clippy --fix --allow-dirty --workspace -- -A clippy::all -W clippy::<rule_name>
+uv run cargo clippy --fix --allow-dirty --workspace -- -W clippy::<rule_name>
 ```
 
 ### tests
