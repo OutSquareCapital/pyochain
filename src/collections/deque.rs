@@ -252,7 +252,7 @@ impl Deque {
     }
     #[pyo3(signature = (n=1))]
     fn rotate(slf: Bound<'_, Self>, n: isize) -> PyResult<Bound<'_, Self>> {
-        slf.get().inner_bind(slf.py()).rotate(n).map(|_| slf)
+        slf.get().inner_bind(slf.py()).rotate(n).map(|()| slf)
     }
 
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {

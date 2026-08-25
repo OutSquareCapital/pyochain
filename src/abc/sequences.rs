@@ -138,7 +138,7 @@ impl PyoMutableSequence {
     fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
         loop {
             match slf.del_item(0) {
-                Ok(_) => continue,
+                Ok(()) => continue,
                 Err(err) => {
                     if err.is_instance_of::<PyIndexError>(slf.py()) {
                         return Ok(());

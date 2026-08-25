@@ -35,7 +35,7 @@ impl SortedList {
     #[inline]
     pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
         let new_inst = Self::new();
-        new_inst.update(py, values).map(|_| new_inst)
+        new_inst.update(py, values).map(|()| new_inst)
     }
 }
 #[pymethods]

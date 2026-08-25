@@ -45,7 +45,7 @@ impl SortedKeyList {
         key: &Py<PyAny>,
     ) -> PyResult<Self> {
         let new_inst = Self::new(key.clone_ref(py));
-        new_inst.update(py, values).map(|_| new_inst)
+        new_inst.update(py, values).map(|()| new_inst)
     }
 }
 #[pymethods]

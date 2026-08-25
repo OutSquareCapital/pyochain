@@ -711,8 +711,8 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     }
     fn __isub__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<()> {
         slf.get()
-            .difference_update(slf.py(), IntoUpdate::from_any(other))
-            .map(|_| ())
+            .difference_update(slf.py(), IntoUpdate::from_any(other))?;
+        Ok(())
     }
 
     fn __and__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -725,7 +725,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __iand__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
         slf.get()
             .intersection_update(slf.py(), (other,))
-            .map(|_| ())
+            .map(|()| ())
     }
 
     fn __ior__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<()> {
@@ -805,7 +805,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     ) -> PyResult<Bound<'py, Self>> {
         slf.get()
             .intersection_update(slf.py(), iterables)
-            .map(|_| slf)
+            .map(|()| slf)
     }
 
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -847,7 +847,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     ) -> PyResult<Bound<'py, Self>> {
         slf.get()
             .update(slf.py(), IntoUpdate::Tuple(iterables))
-            .map(|_| slf)
+            .map(|()| slf)
     }
 }
 pub(super) enum IntoUpdate<'py> {
