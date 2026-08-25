@@ -1,13 +1,9 @@
 use pyo3::{
-    PyClass, intern,
+    PyClass,
     prelude::*,
-    types::{PyDict, PyFrozenSet, PyIterator, PyList, PyMapping, PyNone, PySet, PyTuple},
+    types::{PyDict, PyFrozenSet, PyIterator, PyList, PyNone, PySet, PyTuple},
 };
-use pyo3_ext::{
-    iter::CollectBoundIterator,
-    prelude::{IntoPyIterator, PyDictExtConstructors, PyExtConstructors},
-    types::PyIterable,
-};
+use pyo3_ext::{iter::CollectBoundIterator, prelude::*, types::PyIterable};
 use pyochain_macros::{py_abc, try_cast_into};
 use tap::Pipe;
 
@@ -30,7 +26,7 @@ pub struct FlexibleInit;
 pub trait FromPyIter: Sized {
     #[pyo3(signature = (iterable, /))]
     #[staticmethod]
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>>;
+    fn from_iter<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>>;
 }
 #[py_abc(Seq, PyoVec, Set, SetMut, collections::StableSet, iterators::Iter)]
 pub trait FromPyArgs: Sized + PyClass + FromPyIter {
@@ -54,39 +50,28 @@ pub trait FromPyKwargs: Sized + PyClass + FromPyIter {
     #[pyo3(signature = (**kwargs))]
     fn of<'py>(py: Python<'py>, kwargs: Option<Bound<'py, PyDict>>) -> PyResult<Bound<'py, Self>>;
 }
-impl FromPyIter for Dict {
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        into_dict(iterable).and_then(Bound::into_pyochain)
-    }
+macro_rules! impl_from_py_iter {
+    ($($wrapped:ty => $T:ty),* $(,)?) => {
+        $(
+            impl FromPyIter for $T {
+
+                #[inline(always)]
+                fn from_iter<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, $T>> {
+                    iterable.try_as_py::<$wrapped>().and_then(Bound::into_pyochain)
+                }
+            }
+        )*
+    };
 }
+impl_from_py_iter!(PyDict => Dict, PyTuple => Seq, PyList => PyoVec, PyFrozenSet => Set, PySet => SetMut);
 impl FromPyIter for iterators::Iter {
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+    fn from_iter<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         iterable.try_iter().and_then(Bound::into_pyochain)
     }
 }
-impl FromPyIter for Seq {
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        PyTuple::from_iterable(&iterable).and_then(Bound::into_pyochain)
-    }
-}
-impl FromPyIter for PyoVec {
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        PyList::from_iterable(&iterable).and_then(Bound::into_pyochain)
-    }
-}
-impl FromPyIter for Set {
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        PyFrozenSet::from_iterable(&iterable).and_then(Bound::into_pyochain)
-    }
-}
-impl FromPyIter for SetMut {
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        PySet::from_iterable(&iterable).and_then(Bound::into_pyochain)
-    }
-}
 impl FromPyIter for collections::StableSet {
-    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-        PyDict::from_keys(&iterable)?
+    fn from_iter<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        PyDict::from_keys(iterable)?
             .unbind()
             .pipe(Self)
             .into_bound(iterable.py())
@@ -101,9 +86,9 @@ impl FromPyKwargs for Dict {
         match (iterable, kwargs) {
             (None, None) => PyDict::new(py),
             (None, Some(kw)) => kw,
-            (Some(iterable), None) => into_dict(iterable)?,
+            (Some(iterable), None) => iterable.try_into_py()?,
             (Some(iterable), Some(kw)) => {
-                let dict = into_dict(iterable)?;
+                let dict = PyDict::try_from_py(&iterable)?;
                 dict.update(kw.as_mapping())?;
                 dict
             }
@@ -144,7 +129,7 @@ impl FromPyArgs for Seq {
             match elements.len() {
                 1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
                     CaseExact::Self(inner) => inner.get().inner_into_bound(py),
-                    Case::PyIterable(iterable) => PyTuple::from_iterable(&iterable)?,
+                    Case::PyIterable(iterable) => iterable.try_into_py()?,
                     any => PyTuple::new(py, [any])?,
                 }},
                 _ => elements,
@@ -165,7 +150,7 @@ impl FromPyArgs for PyoVec {
         match elements.len() {
             0 => PyList::empty(py),
             1 => try_cast_into! {match unsafe {elements.get_item_unchecked(0)} {
-                Case::PyIterable(iterable) => PyList::from_iterable(&iterable)?,
+                Case::PyIterable(iterable) => iterable.try_into_py()?,
                 any => PyList::new(py, [any])?,
             }},
             _ => elements.to_list(),
@@ -216,7 +201,7 @@ impl FromPyArgs for Set {
             0 => PyFrozenSet::empty(py)?,
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
                 CaseExact::Self(inner) => inner.get().inner_into_bound(py),
-                Case::PyIterable(iterable) => PyFrozenSet::from_iterable(&iterable)?,
+                Case::PyIterable(iterable) => iterable.try_into_py()?,
                 any => [any].into_iter().collect_bound(py)?,
             }},
             _ => elements.into_iter().collect_bound::<PyFrozenSet>(py)?,
@@ -240,7 +225,7 @@ impl FromPyArgs for SetMut {
         match elements.len() {
             0 => PySet::empty(py)?,
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                Case::PyIterable(iterable) => PySet::from_iterable(&iterable)?,
+                Case::PyIterable(iterable) => iterable.try_into_py()?,
                 any => PySet::new(py, [any])?,
             }},
             _ => elements.into_iter().collect_bound::<PySet>(py)?,
@@ -256,24 +241,5 @@ impl FromPyArgs for SetMut {
             .into_iter()
             .collect_bound::<PySet>(py)?
             .into_pyochain()
-    }
-}
-
-#[inline]
-fn into_dict<'py>(obj: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
-    let py = obj.py();
-    try_cast_into! {
-        match obj {
-            Case::PyDict(dict) => Ok(dict),
-            Case::PyMapping(mapping) => PyDict::from_mapping(mapping),
-            supports_keys
-                if supports_keys.hasattr(intern!(py, "__getitem__"))?
-                    && supports_keys.hasattr(intern!(py, "keys"))? =>
-            {
-                unsafe { supports_keys.cast_into_unchecked::<PyMapping>() }
-                    .pipe(PyDict::from_mapping)
-            }
-            iterable => iterable.as_any().pipe(PyDict::from_sequence),
-        }
     }
 }
