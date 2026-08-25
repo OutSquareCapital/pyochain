@@ -193,7 +193,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
             _ => {
                 bounds.set_from_pos(index, &mut data)?;
             }
-        };
+        }
         let val = data.get_value(&bounds).clone_ref(py);
         self.delete(py, &mut data, &mut bounds)?;
         Ok(val.into_bound(py))
@@ -518,7 +518,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             for value in values.iter().map(Bound::unbind) {
                 self.add(py, value)?;
             }
-        };
+        }
         Ok(())
     }
     #[skip]
@@ -565,7 +565,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values {
-                self.discard(value)?
+                self.discard(value)?;
             }
         }
         Ok(())
@@ -603,7 +603,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
                 self.get_set().bind(py).remove(&value)?;
                 self.get_list().get().delitem_from_int(py, int)?;
             }
-        };
+        }
         Ok(())
     }
 
@@ -786,7 +786,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values {
-                slf_ref.discard(value)?
+                slf_ref.discard(value)?;
             }
         }
         Ok(slf)

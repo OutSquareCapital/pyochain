@@ -170,7 +170,7 @@ fn drop_mut_and_ref_from_pattern(inputs: &mut Punctuated<FnArg, Comma>) {
         .for_each(|pattern| {
             pattern.mutability = None;
             pattern.by_ref = None;
-        })
+        });
 }
 #[derive(Default)]
 struct Classifier {

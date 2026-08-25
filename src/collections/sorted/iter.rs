@@ -28,7 +28,7 @@ impl<T: BaseSortedList> BoundedIter<T> {
     pub fn full(owner: Py<T>, dir: Dir) -> Self {
         let data = owner.get().get_data();
         let last = data.lists.len().saturating_sub(1);
-        let bounds = Bounds::new(0, 0, last, data.lists.last().map_or(0, |x| x.len()));
+        let bounds = Bounds::new(0, 0, last, data.lists.last().map_or(0, Vec::len));
         drop(data);
         Self::new(owner, bounds, dir)
     }

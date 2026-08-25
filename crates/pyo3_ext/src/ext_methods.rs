@@ -242,7 +242,7 @@ impl PyDictExtConstructors for PyDict {
     }
     fn from_mapping(mapping: Bound<'_, PyMapping>) -> PyResult<Bound<'_, Self>> {
         let dict = PyDict::new(mapping.py());
-        dict.update(&mapping).map(|_| dict)
+        dict.update(&mapping).map(|()| dict)
     }
 }
 fn fromkeys<'py, A: PyCallArgs<'py>>(py: Python<'py>, args: A) -> PyResult<Bound<'py, PyDict>> {
@@ -290,7 +290,7 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
     /// If the *key* is missing, return `None`.
     fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>> {
         let mut result = core::ptr::null_mut();
-        match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &mut result) } {
+        match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &raw mut result) } {
             1 => Ok(Some(unsafe { Bound::from_owned_ptr(self.py(), result) })),
             0 => Ok(None),
             // Return code is -1 here, hence error
@@ -301,7 +301,7 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
     /// Raise `KeyError` if the *key* is missing, just like python's `dict.pop(key)` method.\
     fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PopResult<'py> {
         let mut result = core::ptr::null_mut();
-        match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &mut result) } {
+        match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &raw mut result) } {
             1 => PopResult::Ok(unsafe { Bound::from_owned_ptr(self.py(), result) }),
             0 => PopResult::KeyMissing,
             // Return code is -1 here, hence error

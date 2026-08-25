@@ -787,7 +787,7 @@ impl OnceWith {
         Self {
             func: func.unbind(),
             args: args.unbind(),
-            kwargs: kwargs.map(|k| k.unbind()),
+            kwargs: kwargs.map(Bound::unbind),
             yielded: false,
         }
     }
@@ -822,7 +822,7 @@ impl Tail {
             1 => iterator
                 .last()
                 .into_iter()
-                .map(|item| item.map(|i| i.unbind()))
+                .map(|item| item.map(Bound::unbind))
                 .collect(),
             _ => {
                 // Skip the starting part of the iterator if possible.
@@ -830,7 +830,7 @@ impl Tail {
                 let mut iter = iterator
                     .fuse()
                     .skip(low.saturating_sub(n))
-                    .map(|item| item.map(|i| i.unbind()));
+                    .map(|item| item.map(Bound::unbind));
                 // TODO: If VecDeque has a more efficient method than
                 // `.pop_front();.push_back(val)` in the future then maybe revisit this.
                 let mut data = iter.by_ref().take(n).collect::<Vec<_>>();

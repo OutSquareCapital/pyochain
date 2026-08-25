@@ -239,12 +239,12 @@ impl PyoCounter {
             let other_count = o.__getitem__(&elem)?;
             let newcount = pylibs::builtins::max_of(py, (&count, &other_count))?;
             if newcount.gt(0)? {
-                result.set_item(elem, newcount)?
+                result.set_item(elem, newcount)?;
             }
         }
         for (elem, count) in other.get().inner_bind(other.py()).iter() {
             if !inner.contains(&elem)? && count.gt(0)? {
-                result.set_item(elem, count)?
+                result.set_item(elem, count)?;
             }
         }
         Self::wrap(result)
@@ -268,7 +268,7 @@ impl PyoCounter {
         let result = PyDict::new(py);
         for (elem, count) in self.inner_bind(py).iter() {
             if count.gt(0)? {
-                result.set_item(elem, count)?
+                result.set_item(elem, count)?;
             }
         }
         Self::wrap(result)
@@ -337,11 +337,11 @@ impl PyoCounter {
         let inner = self.inner_bind(py);
         for (elem, count) in inner.iter() {
             let new_item = pylibs::builtins::abs(&count.sub(o.__getitem__(&elem)?)?)?;
-            inner.set_item(elem, new_item)?
+            inner.set_item(elem, new_item)?;
         }
         for (elem, count) in other.get().inner_bind(py).iter() {
             if !inner.contains(&elem)? {
-                inner.set_item(elem, pylibs::builtins::abs(&count)?)?
+                inner.set_item(elem, pylibs::builtins::abs(&count)?)?;
             }
         }
         keep_positive(inner)
@@ -431,12 +431,12 @@ impl PyoCounter {
         for (elem, count) in inner.iter() {
             let newcount = pylibs::builtins::abs(&count.sub(o.__getitem__(&elem)?)?)?;
             if newcount.is_truthy()? {
-                result.set_item(elem, newcount)?
+                result.set_item(elem, newcount)?;
             }
         }
         for (elem, count) in other.get().inner_bind(py).iter() {
             if !inner.contains(&elem)? && count.is_truthy()? {
-                result.set_item(elem, pylibs::builtins::abs(&count)?)?
+                result.set_item(elem, pylibs::builtins::abs(&count)?)?;
             }
         }
         Self::wrap(result)
@@ -475,8 +475,8 @@ fn update_counter(
                     for tup in mapping.items()?.try_iter()?.map(extract_tup_from_item) {
                         let (elem, count) = tup?;
                         let new_item =
-                            count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
-                        inner.set_item(elem, new_item)?
+                            count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.clone()))?;
+                        inner.set_item(elem, new_item)?;
                     }
                 }
 
@@ -485,10 +485,7 @@ fn update_counter(
             IntoUpdate::Iterable(it) => {
                 for elem in it.try_iter()? {
                     let e = elem?;
-                    let new_item = inner
-                        .get_item(&e)?
-                        .unwrap_or_else(|| zero.to_owned())
-                        .add(1)?;
+                    let new_item = inner.get_item(&e)?.unwrap_or_else(|| zero.clone()).add(1)?;
                     inner.set_item(&e, new_item)?;
                 }
 
@@ -514,7 +511,7 @@ fn update_dict(
     } else {
         for (elem, count) in dict.iter() {
             let new_item = count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
-            inner.set_item(elem, new_item)?
+            inner.set_item(elem, new_item)?;
         }
         Ok(())
     }
@@ -535,9 +532,9 @@ fn subtract_counter(
                     let (elem, count) = tup?;
                     let new_item = inner
                         .get_item(&elem)?
-                        .unwrap_or_else(|| zero.to_owned())
+                        .unwrap_or_else(|| zero.clone())
                         .sub(count)?;
-                    inner.set_item(elem, new_item)?
+                    inner.set_item(elem, new_item)?;
                 }
 
                 Ok(())
@@ -545,11 +542,8 @@ fn subtract_counter(
             IntoUpdate::Iterable(it) => {
                 for elem in it.try_iter()? {
                     let e = elem?;
-                    let new_item = inner
-                        .get_item(&e)?
-                        .unwrap_or_else(|| zero.to_owned())
-                        .sub(1)?;
-                    inner.set_item(&e, new_item)?
+                    let new_item = inner.get_item(&e)?.unwrap_or_else(|| zero.clone()).sub(1)?;
+                    inner.set_item(&e, new_item)?;
                 }
                 Ok(())
             }
@@ -572,7 +566,7 @@ fn subtract_dict(
             .get_item(&elem)?
             .unwrap_or_else(|| zero.to_owned())
             .sub(count)?;
-        inner.set_item(elem, new_item)?
+        inner.set_item(elem, new_item)?;
     }
     Ok(())
 }

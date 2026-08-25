@@ -81,7 +81,7 @@ impl PyWrapper for SliceView {
         &self.inner
     }
 }
-/// Trait to convert a `Bound` of a Python type into a `Bound` of a PyoChain type, with the same underlying data.\
+/// Trait to convert a `Bound` of a Python type into a `Bound` of a `PyoChain` type, with the same underlying data.\
 /// Useful for no-copy conversions, when the type is known at compile time.\
 /// For example, this avoid checking the type of a `PyTuple` at runtime to convert it into a `Seq`.
 pub trait IntoPyochain<'py, T: PyTypeInfo + IntoInit> {

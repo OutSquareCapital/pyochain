@@ -46,7 +46,7 @@ impl SortedList {
         let data = Self::new();
         if let Some(values) = iterable {
             data.py_update(&values)?;
-        };
+        }
 
         data.init().pipe(Ok)
     }
@@ -72,7 +72,7 @@ impl SortedCollection for SortedList {
             .map(|tup| (Self::type_object(py), tup))
     }
     fn clear(&self, _py: Python<'_>) {
-        self.get_data().clear()
+        self.get_data().clear();
     }
 
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
@@ -290,7 +290,7 @@ impl BaseSortedList for SortedList {
         match ops::Delete::new(&data.lists, self.get_load(), bounds) {
             ops::Delete::PosSupToLoad => {
                 let max_at_pos = data.lists[bounds.pos].last().unwrap().clone_ref(py);
-                data.delete_on_idx(bounds, max_at_pos)
+                data.delete_on_idx(bounds, max_at_pos);
             }
             ops::Delete::DataLenGTOne => {
                 if bounds.pos == 0 {
@@ -299,13 +299,13 @@ impl BaseSortedList for SortedList {
                 let prev = bounds.pos - 1;
                 data.set_prev_from_removed(py, bounds, prev);
                 data.maxes[prev] = data.lists[prev].last().unwrap().clone_ref(py);
-                self.expand(py, data, prev)?
+                self.expand(py, data, prev)?;
             }
             ops::Delete::LenPosNotZero => {
-                data.maxes[bounds.pos] = data.lists[bounds.pos].last().unwrap().clone_ref(py)
+                data.maxes[bounds.pos] = data.lists[bounds.pos].last().unwrap().clone_ref(py);
             }
             ops::Delete::Other => data.remove_pos(bounds),
-        };
+        }
         Ok(())
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
@@ -347,7 +347,7 @@ impl BaseSortedList for SortedList {
                 values = data.collapse(py);
                 values.sort_by(|a, b| py_cmp(py, a, b));
                 data.clear();
-                finalize_update(load, py, values, &mut data)
+                finalize_update(load, py, values, &mut data);
             }
             ops::Update::OtherLTSelf => {
                 drop(data);
@@ -355,7 +355,7 @@ impl BaseSortedList for SortedList {
                     self.add(py, val)?;
                 }
             }
-        };
+        }
         Ok(())
     }
 }

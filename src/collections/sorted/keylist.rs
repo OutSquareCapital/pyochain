@@ -266,7 +266,7 @@ impl BaseSortedListSet for SortedKeyList {
                 drop(keys);
                 self.expand(py, &mut data, bound.pos)?;
             }
-        };
+        }
         data.len += 1;
         Ok(())
     }
@@ -338,7 +338,7 @@ impl BaseSortedListSet for SortedKeyList {
                             return errors::not_in_list_err(value);
                         }
                         len_sublist = keys[bound.pos].len();
-                        bound.idx = 0
+                        bound.idx = 0;
                     }
                 }
                 Ok(())
@@ -398,11 +398,11 @@ impl BaseSortedList for SortedKeyList {
         match ops::Delete::new(&keys, self.get_load(), bounds) {
             ops::Delete::PosSupToLoad => {
                 let max_at_pos = keys[bounds.pos].last().unwrap().clone_ref(py);
-                data.delete_on_idx(bounds, max_at_pos)
+                data.delete_on_idx(bounds, max_at_pos);
             }
             ops::Delete::DataLenGTOne => {
                 if bounds.pos == 0 {
-                    bounds.pos += 1
+                    bounds.pos += 1;
                 }
                 let prev = bounds.pos - 1;
                 let (left, right) = keys.split_at_mut(bounds.pos);
@@ -411,16 +411,16 @@ impl BaseSortedList for SortedKeyList {
                 data.maxes[prev] = left[prev].last().unwrap().clone_ref(py);
                 keys.remove(bounds.pos);
                 drop(keys);
-                self.expand(py, data, prev)?
+                self.expand(py, data, prev)?;
             }
             ops::Delete::LenPosNotZero => {
-                data.maxes[bounds.pos] = keys[bounds.pos].last().unwrap().clone_ref(py)
+                data.maxes[bounds.pos] = keys[bounds.pos].last().unwrap().clone_ref(py);
             }
             ops::Delete::Other => {
                 data.remove_pos(bounds);
                 keys.remove(bounds.pos);
             }
-        };
+        }
         Ok(())
     }
     fn expand(

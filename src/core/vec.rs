@@ -211,7 +211,7 @@ impl PyoVec {
     }
 
     pub fn clear(&self, py: Python<'_>) {
-        self.inner_bind(py).clear()
+        self.inner_bind(py).clear();
     }
 
     fn reverse(slf: Bound<'_, Self>) -> PyResult<()> {

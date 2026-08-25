@@ -13,7 +13,7 @@ use tap::prelude::*;
 
 /// Singleton for NONE - initialized once per Python interpreter
 static NONE: PyOnceLock<Py<PyNull>> = PyOnceLock::new();
-/// Trait to check if a PyAny is the NONE singleton
+/// Trait to check if a `PyAny` is the NONE singleton
 pub trait IsNull<'py> {
     fn is_null(&self) -> bool;
 }
@@ -386,13 +386,12 @@ pub struct PyNull;
 impl PyNull {
     /// Called once on import to initialize the NONE singleton for the interpreter
     pub fn init(py: Python<'_>) -> PyResult<()> {
-        match NONE.get(py) {
-            Some(_) => Ok(()),
-            None => {
-                NONE.set(py, Py::new(py, Self)?)
-                    .expect("NONE singleton should only be initialized once per interpreter");
-                Ok(())
-            }
+        if NONE.get(py).is_some() {
+            Ok(())
+        } else {
+            NONE.set(py, Py::new(py, Self)?)
+                .expect("NONE singleton should only be initialized once per interpreter");
+            Ok(())
         }
     }
 

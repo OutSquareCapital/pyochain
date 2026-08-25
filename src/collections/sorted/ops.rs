@@ -84,12 +84,10 @@ impl Update {
     pub fn new<T, U>(maxes: &[T], length: usize, values: &[U]) -> Self {
         if maxes.is_empty() {
             Self::EmptyMaxes
+        } else if values.len() * 4 >= length {
+            Self::OtherGESelf
         } else {
-            if values.len() * 4 >= length {
-                Self::OtherGESelf
-            } else {
-                Self::OtherLTSelf
-            }
+            Self::OtherLTSelf
         }
     }
 }

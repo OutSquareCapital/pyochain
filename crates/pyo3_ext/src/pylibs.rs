@@ -147,6 +147,7 @@ pub mod builtins {
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
+    #[must_use]
     pub fn reversed<'py>(sequence: &Bound<'py, PyAny>) -> Bound<'py, PyIterator> {
         unsafe {
             ffi::PyObject_CallOneArg(

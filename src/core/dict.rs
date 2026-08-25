@@ -154,7 +154,7 @@ impl Dict {
     }
 
     fn clear(slf: Bound<'_, Self>) {
-        slf.get().inner_bind(slf.py()).clear()
+        slf.get().inner_bind(slf.py()).clear();
     }
     #[pyo3(signature = (m=None, /, **kwargs))]
     fn update(

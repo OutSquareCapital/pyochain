@@ -74,7 +74,7 @@ impl Pos {
                     pos = child + 1;
                 }
 
-                child = (pos << 1) + 1
+                child = (pos << 1) + 1;
             }
             pos
         });
@@ -229,8 +229,8 @@ impl Bounds {
                     bounds.max.pos = data.lists.len() - 1;
                     bounds.max.idx = data.lists.last().unwrap().len();
                 } else {
-                    bounds.max.set_from_pos(indices.stop, data)?
-                };
+                    bounds.max.set_from_pos(indices.stop, data)?;
+                }
 
                 Ok(Some(bounds))
             }

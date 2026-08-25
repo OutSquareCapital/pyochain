@@ -104,18 +104,13 @@ fn run_checks(py: Python<'_>, data: &impl SortedListGetters) -> PyResult<()> {
     (lst_data.maxes.len() == lst_data.lists.len())
         .then_some(())
         .ok_or(err("Maxes and lists must have the same length"))?;
-    (lst_data.len
-        == lst_data
-            .lists
-            .iter()
-            .map(|sublist| sublist.len())
-            .sum::<usize>())
-    .then_some(())
-    .ok_or(err("Data length mismatch"))?;
+    (lst_data.len == lst_data.lists.iter().map(Vec::len).sum::<usize>())
+        .then_some(())
+        .ok_or(err("Data length mismatch"))?;
 
     // Check all sublists are sorted.
 
-    for sublist in lst_data.lists.iter() {
+    for sublist in &lst_data.lists {
         for pos in 1..sublist.len() {
             (sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?)
                 .then_some(())
@@ -208,14 +203,7 @@ fn run_key_checks(py: Python<'_>, data: &SortedKeyList) -> PyResult<()> {
     let key_fn = data.key.bind(py);
     pyassert!(load >= 4);
     pyassert!(lst_data.maxes.len() == lst_data.lists.len() && lst_data.lists.len() == keys.len());
-    pyassert!(
-        lst_data.len
-            == lst_data
-                .lists
-                .iter()
-                .map(|sublist| sublist.len())
-                .sum::<usize>()
-    );
+    pyassert!(lst_data.len == lst_data.lists.iter().map(Vec::len).sum::<usize>());
 
     // Check all sublists are sorted.
 
@@ -295,7 +283,7 @@ fn run_key_checks(py: Python<'_>, data: &SortedKeyList) -> PyResult<()> {
                 pyassert!(&child_sum == lst_data.idx.index(pos));
             }
         }
-    };
+    }
     Ok(())
 }
 
@@ -306,7 +294,7 @@ fn show_key_list(py: Python<'_>, err: &PyErr, data: &SortedKeyList) {
         format!("len_keys: {}", keys.len()),
         format!("keys: {keys:?}"),
     ];
-    err.add_note(py, infos.join("\n")).unwrap()
+    err.add_note(py, infos.join("\n")).unwrap();
 }
 fn show_list(py: Python<'_>, err: &PyErr, data: &impl SortedListGetters) {
     let lst_data = data.get_data();
@@ -323,5 +311,5 @@ fn show_list(py: Python<'_>, err: &PyErr, data: &impl SortedListGetters) {
     ]
     .join("\n");
 
-    err.add_note(py, infos).unwrap()
+    err.add_note(py, infos).unwrap();
 }

@@ -433,7 +433,7 @@ impl PyoIterator {
                         return left.lt(&right);
                     }
                 }
-                (None, None) | (None, Some(_)) => return Ok(true),
+                (None, None | Some(_)) => return Ok(true),
                 (Some(_), None) => return Ok(false),
             }
         }
@@ -450,7 +450,7 @@ impl PyoIterator {
                         return left.lt(&right);
                     }
                 }
-                (None, None) | (Some(_), None) => return Ok(false),
+                (None | Some(_), None) => return Ok(false),
                 (None, Some(_)) => return Ok(true),
             }
         }
@@ -484,7 +484,7 @@ impl PyoIterator {
                         return left.gt(&right);
                     }
                 }
-                (None, None) | (Some(_), None) => return Ok(true),
+                (None | Some(_), None) => return Ok(true),
                 (None, Some(_)) => return Ok(false),
             }
         }
@@ -643,7 +643,7 @@ impl PyoIterator {
                 .map(PyoOk::new)?
                 .into_py_any(py),
             Some(first_val) => {
-                let mut accumulator = first_val?.to_owned().unbind();
+                let mut accumulator = first_val?.clone().unbind();
 
                 for item in slf {
                     let val = item?;

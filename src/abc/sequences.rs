@@ -76,7 +76,7 @@ impl PyoSequence {
                 Ok(_) => i += 1,
                 Err(err) if err.is_instance_of::<PyIndexError>(py) => break,
                 Err(err) => return Err(err),
-            };
+            }
         }
 
         Err(PyValueError::new_err(""))

@@ -228,7 +228,7 @@ impl ListsData {
     ///     2: [6, 7, 8, 9]
     ///     3: [10, 11, 12, 13, 14]
     /// The first transformation maps the sub-lists by their length.\
-    /// The first row of the index is the length of the sub-lists::
+    /// The first row of the index is the length of the `sub-lists::`
     ///     0: [3, 2, 4, 5]
     /// Each row after that is the sum of consecutive pairs of the previous row:
     ///     1: [5, 9]
@@ -239,7 +239,7 @@ impl ListsData {
     ///     _offset = 3
     /// When built, the index can be used for efficient indexing into the list.
     pub(crate) fn build_index(&mut self) -> PyResult<()> {
-        let row0 = self.lists.iter().map(|x| x.len()).collect::<Vec<usize>>();
+        let row0 = self.lists.iter().map(Vec::len).collect::<Vec<usize>>();
 
         if row0.len() == 1 {
             self.idx.extend(row0);
