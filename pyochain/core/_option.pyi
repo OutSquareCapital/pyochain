@@ -77,6 +77,9 @@ class OptionType[T](Pipe, Protocol):
 
         Use `Option::{is_some, is_none, filter, map_if, or_else}`, and others alike for combining control flow with `Option` values.
 
+        Returns:
+            Never: Always raises `TypeError`.
+
         Example:
             ```python
             from pyochain import Some
@@ -123,7 +126,7 @@ class OptionType[T](Pipe, Protocol):
         Equivalent to `Option.and_then(lambda x: x)`.
 
         Returns:
-            Option[U]: The flattened option.
+            Option[T1]: The flattened option.
 
         Example:
             ```python

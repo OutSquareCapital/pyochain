@@ -710,7 +710,7 @@ class ResultType[T, E](Pipe, Protocol):
         This function can be used for control flow based on `Result` values.
 
         Args:
-            fn (Callable[Concatenate[T1, P], Result[R, E1]]): The function to call with the `Ok` value.
+            fn (Callable[Concatenate[T1, P], Result[R, E1]] | type[ResultType[Any, Any]]): The function to call with the `Ok` value.
             *args (P.args): Additional positional arguments to pass to fn.
             **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 

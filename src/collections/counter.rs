@@ -50,16 +50,13 @@ impl PyoCounter {
 
     fn __getitem__<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         let py = key.py();
-        match self.inner_bind(py).as_any().get_item(key) {
-            Ok(value) => Ok(value),
-            Err(err) => {
-                if err.matches(py, PyKeyError::type_object(py))? {
-                    Ok(PyInt::new(py, 0).into_any())
-                } else {
-                    Err(err)
-                }
+        self.inner_bind(py).as_any().get_item(key).or_else(|err| {
+            if err.matches(py, PyKeyError::type_object(py))? {
+                Ok(PyInt::new(py, 0).into_any())
+            } else {
+                Err(err)
             }
-        }
+        })
     }
 
     fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyInt>) -> PyResult<()> {
