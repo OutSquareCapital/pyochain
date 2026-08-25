@@ -331,15 +331,31 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
         }
     }
 }
-pub trait PyExtConstructors: Sized + PyTypeInfo {
-    fn from_iterable<'py, T: PyTypeInfo>(iterable: &Bound<'py, T>) -> PyResult<Bound<'py, Self>> {
+pub trait TryFromPy: Sized + PyTypeInfo {
+    #[inline(always)]
+    fn try_from_py<'py, T: PyTypeInfo>(iterable: &Bound<'py, T>) -> PyResult<Bound<'py, Self>> {
         Self::type_object(iterable.py())
             .call1((iterable,))
             .map(|t| unsafe { t.cast_into_unchecked::<Self>() })
     }
 }
-impl PyExtConstructors for PyTuple {}
-impl PyExtConstructors for PyList {}
-impl PyExtConstructors for PySet {}
-impl PyExtConstructors for PyFrozenSet {}
-impl PyExtConstructors for PyDeque {}
+pub trait TryIntoPy<'py> {
+    fn try_as_py<I: TryFromPy + PyTypeInfo>(&self) -> PyResult<Bound<'py, I>>;
+    fn try_into_py<I: TryFromPy + PyTypeInfo>(self) -> PyResult<Bound<'py, I>>;
+}
+impl<'py, T: Sized + PyTypeInfo> TryIntoPy<'py> for Bound<'py, T> {
+    #[inline(always)]
+    fn try_as_py<I: TryFromPy + PyTypeInfo>(&self) -> PyResult<Bound<'py, I>> {
+        I::try_from_py(self)
+    }
+    #[inline(always)]
+    fn try_into_py<I: TryFromPy + PyTypeInfo>(self) -> PyResult<Bound<'py, I>> {
+        I::try_from_py(&self)
+    }
+}
+impl TryFromPy for PyTuple {}
+impl TryFromPy for PyList {}
+impl TryFromPy for PySet {}
+impl TryFromPy for PyFrozenSet {}
+impl TryFromPy for PyDeque {}
+impl TryFromPy for PyDict {}
