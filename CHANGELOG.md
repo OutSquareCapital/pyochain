@@ -4,11 +4,17 @@
 
 ### 🏆 Highlights
 
-- `Vec`, `Seq` and `Deque` now have flexible constructors: instantiate with no arguments, variable number of positional elements, or a single iterable. For example, `Vec(1, 2, 3)` or `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()` or `Vec([])` will create an empty `Vec`. Same for `Seq`, `Iter`, and `Deque`. The latter has its `max_length` argument become keyword-only.
+- Thanks to [@tecnolgd](https://github.com/tecnolgd) contribution in [#92](https://github.com/OutSquareCapital/pyochain/pull/92), `Range` is now aligned with its python counterpart constructor: `Range(10)` creates a range from 0 to 9, while `Range(1, 10)` creates a range from 1 to 9. The `step` argument is optional and defaults to 1.
+
+- `Vec`, `Seq` and `Deque` now have flexible constructors: instantiate with no arguments, variable number of positional elements, or a single iterable. For example, `Vec(1, 2, 3)` or `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()` or `Vec([])` will create an empty `Vec`. Same for `Seq`, `Iter`, and `Deque`. The latter see its `max_length` argument become keyword-only.
 
 ### 💥 Breaking changes
 
 - `core::Peekable` can only be constructed from `PyoIterator::peekable`.
+
+### 🛠️ Other improvements
+
+- Various clean-ups and refactors in the Rust codebase, to improve readability and maintainability.
 
 ## [0.27.0] - 2026-08-19
 
