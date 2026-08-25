@@ -723,9 +723,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     }
 
     fn __iand__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
-        slf.get()
-            .intersection_update(slf.py(), (other,))
-            .map(|()| ())
+        slf.get().intersection_update(slf.py(), (other,))
     }
 
     fn __ior__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<()> {

@@ -11,3 +11,5 @@ proc-macro2 = "1.0.107"
 quote = "1.0.47"
 syn = { version = "3.0.1", features = ["full", "visit-mut"] }
 tap = "1.0.1"
+[lints]
+workspace = true

@@ -14,3 +14,5 @@ syn = { version = "3.0.1", features = ["full", "visit"] }
 tap = "1.0.1"
 toml = "1.1.0"
 walkdir = "2.5.0"
+[lints]
+workspace = true
