@@ -37,7 +37,9 @@ enum SetCmp<'py> {
 }
 trait SetCmpMethods<
     'py,
-    T: PyTypeInfo + DerefToPyAny + TryFromBoundIterator<'py, Bound<'py, PyIterator>>,
+    T: PyTypeInfo
+        + DerefToPyAny
+        + TryFromBoundIterator<'py, Bound<'py, PyIterator>, Item = Bound<'py, PyAny>>,
 >: Sized + PyWrapper + PyTypeInfo
 {
     #[inline(always)]
