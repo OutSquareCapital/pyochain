@@ -688,9 +688,20 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def and_then[T1, E1](
+        self: Result[T1, E1], fn: type[ResultType[Any, Any]]
+    ) -> Result[T1, E1]: ...
+    @overload
     def and_then[**P, T1, E1, R](
         self: Result[T1, E1],
         fn: Callable[Concatenate[T1, P], Result[R, E1]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Result[R, E1]: ...
+    def and_then[**P, T1, E1, R](
+        self: Result[T1, E1],
+        fn: Callable[Concatenate[T1, P], Result[R, E1]] | type[ResultType[Any, Any]],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Result[R, E1]:
@@ -946,7 +957,7 @@ class ResultType[T, E](Pipe, Protocol):
         """
 
 @final
-class Ok[T, E](ResultType[T, E]):
+class Ok[T = Any, E = Any](ResultType[T, E]):
     """Represents a successful value.
 
     One of the two variants of `Result[T, E]`, where `T` is the type of the value in `Ok`.
@@ -959,15 +970,10 @@ class Ok[T, E](ResultType[T, E]):
 
     __match_args__ = ("value",)
     # NOTE: this is an hack to avoid errors by immediatly casting `E` as `Any`, thus avoiding any type errors with incompatible types.
-    @overload
-    def __new__(cls, value: Result[T, E]) -> Result[Result[T, E], Any]: ...
-    @overload
-    def __new__(cls, value: Option[T]) -> Result[Option[T], Any]: ...
-    @overload
-    def __new__(cls, value: T) -> Result[T, Any]: ...
+    def __new__(cls, value: T) -> Result[T, E]: ...
 
 @final
-class Err[T, E](ResultType[T, E]):
+class Err[T = Any, E = Any](ResultType[T, E]):
     """Represents an error value.
 
     One of the two variants of `Result[T, E]`, where `E` is the type of the value in `Err`.
@@ -979,9 +985,4 @@ class Err[T, E](ResultType[T, E]):
     """Final[E]: The contained error value."""
     __match_args__ = ("error",)
     # NOTE: same hack as in `Ok` for type errors
-    @overload
-    def __new__(cls, error: Result[T, E]) -> Result[Any, Result[T, E]]: ...
-    @overload
-    def __new__(cls, error: Option[E]) -> Result[Any, Option[E]]: ...
-    @overload
-    def __new__(cls, error: E) -> Result[Any, E]: ...
+    def __new__(cls, error: E) -> Result[T, E]: ...

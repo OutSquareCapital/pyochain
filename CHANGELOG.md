@@ -22,6 +22,9 @@
 
 ### 🛠️ Other improvements
 
+- Relaxed the `Callable` return type for `Option::filter` to `object`, since all python objects can be evaluated for truthiness.
+- `Option::__bool__` return `Never` to comply with python typing standards regarding "always-failure" functions.
+- `Ok` and `Err` now have their generics types to `Any` as default. This allow to do `Ok[int, str]` without seeing it inferred as `Result[int, Any]`, it now becomes `Result[int, str]` as expected.
 - Various clean-ups and refactors in the Rust codebase, to improve readability and maintainability.
 
 ## [0.27.0] - 2026-08-19

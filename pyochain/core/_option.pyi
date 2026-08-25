@@ -1,5 +1,15 @@
 from collections.abc import Callable, Iterable
-from typing import Any, Concatenate, Final, final, overload, override
+from typing import (
+    Any,
+    Concatenate,
+    Final,
+    Never,
+    Protocol,
+    final,
+    overload,
+    override,
+    type_check_only,
+)
 
 from pyochain import Result
 from pyochain.abc import Pipe, PyoIterator
@@ -12,7 +22,8 @@ type Option[T] = Some[T] | Null[T]
 See `OptionType` for more details.
 """
 
-class OptionType[T](Pipe):
+@type_check_only
+class OptionType[T](Pipe, Protocol):
     """OptionType is the common interface for an optional value.
 
     `Option[T]` is the union of `Some[T]` and `Null[T]`, and represents a value that can only have two states:
@@ -57,7 +68,7 @@ class OptionType[T](Pipe):
         ```
     """
 
-    def __bool__(self) -> None:
+    def __bool__(self) -> Never:
         """Prevent implicit `Some|None` value checking in boolean contexts.
 
         Always raises `TypeError` to prevent implicit `Some|None` value checking, as the `Option` truthiness is ambiguous.
@@ -104,7 +115,7 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def flatten[U](self: OptionType[Option[U]]) -> Option[U]:
+    def flatten[T1](self: Option[Option[T1]]) -> Option[T1]:
         """Flattens a nested `Option`.
 
         Converts an `Option[Option[U]]` into an `Option[U]` by removing one level of nesting.
@@ -693,9 +704,9 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def filter[**P, R](
+    def filter[**P](
         self,
-        predicate: Callable[Concatenate[T, P], R],
+        predicate: Callable[Concatenate[T, P], object],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Option[T]:
@@ -706,7 +717,7 @@ class OptionType[T](Pipe):
         You can imagine the `Option[T]` being an iterator over one or zero elements.
 
         Args:
-            predicate (Callable[Concatenate[T, P], R]): The predicate to apply to the contained value.
+            predicate (Callable[Concatenate[T, P], object]): The predicate to apply to the contained value.
             *args (P.args): Additional positional arguments to pass to predicate.
             **kwargs (P.kwargs): Additional keyword arguments to pass to predicate.
 
@@ -777,7 +788,7 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def unzip[S, U](self: OptionType[tuple[S, U]]) -> tuple[Option[S], Option[U]]:
+    def unzip[S, U](self: Option[tuple[S, U]]) -> tuple[Option[S], Option[U]]:
         """Unzips an `Option` of a tuple into a tuple of `Option`s.
 
         If the option is `Some((a, b))`, this method returns `(Some(a), Some(b))`.
@@ -888,7 +899,7 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def transpose[S, E](self: OptionType[Result[S, E]]) -> Result[Option[S], E]:
+    def transpose[S, E](self: Option[Result[S, E]]) -> Result[Option[S], E]:
         """Transposes an `Option` of a `Result` into a `Result` of an `Option`.
 
         The mapping is as follows:
@@ -953,7 +964,7 @@ class OptionType[T](Pipe):
         """
 
 @final
-class Some[T](OptionType[T]):
+class Some[T = Any](OptionType[T]):
     """Option variant representing the presence of a value.
 
     For more documentation, see the `Option[T]` class.
@@ -977,13 +988,10 @@ class Some[T](OptionType[T]):
     """Final[T]: The contained value."""
     __match_args__ = ("value",)
     # Hack to immediately handle it as an "enum".
-    @overload
-    def __new__[E](cls, value: Result[T, E]) -> Option[Result[T, E]]: ...
-    @overload
     def __new__(cls, value: T) -> Option[T]: ...
 
 @final
-class Null[T](OptionType[T]):
+class Null[T = Any](OptionType[T]):
     """Option variant representing the absence of a value.
 
     This class or `NONE` can be used interchangeably, as calling `Null()` will always return the singleton instance `NONE`.
@@ -1010,6 +1018,7 @@ class Null[T](OptionType[T]):
         assert is_none(Null())
         ```
     """
+    def __new__(cls) -> Option[T]: ...
 
 NONE: Final[Null[Any]] = ...  # pyright: ignore[reportAny]
 """Singleton instance representing the absence of a value.

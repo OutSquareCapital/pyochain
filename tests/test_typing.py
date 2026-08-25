@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import itertools
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal, Never, assert_type
 
 from pyochain import (
     NONE,
@@ -19,6 +20,7 @@ from pyochain import (
     Vec,
     option,
 )
+from pyochain.abc import PyoIterator
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -33,7 +35,6 @@ if TYPE_CHECKING:
         MutableMapping,
         MutableSequence,
         Reversible,
-        Sequence,
         Sized,
         ValuesView,
     )
@@ -44,7 +45,6 @@ if TYPE_CHECKING:
         PyoContainer,
         PyoItemsView,
         PyoIterable,
-        PyoIterator,
         PyoKeysView,
         PyoMapping,
         PyoMappingView,
@@ -68,50 +68,41 @@ class Dog(Animal):
     pass
 
 
+type LitDog = Literal["dog"]
+type LitCat = Literal["cat"]
 type AnimalLit = Literal["dog", "cat"]
 
 
-def check_covariance() -> None:
-    base = Vec[Dog](())
-    opt: Option[Dog] = Some(Dog())
-    res: Result[Dog, str] = Ok(Dog())
-    _abc_iterable: PyoIterable[Animal] = _pyoiterable(base)
-    _abc_iterator: PyoIterator[Animal] = _pyoiterator(base.iter())
-    _abc_collection: PyoCollection[Animal] = _pyocollection(base)
-    _abc_sequence: PyoSequence[Animal] = _pyosequence(base)
+def check_iterables_covariance() -> None:
+    base = Vec[Dog]()
+    _abc_iterable: PyoIterable[Animal] = _foo(base)
+    _abc_iterator: PyoIterator[Animal] = _foo(base.iter())
+    _abc_collection: PyoCollection[Animal] = _foo(base)
+    _abc_sequence: PyoSequence[Animal] = _foo(base)
     _peekable_iterator: Peekable[Animal] = base.iter().peekable()
-    _abc_set_immutable: PyoSet[Animal] = _pyoset(base.pipe(Set))
+    _abc_set_immutable: PyoSet[Animal] = _foo(base.pipe(Set))
     _seq_immutable: Seq[Animal] = base.pipe(Seq)
-    _as_opt: Option[Animal] = opt
-    _as_res: Result[Animal, str] = res
+    # pyrefly: ignore [bad-assignment]
+    _: PyoMutableSequence[Animal] = _foo(base)  # pyright: ignore[reportAssignmentType]
 
 
-def _pyoiterable(x: PyoIterable[Dog]) -> PyoIterable[Dog]:
+def _foo[T: Iterable[Animal]](x: T) -> T:
     return x
 
 
-def _pyoiterator(x: PyoIterator[Dog]) -> PyoIterator[Dog]:
-    return x
-
-
-def _pyocollection(x: PyoCollection[Dog]) -> PyoCollection[Dog]:
-    return x
-
-
-def _pyosequence(x: PyoSequence[Dog]) -> PyoSequence[Dog]:
-    return x
-
-
-def _pyoset(x: PyoSet[Dog]) -> PyoSet[Dog]:
-    return x
+def check_monads_covariance() -> None:
+    opt = assert_type(Some(Dog()), Option[Dog])
+    res = assert_type(Ok(Dog()), Result[Dog, Any])
+    _as_opt: Option[Animal] = assert_type(opt, Option[Dog])
+    _as_res: Result[Animal, str] = assert_type(res.map(lambda x: x), Result[Dog, Any])
 
 
 def check_option_basic() -> None:
-    base = Some(Dog())
-    canary: Dog | None = base.unwrap_or_none()
-    _ = base.map(_value)
+    base = assert_type(Some(Dog()), Option[Dog])
+    canary = assert_type(base.unwrap_or_none(), Dog | None)
+    _ = assert_type(base.map(_value), Option[Animal])
     if canary is not None:
-        _ = _value(canary)
+        _ = assert_type(canary, Dog)
 
 
 def _value(x: Animal) -> Animal:
@@ -121,56 +112,29 @@ def _value(x: Animal) -> Animal:
 def check_option_transpose() -> None:
     _a: Result[Option[int], int] = Some(Ok(10)).transpose()
     _b: Result[Option[int], int] = Some(Err(10)).transpose()
-    _c: Result[Option[int], int] = NONE.transpose()
+    _c: Result[Option[int], int] = Null().transpose()
 
 
-def check_option_literal() -> None:  # ruff:ignore[complex-structure]
-    lit = _get_cat()
+def check_option_literal() -> None:
+    lit = assert_type(_get_cat(), AnimalLit | None)
     # Inferred as Option[str]
-    opt_infered = option(lit)
-    opt_casted: Option[AnimalLit] = option(lit)
-    # Inferred as tuple[AnimalLit | None]
-    canary_infered_tup = (lit,)
-    # Inferred as list[str | None]
-    canary_infered_list = [lit]
-    canary_casted_list: list[AnimalLit | None] = [lit]
-    # TODO: check if the literal inference for tuple but not for option nor list is a variance issue for option, or a special casing for tuple.
-    _ = opt_infered.map(_literal)  # pyright: ignore[reportArgumentType]
-    _ = opt_casted.map(_literal)
-    _ = _literal(canary_infered_list[0]) if canary_infered_list[0] is not None else None  # pyright: ignore[reportArgumentType]
-    _ = _literal(canary_casted_list[0]) if canary_casted_list[0] is not None else None
-    _ = _literal(canary_infered_tup[0]) if canary_infered_tup[0] is not None else None
-
-    match lit:
-        case "dog":
-            pass
-        case "cat":
-            pass
-        case None:
-            pass
-    match canary_infered_tup:
-        case ("dog",):
-            pass
-        case ("cat",):
-            pass
-        case (None,):
-            pass
-    # Here it doesn't work due to invariance of list (I think).
-    match canary_casted_list:  # pyright: ignore[reportMatchNotExhaustive]
-        case ["dog"]:
-            pass
-        case ["cat"]:
-            pass
-        case [None]:
-            pass
-    # But here it's an issue: Literals aren't handled for type unions, even if both members are covariant.
+    _ = assert_type(option(lit), Option[str])
+    # Need to add explicit type hint to get Option[AnimalLit]
+    opt_casted: Option[AnimalLit] = assert_type(option(lit), Option[AnimalLit])
+    _ = assert_type(opt_casted.map(_literal), Option[AnimalLit])
+    # Issue: Literals aren't handled for type unions, even if both members are covariant.
+    # pyrefly: ignore [non-exhaustive-match]
     match opt_casted:  # pyright: ignore[reportMatchNotExhaustive]
-        case Some("dog"):
-            pass
+        case Some("dog") as opt_casted:
+            # pyrefly: ignore [assert-type]
+            _ = assert_type(opt_casted.unwrap(), LitDog)  # pyright: ignore[reportAssertTypeFailure]
         case Some("cat"):
-            pass
+            # pyrefly: ignore[assert-type]
+            _ = assert_type(opt_casted.unwrap(), LitCat)  # pyright: ignore[reportAssertTypeFailure]
+        case Some("tyrannosaurus"):  # pyright: ignore[reportUnnecessaryComparison]
+            _ = assert_type(opt_casted.unwrap(), Never)  # pyright: ignore[reportUnreachable]
         case Null():
-            pass
+            _ = assert_type(opt_casted, Null[AnimalLit])
 
 
 def _get_cat() -> AnimalLit | None:
@@ -182,71 +146,112 @@ def _literal(x: AnimalLit) -> AnimalLit:
 
 
 def check_result_basic() -> None:
-    ok = Ok(Dog())
-    err = Err(Dog())
-    _a: Result[Animal, Animal] = ok.map(lambda x: x).map_err(_value)
-    _b: Result[Animal, Animal] = ok.map_err(lambda x: x).map(_value)  # pyright: ignore[reportAny]
-    _c: Result[Animal, Animal] = err.map(lambda x: x).map_err(_value)  # pyright: ignore[reportAny]
-    # BUG: This should fail
-    _d: Result[Animal, Animal] = err.map_err(lambda x: x).map(_value)
+    ok = assert_type(Ok(Dog()), Result[Dog, Any])
+    err = assert_type(Err(Dog()), Result[Any, Dog])
+    _ = assert_type(Ok[int, str](42), Result[int, str])
+    _a = assert_type(ok.map(_identity).map_err(_value), Result[Dog, Animal])
+    _b = assert_type(ok.map_err(_identity).map(_value), Result[Animal, Any])
+    _c = assert_type(err.map(_identity).map_err(_value), Result[Any, Animal])
+    _d = assert_type(err.map_err(_identity).map(_value), Result[Animal, Dog])
 
 
 def check_result_transpose() -> None:
-    """The error is expected.
-
-    Rust equivalent (won't compile):
-    ```rust
-    fn check_result_transpose() -> () {
-    let _a: Option<Result<u32, i32>> = Ok(Some(10)).transpose();
-    let _b: Option<Result<i32, i32>> = Err(Some(10)).transpose();
-    let _c: Option<Result<i32, i32>> = Ok(None).transpose();
-    let _d: Option<Result<i32, i32>> = Err(None).transpose();
-    }
-    ```
-    """
-    _a: Option[Result[int, int]] = Ok(Some(10)).transpose()
-    # pyrefly: ignore [bad-assignment]
-    _b: Option[Result[int, int]] = Err(Some(10)).transpose()  # pyright: ignore[reportAssignmentType]
-    _c: Option[Result[int, int]] = Ok(NONE).transpose()
-    _d: Option[Result[int, int]] = Err(NONE).transpose()  # pyright: ignore[reportAssignmentType]
+    a = assert_type(Ok(Some(10)), Result[Option[int], Any])
+    _a = assert_type(a.transpose(), Option[Result[int, Any]])
+    b = assert_type(Err(Some(10)), Result[Any, Option[int]])
+    _b = assert_type(b.transpose(), Option[Result[Any, Option[int]]])
+    c = assert_type(Ok[Option[int], int](NONE), Result[Option[int], int])
+    _c = assert_type(c.transpose(), Option[Result[int, int]])
+    d = assert_type(
+        Err[Option[int], Option[int]](Null()), Result[Option[int], Option[int]]
+    )
+    _d = assert_type(d.transpose(), Option[Result[int, Option[int]]])
 
 
 def check_option_flatten() -> None:
-    _a: Option[int] = Some(Some(10)).flatten()
-    _b: Option[int] = Some(NONE).flatten()
-    _c: Option[int] = NONE.flatten()
+    def _(x: int) -> int:
+        return x
+
+    _a = assert_type(Some(Some(10)).flatten(), Option[int])
+    _b = assert_type(Some(Null()).flatten(), Option[Any])
+    _c = assert_type(Null().flatten(), Option[Any])
+    _d = assert_type(Some(Null()).flatten().map(_), Option[int])
+    _e = assert_type(Some(Some(Some(10))).flatten().flatten().map(str), Option[str])
+
+
+def check_option_and_then() -> None:
+    """Rust equivalent who compiles (the type hints for variables have been added *last*, so they are not helping for inference):
+
+    ```rust
+    let _a: Option<i32> = Some(10).and_then(Some);
+    let _b: Option<Option<i32>> = Some::<Option<i32>>(None).and_then(Some);
+    let _c: Option<i32> = None::<i32>.and_then(Some);
+    ```
+    """
+    _a = assert_type(Some(10).and_then(Some), Option[int])
+    _b = assert_type(Some[Option[int]](Null()).and_then(Some), Option[Option[int]])
+    _c = assert_type(Null[int]().and_then(Some), Option[int])
 
 
 def check_result_flatten() -> None:
-    _a: Result[int, str] = Ok(Ok(10)).flatten()
-    _b: Result[int, str] = Ok(Err("error")).flatten()
-    _c: Result[int, str] = Err("error").flatten()
-    # BUG: This should fail
-    _d: Result[int, str] = Err(Err("error")).flatten()
+    """Rust equivalent who compiles (the type hints for variables have been added *last*, so they are not helping for inference):
+
+    ```rust
+
+    let _a: Result<i32, i32> = Ok(Ok::<i32, i32>(10)).flatten();
+    let _b: Result<&str, &str> = Ok(Err::<&str, &str>("error")).flatten();
+    ```
+    """
+    _a = assert_type(Ok(Ok[int, int](10)).flatten(), Result[int, int])
+    _b = assert_type(Ok(Err[str, str]("error")).flatten(), Result[str, str])
+    _ = assert_type(Err(Err("error")), Result[Any, Result[Any, str]])
 
 
-def check_and_then() -> None:
-    """The last case failing is expected.
+def check_and_then_result() -> None:
+    """Rust equivalent who compiles (the type hints for variables have been added *last*, so they are not helping for inference):
 
-    Rust equivalent (won't compile):
     ```rust
     fn test_flatten() {
-    let _a: Result<i32, &str> = Ok(Ok(10)).and_then(|x| x);
-    let _b: Result<i32, &str> = Ok(Err("error")).and_then(|x| x);
-    let _c: Result<i32, &str> = Err("error").and_then(|x| x);
-    let _d: Result<i32, &str> = Err(Err("error")).and_then(|x| x);
+    let _a: Result<i32, i32> = Ok(Ok::<i32, i32>(10)).and_then(|x| x);
+    let _b: Result<&str, &str> = Ok(Err::<&str, &str>("error")).and_then(|x| x);
+    let _c: Result<&str, &str> = Err::<&str, &str>("error").and_then(|x| Ok(x));
+    let _d: Result<Result<&str, &str>, Result<&str, &str>> =
+        Err(Err::<&str, &str>("error")).and_then(|x: Result<&str, &str>| Ok(x));
+    let _e: Result<Result<i32, i32>, Result<i32, i32>> =
+        Err(Ok::<i32, i32>(10)).and_then(|x: Result<i32, i32>| Ok(x));
     }
     ```
     """
-    _a: Result[int, str] = Ok(Ok(10)).and_then(lambda x: x)
-    _b: Result[int, str] = Ok(Err("error")).and_then(lambda x: x)
-    _c: Result[int, str] = Err("error").and_then(lambda x: x)  # pyright: ignore[reportAny]
-    # pyrefly: ignore [bad-assignment]
-    _d: Result[int, str] = Err(Err("error")).and_then(lambda x: x)  # pyright: ignore[reportAssignmentType, reportAny]
+    msg = "error"
+    _a = assert_type(
+        Ok[Result[int, int], int](Ok[int, int](10)).and_then(lambda x: x),
+        Result[int, int],
+    )
+    _b = assert_type(
+        Ok[Result[str, str], str](Err[str, str](msg)).and_then(lambda x: x),
+        Result[str, str],
+    )
+    _c = assert_type(Err[str, str](msg).and_then(Ok), Result[str, str])
+    _d = assert_type(
+        Err(Err[str, str](msg)).and_then(_fn_str),
+        Result[Result[str, str], Result[str, str]],
+    )
+    _e = assert_type(
+        Err(Ok[int, int](10)).and_then(_fn_int),
+        Result[Result[int, int], Result[int, int]],
+    )
+
+
+def _fn_str(x: Result[str, str]) -> Result[Result[str, str], Any]:
+    return Ok(x)
+
+
+def _fn_int(x: Result[int, int]) -> Result[Result[int, int], Any]:
+    return Ok(x)
 
 
 def check_iter_flatten() -> None:
-    nested: PyoIterator[PyoIterator[PyoIterator[list[int]]]] = (
+    nested = (
         Range(3)
         .iter()
         .map(
@@ -257,11 +262,11 @@ def check_iter_flatten() -> None:
             )
         )
     )
-    one: PyoIterator[PyoIterator[list[int]]] = nested.flatten()
-    two: PyoIterator[list[int]] = one.flatten()
-    ok: PyoIterator[int] = two.flatten()
+    _ = assert_type(nested, PyoIterator[PyoIterator[PyoIterator[list[int]]]])
+    one = assert_type(nested.flatten(), PyoIterator[PyoIterator[list[int]]])
+    two = assert_type(one.flatten(), PyoIterator[list[int]])
+    ok = assert_type(two.flatten(), PyoIterator[int])
     # Expected to fail
-    # pyrefly: ignore [bad-argument-type]
     _fail = ok.flatten()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
 
 
@@ -780,33 +785,27 @@ def _values_view(x: ValuesView[Animal]) -> ValuesView[Animal]:
 type EntryData = list[tuple[object, tuple[str, ...]]]
 
 
-def covariance_pyomapping(data: EntryData) -> PyoMapping[object, Sequence[object]]:
-    x: Dict[object, tuple[str, ...]] = Dict(data)
-    return x
+def covariance_pyomapping(data: EntryData) -> None:
+    _: Dict[object, Sequence[object]] = assert_type(
+        Dict(data), Dict[object, Sequence[object]]
+    )
 
 
-def covariance_mapping(data: EntryData) -> Mapping[object, Sequence[object]]:
-    x: dict[object, tuple[str, ...]] = dict(data)
-    return x
-
-
-def check_chain_covariance[T, S](
-    base: Iterable[T], *others: Iterable[S]
-) -> tuple[PyoIterator[T | S], itertools.chain[T | S]]:
+def check_chain_covariance[T, S](base: Iterable[T], *others: Iterable[S]) -> None:
     from pyochain import Iter
 
-    x = Iter(base).chain(*others)
-    y = itertools.chain(base, *others)
-
-    return x, y
+    _ = assert_type(Iter(base).chain(*others), PyoIterator[T | S])
+    _ = assert_type(itertools.chain(base, *others), itertools.chain[T | S])
 
 
 def check_dict() -> None:
+    _ = assert_type(Dict({"a": 1, "b": 2}), Dict[str, int])
+    # Avoid automatic literal inference
+    data = [("a", 1), ("b", 2)]
+    _ = assert_type(Dict(data), Dict[str, int])
+    _ = assert_type(Dict(a=1, b=2), Dict[str, int])
+    _ = assert_type(Dict({"a": 1}, b=2), Dict[str, int])
 
-    def _(_d: Dict[str, int]) -> None:
-        pass
 
-    _(Dict({"a": 1, "b": 2}))
-    _(Dict([("a", 1), ("b", 2)]))
-    _(Dict(a=1, b=2))
-    _(Dict({"a": 1}, b=2))
+def _identity[T](x: T) -> T:
+    return x
