@@ -248,7 +248,7 @@ impl BaseSortedList for SortedList {
         let cls_name = Self::type_object(py).name()?;
         self.get_data()
             .py_repr(py)
-            .map(|repr| format!("{}({})", cls_name, repr))
+            .map(|repr| format!("{cls_name}({repr})"))
     }
 
     fn wrap_iter(

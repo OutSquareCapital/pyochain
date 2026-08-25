@@ -61,7 +61,7 @@ trait HeapType: Sized + PyWrapper<Wrapped = PyList> {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
         let repr = self.inner_bind(py).repr()?.to_string();
-        Ok(format!("{}({})", name, repr))
+        Ok(format!("{name}({repr})"))
     }
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn push_pop<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
@@ -221,13 +221,13 @@ impl HeapType for HeapMax {
     ) -> PyResult<Bound<'py, PyAny>> {
         let inner = self.inner_bind(py);
         let lastelt = inner.pop(inner.len().saturating_sub(1))?;
-        if !(inner.is_empty()) {
+        if inner.is_empty() {
+            Ok(lastelt)
+        } else {
             let returnitem = inner.get_item(0)?;
             inner.set_item(0, lastelt)?;
             self._siftup(py, 0)?;
             Ok(returnitem)
-        } else {
-            Ok(lastelt)
         }
     }
 

@@ -274,8 +274,8 @@ impl PyoSet {
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
             .inspect_err(|e| {
                 let name = cls.name().unwrap();
-                let msg = format!("hint: As a `PyoSet` subclass, `{}::__init__` must accept a single `Iterable` argument.\n
-                If you override it, make sure to override `PyoSet::_from_iterable` as well.", name);
+                let msg = format!("hint: As a `PyoSet` subclass, `{name}::__init__` must accept a single `Iterable` argument.\n
+                If you override it, make sure to override `PyoSet::_from_iterable` as well.");
                 e.add_note(cls.py(), msg).unwrap();
             })
     }

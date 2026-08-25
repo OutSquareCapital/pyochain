@@ -173,7 +173,7 @@ impl Set {
             .into_iter()
             .collect_bound::<PyTuple>(py)
             .and_then(get_repr)
-            .map(|repr| format!("{}({})", name, repr))
+            .map(|repr| format!("{name}({repr})"))
     }
 
     fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -302,7 +302,7 @@ impl SetMut {
             .into_iter()
             .collect_bound::<PyTuple>(py)
             .and_then(get_repr)
-            .map(|repr| format!("{}({})", name, repr))
+            .map(|repr| format!("{name}({repr})"))
     }
 
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {

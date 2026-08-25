@@ -80,7 +80,7 @@ impl Range {
         let inner = slf.get().inner_bind(slf.py());
 
         let params = format!("{}, {}, {}", inner.start()?, inner.stop()?, inner.step()?);
-        Ok(format!("{}({})", name, params))
+        Ok(format!("{name}({params})"))
     }
 
     fn __eq__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {

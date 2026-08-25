@@ -22,7 +22,7 @@ impl Seq {
         slf.get()
             .inner_into_bound(py)
             .pipe(get_repr)
-            .map(|repr| format!("{}({})", name, repr))
+            .map(|repr| format!("{name}({repr})"))
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {

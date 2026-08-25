@@ -39,10 +39,7 @@ pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Syn
                 let wrapper = Self::type_object(py).name().unwrap();
                 let inner = Self::Wrapped::type_object(py).name().unwrap();
                 let incorrect = value.get_type().name().unwrap();
-                let txt = format!(
-                    "Input must be a '{}'' or a '{}', got '{}'",
-                    wrapper, inner, incorrect
-                );
+                let txt = format!("Input must be a '{wrapper}'' or a '{inner}', got '{incorrect}'");
                 PyTypeError::new_err(txt)
             })
     }

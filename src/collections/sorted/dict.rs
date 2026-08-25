@@ -101,7 +101,7 @@ impl BaseSortedDict for SortedDict {
             .map(|x| x.and_then(|(k, v)| Ok(format!("{}: {}", k.repr()?, v.repr()?))))
             .collect::<PyResult<Vec<_>>>()?
             .join(", ");
-        Ok(format!("{}({{{}}})", type_name, items))
+        Ok(format!("{type_name}({{{items}}})"))
     }
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableMapping, mapping)]
@@ -215,13 +215,10 @@ impl BaseSortedDict for SortedKeyDict {
             .get()
             .get_data()
             .iter()
-            .map(|key| {
-                dict.get_item(key)
-                    .map(|value| format!("{}: {}", key, value))
-            })
+            .map(|key| dict.get_item(key).map(|value| format!("{key}: {value}")))
             .collect::<PyResult<Vec<_>>>()?
             .join(", ");
-        Ok(format!("{}({}{{{}}})", type_name, key_arg, items))
+        Ok(format!("{type_name}({key_arg}{{{items}}})"))
     }
     fn __ror__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();

@@ -17,22 +17,22 @@ use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
 use tap::prelude::*;
 fn format_err_value(error: &Bound<'_, PyAny>) -> PyResult<String> {
-    match error.is_instance_of::<PyBaseException>() {
-        true => {
-            let error_type = error.get_type();
-            let module_name = error_type.getattr("__module__")?.extract::<String>()?;
-            let type_name = error_type.getattr("__qualname__")?.extract::<String>()?;
-            let display_name = match module_name.as_str() {
-                "builtins" => type_name,
-                _ => format!("{}.{}", module_name, type_name),
-            };
-            let error_message = error.str()?.extract::<String>()?;
-            match error_message.is_empty() {
-                true => Ok(display_name),
-                false => Ok(format!("{}: {}", display_name, error_message)),
-            }
+    if error.is_instance_of::<PyBaseException>() {
+        let error_type = error.get_type();
+        let module_name = error_type.getattr("__module__")?.extract::<String>()?;
+        let type_name = error_type.getattr("__qualname__")?.extract::<String>()?;
+        let display_name = match module_name.as_str() {
+            "builtins" => type_name,
+            _ => format!("{module_name}.{type_name}"),
+        };
+        let error_message = error.str()?.extract::<String>()?;
+        if error_message.is_empty() {
+            Ok(display_name)
+        } else {
+            Ok(format!("{display_name}: {error_message}"))
         }
-        false => error.repr()?.extract::<String>(),
+    } else {
+        error.repr()?.extract::<String>()
     }
 }
 #[py_abc(PyoOk, PyoErr)]
@@ -75,7 +75,7 @@ impl PyoOk {
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let value_repr = self.value.bind(py).repr()?;
-        Ok(format!("Ok({})", value_repr))
+        Ok(format!("Ok({value_repr})"))
     }
     fn is_ok(&self) -> bool {
         true
@@ -159,8 +159,7 @@ impl PyoOk {
     fn expect_err(&self, msg: &Bound<'_, PyString>) -> PyResult<Py<PyAny>> {
         let ok_repr = self.value.bind(msg.py()).repr()?.to_string();
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
-            "{}: expected Err, got Ok({})",
-            msg, ok_repr
+            "{msg}: expected Err, got Ok({ok_repr})"
         )))
     }
 
@@ -295,7 +294,7 @@ impl PyoErr {
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let error_repr = self.error.bind(py).repr()?;
-        Ok(format!("Err({})", error_repr))
+        Ok(format!("Err({error_repr})"))
     }
 
     fn is_ok(&self) -> bool {
@@ -321,16 +320,14 @@ impl PyoErr {
     fn unwrap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let err_repr = format_err_value(self.error.bind(py))?;
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
-            "called `unwrap` on an `Err`: {}",
-            err_repr
+            "called `unwrap` on an `Err`: {err_repr}"
         )))
     }
 
     fn expect(&self, msg: &Bound<'_, PyString>) -> PyResult<Py<PyAny>> {
         let err_repr = format_err_value(self.error.bind(msg.py()))?;
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
-            "{}: {}",
-            msg, err_repr
+            "{msg}: {err_repr}"
         )))
     }
 

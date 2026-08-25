@@ -304,7 +304,7 @@ fn show_key_list(py: Python<'_>, err: &PyErr, data: &SortedKeyList) {
     let keys = data.get_keys();
     let infos = [
         format!("len_keys: {}", keys.len()),
-        format!("keys: {:?}", keys),
+        format!("keys: {keys:?}"),
     ];
     err.add_note(py, infos.join("\n")).unwrap()
 }

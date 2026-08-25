@@ -25,7 +25,7 @@ impl StableSet {
             .inner_bind(slf.py())
             .keys()
             .pipe(get_repr)
-            .map(|repr| format!("{}({})", name, repr))
+            .map(|repr| format!("{name}({repr})"))
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {

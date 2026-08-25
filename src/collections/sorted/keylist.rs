@@ -79,10 +79,7 @@ impl SortedKeyList {
         iterable: Option<Bound<'_, PyAny>>,
         key: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let slf = Self::new(
-            key.map(Bound::unbind)
-                .unwrap_or_else(|| PyIdentity.into_py_any(py).unwrap()),
-        );
+        let slf = Self::new(key.map_or_else(|| PyIdentity.into_py_any(py).unwrap(), Bound::unbind));
 
         if let Some(iterable) = iterable {
             slf.py_update(&iterable)?;
@@ -294,18 +291,16 @@ impl BaseSortedListSet for SortedKeyList {
                         drop(keys);
                         self.delete(py, &mut data, &mut bound)?;
                         break;
-                    } else {
-                        bound.idx += 1;
-                        if bound.idx == len_sublist {
-                            bound.pos += 1;
-                            if bound.pos == len_keys {
-                                break;
-                            } else {
-                                len_sublist = keys[bound.pos].len();
-                                bound.idx = 0;
-                                continue;
-                            }
+                    }
+                    bound.idx += 1;
+                    if bound.idx == len_sublist {
+                        bound.pos += 1;
+                        if bound.pos == len_keys {
+                            break;
                         }
+                        len_sublist = keys[bound.pos].len();
+                        bound.idx = 0;
+                        continue;
                     }
                 }
                 Ok(())
@@ -378,7 +373,7 @@ impl BaseSortedList for SortedKeyList {
 
         self.get_data()
             .py_repr(py)
-            .map(|repr| format!("{type_name}({}, key={})", repr, key_repr))
+            .map(|repr| format!("{type_name}({repr}, key={key_repr})"))
     }
 
     fn wrap_iter(

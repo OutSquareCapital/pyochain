@@ -70,11 +70,11 @@ impl PyoMutableSet {
     }
 
     fn remove(slf: Bound<'_, Self>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        if !slf.contains(&value)? {
-            Err(PyKeyError::new_err(format!("{}", value)))
-        } else {
+        if slf.contains(&value)? {
             Self::into_mutable_set(slf).discard(&value)?;
             Ok(())
+        } else {
+            Err(PyKeyError::new_err(format!("{value}")))
         }
     }
 
@@ -107,10 +107,9 @@ impl PyoMutableSet {
 #[inline]
 fn new_pop_result<'py>(slf: &Bound<'py, PyAny>) -> PopResult<'py> {
     slf.try_iter()
-        .map(|mut x| match x.next() {
+        .map_or_else(PopResult::Err, |mut x| match x.next() {
             None => PopResult::KeyMissing,
             Some(Ok(v)) => PopResult::Ok(v),
             Some(Err(e)) => PopResult::Err(e),
         })
-        .unwrap_or_else(PopResult::Err)
 }

@@ -35,7 +35,7 @@ impl PyoVec {
         slf.get()
             .inner_into_bound(py)
             .pipe(get_repr)
-            .map(|repr| format!("{}({})", name, repr))
+            .map(|repr| format!("{name}({repr})"))
     }
 
     fn __len__(slf: Bound<'_, Self>) -> usize {

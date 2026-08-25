@@ -172,9 +172,7 @@ impl PyoCounter {
         let py = slf.py();
         let name = slf.get_type().name()?;
 
-        if !&slf.is_truthy()? {
-            Ok(format!("{}()", name))
-        } else {
+        if slf.is_truthy()? {
             let d_repr = slf
                 .get()
                 .most_common(py, None)
@@ -189,7 +187,9 @@ impl PyoCounter {
                     }
                 })?
                 .repr()?;
-            Ok(format!("{}({})", name, d_repr))
+            Ok(format!("{name}({d_repr})"))
+        } else {
+            Ok(format!("{name}()"))
         }
     }
 
@@ -358,9 +358,8 @@ impl PyoCounter {
                             let e = elem?;
                             if self.__getitem__(&e)?.eq(o.__getitem__(&e)?)? {
                                 continue;
-                            } else {
-                                return Ok(Either::Left(false));
                             }
+                            return Ok(Either::Left(false));
                         }
                     }
                     Ok(Either::Left(true))
@@ -373,10 +372,10 @@ impl PyoCounter {
     }
 
     fn __ne__<'py>(&self, other: &Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        if !other.is_instance_of::<PyoCounter>() {
-            PyNotImplemented::from_cmp(other.py())
-        } else {
+        if other.is_instance_of::<PyoCounter>() {
             self.__eq__(other)?.map_left(|x| !x).pipe(Ok)
+        } else {
+            PyNotImplemented::from_cmp(other.py())
         }
     }
 
@@ -388,9 +387,8 @@ impl PyoCounter {
                 let e = elem?;
                 if self.__getitem__(&e)?.le(o.__getitem__(&e)?)? {
                     continue;
-                } else {
-                    return Ok(false);
                 }
+                return Ok(false);
             }
         }
         Ok(true)
@@ -410,9 +408,8 @@ impl PyoCounter {
                 let e = elem?;
                 if self.__getitem__(&e)?.ge(o.__getitem__(&e)?)? {
                     continue;
-                } else {
-                    return Ok(false);
                 }
+                return Ok(false);
             }
         }
 
@@ -471,16 +468,16 @@ fn update_counter(
         .map(|iterable| match iterable {
             IntoUpdate::Dict(dict) => update_dict(inner, &dict, &zero),
             IntoUpdate::Mapping(mapping) => {
-                if !inner.is_empty() {
+                if inner.is_empty() {
+                    // fast path when counter is empty
+                    inner.update(&mapping)?;
+                } else {
                     for tup in mapping.items()?.try_iter()?.map(extract_tup_from_item) {
                         let (elem, count) = tup?;
                         let new_item =
                             count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
                         inner.set_item(elem, new_item)?
                     }
-                } else {
-                    // fast path when counter is empty
-                    inner.update(&mapping)?;
                 }
 
                 Ok(())
@@ -511,15 +508,15 @@ fn update_dict(
     dict: &Bound<'_, PyDict>,
     zero: &Bound<'_, PyAny>,
 ) -> PyResult<()> {
-    if !inner.is_empty() {
+    if inner.is_empty() {
+        // fast path when counter is empty
+        inner.update(dict.as_mapping())
+    } else {
         for (elem, count) in dict.iter() {
             let new_item = count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
             inner.set_item(elem, new_item)?
         }
         Ok(())
-    } else {
-        // fast path when counter is empty
-        inner.update(dict.as_mapping())
     }
 }
 #[inline]

@@ -166,8 +166,13 @@ impl Bounds {
 
         // Calculate the maximum (pos, idx) pair. By default this location
         // will be exclusive in our calculation.
-        let max = maximum
-            .map(|m| {
+        let max = maximum.map_or_else(
+            || {
+                let max_pos = maxes.len() - 1;
+                let max_idx = lists[max_pos].len();
+                Ok(Pos::new(max_pos, max_idx))
+            },
+            |m| {
                 if inclusive.1 {
                     let mut max_pos = bisect::right(maxes, &m)?;
 
@@ -189,12 +194,8 @@ impl Bounds {
                     };
                     Ok(Pos::new(max_pos, max_idx))
                 }
-            })
-            .unwrap_or_else(|| {
-                let max_pos = maxes.len() - 1;
-                let max_idx = lists[max_pos].len();
-                Ok(Pos::new(max_pos, max_idx))
-            })?;
+            },
+        )?;
 
         if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
             Ok(None)

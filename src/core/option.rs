@@ -376,7 +376,7 @@ impl PySome {
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let value_repr = self.value.bind(py).repr()?;
-        format!("Some({})", value_repr).pipe(Ok)
+        format!("Some({value_repr})").pipe(Ok)
     }
 }
 
@@ -460,8 +460,7 @@ impl PyNull {
 
     fn expect(&self, msg: String) -> PyResult<Py<PyAny>> {
         Err(PyErr::new::<OptionUnwrapError, _>(format!(
-            "{} (called `expect` on a `None`)",
-            msg
+            "{msg} (called `expect` on a `None`)"
         )))
     }
 

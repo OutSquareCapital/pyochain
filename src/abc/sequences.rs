@@ -70,13 +70,12 @@ impl PyoSequence {
         loop {
             if stop.is_some_and(|stop| i >= stop) {
                 break;
-            } else {
-                match slf.get_item(i) {
-                    Ok(v) if v.is(value) || v.eq(value)? => return Ok(i),
-                    Ok(_) => i += 1,
-                    Err(err) if err.is_instance_of::<PyIndexError>(py) => break,
-                    Err(err) => return Err(err),
-                }
+            }
+            match slf.get_item(i) {
+                Ok(v) if v.is(value) || v.eq(value)? => return Ok(i),
+                Ok(_) => i += 1,
+                Err(err) if err.is_instance_of::<PyIndexError>(py) => break,
+                Err(err) => return Err(err),
             };
         }
 
@@ -142,9 +141,8 @@ impl PyoMutableSequence {
                 Err(err) => {
                     if err.is_instance_of::<PyIndexError>(slf.py()) {
                         return Ok(());
-                    } else {
-                        return Err(err);
                     }
+                    return Err(err);
                 }
             }
         }
@@ -162,7 +160,7 @@ impl PyoMutableSequence {
             for v in values.try_iter()? {
                 slf.call_method1(intern!(py, "append"), (v?,))?;
             }
-        };
+        }
         Ok(())
     }
 

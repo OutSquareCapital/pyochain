@@ -152,24 +152,21 @@ impl SliceView {
     fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = other.py();
         let seq = self.inner_bind(py);
-        other
-            .cast_into::<PySequence>()
-            .map(|o| {
-                let elem_eq = self
-                    .current_range(py)?
-                    .iter_py()
-                    .map(|x| seq.get_item(x?.extract::<usize>()?))
-                    .zip(o.try_iter().unwrap())
-                    .map(|(a, b)| a?.eq(b?))
-                    .find_map(|x| match x {
-                        Ok(true) => None,
-                        Ok(false) => Some(Ok(false)),
-                        Err(e) => Some(Err(e)),
-                    })
-                    .unwrap_or(Ok(true))?;
-                Ok(self.__len__(py)? == o.len()? && elem_eq)
-            })
-            .unwrap_or(Ok(false))
+        other.cast_into::<PySequence>().map_or(Ok(false), |o| {
+            let elem_eq = self
+                .current_range(py)?
+                .iter_py()
+                .map(|x| seq.get_item(x?.extract::<usize>()?))
+                .zip(o.try_iter().unwrap())
+                .map(|(a, b)| a?.eq(b?))
+                .find_map(|x| match x {
+                    Ok(true) => None,
+                    Ok(false) => Some(Ok(false)),
+                    Err(e) => Some(Err(e)),
+                })
+                .unwrap_or(Ok(true))?;
+            Ok(self.__len__(py)? == o.len()? && elem_eq)
+        })
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
@@ -247,8 +244,7 @@ impl SliceView {
                         let tr_len = tr.len()?;
                         if values_len != tr_len {
                             let msg = format!(
-                                "attempt to assign sequence of size {} to slice of size {}",
-                                values_len, tr_len
+                                "attempt to assign sequence of size {values_len} to slice of size {tr_len}"
                             );
                             Err(PyValueError::new_err(msg))
                         } else {
@@ -268,22 +264,21 @@ impl SliceView {
                     if idx < 0 {
                         idx += length
                     };
-                    if !(0 <= idx && idx < length) {
-                        let msg = "SliceView index out of range";
-                        Err(PyIndexError::new_err(msg))
-                    } else {
+                    if 0 <= idx && idx < length  {
                         seq.set_item(
                             cr.get_item(PyInt::new(py, idx).into_any())?
                                 .extract::<usize>()?,
                             value,
                         )
+                    } else {
+                        let msg = "SliceView index out of range";
+                        Err(PyIndexError::new_err(msg))
                     }
                 }
                 _ => {
                     let name = inner.get_type().name()?;
                     let msg = format!(
-                        "underlying sequence of type '{}' has no '__setitem__'",
-                        name
+                        "underlying sequence of type '{name}' has no '__setitem__'"
                     );
                     Err(PyTypeError::new_err(msg))
                 }

@@ -37,9 +37,7 @@ impl SortedKeySet {
         iterable: Option<Bound<'_, PyAny>>,
         key: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let key_fn = key
-            .map(Bound::unbind)
-            .unwrap_or_else(|| PyIdentity.into_py_any(py).unwrap());
+        let key_fn = key.map_or_else(|| PyIdentity.into_py_any(py).unwrap(), Bound::unbind);
         let list = SortedKeyList::new(key_fn.clone_ref(py));
         let slf = Self::new(PySet::empty(py).unwrap(), list, key_fn);
 
@@ -97,6 +95,6 @@ impl BaseSortedSet for SortedKeySet {
         let key = format!(", key={}", self.key.bind(py).repr()?);
         let type_name = Self::type_object(py).name()?;
         let list_repr = self.list.get().get_data().py_repr(py)?;
-        Ok(format!("{}({}{})", type_name, list_repr, key))
+        Ok(format!("{type_name}({list_repr}{key})"))
     }
 }

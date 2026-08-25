@@ -280,9 +280,8 @@ impl FilterMapStar {
                 None => return Ok(None),
                 Some(result) => {
                     let res = func.call1(result?.cast_exact::<PyTuple>()?)?;
-                    match res.cast_into_exact::<PySome>() {
-                        Ok(some) => return Ok(Some(some.get().value.clone_ref(py))),
-                        Err(_) => continue,
+                    if let Ok(some) = res.cast_into_exact::<PySome>() {
+                        return Ok(Some(some.get().value.clone_ref(py)));
                     }
                 }
             }
@@ -794,14 +793,14 @@ impl OnceWith {
     }
 
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
-        if !slf.yielded {
+        if slf.yielded {
+            Ok(None)
+        } else {
             slf.yielded = true;
             let py = slf.py();
             let args = slf.args.bind(py);
             let kwargs = slf.kwargs.as_ref().map(|k| k.bind(py));
             slf.func.bind(py).call(args, kwargs).map(Some)
-        } else {
-            Ok(None)
         }
     }
 }
@@ -881,7 +880,7 @@ impl Iter {
         let py = slf.py();
         let name = slf.get_type().name();
         let inner_repr = slf.get().inner_into_bound(py).repr()?;
-        Ok(format!("{:?}({:?})", name, inner_repr))
+        Ok(format!("{name:?}({inner_repr:?})"))
     }
 }
 
@@ -959,8 +958,7 @@ impl Peekable {
 
     fn __bool__(&mut self, py: Python<'_>) -> bool {
         self.peek(py)
-            .map(|x| x.bind(py).cast_exact::<PySome>().is_ok())
-            .unwrap_or(false)
+            .is_ok_and(|x| x.bind(py).cast_exact::<PySome>().is_ok())
     }
 
     fn peek(&mut self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -974,11 +972,10 @@ impl Peekable {
                 .map(Bound::unbind);
         }
 
-        self.peeked
-            .as_ref()
-            .map(|x| x.clone_ref(py))
-            .map(|x| PySome::new(x).into_py_any(py))
-            .unwrap_or_else(|| PyNull::get(py).into_py_any(py))
+        self.peeked.as_ref().map(|x| x.clone_ref(py)).map_or_else(
+            || PyNull::get(py).into_py_any(py),
+            |x| PySome::new(x).into_py_any(py),
+        )
     }
 
     fn next_if(&mut self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {

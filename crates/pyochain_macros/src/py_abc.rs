@@ -85,19 +85,22 @@ fn generate_method(
                 .map(|prop| (prop, property_python_name(original_ident, prop)));
             let tokens = match kind {
                 AttrKind::Skipped => None,
-                AttrKind::BasicMethod => Some(match &property {
-                    Some((prop, name)) => quote! { #[#prop(#name)] },
-                    None => quote! { #[pyo3(name = #python_name)] },
+                AttrKind::BasicMethod => Some(if let Some((prop, name)) = &property {
+                    quote! { #[#prop(#name)] }
+                } else {
+                    quote! { #[pyo3(name = #python_name)] }
                 }),
                 AttrKind::NewNoSignature => Some(quote! {}),
                 AttrKind::New(ref tokens) => Some(quote! { #[pyo3(#(#tokens),*)] }),
-                AttrKind::Signed(ref tokens) => Some(match &property {
-                    Some((prop, name)) => quote! { #[#prop(#name)] #[pyo3(#(#tokens),*)] },
-                    None => quote! { #[pyo3(name = #python_name, #(#tokens),*)] },
+                AttrKind::Signed(ref tokens) => Some(if let Some((prop, name)) = &property {
+                    quote! { #[#prop(#name)] #[pyo3(#(#tokens),*)] }
+                } else {
+                    quote! { #[pyo3(name = #python_name, #(#tokens),*)] }
                 }),
-                AttrKind::SignedNamed(ref tokens) => Some(match &property {
-                    Some((prop, name)) => quote! { #[#prop(#name)] #[pyo3(#(#tokens),*)] },
-                    None => quote! { #[pyo3(#(#tokens),*)] },
+                AttrKind::SignedNamed(ref tokens) => Some(if let Some((prop, name)) = &property {
+                    quote! { #[#prop(#name)] #[pyo3(#(#tokens),*)] }
+                } else {
+                    quote! { #[pyo3(#(#tokens),*)] }
                 }),
             };
             (tokens, other_attrs)
@@ -198,27 +201,26 @@ fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>,
         if path.is_ident(SKIP) {
             classifier.other.clear();
             return Ok((AttrKind::Skipped, classifier.other, None));
+        }
+        if path.is_ident(NEW) {
+            classifier.has_new = true;
+        }
+        if path.is_ident(PYO3) {
+            let arg = match attr.meta {
+                Meta::List(list) => Ok(list.tokens),
+                _ => Err(syn::Error::new_spanned(
+                    attr,
+                    "expected #[pyo3(...)] on a #[py_methods] trait method",
+                )),
+            }?;
+            if arg.clone().pipe(has_name_key) {
+                classifier.has_name = true;
+            }
+            classifier.pyo3.push(arg);
+        } else if path.is_ident(GETTER) || path.is_ident(SETTER) || path.is_ident(DELETER) {
+            classifier.property_kind = Some(path.get_ident().expect("checked above").clone());
         } else {
-            if path.is_ident(NEW) {
-                classifier.has_new = true;
-            }
-            if path.is_ident(PYO3) {
-                let arg = match attr.meta {
-                    Meta::List(list) => Ok(list.tokens),
-                    _ => Err(syn::Error::new_spanned(
-                        attr,
-                        "expected #[pyo3(...)] on a #[py_methods] trait method",
-                    )),
-                }?;
-                if arg.clone().pipe(has_name_key) {
-                    classifier.has_name = true;
-                }
-                classifier.pyo3.push(arg);
-            } else if path.is_ident(GETTER) || path.is_ident(SETTER) || path.is_ident(DELETER) {
-                classifier.property_kind = Some(path.get_ident().expect("checked above").clone());
-            } else {
-                classifier.other.push(attr);
-            }
+            classifier.other.push(attr);
         }
     }
     Ok(classifier.finalize())

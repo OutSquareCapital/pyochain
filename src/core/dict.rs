@@ -44,7 +44,7 @@ impl Dict {
             rs_str[1..length - 1].to_string()
         })?;
 
-        Ok(format!("{}({})", name, repr))
+        Ok(format!("{name}({repr})"))
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
@@ -138,8 +138,10 @@ impl Dict {
         let lhs = slf.get().inner_bind(py);
         other
             .cast_exact::<Self>()
-            .map(|x| lhs.ior(x.get().inner_bind(py).as_any()))
-            .unwrap_or_else(|_| lhs.ior(&other))
+            .map_or_else(
+                |_| lhs.ior(&other),
+                |x| lhs.ior(x.get().inner_bind(py).as_any()),
+            )
             .map(|_| slf)
     }
 

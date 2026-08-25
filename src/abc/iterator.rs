@@ -467,7 +467,7 @@ impl PyoIterator {
                         return left.gt(&right);
                     }
                 }
-                (None, None) | (None, Some(_)) => return Ok(false),
+                (None, None | Some(_)) => return Ok(false),
                 (Some(_), None) => return Ok(true),
             }
         }
@@ -747,8 +747,10 @@ impl PyoIterator {
                         "Error occurred while evaluating predicate output in `PyoIterator::find`",
                     )
             })
-            .map(|x| x?.unbind().pipe(PySome::new).into_py_any(py))
-            .unwrap_or_else(|| PyNull::get_any_ok(py))
+            .map_or_else(
+                || PyNull::get_any_ok(py),
+                |x| x?.unbind().pipe(PySome::new).into_py_any(py),
+            )
     }
     fn intersperse<'py>(
         slf: &Bound<'py, Self>,
@@ -916,10 +918,10 @@ impl PyoIterator {
                 None => return PyNull::get(py).into_bound(py).into_any().pipe(Ok),
                 Some(result) => {
                     let item = result?;
-                    match item.is(PyNull::get(py)) {
-                        false => return Ok(item),
-                        true => continue,
+                    if !item.is(PyNull::get(py)) {
+                        return Ok(item);
                     }
+                    continue;
                 }
             }
         }
@@ -1026,16 +1028,18 @@ impl PyoIterator {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::nth(&x, n))
             .and_then(|x| {
-                x.map(|y| y.unbind().pipe(PySome::new).into_py_any(py))
-                    .unwrap_or_else(|| PyNull::get(py).into_py_any(py))
+                x.map_or_else(
+                    || PyNull::get(py).into_py_any(py),
+                    |y| y.unbind().pipe(PySome::new).into_py_any(py),
+                )
             })
     }
     fn next<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
-        slf.try_iter()?
-            .next()
-            .map(|x| x?.unbind().pipe(PySome::new).into_bound_py_any(py))
-            .unwrap_or_else(|| PyNull::get(py).into_bound_py_any(py))
+        slf.try_iter()?.next().map_or_else(
+            || PyNull::get(py).into_bound_py_any(py),
+            |x| x?.unbind().pipe(PySome::new).into_bound_py_any(py),
+        )
     }
     fn peekable(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Peekable>> {
         slf.try_iter()?

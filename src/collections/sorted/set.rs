@@ -71,6 +71,6 @@ impl BaseSortedSet for SortedSet {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let type_name = Self::type_object(py).name()?;
         let self_repr = self.get_list().get().get_data().py_repr(py)?;
-        Ok(format!("{}({})", type_name, self_repr))
+        Ok(format!("{type_name}({self_repr})"))
     }
 }

@@ -128,28 +128,27 @@ impl PyoMutableMapping {
     }
 
     fn popitem(slf: Bound<'_, Self>) -> PyResult<(Bound<'_, PyAny>, Bound<'_, PyAny>)> {
-        slf.try_iter()?
-            .next()
-            .map(|k| {
+        slf.try_iter()?.next().map_or_else(
+            || Err(PyKeyError::new_err("")),
+            |k| {
                 let key = k?;
                 let value = slf.get_item(&key)?;
                 slf.del_item(&key)?;
                 Ok((key, value))
-            })
-            .unwrap_or_else(|| Err(PyKeyError::new_err("")))
+            },
+        )
     }
 
     fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
         let py = slf.py();
         loop {
             match slf.call_method0(intern!(py, "popitem")) {
-                Ok(_) => continue,
+                Ok(_) => {}
                 Err(err) => {
                     if err.is_instance_of::<PyKeyError>(py) {
                         return Ok(());
-                    } else {
-                        return Err(err);
                     }
+                    return Err(err);
                 }
             }
         }
@@ -196,9 +195,7 @@ impl PyoMutableMapping {
         let py = slf.py();
         slf.get_item(key).or_else(|err| {
             if err.is_instance_of::<PyKeyError>(py) {
-                let default = default
-                    .map(Ok)
-                    .unwrap_or_else(|| PyNone::get(py).into_bound_py_any(py))?;
+                let default = default.map_or_else(|| PyNone::get(py).into_bound_py_any(py), Ok)?;
                 slf.set_item(key, &default)?;
                 Ok(default)
             } else {
@@ -215,9 +212,10 @@ impl PyoMutableMapping {
         let py = slf.py();
         let previous = slf.get_item(key);
         slf.set_item(key, value)?;
-        previous
-            .map(|x| PySome::new(x.unbind()).into_bound_py_any(py))
-            .unwrap_or_else(|_| PyNull::get(py).into_bound_py_any(py))
+        previous.map_or_else(
+            |_| PyNull::get(py).into_bound_py_any(py),
+            |x| PySome::new(x.unbind()).into_bound_py_any(py),
+        )
     }
 
     fn try_insert<'py>(
