@@ -1,5 +1,14 @@
 from collections.abc import Callable
-from typing import Any, Concatenate, Final, Protocol, final, overload, type_check_only
+from typing import (
+    Any,
+    Concatenate,
+    Final,
+    Protocol,
+    final,
+    overload,
+    override,
+    type_check_only,
+)
 
 from pyochain import Option
 from pyochain.abc import Pipe, PyoIterator
@@ -108,7 +117,44 @@ class ResultType[T, E](Pipe, Protocol):
         assert res2 == "Failure: -3 is not positive"
         ```
     """
+    @override
+    def __eq__(self, other: object) -> bool:
+        """Checks equality between two `Result` instances.
 
+        Args:
+            other (object): The other object to compare with.
+
+        Returns:
+            bool: `True` if both are the same variant and their contained values are equal, `False` otherwise.
+
+        Example:
+            ```python
+            from pyochain import Ok, Err
+
+            assert Ok(2) == Ok(2)
+            assert Err("error") == Err("error")
+            ```
+        """
+    @override
+    def __ne__(self, value: object, /) -> bool:
+        """Checks inequality between two `Result` instances.
+
+        Args:
+            value (object): The other object to compare with.
+
+        Returns:
+            bool: `True` if both are not the same variant or their contained values are not equal, `False` otherwise.
+
+        Example:
+            ```python
+            from pyochain import Ok, Err
+
+            assert Ok(2) != Err("error")
+            assert Err("error") != Ok(2)
+            assert Ok(2) != 2
+            assert Err("error") != "error"
+            ```
+        """
     def swap(self) -> Result[E, T]:
         """Swaps the `Ok` and `Err` variants.
 
@@ -125,10 +171,10 @@ class ResultType[T, E](Pipe, Protocol):
             assert Err("error").swap().unwrap() == "error"
             ```
         """
-    def flatten[T1, E1, E2](self: ResultType[Result[T1, E1], E2]) -> Result[T1, E1]:
+    def flatten[T1, E1](self: Result[Result[T1, E1], E1]) -> Result[T1, E1]:
         """Flattens a nested `Result`.
 
-        Converts from `Result[Result[T1, E1], E2]` to `Result[T1, E1]`.
+        Converts from `Result[Result[T1, E1], E1]` to `Result[T1, E1]`.
 
         Equivalent to calling `Result.and_then(lambda x: x)`, but more convenient when there's no need to process the inner `Ok` value.
 
@@ -137,13 +183,18 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            from pyochain import Result, Ok, Err
+            from pyochain import Ok, Err, Result
 
-            nested_ok: Result[Result[int, str], str] = Ok(Ok(2))
-            assert nested_ok.flatten().unwrap() == 2
-
-            nested_err: Result[Result[int, str], str] = Ok(Err("inner error"))
-            assert nested_err.flatten().unwrap_err() == "inner error"
+            a: Result[Result[str, int], int] = Ok(Ok("hello"))
+            assert Ok("hello") == a.flatten()
+            b: Result[Result[str, int], int] = Ok(Err(6))
+            assert Err(6) == b.flatten()
+            c: Result[Result[str, int], int] = Err(6)
+            assert Err(6) == c.flatten()
+            # flattening only remove one level of nesting at a time
+            d: Result[Result[Result[str, int], int], int] = Ok(Ok(Ok("hello")))
+            assert Ok(Ok("hello")) == d.flatten()
+            assert Ok("hello") == d.flatten().flatten()
             ```
         """
 
@@ -637,33 +688,79 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    def and_then[**P, R, NE](
-        self,
-        fn: Callable[Concatenate[T, P], Result[R, object]],
+    def and_then[**P, T1, E1, R](
+        self: Result[T1, E1],
+        fn: Callable[Concatenate[T1, P], Result[R, E1]],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> Result[R, E]:
-        """Calls a function if the result is `Ok`, otherwise returns the `Err` value.
+    ) -> Result[R, E1]:
+        """Calls `fn` if the result is [`Ok`], otherwise returns the [`Err`] value of `self`.
 
-        This is often used for chaining operations that might fail.
+        This function can be used for control flow based on `Result` values.
 
         Args:
-            fn (Callable[Concatenate[T, P], Result[R, object]]): The function to call with the `Ok` value.
+            fn (Callable[Concatenate[T1, P], Result[R, E1]]): The function to call with the `Ok` value.
             *args (P.args): Additional positional arguments to pass to fn.
             **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
-            Result[R, E]: The result of the function if `Ok`, otherwise the original `Err`.
+            Result[R, E1]: The result of calling `fn` if the original result is `Ok`, otherwise the original `Err`.
 
-        Example:
+        Examples:
             ```python
             from pyochain import Ok, Err, Result
 
-            def to_str(x: int) -> Result[str, str]:
-                return Ok(str(x))
+            def try_mul_to_str(x: int) -> Result[str, str]:
+                if x < 100_000:
+                    return Ok(str(x * x))
+                else:
+                    return Err("overflow")
 
-            assert Ok(2).and_then(to_str).unwrap() == "2"
-            assert Err("error").and_then(to_str), unwrap_err() == "error"
+            assert Ok(2).and_then(try_mul_to_str) == Ok("4")
+            assert Ok(1_000_000).and_then(try_mul_to_str) == Err("overflow")
+            assert Err("hi").and_then(try_mul_to_str) == Err("hi")
+            ```
+
+            Often used to chain fallible operations that may return [`Err`].
+
+            ```python
+            from pyochain import Option, Some, NONE
+            from pathlib import Path
+
+            CONFIG = Path("pyproject")
+
+            def run(value: int = 10, path: Option[str] = NONE) -> Result[float, str]:
+                return (
+                    check_toml(path.map(Path).unwrap_or(CONFIG))
+                    .map(lambda _: value)
+                    .and_then(parse_int)
+                    .and_then(reciprocal)
+                )
+
+            def check_toml(path: Path) -> Result[None, str]:
+                p = path.with_suffix(".toml")
+                if p.exists():
+                    return Ok(None)
+                else:
+                    return Err(f"File {p} does not exist")
+
+            def parse_int(s: str) -> Result[int, str]:
+                try:
+                    return Ok(int(s))
+                except ValueError:
+                    return Err(f"'{s}' is not a valid int")
+
+            def reciprocal(x: int) -> Result[float, str]:
+                if x == 0:
+                    return Err("division by zero")
+                else:
+                    return Ok(1 / x)
+
+            assert run() == Ok(0.1)
+            assert run(path=Some("ruff")) == Ok(0.1)
+            assert run(path=Some("bad")) == Err("File bad.toml does not exist")
+            assert run(value=0) == Err("division by zero")
+            assert run(value="hi") == Err("'hi' is not a valid int")
             ```
         """
 

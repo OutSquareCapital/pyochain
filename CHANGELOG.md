@@ -12,6 +12,14 @@
 
 - `core::Peekable` can only be constructed from `PyoIterator::peekable`.
 
+### 🆕 New features
+
+- `Result::{__eq__, __ne__}`  are now implemented, allowing to compare `Result` instances for equality.
+
+### 🐞 Bug fixes
+
+- `Err::flatten` was actually not implemented. To prevent similar issues, the code for monads has started to be refactored to use `py_abc` macro.
+
 ### 🛠️ Other improvements
 
 - Various clean-ups and refactors in the Rust codebase, to improve readability and maintainability.

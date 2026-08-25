@@ -14,6 +14,7 @@ use pyo3::{
     types::{PyString, PyTuple},
 };
 use pyo3_ext::prelude::*;
+use pyochain_macros::py_abc;
 use tap::prelude::*;
 fn format_err_value(error: &Bound<'_, PyAny>) -> PyResult<String> {
     match error.is_instance_of::<PyBaseException>() {
@@ -34,7 +35,14 @@ fn format_err_value(error: &Bound<'_, PyAny>) -> PyResult<String> {
         false => error.repr()?.extract::<String>(),
     }
 }
-
+#[py_abc(PyoOk, PyoErr)]
+trait ResultMethods: Sized {
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool>;
+    fn __ne__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        self.__eq__(other).map(|eq| !eq)
+    }
+    fn flatten(slf: Bound<'_, Self>) -> Bound<'_, PyAny>;
+}
 /// Exception raised when unwrapping fails on Result types
 #[pyclass(module = "pyochain.core",frozen, extends = PyValueError)]
 pub struct ResultUnwrapError;
@@ -154,11 +162,6 @@ impl PyoOk {
             "{}: expected Err, got Ok({})",
             msg, ok_repr
         )))
-    }
-
-    fn flatten(&self, py: Python<'_>) -> Py<PyAny> {
-        // For Ok[Result[T, E], E], the self.value IS the inner Result
-        self.value.clone_ref(py)
     }
 
     fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
@@ -477,5 +480,29 @@ impl PyoErr {
     }
     fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         self.error.clone_ref(py).pipe(PyoOk::new).into_py_any(py)
+    }
+}
+impl ResultMethods for PyoOk {
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = other.py();
+        other.cast_exact::<Self>().map_or(Ok(false), |other_ok| {
+            self.value.bind(py).eq(other_ok.get().value.bind(py))
+        })
+    }
+    fn flatten(slf: Bound<'_, Self>) -> Bound<'_, PyAny> {
+        // For Ok[Result[T, E], E], the self.value IS the inner Result
+        let py = slf.py();
+        slf.get().value.clone_ref(py).into_bound(py)
+    }
+}
+impl ResultMethods for PyoErr {
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = other.py();
+        other.cast_exact::<Self>().map_or(Ok(false), |other_err| {
+            self.error.bind(py).eq(other_err.get().error.bind(py))
+        })
+    }
+    fn flatten(slf: Bound<'_, Self>) -> Bound<'_, PyAny> {
+        slf.into_any()
     }
 }
