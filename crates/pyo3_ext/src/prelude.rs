@@ -5,7 +5,7 @@ pub use super::ext_methods::{
     PySequenceExtMethods, PySetExtMethods, PySetExtMethodsMut,
 };
 pub use super::iter::{
-    CollectBoundIterator, FromBoundIterator, TryCollectBoundIterator, TryFromBoundIterator,
+    CollectBoundIterator, FromBoundIterator, TryFromBoundIterator,
 };
 pub use super::pyany::PyAnyInPlaceMethods;
 pub use super::types::{
