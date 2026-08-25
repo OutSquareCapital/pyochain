@@ -882,7 +882,8 @@ macro_rules! impl_sorted_collection_for_set {
                 self.get_set().bind(value.py()).contains(value)
             }
             fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-                tuple!(self.get_set().clone_ref(py)).map(|tup| (Self::type_object(py), tup))
+                PyTuple::new(py, [self.get_set().clone_ref(py)])
+                    .map(|tup| (Self::type_object(py), tup))
             }
 
             fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
