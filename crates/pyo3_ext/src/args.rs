@@ -4,6 +4,8 @@ use pyo3::{
     types::{PyDict, PyTuple},
 };
 use tap::prelude::*;
+
+use crate::iter::CollectBoundIterator;
 /// Type alias representing the `*args` parameter in Python functions (or any argument that is expected to be a tuple)
 pub type Args<'py> = Bound<'py, PyTuple>;
 /// Type alias representing the `**kwargs` parameter in Python functions
@@ -138,7 +140,8 @@ impl<'py> ConcatWith<'py> for Bound<'py, PyAny> {
         self.pipe(std::iter::once)
             .chain(others.iter())
             .collect::<Vec<Bound<'py, PyAny>>>()
-            .pipe_ref(|x| PyTuple::new(py, x))
+            .into_iter()
+            .collect_bound::<PyTuple>(py)
     }
 
     #[inline]

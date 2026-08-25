@@ -139,7 +139,8 @@ trait HeapType: Sized + PyWrapper<Wrapped = PyList> {
             .pipe(std::iter::once)
             .chain(others.iter())
             .collect::<Vec<_>>()
-            .pipe(|x| PyTuple::new(py, x))?;
+            .into_iter()
+            .collect_bound(py)?;
         pylibs::heapq::merge(py, args, key, reverse)?.into_pyochain()
     }
     #[pyo3(signature = (n, key=None))]

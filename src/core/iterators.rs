@@ -44,8 +44,9 @@ impl MapJuxt {
                 slf.funcs
                     .iter()
                     .map(|func| func.call1(py, (&args,)))
-                    .collect::<PyResult<Vec<_>>>()
-                    .and_then(|x| PyTuple::new(py, x))
+                    .collect::<PyResult<Vec<_>>>()?
+                    .into_iter()
+                    .collect_bound(py)
                     .map(Some)
             }
             None => Ok(None),
@@ -220,7 +221,7 @@ impl MapWindow {
         slf.prev.rotate_left(1);
         let last = slf.prev.len() - 1;
         slf.prev[last] = item;
-        Ok(Some(PyTuple::new(py, slf.prev.iter())?))
+        Ok(Some(slf.prev.iter().collect_bound(py)?))
     }
 }
 #[pyclass(module = "pyochain._iterators")]
@@ -712,8 +713,9 @@ impl ZipLongest {
                 .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })?
                 .iter()
                 .map(|x| PyochainOption::dispatch(&x))
-                .collect::<PyResult<Vec<_>>>()
-                .and_then(|v| PyTuple::new(py, v))
+                .collect::<PyResult<Vec<_>>>()?
+                .into_iter()
+                .collect_bound(py)
                 .map(Bound::unbind)
                 .map(Some),
         }
