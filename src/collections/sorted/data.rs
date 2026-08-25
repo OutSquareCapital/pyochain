@@ -326,7 +326,7 @@ impl ListsData {
         }
     }
 }
-fn get_slice<'a>(data: &'a ListsData, bounds: Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {
+fn get_slice(data: &ListsData, bounds: Bounds) -> impl Iterator<Item = &Py<PyAny>> + '_ {
     data.lists[bounds.min.pos][bounds.min.idx..]
         .iter()
         .chain(
@@ -345,12 +345,12 @@ pub(super) fn reset_list<T: BaseSortedList>(slf: &T, py: Python<'_>, load: usize
     slf.update(py, values)
 }
 #[inline(always)]
-pub(super) fn islice_list<'py, T: BaseSortedList>(
-    slf: Bound<'py, T>,
+pub(super) fn islice_list<T: BaseSortedList>(
+    slf: Bound<'_, T>,
     start: Option<isize>,
     stop: Option<isize>,
     reverse: bool,
-) -> PyResult<Bound<'py, abc::PyoIterator>> {
+) -> PyResult<Bound<'_, abc::PyoIterator>> {
     let py = slf.py();
     let specs = Bounds::get_islice_specs(&mut slf.get().get_data(), py, start, stop)?;
     match specs {

@@ -21,7 +21,7 @@ pub struct PyoIterator;
 #[pymethods]
 impl PyoIterator {
     #[staticmethod]
-    pub fn once<'py>(value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    pub fn once(value: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
         tuple!(value)?
             .iter_py()
             .into_pyochain()
@@ -665,7 +665,7 @@ impl PyoIterator {
             }
         }
     }
-    fn try_collect<'py>(slf: &Bound<'py, Self>) -> PyResult<Py<PyAny>> {
+    fn try_collect(slf: &Bound<'_, Self>) -> PyResult<Py<PyAny>> {
         let slf = slf.try_iter()?;
         let py = slf.py();
         let collected = PyList::empty(py);
@@ -1021,7 +1021,7 @@ impl PyoIterator {
         slf.try_iter()
             .and_then(|x| pylibs::builtins::min_by(&x, key))
     }
-    fn nth<'py>(slf: &Bound<'py, Self>, n: usize) -> PyResult<Py<PyAny>> {
+    fn nth(slf: &Bound<'_, Self>, n: usize) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         slf.try_iter()
             .and_then(|x| pylibs::itertools::nth(&x, n))
@@ -1037,7 +1037,7 @@ impl PyoIterator {
             .map(|x| x?.unbind().pipe(PySome::new).into_bound_py_any(py))
             .unwrap_or_else(|| PyNull::get(py).into_bound_py_any(py))
     }
-    fn peekable<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Peekable>> {
+    fn peekable(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Peekable>> {
         slf.try_iter()?
             .unbind()
             .pipe(iterators::Peekable::new)
@@ -1168,7 +1168,7 @@ impl PyoIterator {
         };
         func.concat_star(&unpacked, args, kwargs)
     }
-    fn unique<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn unique(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
         slf.try_iter()
             .and_then(iterators::UniqueIdentity::new)
             .and_then(|x| iterator_into_iter(x, slf.py()))
@@ -1178,7 +1178,7 @@ impl PyoIterator {
             .and_then(|iter| iterators::UniqueKey::new(iter, key))
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
-    fn unzip<'py>(slf: Bound<'py, Self>) -> PyResult<(Bound<'py, Self>, Bound<'py, Self>)> {
+    fn unzip(slf: Bound<'_, Self>) -> PyResult<(Bound<'_, Self>, Bound<'_, Self>)> {
         let py = slf.py();
         slf.try_iter()
             .and_then(|data| pylibs::itertools::tee(data, 2))
@@ -1193,7 +1193,7 @@ impl PyoIterator {
                 (Err(e), _) | (_, Err(e)) => Err(e),
             })
     }
-    fn with_position<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn with_position(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
         slf.try_iter()
             .map(|x| iterators::WithPosition::new(x))
             .and_then(|x| iterator_into_iter(x, slf.py()))

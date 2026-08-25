@@ -95,7 +95,7 @@ impl Dict {
     }
 
     #[staticmethod]
-    fn from_object<'py>(obj: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    fn from_object(obj: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
         obj.getattr(intern!(obj.py(), "__dict__"))
             .and_then(|x| unsafe { x.cast_into_unchecked::<PyDict>() }.into_pyochain())
     }

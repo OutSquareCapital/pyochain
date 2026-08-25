@@ -83,12 +83,12 @@ pub(super) trait SortedCollection:
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>>;
     #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
-    fn islice<'py>(
-        slf: Bound<'py, Self>,
+    fn islice(
+        slf: Bound<'_, Self>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
+    ) -> PyResult<Bound<'_, abc::PyoIterator>>;
     #[pyo3(signature = (value, start = None, stop = None))]
     fn index(
         &self,
@@ -139,10 +139,10 @@ impl_inner_sorted_rs!(SortedKeyList);
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait BaseSortedList: SortedListGetters {
     #[skip]
-    fn wrap_iter<'py>(
-        py: Python<'py>,
+    fn wrap_iter(
+        py: Python<'_>,
         inner: iter::BoundedIter<Self>,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
+    ) -> PyResult<Bound<'_, abc::PyoIterator>>;
     #[skip]
     fn delete(
         &self,
@@ -255,11 +255,11 @@ pub(super) trait BaseSortedList: SortedListGetters {
     /// See `_pos` for details on how an index is converted to an index pair.\
     /// When `reverse` is `True`, values are yielded from the iterator in reverse order.
     #[skip]
-    fn islice_iter<'py>(
-        slf: Bound<'py, Self>,
+    fn islice_iter(
+        slf: Bound<'_, Self>,
         bounds: Bounds,
         reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
         let py = slf.py();
         let dir = if reverse {
             iter::Dir::Bwd
@@ -555,7 +555,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             .and_then(|u| self.wrap(u))
     }
     #[skip]
-    fn difference_update<'py>(&self, py: Python<'_>, iterables: IntoUpdate<'py>) -> PyResult<()> {
+    fn difference_update(&self, py: Python<'_>, iterables: IntoUpdate<'_>) -> PyResult<()> {
         let set = self.get_set().bind(py);
         let values = iterables.into_set(py)?;
         if (4 * values.len()) > set.len() {
@@ -585,7 +585,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
         self.get_list().get().__getitem__(py, index)
     }
-    fn __delitem__<'py>(&self, py: Python<'_>, index: IntOrSlice<'py>) -> PyResult<()> {
+    fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
             Either::Right(slice) => {
                 let values = self
@@ -903,12 +903,12 @@ macro_rules! impl_sorted_collection_for_set {
                 self.get_list().get().index(value, start, stop)
             }
             #[allow(unused_variables)]
-            fn islice<'py>(
-                slf: Bound<'py, Self>,
+            fn islice(
+                slf: Bound<'_, Self>,
                 start: Option<isize>,
                 stop: Option<isize>,
                 reverse: bool,
-            ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+            ) -> PyResult<Bound<'_, abc::PyoIterator>> {
                 slf.get()
                     .get_list_bound(slf.py())
                     .pipe(|list| <$list>::islice(list, start, stop, reverse))
@@ -1205,7 +1205,7 @@ impl<'a, 'py> SortedDictIter<'a, 'py> {
         }
     }
 }
-impl<'a, 'py> Iterator for SortedDictIter<'a, 'py> {
+impl<'py> Iterator for SortedDictIter<'_, 'py> {
     type Item = PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>;
     fn next(&mut self) -> Option<PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>> {
         let index = self.range.next()?;

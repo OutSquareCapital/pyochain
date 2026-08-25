@@ -114,7 +114,7 @@ impl PyoSequence {
             }
         }
     }
-    fn rev<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
+    fn rev(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
             .into_pyochain()
@@ -218,11 +218,11 @@ impl PyoMutableSequence {
             .into_pyochain()
     }
     #[pyo3(signature = (start=None, end=None))]
-    fn drain<'py>(
-        slf: Bound<'py, Self>,
+    fn drain(
+        slf: Bound<'_, Self>,
         start: Option<usize>,
         end: Option<usize>,
-    ) -> PyResult<Bound<'py, iterators::Iter>> {
+    ) -> PyResult<Bound<'_, iterators::Iter>> {
         let py = slf.py();
         unsafe { slf.cast_into_unchecked::<PySequence>() }
             .pipe(|x| iterators::Drain::new(x, start, end))?

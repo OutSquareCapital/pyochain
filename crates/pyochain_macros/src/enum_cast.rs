@@ -8,8 +8,9 @@ use syn::{
 pub(crate) fn generate_from_input(input: DeriveInput) -> TokenStream {
     get_variants(&input)
         .and_then(get_arms_and_names)
-        .map(|(arms, names)| gen_impl(input, arms, names))
-        .unwrap_or_else(syn::Error::into_compile_error)
+        .map_or_else(syn::Error::into_compile_error, |(arms, names)| {
+            gen_impl(input, arms, names)
+        })
         .into()
 }
 

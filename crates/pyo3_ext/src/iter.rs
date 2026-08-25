@@ -21,7 +21,7 @@ where
 {
     fn from_iter_bound(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
 }
-/// Mirror of std `Iterator::collect`, but for PyO3 Python collection types.
+/// Mirror of std `Iterator::collect`, but for `PyO3` Python collection types.
 pub trait CollectBoundIterator<'py>: Iterator + Sized {
     #[inline(always)]
     fn collect_bound<B>(self, py: Python<'py>) -> PyResult<Bound<'py, B>>
@@ -41,7 +41,7 @@ pub trait CollectBoundIterator<'py>: Iterator + Sized {
         B::try_from_iter_bound(self, py)
     }
 }
-impl<'py, I> CollectBoundIterator<'py> for I where I: Iterator {}
+impl<I> CollectBoundIterator<'_> for I where I: Iterator {}
 impl<'py, T, I> FromBoundIterator<'py, I> for PyTuple
 where
     T: IntoPyObject<'py>,
@@ -80,7 +80,7 @@ where
         let mut builder = PyFrozenSetBuilder::new(py)?;
         iter.into_iter()
             .try_for_each(|item| builder.add(item))
-            .map(|_| builder.finalize())
+            .map(|()| builder.finalize())
     }
 }
 impl<'py, T, I> TryFromBoundIterator<'py, I> for PyFrozenSet
@@ -95,7 +95,7 @@ where
         let mut builder = PyFrozenSetBuilder::new(py)?;
         iter.into_iter()
             .try_for_each(|item| builder.add(item?))
-            .map(|_| builder.finalize())
+            .map(|()| builder.finalize())
     }
 }
 impl<'py, T, I> TryFromBoundIterator<'py, I> for PySet
@@ -110,7 +110,7 @@ where
         let pyset = PySet::empty(py)?;
         iter.into_iter()
             .try_for_each(|item| pyset.add(item?))
-            .map(|_| pyset)
+            .map(|()| pyset)
     }
 }
 

@@ -155,12 +155,12 @@ impl SortedCollection for SortedList {
         }
     }
 
-    fn islice<'py>(
-        slf: Bound<'py, Self>,
+    fn islice(
+        slf: Bound<'_, Self>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
         islice_list(slf, start, stop, reverse)
     }
 }
@@ -251,10 +251,10 @@ impl BaseSortedList for SortedList {
             .map(|repr| format!("{}({})", cls_name, repr))
     }
 
-    fn wrap_iter<'py>(
-        py: Python<'py>,
+    fn wrap_iter(
+        py: Python<'_>,
         inner: iter::BoundedIter<Self>,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
         iter::SortedIter::new(inner)
             .into_bound(py)
             .map(Bound::into_super)

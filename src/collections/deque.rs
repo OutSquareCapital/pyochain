@@ -141,7 +141,7 @@ impl Deque {
     fn __rmul__<'py>(&self, value: Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
         self.__mul__(value)
     }
-    fn __imul__<'py>(&self, value: Bound<'py, PyInt>) -> PyResult<()> {
+    fn __imul__(&self, value: Bound<'_, PyInt>) -> PyResult<()> {
         self.inner_bind(value.py()).imul(value)?;
         Ok(())
     }

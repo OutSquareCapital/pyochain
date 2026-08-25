@@ -11,7 +11,7 @@ pub fn hash_fn(tag: u8, value: isize) -> u64 {
 /// Python masks with `MASK = 2 * sys.maxsize + 1` (i.e. the full 64-bit range) after every step.\
 /// This is equivalent to doing the whole computation with wrapping u64 arithmetic,\
 /// and reinterpreting the final bit pattern as a signed 64-bit hash.
-pub fn set_hash<'py, T: PyClass + DerefToPyAny>(slf: &Bound<'py, T>) -> PyResult<isize> {
+pub fn set_hash<T: PyClass + DerefToPyAny>(slf: &Bound<'_, T>) -> PyResult<isize> {
     let length = slf.len()? as u64;
     let mut h = 1927868237u64.wrapping_mul(length.wrapping_add(1));
     for x in slf.try_iter()? {

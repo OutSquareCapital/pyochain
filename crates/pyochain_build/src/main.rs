@@ -7,9 +7,11 @@ fn main() -> ExitCode {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .pipe(pyochain_build::run)
-        .map(|_| ExitCode::SUCCESS)
-        .unwrap_or_else(|error| {
-            anstream::eprintln!("Documentation generation failed: {error}");
-            ExitCode::FAILURE
-        })
+        .map_or_else(
+            |error| {
+                anstream::eprintln!("Documentation generation failed: {error}");
+                ExitCode::FAILURE
+            },
+            |()| ExitCode::SUCCESS,
+        )
 }

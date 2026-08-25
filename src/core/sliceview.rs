@@ -291,7 +291,7 @@ impl SliceView {
         }
     }
 
-    fn advance<'py>(slf: Bound<'py, Self>, n: isize) -> PyResult<Bound<'py, Self>> {
+    fn advance(slf: Bound<'_, Self>, n: isize) -> PyResult<Bound<'_, Self>> {
         let py = slf.py();
         let slf_get = slf.get();
         let b_len = slf_get.inner_bind(py).len()? as isize;

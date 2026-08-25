@@ -44,7 +44,7 @@ impl PyoCounter {
         self.inner_bind(py).iter_py()
     }
 
-    fn __len__<'py>(&self, py: Python<'py>) -> usize {
+    fn __len__(&self, py: Python<'_>) -> usize {
         self.inner_bind(py).len()
     }
 
@@ -331,7 +331,7 @@ impl PyoCounter {
         keep_positive(inner)
     }
 
-    fn __ixor__<'py>(&self, other: Bound<'py, Self>) -> PyResult<()> {
+    fn __ixor__(&self, other: Bound<'_, Self>) -> PyResult<()> {
         let py = other.py();
         let o = other.get();
         let inner = self.inner_bind(py);

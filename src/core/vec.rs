@@ -53,7 +53,7 @@ impl PyoVec {
             }
         }
     }
-    fn __reversed__<'py>(slf: Bound<'py, Self>) -> Bound<'py, PyIterator> {
+    fn __reversed__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
         let py = slf.py();
         slf.get()
             .inner_bind(py)
@@ -69,12 +69,12 @@ impl PyoVec {
             .and_then(Bound::into_pyochain)
     }
 
-    fn __iadd__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<()> {
+    fn __iadd__(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         self.inner_bind(py).iadd(value)?;
         Ok(())
     }
-    fn __inplace_concat__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<()> {
+    fn __inplace_concat__(&self, other: &Bound<'_, PyAny>) -> PyResult<()> {
         self.__iadd__(other)
     }
 
@@ -90,10 +90,10 @@ impl PyoVec {
     ) -> PyResult<Bound<'py, Self>> {
         slf.get().repeat(&value)
     }
-    fn __repeat__<'py>(slf: Bound<'py, Self>, count: isize) -> PyResult<Bound<'py, Self>> {
+    fn __repeat__(slf: Bound<'_, Self>, count: isize) -> PyResult<Bound<'_, Self>> {
         slf.get().repeat(&PyInt::new(slf.py(), count))
     }
-    fn __inplace_repeat__<'py>(slf: Bound<'py, Self>, count: isize) -> PyResult<Bound<'py, Self>> {
+    fn __inplace_repeat__(slf: Bound<'_, Self>, count: isize) -> PyResult<Bound<'_, Self>> {
         let py = slf.py();
         Self::repeat_mut(slf, &PyInt::new(py, count))
     }

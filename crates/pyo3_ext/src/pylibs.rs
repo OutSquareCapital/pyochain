@@ -207,7 +207,7 @@ pub mod operator {
     static ITEMGETTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
     #[inline(always)]
-    pub fn itemgetter<'py>(py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
+    pub fn itemgetter(py: Python<'_>, index: isize) -> PyResult<Bound<'_, PyAny>> {
         ITEMGETTER
             .import(py, OPERATOR, "itemgetter")?
             .call1((index,))
@@ -279,7 +279,7 @@ pub mod itertools {
     }
 
     #[inline(always)]
-    pub fn tee<'py>(iterator: Bound<'py, PyIterator>, n: usize) -> PyResult<Bound<'py, PyTuple>> {
+    pub fn tee(iterator: Bound<'_, PyIterator>, n: usize) -> PyResult<Bound<'_, PyTuple>> {
         TEE.import(iterator.py(), ITERTOOLS, "tee")?
             .call1((iterator, n))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyTuple>() })

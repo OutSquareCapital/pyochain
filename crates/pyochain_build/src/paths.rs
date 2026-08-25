@@ -48,7 +48,7 @@ impl Related {
                     && entry.path().extension().and_then(|value| value.to_str())
                         == Some(self.extension.as_str())
             })
-            .map(|entry| entry.into_path())
+            .map(walkdir::DirEntry::into_path)
     }
 
     pub(super) fn make_relative<'a>(&self, path: &'a Path) -> Relative<'a> {
@@ -76,7 +76,7 @@ impl Related {
 
 /// Only relative path can be normalized
 pub(super) struct Relative<'a>(pub &'a Path);
-impl<'a> Relative<'a> {
+impl Relative<'_> {
     pub(super) fn normalize(self) -> Normalized {
         Normalized {
             source: self.0.to_path_buf(),

@@ -65,7 +65,7 @@ trait HeapType: Sized + PyWrapper<Wrapped = PyList> {
     }
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn push_pop<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
-    fn push<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<()>;
+    fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()>;
 
     #[pyo3(signature = (_index=None))]
     fn pop<'py>(

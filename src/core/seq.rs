@@ -93,7 +93,7 @@ impl Seq {
     ) -> PyResult<Bound<'py, Self>> {
         slf.get().repeat(&value)
     }
-    fn __repeat__<'py>(slf: Bound<'py, Self>, count: isize) -> PyResult<Bound<'py, Self>> {
+    fn __repeat__(slf: Bound<'_, Self>, count: isize) -> PyResult<Bound<'_, Self>> {
         slf.get().repeat(&PyInt::new(slf.py(), count))
     }
     fn __concat__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -107,10 +107,7 @@ impl Seq {
         let tup = Self::extract_union(other)?.as_sequence();
         self.inner_bind(py).as_sequence().in_place_concat(tup)
     }
-    fn __inplace_repeat__<'py>(
-        slf: Bound<'py, Self>,
-        count: isize,
-    ) -> PyResult<Bound<'py, PySequence>> {
+    fn __inplace_repeat__(slf: Bound<'_, Self>, count: isize) -> PyResult<Bound<'_, PySequence>> {
         slf.get()
             .inner_bind(slf.py())
             .as_sequence()

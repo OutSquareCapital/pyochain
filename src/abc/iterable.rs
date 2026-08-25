@@ -5,7 +5,7 @@ pub struct PyoIterable;
 
 #[pymethods]
 impl PyoIterable {
-    fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
+    fn iter(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Iter>> {
         slf.try_iter()?.into_pyochain()
     }
 }

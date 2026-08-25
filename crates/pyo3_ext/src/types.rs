@@ -15,7 +15,7 @@ use tap::prelude::*;
 const COLLECTIONS_ABC: &str = "collections.abc";
 /// Return type from python comparison dunders, returning either `T` in case of success, or `NotImplemented`.
 pub type PyCmpOut<'py, T> = PyResult<Either<T, Bound<'py, PyNotImplemented>>>;
-/// Small extension trait for PyNotImplemented to allow for easy conversion to `PyCmpOut`.
+/// Small extension trait for `PyNotImplemented` to allow for easy conversion to `PyCmpOut`.
 pub trait FromCmp<'py, T> {
     fn from_cmp(py: Python<'py>) -> PyCmpOut<'py, T>;
 }

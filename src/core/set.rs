@@ -159,8 +159,8 @@ trait SetCmpMethods<
         }
     }
 }
-impl<'py> SetCmpMethods<'py, PyFrozenSet> for Set {}
-impl<'py> SetCmpMethods<'py, PySet> for SetMut {}
+impl SetCmpMethods<'_, PyFrozenSet> for Set {}
+impl SetCmpMethods<'_, PySet> for SetMut {}
 #[pyclass(module = "pyochain.core",frozen, generic, extends=abc::PyoSet)]
 pub struct Set(pub Py<PyFrozenSet>);
 #[pymethods]
@@ -320,16 +320,16 @@ impl SetMut {
     /// And if we use `PySet::__ior__`, it will return `NotImplemented` on object who are NOT subclasses of `set` or `frozenset`.\
     /// As such, it fallback to `SetMut::__ror__` which will call `SetMut::__or__` and return a new `PySet` instead of updating the current one in-place.\
     /// Which then just doesn't work since we don't return anything, so we end up creating a new set AND then discarding it.
-    fn __iand__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+    fn __iand__(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.inner_bind(value.py()).intersection_update((value,))
     }
-    fn __ior__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+    fn __ior__(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.inner_bind(value.py()).update((value,))
     }
-    fn __isub__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+    fn __isub__(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.inner_bind(value.py()).difference_update((value,))
     }
-    fn __ixor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+    fn __ixor__(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.inner_bind(value.py())
             .symmetric_difference_update(value)
     }
@@ -433,7 +433,7 @@ impl SetMut {
             .and_then(Bound::into_pyochain)
     }
     #[pyo3(signature = (*s))]
-    fn difference_update<'py>(&self, s: Bound<'py, PyTuple>) -> PyResult<()> {
+    fn difference_update(&self, s: Bound<'_, PyTuple>) -> PyResult<()> {
         self.inner_bind(s.py()).difference_update(s)
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {

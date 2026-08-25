@@ -39,8 +39,8 @@ impl SortedKeyList {
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
         }
     }
-    pub(super) fn from_vec<'py>(
-        py: Python<'py>,
+    pub(super) fn from_vec(
+        py: Python<'_>,
         values: Vec<Py<PyAny>>,
         key: &Py<PyAny>,
     ) -> PyResult<Self> {
@@ -227,12 +227,12 @@ impl SortedCollection for SortedKeyList {
         let max_key = maximum.map(key_fn).transpose()?;
         Self::irange_key(slf, min_key, max_key, inclusive, reverse)
     }
-    fn islice<'py>(
-        slf: Bound<'py, Self>,
+    fn islice(
+        slf: Bound<'_, Self>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
         islice_list(slf, start, stop, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
@@ -381,10 +381,10 @@ impl BaseSortedList for SortedKeyList {
             .map(|repr| format!("{type_name}({}, key={})", repr, key_repr))
     }
 
-    fn wrap_iter<'py>(
-        py: Python<'py>,
+    fn wrap_iter(
+        py: Python<'_>,
         inner: iter::BoundedIter<Self>,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
         iter::SortedIterKey::new(inner)
             .into_bound(py)
             .map(Bound::into_super)

@@ -331,7 +331,7 @@ impl PySome {
         }
     }
 
-    fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    fn iter(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
         let py = slf.py();
         slf.get()
             .value

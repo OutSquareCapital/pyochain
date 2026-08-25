@@ -251,12 +251,12 @@ impl SortedCollection for SortedDict {
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_list().get().bisect_right(value)
     }
-    fn islice<'py>(
-        slf: Bound<'py, Self>,
+    fn islice(
+        slf: Bound<'_, Self>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
         SortedList::islice(slf.get().get_list_bound(slf.py()), start, stop, reverse)
     }
 
@@ -315,12 +315,12 @@ impl SortedCollection for SortedKeyDict {
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_list().get().bisect_right(value)
     }
-    fn islice<'py>(
-        slf: Bound<'py, Self>,
+    fn islice(
+        slf: Bound<'_, Self>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
         SortedKeyList::islice(slf.get().get_list_bound(slf.py()), start, stop, reverse)
     }
 
