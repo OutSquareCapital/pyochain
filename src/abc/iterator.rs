@@ -1150,8 +1150,7 @@ impl PyoIterator {
             .iter()
             .map(|x| slf.get_type().call1((x,)))
             .collect::<PyResult<Vec<_>>>()
-            .into_iter()
-            .collect_bound(slf.py())
+            .and_then(|v| PyTuple::new(slf.py(), v))
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]

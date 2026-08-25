@@ -327,6 +327,7 @@ class SetMut[T](PyoMutableSet[T], ArgsWrapper[T]):
 
             # Create an empty `SetMut`
             assert SetMut() == SetMut([]) == SetMut(()) == set()
+            assert repr(SetMut()) == "SetMut()"
             ```
         """
 

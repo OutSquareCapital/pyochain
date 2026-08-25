@@ -14,7 +14,6 @@ use pyo3_ext::{
     types::{FromCmp, PyAbstractSet, PyCmpOut},
 };
 use pyochain_macros::{BoundFromAny, try_cast};
-use tap::Pipe;
 /// Accepted types for set operations.
 /// In the case of pyochain types, we extract the inner sets.
 /// For python builtins, we directly work with them and call the corresponding numeric operators
@@ -38,7 +37,7 @@ enum SetCmp<'py> {
 }
 trait SetCmpMethods<
     'py,
-    T: PyTypeInfo + DerefToPyAny + TryFromBoundIterator<'py, Bound<'py, PyAny>>,
+    T: PyTypeInfo + DerefToPyAny + TryFromBoundIterator<'py, Bound<'py, PyIterator>>,
 >: Sized + PyWrapper + PyTypeInfo
 {
     #[inline(always)]
@@ -169,7 +168,8 @@ impl Set {
         let name = slf.get_type().name()?;
         slf.get()
             .inner_bind(py)
-            .pipe(|x| tuple!(x))
+            .into_iter()
+            .collect_bound::<PyTuple>(py)
             .and_then(get_repr)
             .map(|repr| format!("{}({})", name, repr))
     }
@@ -297,7 +297,8 @@ impl SetMut {
         let name = slf.get_type().name()?;
         slf.get()
             .inner_bind(py)
-            .pipe(|x| tuple!(x))
+            .into_iter()
+            .collect_bound::<PyTuple>(py)
             .and_then(get_repr)
             .map(|repr| format!("{}({})", name, repr))
     }
