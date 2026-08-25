@@ -169,7 +169,7 @@ impl Set {
         let name = slf.get_type().name()?;
         slf.get()
             .inner_bind(py)
-            .pipe(|x| PyTuple::new(py, x))
+            .pipe(|x| tuple!(x))
             .and_then(get_repr)
             .map(|repr| format!("{}({})", name, repr))
     }
@@ -297,7 +297,7 @@ impl SetMut {
         let name = slf.get_type().name()?;
         slf.get()
             .inner_bind(py)
-            .pipe(|x| PyTuple::new(py, x))
+            .pipe(|x| tuple!(x))
             .and_then(get_repr)
             .map(|repr| format!("{}({})", name, repr))
     }

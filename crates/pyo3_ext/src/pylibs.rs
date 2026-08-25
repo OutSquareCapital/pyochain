@@ -11,6 +11,7 @@ use pyo3::{
 use tap::prelude::*;
 
 use crate::args::{Args, Concatenate};
+use crate::tuple;
 
 /// Python `builtins` functions and objects
 pub mod builtins {
@@ -498,6 +499,7 @@ pub mod itertools {
 }
 /// Python `functools` module functions and objects
 pub mod functools {
+
     use super::*;
     const FUNCTOOLS: &str = "functools";
     static REDUCE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
@@ -509,8 +511,8 @@ pub mod functools {
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = function.py();
         let args = match initial {
-            Some(initial) => PyTuple::new(py, [function, iterable, initial])?,
-            None => PyTuple::new(py, [function, iterable])?,
+            Some(initial) => tuple!(function, iterable, initial)?,
+            None => tuple!(function, iterable)?,
         };
         REDUCE.import(py, FUNCTOOLS, "reduce")?.call1(args)
     }

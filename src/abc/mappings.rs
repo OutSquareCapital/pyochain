@@ -12,7 +12,10 @@ use crate::{
     abc::{PyoCollection, PyoItemsView, PyoKeysView, PyoValuesView},
     core::{PyNull, PySome, PyoErr, PyoOk},
 };
-use pyo3_ext::types::{FromCmp, PyCmpOut};
+use pyo3_ext::{
+    prelude::*,
+    types::{FromCmp, PyCmpOut},
+};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, mapping, extends=PyoCollection)]
 pub struct PyoMapping;
 #[pymethods]
@@ -263,7 +266,7 @@ impl PyoMutableMapping {
         match slf.get_item(key) {
             Ok(value) => {
                 slf.del_item(key)?;
-                PyTuple::new(py, [key, &value])?
+                tuple!(key, &value)?
                     .into_any()
                     .unbind()
                     .pipe(PySome::new)

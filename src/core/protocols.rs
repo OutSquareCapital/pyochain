@@ -109,7 +109,7 @@ impl FromPyArgs for iterators::Iter {
             1 => try_cast_into! {match { unsafe { elements.get_item_unchecked(0) } } {
                 Case::PyIterator(iterator) => iterator,
                 Case::PyIterable(iterable) => iterable.try_iter()?,
-                any => PyTuple::new(elements.py(), [any])?.iter_py(),
+                any => tuple!(any)?.iter_py(),
             }},
             _ => elements.iter_py(),
         }
@@ -130,7 +130,7 @@ impl FromPyArgs for Seq {
                 1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
                     CaseExact::Self(inner) => inner.get().inner_into_bound(py),
                     Case::PyIterable(iterable) => iterable.try_into_py()?,
-                    any => PyTuple::new(py, [any])?,
+                    any => tuple!(any)?,
                 }},
                 _ => elements,
             }
@@ -151,7 +151,7 @@ impl FromPyArgs for PyoVec {
             0 => PyList::empty(py),
             1 => try_cast_into! {match unsafe {elements.get_item_unchecked(0)} {
                 Case::PyIterable(iterable) => iterable.try_into_py()?,
-                any => PyList::new(py, [any])?,
+                any => list![any]?,
             }},
             _ => elements.to_list(),
         }

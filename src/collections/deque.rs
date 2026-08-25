@@ -25,11 +25,10 @@ impl Deque {
         elements: Bound<'_, PyTuple>,
         max_length: Option<Bound<'_, PyInt>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let py = elements.py();
         match elements.len() {
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
                 Case::PyIterable(iterable) => PyDeque::new(iterable.into_any(), max_length)?,
-                any => PyTuple::new(py, [any])
+                any => tuple!(any)
                     .map(Bound::into_any)
                     .and_then(|iterable| PyDeque::new(iterable, max_length))?,
             }},

@@ -14,7 +14,8 @@ use crate::{
     core::iterators,
     traits::IntoInit,
 };
-use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyTuple};
+use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*};
+use pyo3_ext::prelude::*;
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 use tap::Pipe;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -100,7 +101,7 @@ impl SortedCollection for SortedKeyList {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         self.get_data()
             .as_pyovec(py)
-            .and_then(|x| PyTuple::new(py, [x.as_any(), self.key.bind(py)]))
+            .and_then(|x| tuple!(x.as_any(), self.key.bind(py)))
             .map(|tup| (Self::type_object(py), tup))
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {

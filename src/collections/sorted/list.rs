@@ -14,7 +14,8 @@ use crate::{
     core::iterators,
     traits::IntoInit,
 };
-use pyo3::{PyTypeInfo, prelude::*, types::PyTuple};
+use pyo3::{PyTypeInfo, prelude::*};
+use pyo3_ext::prelude::*;
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 
 use tap::prelude::*;
@@ -67,7 +68,7 @@ impl SortedCollection for SortedList {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         self.get_data()
             .as_pyovec(py)
-            .and_then(|x| PyTuple::new(py, [x]))
+            .and_then(|x| tuple!(x))
             .map(|tup| (Self::type_object(py), tup))
     }
     fn clear(&self, _py: Python<'_>) {

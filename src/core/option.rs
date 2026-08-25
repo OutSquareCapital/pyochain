@@ -1,8 +1,8 @@
 use crate::abc;
 use crate::core::{PyoErr, PyoOk, iterators};
 use crate::hasher::hash_fn;
+use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::{PyTypeError, PyValueError};
-use pyo3::{IntoPyObjectExt, PyTypeInfo};
 use pyo3::{
     prelude::*,
     sync::PyOnceLock,
@@ -290,12 +290,9 @@ impl PySome {
         if other.is_null() {
             return PyNull::get_any_ok(py);
         }
-        PyTuple::new(
-            py,
-            [
-                self.value.bind(py).clone(),
-                other.cast_exact::<Self>()?.get().value.bind(py).clone(),
-            ],
+        tuple!(
+            self.value.bind(py).clone(),
+            other.cast_exact::<Self>()?.get().value.bind(py).clone(),
         )?
         .unbind()
         .into_any()
@@ -340,7 +337,7 @@ impl PySome {
             .value
             .clone_ref(py)
             .into_bound(py)
-            .pipe(|x| abc::PyoIterator::once(&iterators::Iter::type_object(py), x))
+            .pipe(abc::PyoIterator::once)
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {

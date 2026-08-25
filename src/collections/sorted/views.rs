@@ -2,7 +2,7 @@ use either::Either;
 use pyo3::{
     PyClass,
     prelude::*,
-    types::{PyList, PySlice, PyTuple, PyType},
+    types::{PyList, PySlice, PyType},
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::{py_abc, try_cast_into};
@@ -178,18 +178,14 @@ fn get_item_for_items_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
             Case::PySlice(slice) => mapping_list
                 .getitem_from_slice(py, &slice)?
                 .iter()
-                .map(|key| {
-                    PyTuple::new(py, [key.bind(py), &dict.get_item(key)?]).map(Bound::into_any)
-                })
+                .map(|key| tuple!(key.bind(py), &dict.get_item(key)?).map(Bound::into_any))
                 .try_collect_bound::<PyList>(py)?
                 .into_pyochain()
                 .map(Either::Right),
             int => {
                 let key = mapping_list.getitem_from_int(py, int.extract::<isize>()?)?;
                 let value = dict.get_item(&key)?;
-                PyTuple::new(py, [key, value])
-                    .map(Bound::into_any)
-                    .map(Either::Left)
+                tuple!(key, value).map(Bound::into_any).map(Either::Left)
             }
         }
     }

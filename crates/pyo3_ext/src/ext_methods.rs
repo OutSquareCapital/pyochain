@@ -13,6 +13,25 @@ use pyo3::{
 use crate::types::{
     PopResult, PyAbstractSet, PyDeque, PyIterable, PyMappingView, PyMutableSequence, PyMutableSet,
 };
+
+/// Create a new Python list from the given arguments.\
+#[macro_export]
+macro_rules! list {
+    ($first:expr $(, $rest:expr)* $(,)?) => {{
+        let first = $first;
+        ::pyo3::types::PyList::new(first.py(), [first $(, $rest)*])
+    }};
+}
+/// Create a new Python tuple from the given arguments (one or many).
+/// The `Python` token is gotten from the first argument.
+#[macro_export]
+macro_rules! tuple {
+    ($first:expr $(, $rest:expr)* $(,)?) => {{
+        let first = $first;
+        ::pyo3::types::PyTuple::new(first.py(), [first $(, $rest)*])
+    }};
+}
+
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
 /// This trait factorize the implementation for all ABCs.\
 /// The code is strictly identical from what's already available for `pyo3::types::PySequence` for example.

@@ -20,13 +20,9 @@ pub struct PyoIterator;
 
 #[pymethods]
 impl PyoIterator {
-    #[classmethod]
-    pub fn once<'py>(
-        cls: &Bound<'py, PyType>,
-        value: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        let py = cls.py();
-        PyTuple::new(py, &[value])?
+    #[staticmethod]
+    pub fn once<'py>(value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        tuple!(value)?
             .iter_py()
             .into_pyochain()
             .map(Bound::into_super)

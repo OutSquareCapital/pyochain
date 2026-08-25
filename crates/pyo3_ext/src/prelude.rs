@@ -10,3 +10,4 @@ pub use super::types::{
     PyDequeMethods, PyMutableSequenceMethods, PyMutableSetMethods, PySupportsIndexMethods,
     PySupportsItemsMethods,
 };
+pub use crate::{list, tuple};

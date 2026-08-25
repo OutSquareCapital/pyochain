@@ -13,8 +13,9 @@ use crate::{
 use pyo3::{
     PyTypeInfo, ffi,
     prelude::*,
-    types::{PyDict, PyMapping, PyTuple},
+    types::{PyDict, PyMapping},
 };
+use pyo3_ext::prelude::*;
 use tap::prelude::*;
 /// Key-value pair type from a Python `Mapping`
 type DictItem<'py> = (Bound<'py, PyAny>, Bound<'py, PyAny>);
@@ -236,11 +237,7 @@ impl BaseSortedDict for SortedKeyDict {
 }
 impl SortedCollection for SortedDict {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        let items = self
-            .get_inner()
-            .bind(py)
-            .copy()
-            .and_then(|x| PyTuple::new(py, [x]))?;
+        let items = self.get_inner().bind(py).copy().and_then(|x| tuple!(x))?;
         Ok((Self::type_object(py), items))
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -304,7 +301,7 @@ impl SortedCollection for SortedKeyDict {
             .get_inner()
             .bind(py)
             .copy()
-            .and_then(|x| PyTuple::new(py, [x.as_any(), self.key.bind(py)]))?;
+            .and_then(|x| tuple!(x.as_any(), self.key.bind(py)))?;
         Ok((Self::type_object(py), items))
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
