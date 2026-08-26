@@ -5,10 +5,10 @@
 
 use pyo3::prelude::*;
 
-use crate::collections::sorted::bounds::Pos;
+use crate::bounds::Pos;
 
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
-pub(super) enum Maxes {
+pub enum Maxes {
     Empty,
     LenEQPos,
     LenNEPos,
@@ -35,7 +35,7 @@ impl Maxes {
 }
 
 /// Used in `expand`
-pub(super) enum Expand {
+pub enum Expand {
     PosLenGtLoad,
     IdxNotEmpty,
     Other,
@@ -53,7 +53,7 @@ impl Expand {
     }
 }
 /// Used in `delete`
-pub(super) enum Delete {
+pub enum Delete {
     PosSupToLoad,
     DataLenGTOne,
     LenPosNotZero,
@@ -74,7 +74,7 @@ impl Delete {
         }
     }
 }
-pub(super) enum Update {
+pub enum Update {
     EmptyMaxes,
     OtherGESelf,
     OtherLTSelf,

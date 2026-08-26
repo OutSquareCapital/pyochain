@@ -1,0 +1,17 @@
+[package]
+edition = "2024"
+name = "sorted_rs"
+version = "0.1.0"
+[lib]
+name = "sorted_rs"
+
+[dependencies]
+tap = "1.0.1"
+pyo3 = { version = ">=0.29", features = [
+    "either",
+    "extension-module",
+    "multiple-pymethods",
+    "smallvec",
+] }
+[lints]
+workspace = true

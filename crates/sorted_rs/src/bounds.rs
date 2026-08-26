@@ -1,9 +1,9 @@
 use pyo3::{prelude::*, types::PySlice};
 use tap::Pipe;
 
-use crate::collections::sorted::{bisect, data::ListsData, errors};
+use crate::{bisect, data::ListsData, errors};
 
-pub(super) struct Indexes {
+pub struct Indexes {
     pub start: isize,
     pub stop: isize,
 }
@@ -25,7 +25,7 @@ impl Indexes {
 }
 
 #[derive(PartialEq, Eq, Default)]
-pub(super) struct Pos {
+pub struct Pos {
     pub pos: usize,
     pub idx: usize,
 }
@@ -33,7 +33,7 @@ impl Pos {
     pub fn new(pos: usize, idx: usize) -> Self {
         Self { pos, idx }
     }
-    pub(super) fn set_from_pos(&mut self, mut idx: isize, data: &mut ListsData) -> PyResult<()> {
+    pub fn set_from_pos(&mut self, mut idx: isize, data: &mut ListsData) -> PyResult<()> {
         if idx < 0 {
             if idx >= -(data.lists.last().unwrap().len() as isize) {
                 self.pos = data.lists.len() - 1;
@@ -84,7 +84,7 @@ impl Pos {
         Ok(())
     }
 
-    pub(crate) fn loc(&self, data: &mut ListsData) -> PyResult<isize> {
+    pub fn loc(&self, data: &mut ListsData) -> PyResult<isize> {
         if self.pos == 0 {
             Ok(self.idx as isize)
         } else {
@@ -117,7 +117,7 @@ impl Pos {
 }
 
 #[derive(Default)]
-pub(super) struct Bounds {
+pub struct Bounds {
     pub min: Pos,
     pub max: Pos,
 }
@@ -128,7 +128,7 @@ impl Bounds {
             max: Pos::new(max_pos, max_idx),
         }
     }
-    pub(super) fn get_irange_specs(
+    pub fn get_irange_specs(
         lists: &[Vec<Py<PyAny>>],
         maxes: &[Py<PyAny>],
         minimum: Option<Bound<'_, PyAny>>,
@@ -204,7 +204,7 @@ impl Bounds {
         }
     }
 
-    pub(super) fn get_islice_specs(
+    pub fn get_islice_specs(
         data: &mut ListsData,
         py: Python<'_>,
         start: Option<isize>,

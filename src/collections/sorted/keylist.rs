@@ -1,21 +1,24 @@
 use crate::{
     abc,
     collections::sorted::{
-        bisect,
-        bounds::{Bounds, Indexes, Pos},
-        cmp::py_cmp_by_key,
-        data::ListsData,
-        errors, iter, ops,
+        iter,
         traits::{
             BaseSortedList, BaseSortedListSet, DEFAULT_LOAD_FACTOR, PyIdentity, Reduced,
             SortedCollection, SortedListGetters, try_lock_recover,
         },
     },
     core::iterators,
-    traits::IntoInit,
+    traits::{IntoInit, IntoPyochain},
 };
-use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*};
+use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
+use sorted_rs::{
+    bisect,
+    bounds::{Bounds, Indexes, Pos},
+    cmp::py_cmp_by_key,
+    data::ListsData,
+    errors, ops,
+};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 use tap::Pipe;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -97,7 +100,9 @@ impl SortedKeyList {
 impl SortedCollection for SortedKeyList {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         self.get_data()
-            .as_pyovec(py)
+            .iter()
+            .collect_bound::<PyList>(py)?
+            .into_pyochain()
             .and_then(|x| tuple!(x.as_any(), self.key.bind(py)))
             .map(|tup| (Self::type_object(py), tup))
     }
@@ -372,7 +377,9 @@ impl BaseSortedList for SortedKeyList {
         let key_repr = self.key.bind(py).repr()?;
 
         self.get_data()
-            .py_repr(py)
+            .iter()
+            .collect_bound::<PyList>(py)?
+            .repr()
             .map(|repr| format!("{type_name}({repr}, key={key_repr})"))
     }
 

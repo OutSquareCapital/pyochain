@@ -1,14 +1,8 @@
-pub(super) mod bisect;
-mod bounds;
-mod cmp;
-mod data;
 mod dict;
-mod errors;
 pub mod iter;
 mod keylist;
 mod keyset;
 mod list;
-mod ops;
 mod set;
 mod traits;
 mod views;

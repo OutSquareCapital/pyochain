@@ -1,4 +1,9 @@
-use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PySet};
+use pyo3::{
+    IntoPyObjectExt, PyTypeInfo,
+    prelude::*,
+    types::{PyList, PySet},
+};
+use pyo3_ext::prelude::CollectBoundIterator;
 use tap::Pipe;
 
 use crate::{
@@ -94,7 +99,13 @@ impl BaseSortedSet for SortedKeySet {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let key = format!(", key={}", self.key.bind(py).repr()?);
         let type_name = Self::type_object(py).name()?;
-        let list_repr = self.list.get().get_data().py_repr(py)?;
+        let list_repr = self
+            .list
+            .get()
+            .get_data()
+            .iter()
+            .collect_bound::<PyList>(py)?
+            .repr()?;
         Ok(format!("{type_name}({list_repr}{key})"))
     }
 }

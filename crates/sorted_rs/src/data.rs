@@ -1,28 +1,22 @@
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PyList, PySlice, PySliceIndices, PyString},
+    types::{PySlice, PySliceIndices},
 };
-use pyo3_ext::prelude::*;
 use std::cmp::Ordering;
 use tap::prelude::*;
 
 use crate::{
-    collections::sorted::{
-        bisect,
-        bounds::{Bounds, Pos},
-    },
-    core::PyoVec,
-    traits::IntoPyochain,
+    bisect,
+    bounds::{Bounds, Pos},
 };
-
 #[derive(Default)]
-pub(super) struct ListsData {
-    pub(super) lists: Vec<Vec<Py<PyAny>>>,
-    pub(super) maxes: Vec<Py<PyAny>>,
-    pub(super) idx: Vec<usize>,
-    pub(super) len: usize,
-    pub(super) offset: usize,
+pub struct ListsData {
+    pub lists: Vec<Vec<Py<PyAny>>>,
+    pub maxes: Vec<Py<PyAny>>,
+    pub idx: Vec<usize>,
+    pub len: usize,
+    pub offset: usize,
 }
 impl ListsData {
     #[inline]
@@ -36,10 +30,6 @@ impl ListsData {
     #[inline(always)]
     pub fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
         self.lists.iter().flatten()
-    }
-    #[inline]
-    pub fn py_repr<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyString>> {
-        self.iter().collect_bound::<PyList>(py)?.repr()
     }
     #[inline]
     pub fn concat(&self, py: Python<'_>, other: Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {
@@ -64,10 +54,6 @@ impl ListsData {
         self.idx.clear();
         self.len = 0;
         self.offset = 0;
-    }
-    #[inline]
-    pub fn as_pyovec<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoVec>> {
-        self.iter().collect_bound::<PyList>(py)?.into_pyochain()
     }
     pub fn bisect_left(
         &mut self,
@@ -107,7 +93,7 @@ impl ListsData {
         bound.loc(self)
     }
 
-    pub(crate) fn getitem_from_int<'py>(
+    pub fn getitem_from_int<'py>(
         &mut self,
         py: Python<'py>,
         index: isize,
@@ -152,7 +138,7 @@ impl ListsData {
             }
         }
     }
-    pub(crate) fn getitem_from_slice<'py>(
+    pub fn getitem_from_slice<'py>(
         &mut self,
         py: Python<'py>,
         slice: &Bound<'py, PySlice>,
@@ -277,7 +263,7 @@ impl ListsData {
             Ok(())
         }
     }
-    pub(super) fn expand_on_empty_idx(&mut self, pos: usize) {
+    pub fn expand_on_empty_idx(&mut self, pos: usize) {
         let mut child = self.offset + pos;
         while child != 0 {
             self.idx[child] += 1;
@@ -285,12 +271,12 @@ impl ListsData {
         }
         self.idx[0] += 1;
     }
-    pub(super) fn remove_pos(&mut self, bound: &Pos) {
+    pub fn remove_pos(&mut self, bound: &Pos) {
         self.lists.remove(bound.pos);
         self.maxes.remove(bound.pos);
         self.idx.clear();
     }
-    pub(super) fn expand_at_pos(
+    pub fn expand_at_pos(
         &mut self,
         pos: usize,
         half: Vec<Py<PyAny>>,
@@ -302,7 +288,7 @@ impl ListsData {
         self.lists.insert(pos + 1, half);
         self.idx.clear();
     }
-    pub(super) fn set_prev_from_removed(&mut self, py: Python<'_>, bounds: &Pos, prev: usize) {
+    pub fn set_prev_from_removed(&mut self, py: Python<'_>, bounds: &Pos, prev: usize) {
         let mut removed = (self.lists)[bounds.pos]
             .iter()
             .map(|x| x.clone_ref(py))
@@ -310,7 +296,7 @@ impl ListsData {
         self.lists[prev].append(removed.as_mut());
         self.remove_pos(bounds);
     }
-    pub(super) fn delete_on_idx(&mut self, bounds: &Pos, max_at_pos: Py<PyAny>) {
+    pub fn delete_on_idx(&mut self, bounds: &Pos, max_at_pos: Py<PyAny>) {
         self.maxes[bounds.pos] = max_at_pos;
 
         if !self.idx.is_empty() {

@@ -3,8 +3,6 @@ use crate::{
     collections::{
         SortedKeyList, SortedList,
         sorted::{
-            bounds::{Bounds, Pos},
-            data::ListsData,
             dict::{SortedDict, SortedKeyDict},
             iter,
             keyset::SortedKeySet,
@@ -31,6 +29,10 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
+use sorted_rs::{
+    bounds::{Bounds, Pos},
+    data::ListsData,
+};
 use std::{
     cmp::Ordering,
     sync::{Mutex, MutexGuard, TryLockError, atomic::Ordering as AtomicOrdering},

@@ -8,12 +8,12 @@ use pyo3::prelude::*;
 ///insert just after the rightmost x already there.
 ///Optional args lo (default 0) and hi (default len(a)) bound the slice of a to be searched.
 #[inline]
-pub(super) fn right(lst: &[Py<PyAny>], item: &Bound<'_, PyAny>) -> PyResult<usize> {
+pub fn right(lst: &[Py<PyAny>], item: &Bound<'_, PyAny>) -> PyResult<usize> {
     let py = item.py();
     resolve(lst.len(), |mid| item.lt(lst[mid].bind(py)))
 }
 #[inline]
-pub(super) fn left(lst: &[Py<PyAny>], item: &Bound<'_, PyAny>) -> PyResult<usize> {
+pub fn left(lst: &[Py<PyAny>], item: &Bound<'_, PyAny>) -> PyResult<usize> {
     let py = item.py();
     resolve(lst.len(), |mid| Ok(!lst[mid].bind(py).lt(item)?))
 }

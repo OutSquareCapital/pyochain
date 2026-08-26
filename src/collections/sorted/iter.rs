@@ -3,13 +3,10 @@ use std::sync::Mutex;
 use super::traits::BaseSortedList;
 use crate::{
     abc,
-    collections::{
-        SortedKeyList, SortedList,
-        sorted::bounds::{Bounds, Pos},
-    },
+    collections::{SortedKeyList, SortedList},
 };
 use pyo3::prelude::*;
-
+use sorted_rs::bounds::{Bounds, Pos};
 pub enum Dir {
     Fwd,
     Bwd,
