@@ -13,7 +13,7 @@ use crate::{
         SortedDict, SortedKeyDict, SortedSet,
         sorted::traits::{BaseSortedDict, BaseSortedList, ListGetter, ObjOrVec, SortedListGetters},
     },
-    traits::{IntoInit, IntoPyochain},
+    traits::IntoInit,
 };
 #[py_abc(
     SortedItemsView,
@@ -180,7 +180,7 @@ fn get_item_for_items_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
                 .iter()
                 .map(|key| tuple!(key.bind(py), &dict.get_item(key)?).map(Bound::into_any))
                 .try_collect_bound::<PyList>(py)?
-                .into_pyochain()
+                .try_into_py()
                 .map(Either::Right),
             int => {
                 let key = mapping_list.getitem_from_int(py, int.extract::<isize>()?)?;
@@ -207,7 +207,7 @@ fn get_item_for_values_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
                 .iter()
                 .map(|key| dict.get_item(key))
                 .try_collect_bound::<PyList>(py)?
-                .into_pyochain()
+                .try_into_py()
                 .map(Either::Right),
             int => dict
                 .get_item(mapping_list.getitem_from_int(py, int.extract::<isize>()?)?)
@@ -229,7 +229,7 @@ fn get_item_for_key_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
                 .getitem_from_slice(py, &slice)?
                 .iter()
                 .collect_bound::<PyList>(py)?
-                .into_pyochain()
+                .try_into_py()
                 .map(Either::Right),
             int => mapping_list
                 .getitem_from_int(py, int.extract::<isize>()?)

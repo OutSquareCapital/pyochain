@@ -1,7 +1,7 @@
 use crate::{
     abc,
     core::{PyoVec, iterators},
-    traits::{IntoInit, IntoPyochain, PyWrapper},
+    traits::{IntoInit, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -89,7 +89,7 @@ trait HeapType: Sized + PyWrapper<Wrapped = PyList> {
                 Case::PySlice(slice) => list
                     .get_item(slice)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
-                    .into_pyochain()
+                    .try_into_py()
                     .map(Either::Left),
                 object => list.get_item(object).map(Either::Right),
             }
@@ -141,7 +141,7 @@ trait HeapType: Sized + PyWrapper<Wrapped = PyList> {
             .collect::<Vec<_>>()
             .into_iter()
             .collect_bound(py)?;
-        pylibs::heapq::merge(py, args, key, reverse)?.into_pyochain()
+        pylibs::heapq::merge(py, args, key, reverse)?.try_into_py()
     }
     #[pyo3(signature = (n, key=None))]
     fn n_smallest<'py>(

@@ -38,33 +38,38 @@ impl_into_py_iterator_for_iterable!(
 
 /// Trait for types that can be converted from another type via their class constructors.\
 /// The default implementation of `try_from_py` calls the type's constructor with the object as an argument, and casts the result into the target type.\
-pub trait TryFromPy: Sized + PyTypeInfo {
+pub trait TryFromPy<T: PyTypeInfo = types::PyAny>: Sized + PyTypeInfo {
     #[inline(always)]
-    fn try_from_py<'py, T: PyTypeInfo>(obj: &Bound<'py, T>) -> PyResult<Bound<'py, Self>> {
+    fn try_from_py(obj: Bound<'_, T>) -> PyResult<Bound<'_, Self>> {
         Self::type_object(obj.py())
             .call1((obj,))
             .map(|t| unsafe { t.cast_into_unchecked::<Self>() })
     }
 }
 /// Counterpart of `TryFromPy`, for types that can be converted into another type via a Python call.\
-pub trait TryIntoPy<'py> {
-    fn try_as<I: TryFromPy + PyTypeInfo>(&self) -> PyResult<Bound<'py, I>>;
-    fn try_into_py<I: TryFromPy + PyTypeInfo>(self) -> PyResult<Bound<'py, I>>;
+pub trait TryIntoPy<'py, T: PyTypeInfo> {
+    fn try_into_py<I: TryFromPy<T>>(self) -> PyResult<Bound<'py, I>>;
 }
-impl<'py, T: Sized + PyTypeInfo> TryIntoPy<'py> for Bound<'py, T> {
+impl<'py, T: Sized + PyTypeInfo> TryIntoPy<'py, T> for Bound<'py, T> {
     #[inline(always)]
-    fn try_as<I: TryFromPy + PyTypeInfo>(&self) -> PyResult<Bound<'py, I>> {
+    fn try_into_py<I: TryFromPy<T>>(self) -> PyResult<Bound<'py, I>> {
         I::try_from_py(self)
     }
-    #[inline(always)]
-    fn try_into_py<I: TryFromPy + PyTypeInfo>(self) -> PyResult<Bound<'py, I>> {
-        I::try_from_py(&self)
-    }
 }
-impl TryFromPy for types::PyTuple {}
-impl TryFromPy for types::PyList {}
-impl TryFromPy for types::PySet {}
-impl TryFromPy for types::PyFrozenSet {}
-impl TryFromPy for PyDeque {}
-impl TryFromPy for types::PyDict {}
-impl TryFromPy for types::PyString {}
+macro_rules! impl_default_try_from_py {
+    ($($target:ty),* $(,)?) => {
+        $(
+            impl<T: PyTypeInfo> TryFromPy<T> for $target {}
+        )*
+    };
+}
+
+impl_default_try_from_py!(
+    types::PyTuple,
+    types::PyList,
+    types::PySet,
+    types::PyFrozenSet,
+    PyDeque,
+    types::PyDict,
+    types::PyString,
+);

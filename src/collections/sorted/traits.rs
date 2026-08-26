@@ -11,7 +11,7 @@ use crate::{
         },
     },
     core::{PyoVec, iterators},
-    traits::{IntoInit, IntoPyochain},
+    traits::IntoInit,
 };
 use either::Either;
 use pyo3::{
@@ -450,7 +450,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 .getitem_from_slice(py, &slice)?
                 .iter()
                 .collect_bound::<PyList>(py)?
-                .into_pyochain()
+                .try_into_py()
                 .map(Either::Right),
             Either::Left(index) => data.getitem_from_int(py, index).map(Either::Left),
         }

@@ -7,8 +7,8 @@ use crate::{
             SortedListGetters,
         },
     },
-    core::iterators,
-    traits::{IntoInit, IntoPyochain},
+    core::{PyoVec, iterators},
+    traits::IntoInit,
 };
 use pyo3::{PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
@@ -65,7 +65,7 @@ impl SortedCollection for SortedList {
         self.get_data()
             .iter()
             .collect_bound::<PyList>(py)?
-            .into_pyochain()
+            .try_into_py::<PyoVec>()
             .and_then(|x| tuple!(x))
             .map(|tup| (Self::type_object(py), tup))
     }

@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use crate::{
     abc,
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
-    traits::{IntoPyochain, PyWrapper},
+    traits::PyWrapper,
 };
 use pyo3::{
     IntoPyObjectExt, PyTypeInfo,
@@ -765,7 +765,7 @@ impl GroupBy {
                 let tup = item?.cast_into_unchecked::<PyTuple>();
                 let (key, group) = (tup.get_item_unchecked(0), tup.get_item_unchecked(1));
 
-                Ok(Some((key, group.try_iter().unwrap().into_pyochain()?)))
+                Ok(Some((key, group.try_iter().unwrap().try_into_py()?)))
             },
             None => Ok(None),
         }
@@ -862,7 +862,7 @@ impl Tail {
 pub struct Iter(pub Py<PyIterator>);
 impl Iter {
     pub fn empty(py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-        PyTuple::empty(py).iter_py().into_pyochain()
+        PyTuple::empty(py).iter_py().try_into_py()
     }
 }
 #[pymethods]

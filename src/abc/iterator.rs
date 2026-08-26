@@ -12,7 +12,7 @@ use tap::Pipe;
 use crate::{
     abc::{PyoIterable, traits::ImplPyoIterator},
     core::{PyNull, PySome, PyoErr, PyoOk, PyoVec, iterators},
-    traits::{IntoInit, IntoPyochain},
+    traits::IntoInit,
 };
 use pyo3_ext::{prelude::*, pylibs, types::pyitertools};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
@@ -24,7 +24,7 @@ impl PyoIterator {
     pub fn once(value: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
         tuple!(value)?
             .iter_py()
-            .into_pyochain()
+            .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -57,7 +57,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         pyitertools::PyRepeat::new(obj, n)
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py::<iterators::Iter>)
             .map(Bound::into_super)
     }
     #[classmethod]
@@ -76,7 +76,7 @@ impl PyoIterator {
         step: i32,
     ) -> PyResult<Bound<'py, Self>> {
         pylibs::itertools::count(cls.py(), &start, &step)?
-            .into_pyochain()
+            .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
 
@@ -494,14 +494,14 @@ impl PyoIterator {
         slf.into_any()
             .concat_with(others)
             .and_then(|x| pylibs::itertools::chain::new(&x))?
-            .into_pyochain()
+            .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
     #[pyo3(signature = (start = 0))]
     fn enumerate<'py>(slf: &Bound<'py, Self>, start: usize) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::builtins::enumerate(&x, start))?
-            .into_pyochain()
+            .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -681,7 +681,7 @@ impl PyoIterator {
             }
         }
         collected
-            .into_pyochain()?
+            .try_into_py::<PyoVec>()?
             .unbind()
             .into_any()
             .pipe(PySome::new)
@@ -1004,7 +1004,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         func.concat_with_2(slf.try_iter()?.as_any(), iterables)
             .pipe_ref(pylibs::builtins::map_with)?
-            .into_pyochain()
+            .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
 
@@ -1062,7 +1062,7 @@ impl PyoIterator {
                 false_list.append(item)?;
             }
         }
-        Ok((true_list.into_pyochain()?, false_list.into_pyochain()?))
+        Ok((true_list.try_into_py()?, false_list.try_into_py()?))
     }
     #[pyo3(signature = (*others, repeat=1))]
     fn product<'py>(
@@ -1073,7 +1073,7 @@ impl PyoIterator {
         slf.into_any()
             .concat_with(others)
             .and_then(|x| pylibs::itertools::product(&x, repeat))?
-            .into_pyochain()
+            .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
     fn reduce<'py>(
@@ -1111,7 +1111,7 @@ impl PyoIterator {
     #[pyo3(signature = (*, reverse=false))]
     fn sort<'py>(slf: &Bound<'py, Self>, reverse: bool) -> PyResult<Bound<'py, PyoVec>> {
         slf.try_iter()
-            .and_then(|x| pylibs::builtins::sorted(&x, reverse)?.into_pyochain())
+            .and_then(|x| pylibs::builtins::sorted(&x, reverse)?.try_into_py())
     }
     #[pyo3(signature = (key, *,reverse=false))]
     fn sort_by<'py>(
@@ -1120,7 +1120,7 @@ impl PyoIterator {
         reverse: bool,
     ) -> PyResult<Bound<'py, PyoVec>> {
         slf.try_iter()
-            .and_then(|x| pylibs::builtins::sorted_by(&x, reverse, key)?.into_pyochain())
+            .and_then(|x| pylibs::builtins::sorted_by(&x, reverse, key)?.try_into_py())
     }
     fn step_by<'py>(
         slf: &Bound<'py, Self>,
@@ -1245,9 +1245,9 @@ fn iterator_into_iter<'py, T: IntoPyObjectExt<'py> + ImplPyoIterator>(
 ) -> PyResult<Bound<'py, PyoIterator>> {
     obj.into_bound_py_any(py)?
         .pipe(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
-        .into_pyochain()
+        .try_into_py::<iterators::Iter>()
         .map(Bound::into_super)
 }
 fn pyiterator_into_iter(obj: Bound<'_, PyIterator>) -> PyResult<Bound<'_, PyoIterator>> {
-    obj.into_pyochain().map(Bound::into_super)
+    obj.try_into_py::<iterators::Iter>().map(Bound::into_super)
 }

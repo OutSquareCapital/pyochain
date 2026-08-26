@@ -1,8 +1,4 @@
-use crate::{
-    abc,
-    display::get_repr,
-    traits::{IntoPyochain, PyWrapper},
-};
+use crate::{abc, display::get_repr, traits::PyWrapper};
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -42,7 +38,7 @@ impl Seq {
                 Case::PySlice(slice) => tuple
                     .get_item(slice)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })?
-                    .into_pyochain()
+                    .try_into_py()
                     .map(Either::Left),
                 object => tuple.get_item(object).map(Either::Right),
             }
@@ -130,7 +126,7 @@ impl Seq {
         self.inner_bind(py)
             .mul(n)
             .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
     fn concat<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
@@ -139,6 +135,6 @@ impl Seq {
             .as_sequence()
             .concat(other_seq)
             .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 }

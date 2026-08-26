@@ -242,7 +242,7 @@ impl SliceView {
                     if tr.step()?.abs() == 1 {
                         seq.set_slice_with_step(tr.start()?, tr.stop()?, tr.step()?, &value)
                     } else {
-                        let values = PyTuple::try_from_py(&value)?;
+                        let values = PyTuple::try_from_py(value)?;
                         let values_len = values.len();
                         let tr_len = tr.len()?;
                         if values_len == tr_len {

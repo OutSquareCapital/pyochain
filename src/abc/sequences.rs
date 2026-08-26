@@ -10,9 +10,8 @@ use tap::Pipe;
 use crate::{
     abc::{PyoCollection, PyoIterable},
     core::{PyNull, PySome, iterators},
-    traits::IntoPyochain,
 };
-use pyo3_ext::pylibs;
+use pyo3_ext::{prelude::*, pylibs};
 
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoReversible;
@@ -21,9 +20,7 @@ pub struct PyoReversible;
 impl PyoReversible {
     /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
     fn rev<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
-        slf.as_any()
-            .pipe(pylibs::builtins::reversed)
-            .into_pyochain()
+        slf.as_any().pipe(pylibs::builtins::reversed).try_into_py()
     }
 }
 #[pyclass(module = "pyochain.abc",subclass,  frozen, generic, sequence, extends=PyoCollection)]
@@ -114,9 +111,7 @@ impl PyoSequence {
         }
     }
     fn rev<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
-        slf.as_any()
-            .pipe(pylibs::builtins::reversed)
-            .into_pyochain()
+        slf.as_any().pipe(pylibs::builtins::reversed).try_into_py()
     }
 }
 
@@ -210,7 +205,7 @@ impl PyoMutableSequence {
             .pipe(|x| iterators::ExtractIf::new(x, predicate, start, end))?
             .into_bound_py_any(py)?
             .try_iter()?
-            .into_pyochain()
+            .try_into_py()
     }
     #[pyo3(signature = (start=None, end=None))]
     fn drain(
@@ -223,6 +218,6 @@ impl PyoMutableSequence {
             .pipe(|x| iterators::Drain::new(x, start, end))?
             .into_bound_py_any(py)?
             .try_iter()?
-            .into_pyochain()
+            .try_into_py()
     }
 }

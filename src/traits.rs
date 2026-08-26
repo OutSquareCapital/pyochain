@@ -10,7 +10,8 @@ use pyo3::{
         DerefToPyAny, PyDict, PyFrozenSet, PyIterator, PyList, PyRange, PySequence, PySet, PyTuple,
     },
 };
-use pyo3_ext::types::PyDeque;
+use pyo3_ext::prelude::TryFromPy;
+use pyo3_ext::{prelude::*, types::PyDeque};
 use pyochain_macros::py_abc;
 use tap::Pipe;
 pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync {
@@ -81,30 +82,20 @@ impl PyWrapper for SliceView {
         &self.inner
     }
 }
-/// Trait to convert a `Bound` of a Python type into a `Bound` of a `PyoChain` type, with the same underlying data.\
-/// Useful for no-copy conversions, when the type is known at compile time.\
-/// For example, this avoid checking the type of a `PyTuple` at runtime to convert it into a `Seq`.
-pub trait IntoPyochain<'py, T: PyTypeInfo + IntoInit> {
-    /// Convert a given Python type `T` (wrapped in a `Py` or `Bound`) into the corresponding pyochain wrapper type.\
-    /// This will create the class and bind it to the python interpreter.\
-    /// As such, prefer using `new` (or alike) methods if you simply want to use the struct in Rust.\
-    /// That being said, prefer using the underlying Python type, as pyochain wrapper are, well, wrappers. There's not much to gain from using them in Rust.
-    fn into_pyochain(self) -> PyResult<Bound<'py, T>>;
-}
-macro_rules! impl_into_pyochain {
+macro_rules! impl_try_from_py {
     ($($py:ty => $pyochain:path),* $(,)?) => {
         $(
-            impl<'py> IntoPyochain<'py, $pyochain> for Bound<'py, $py> {
+            impl TryFromPy<$py> for $pyochain {
                 #[inline]
-                fn into_pyochain(self) -> PyResult<Bound<'py, $pyochain>> {
-                    Bound::new(self.py(), $pyochain(self.unbind()).init())
+                fn try_from_py(obj: Bound<'_, $py>) -> PyResult<Bound<'_, Self>> {
+                    Bound::new(obj.py(), Self(obj.unbind()).init())
                 }
             }
         )*
     };
 }
 
-impl_into_pyochain!(
+impl_try_from_py!(
     PyTuple => Seq,
     PyList => PyoVec,
     PyFrozenSet => Set,
@@ -225,7 +216,7 @@ macro_rules! impl_flex_wrapper {
         $(
             impl FlexWrapper for $ty {
                 fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-                    iterable.into_pyochain()
+                    iterable.try_into_py()
                 }
             }
         )*

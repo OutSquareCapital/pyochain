@@ -1,7 +1,7 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
     core::{PyoVec, iterators},
-    traits::{FlexWrapper, IntoInit, IntoPyochain, PyWrapper},
+    traits::{FlexWrapper, IntoInit, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -108,7 +108,7 @@ impl PyoCounter {
         let items = self.inner_bind(py).items_view().iter_py();
         let getter = pylibs::operator::itemgetter(py, 1)?;
         match n {
-            None => pylibs::builtins::sorted_by(&items, true, &getter)?.into_pyochain(),
+            None => pylibs::builtins::sorted_by(&items, true, &getter)?.try_into_py(),
             Some(n) => {
                 let kwargs = PyDict::new(py);
                 kwargs.set_item(intern!(py, "key"), getter)?;
@@ -116,7 +116,7 @@ impl PyoCounter {
                     .getattr(intern!(py, "nlargest"))?
                     .call((n, items), Some(&kwargs))
                     .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
-                    .into_pyochain()
+                    .try_into_py()
             }
         }
     }
@@ -127,7 +127,7 @@ impl PyoCounter {
             self.inner_bind(py).items_view().iter_py(),
         )?
         .pipe_ref(pylibs::itertools::chain::from_iterable)?
-        .into_pyochain()
+        .try_into_py()
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
     fn update(
@@ -446,7 +446,7 @@ impl ImplPyoReversible for PyoCounter {
         self.inner_bind(py)
             .as_any()
             .pipe(pylibs::builtins::reversed)
-            .into_pyochain()
+            .try_into_py()
     }
 }
 #[inline(always)]

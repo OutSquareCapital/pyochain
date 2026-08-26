@@ -1,8 +1,4 @@
-use crate::{
-    abc,
-    display::get_repr,
-    traits::{IntoPyochain, PyWrapper},
-};
+use crate::{abc, display::get_repr, traits::PyWrapper};
 
 use either::Either;
 use pyo3::{
@@ -62,7 +58,7 @@ impl PyoVec {
             .as_sequence()
             .pipe(|x| self.inner_bind(py).as_sequence().concat(x))
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 
     fn __iadd__(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
@@ -129,7 +125,7 @@ impl PyoVec {
                 Case::PySlice(slice) => list
                     .get_item(slice)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
-                    .into_pyochain()
+                    .try_into_py()
                     .map(Either::Left),
                 object => list.get_item(object).map(Either::Right),
             }
@@ -179,7 +175,7 @@ impl PyoVec {
         self.inner_bind(py)
             .mul(n)
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
     fn repeat_mut<'py>(slf: Bound<'py, Self>, n: &Bound<'_, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = n.py();
@@ -208,7 +204,7 @@ impl PyoVec {
         self.inner_bind(py)
             .call_method0(intern!(py, "copy"))
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
     #[pyo3(signature = (value, /))]
     fn count<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
@@ -233,7 +229,7 @@ impl PyoVec {
                     .concat(other.as_sequence())
             })
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 
     fn concat_mut<'py>(

@@ -2,7 +2,7 @@ use crate::{
     abc::{self, traits::ImplPyoReversible},
     core::iterators,
     display::pformat,
-    traits::{IntoPyochain, PyWrapper},
+    traits::PyWrapper,
 };
 use pyo3::{
     PyTypeInfo,
@@ -31,7 +31,7 @@ impl Dict {
                 || PyDict::from_keys(keys),
                 |v| PyDict::from_keys_with_default(keys, v),
             )
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
@@ -86,7 +86,7 @@ impl Dict {
         let py = value.py();
         Self::extract_union(value)
             .and_then(|r| r.bitor(self.inner_bind(py)))
-            .and_then(|new| unsafe { new.cast_into_unchecked::<PyDict>() }.into_pyochain())
+            .and_then(|new| unsafe { new.cast_into_unchecked::<PyDict>() }.try_into_py())
     }
 
     fn __ior__<'py>(slf: Bound<'py, Self>, value: &Bound<'py, PyAny>) -> PyResult<()> {
@@ -97,11 +97,11 @@ impl Dict {
     #[staticmethod]
     fn from_object<'py>(obj: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         obj.getattr(intern!(obj.py(), "__dict__"))
-            .and_then(|x| unsafe { x.cast_into_unchecked::<PyDict>() }.into_pyochain())
+            .and_then(|x| unsafe { x.cast_into_unchecked::<PyDict>() }.try_into_py())
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.inner_bind(py).copy().and_then(Bound::into_pyochain)
+        self.inner_bind(py).copy().and_then(Bound::try_into_py)
     }
 
     #[pyo3(signature = (key, default=None, /))]
@@ -123,7 +123,7 @@ impl Dict {
         let rhs = Self::extract_union(other)?;
         self.inner_bind(py)
             .bitor(rhs)
-            .and_then(|new| unsafe { new.cast_into_unchecked::<PyDict>() }.into_pyochain())
+            .and_then(|new| unsafe { new.cast_into_unchecked::<PyDict>() }.try_into_py())
     }
 
     fn union_mut<'py>(
@@ -181,6 +181,6 @@ impl ImplPyoReversible for Dict {
         self.inner_bind(py)
             .as_any()
             .pipe(pylibs::builtins::reversed)
-            .into_pyochain()
+            .try_into_py()
     }
 }

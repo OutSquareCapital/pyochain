@@ -1,6 +1,6 @@
 use crate::{
     abc,
-    traits::{IntoInit, IntoPyochain, PyWrapper},
+    traits::{IntoInit, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -47,7 +47,7 @@ impl Deque {
         iterable: Bound<'py, PyAny>,
         max_length: Option<Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, Self>> {
-        PyDeque::new(iterable, max_length)?.into_pyochain()
+        PyDeque::new(iterable, max_length)?.try_into_py()
     }
     #[staticmethod]
     #[pyo3(signature = (*elements, max_length=None))]
@@ -55,12 +55,12 @@ impl Deque {
         elements: Bound<'py, PyTuple>,
         max_length: Option<Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, Self>> {
-        PyDeque::new(elements.into_any(), max_length)?.into_pyochain()
+        PyDeque::new(elements.into_any(), max_length)?.try_into_py()
     }
     #[pyo3(signature = (data, /))]
     #[staticmethod]
     fn wrap(data: Bound<'_, PyDeque>) -> PyResult<Bound<'_, Self>> {
-        data.into_pyochain()
+        data.try_into_py()
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {

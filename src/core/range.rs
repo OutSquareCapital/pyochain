@@ -1,6 +1,6 @@
 use crate::{
     abc,
-    traits::{IntoInit, IntoPyochain, PyWrapper},
+    traits::{IntoInit, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -68,7 +68,7 @@ impl Range {
                 Case::PySlice(slice) => range
                     .get_item(slice)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyRange>() })?
-                    .into_pyochain()
+                    .try_into_py()
                     .map(Either::Left),
                 object => range.get_item(object).map(Either::Right),
             }

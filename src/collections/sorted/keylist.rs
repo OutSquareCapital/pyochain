@@ -7,8 +7,8 @@ use crate::{
             SortedCollection, SortedListGetters, try_lock_recover,
         },
     },
-    core::iterators,
-    traits::{IntoInit, IntoPyochain},
+    core::{PyoVec, iterators},
+    traits::IntoInit,
 };
 use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
@@ -96,7 +96,7 @@ impl SortedCollection for SortedKeyList {
         self.get_data()
             .iter()
             .collect_bound::<PyList>(py)?
-            .into_pyochain()
+            .try_into_py::<PyoVec>()
             .and_then(|x| tuple!(x.as_any(), self.key.bind(py)))
             .map(|tup| (Self::type_object(py), tup))
     }

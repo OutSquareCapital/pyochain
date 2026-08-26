@@ -1,16 +1,16 @@
+use crate::{
+    abc::{Checkable, PyoSet, PyoSized, traits::MappingView},
+    core::{SetMut, iterators},
+    traits::IntoInit,
+};
 use pyo3::{
     PyTypeInfo,
     exceptions::PyKeyError,
     prelude::*,
     types::{PyIterator, PySet, PyType},
 };
+use pyo3_ext::prelude::*;
 use tap::Pipe;
-
-use crate::{
-    abc::{Checkable, PyoSet, PyoSized, traits::MappingView},
-    core::{SetMut, iterators},
-    traits::{IntoInit, IntoPyochain},
-};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSized)]
 pub struct PyoMappingView(pub Py<PyAny>);
 #[pymethods]
@@ -73,7 +73,7 @@ impl PyoKeysView {
         PySet::type_object(cls.py())
             .call1((it,))
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -134,7 +134,7 @@ impl PyoItemsView {
         PySet::type_object(cls.py())
             .call1((it,))
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
     /// NOTE: There's a fundamental incoherence between Python `dict_items` and `collections.abc.ItemsView` regarding the `__contains__` method.\
     /// `dict_items` will return `False` if the argument is not a tuple of length 2,\

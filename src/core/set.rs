@@ -1,8 +1,4 @@
-use crate::{
-    abc,
-    display::get_repr,
-    traits::{IntoPyochain, PyWrapper},
-};
+use crate::{abc, display::get_repr, traits::PyWrapper};
 use either::Either;
 use pyo3::{
     PyTypeInfo, intern,
@@ -187,18 +183,18 @@ impl Set {
     }
 
     fn __and__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        self.cmp_and(value).and_then(Bound::into_pyochain)
+        self.cmp_and(value).and_then(Bound::try_into_py)
     }
     fn __or__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        self.cmp_or(value).and_then(Bound::into_pyochain)
+        self.cmp_or(value).and_then(Bound::try_into_py)
     }
 
     fn __sub__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        self.cmp_sub(value).and_then(Bound::into_pyochain)
+        self.cmp_sub(value).and_then(Bound::try_into_py)
     }
 
     fn __xor__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        self.cmp_xor(value).and_then(Bound::into_pyochain)
+        self.cmp_xor(value).and_then(Bound::try_into_py)
     }
 
     fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -253,27 +249,27 @@ impl Set {
     fn intersection<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.inner_bind(others.py())
             .intersection(others)
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 
     #[pyo3(signature = (*others))]
     fn union<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.inner_bind(others.py())
             .union(others)
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 
     #[pyo3(signature = (*others))]
     fn difference<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.inner_bind(others.py())
             .difference(others)
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.inner_bind(other.py())
             .symmetric_difference(other)
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 }
 #[pyclass(module = "pyochain.core",frozen, generic, extends=abc::PyoMutableSet)]
@@ -306,11 +302,11 @@ impl SetMut {
     }
 
     fn __and__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        self.cmp_and(value).and_then(Bound::into_pyochain)
+        self.cmp_and(value).and_then(Bound::try_into_py)
     }
 
     fn __or__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        self.cmp_or(value).and_then(Bound::into_pyochain)
+        self.cmp_or(value).and_then(Bound::try_into_py)
     }
     /// NOTE: We need to use `call_method1` for in-place operators here because Pyo3 doesn't allow returning something else than `PyResult<()>`.\
     /// And if we use `PySet::__ior__`, it will return `NotImplemented` on object who are NOT subclasses of `set` or `frozenset`.\
@@ -331,11 +327,11 @@ impl SetMut {
     }
 
     fn __sub__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        self.cmp_sub(value).and_then(Bound::into_pyochain)
+        self.cmp_sub(value).and_then(Bound::try_into_py)
     }
 
     fn __xor__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        self.cmp_xor(value).and_then(Bound::into_pyochain)
+        self.cmp_xor(value).and_then(Bound::try_into_py)
     }
 
     fn __rand__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
@@ -374,7 +370,7 @@ impl SetMut {
         self.inner_bind(py)
             .call_method0(intern!(py, "copy"))
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
@@ -407,14 +403,14 @@ impl SetMut {
     fn intersection<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.inner_bind(others.py())
             .intersection(others)
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 
     #[pyo3(signature = (*others))]
     fn union<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.inner_bind(others.py())
             .union(others)
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
     #[pyo3(signature = (*s))]
     fn update(&self, s: Bound<'_, PyTuple>) -> PyResult<()> {
@@ -425,7 +421,7 @@ impl SetMut {
     fn difference<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.inner_bind(others.py())
             .difference(others)
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
     #[pyo3(signature = (*s))]
     fn difference_update(&self, s: Bound<'_, PyTuple>) -> PyResult<()> {
@@ -434,6 +430,6 @@ impl SetMut {
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.inner_bind(other.py())
             .symmetric_difference(other)
-            .and_then(Bound::into_pyochain)
+            .and_then(Bound::try_into_py)
     }
 }

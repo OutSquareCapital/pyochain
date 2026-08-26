@@ -10,7 +10,7 @@ use tap::Pipe;
 use crate::{
     collections,
     core::{Dict, PyoVec, Seq, Set, SetMut, iterators},
-    traits::{IntoInit, IntoPyochain, PyWrapper},
+    traits::{IntoInit, PyWrapper},
 };
 #[pyclass(module = "pyochain.core", frozen, generic)]
 pub struct FlexibleInit;
@@ -26,7 +26,7 @@ pub struct FlexibleInit;
 pub trait FromPyIter: Sized {
     #[pyo3(signature = (iterable, /))]
     #[staticmethod]
-    fn from_iter<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>>;
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>>;
 }
 #[py_abc(Seq, PyoVec, Set, SetMut, collections::StableSet, iterators::Iter)]
 pub trait FromPyArgs: Sized + PyClass + FromPyIter {
@@ -56,8 +56,8 @@ macro_rules! impl_from_py_iter {
             impl FromPyIter for $T {
 
                 #[inline(always)]
-                fn from_iter<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, $T>> {
-                    iterable.try_as::<$wrapped>().and_then(Bound::into_pyochain)
+                fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, $T>> {
+                    iterable.try_into_py::<$wrapped>().and_then(Bound::try_into_py)
                 }
             }
         )*
@@ -65,13 +65,13 @@ macro_rules! impl_from_py_iter {
 }
 impl_from_py_iter!(PyDict => Dict, PyTuple => Seq, PyList => PyoVec, PyFrozenSet => Set, PySet => SetMut);
 impl FromPyIter for iterators::Iter {
-    fn from_iter<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        iterable.try_iter().and_then(Bound::into_pyochain)
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        iterable.try_iter().and_then(Bound::try_into_py)
     }
 }
 impl FromPyIter for collections::StableSet {
-    fn from_iter<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        PyDict::from_keys(iterable)?
+    fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        PyDict::from_keys(&iterable)?
             .unbind()
             .pipe(Self)
             .into_bound(iterable.py())
@@ -88,7 +88,7 @@ impl FromPyKwargs for Dict {
             (None, Some(kw)) => kw,
             (Some(iterable), None) => iterable.try_into_py()?,
             (Some(iterable), Some(kw)) => {
-                let dict = PyDict::try_from_py(&iterable)?;
+                let dict = PyDict::try_from_py(iterable)?;
                 dict.update(kw.as_mapping())?;
                 dict
             }
@@ -100,7 +100,7 @@ impl FromPyKwargs for Dict {
     }
 
     fn of<'py>(py: Python<'py>, kwargs: Option<Bound<'py, PyDict>>) -> PyResult<Bound<'py, Self>> {
-        kwargs.unwrap_or_else(|| PyDict::new(py)).into_pyochain()
+        kwargs.unwrap_or_else(|| PyDict::new(py)).try_into_py()
     }
 }
 impl FromPyArgs for iterators::Iter {
@@ -119,7 +119,7 @@ impl FromPyArgs for iterators::Iter {
         .pipe(Ok)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
-        elements.iter_py().into_pyochain()
+        elements.iter_py().try_into_py()
     }
 }
 impl FromPyArgs for Seq {
@@ -129,7 +129,7 @@ impl FromPyArgs for Seq {
             match elements.len() {
                 1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
                     CaseExact::Self(inner) => inner.get().inner_into_bound(py),
-                    Case::PyIterable(iterable) => iterable.try_into_py()?,
+                    Case::PyIterable(iterable) => iterable.try_into_py::<PyTuple>()?,
                     any => tuple!(any)?,
                 }},
                 _ => elements,
@@ -141,7 +141,7 @@ impl FromPyArgs for Seq {
         .pipe(Ok)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
-        elements.into_pyochain()
+        elements.try_into_py()
     }
 }
 impl FromPyArgs for PyoVec {
@@ -150,7 +150,7 @@ impl FromPyArgs for PyoVec {
         match elements.len() {
             0 => PyList::empty(py),
             1 => try_cast_into! {match unsafe {elements.get_item_unchecked(0)} {
-                Case::PyIterable(iterable) => iterable.try_into_py()?,
+                Case::PyIterable(iterable) => iterable.try_into_py::<PyList>()?,
                 any => list![any]?,
             }},
             _ => elements.to_list(),
@@ -161,7 +161,7 @@ impl FromPyArgs for PyoVec {
         .pipe(Ok)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
-        elements.to_list().into_pyochain()
+        elements.to_list().try_into_py()
     }
 }
 impl FromPyArgs for collections::StableSet {
@@ -201,7 +201,7 @@ impl FromPyArgs for Set {
             0 => PyFrozenSet::empty(py)?,
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
                 CaseExact::Self(inner) => inner.get().inner_into_bound(py),
-                Case::PyIterable(iterable) => iterable.try_into_py()?,
+                Case::PyIterable(iterable) => iterable.try_into_py::<PyFrozenSet>()?,
                 any => [any].into_iter().collect_bound(py)?,
             }},
             _ => elements.into_iter().collect_bound::<PyFrozenSet>(py)?,
@@ -216,7 +216,7 @@ impl FromPyArgs for Set {
         elements
             .into_iter()
             .collect_bound::<PyFrozenSet>(py)?
-            .into_pyochain()
+            .try_into_py()
     }
 }
 impl FromPyArgs for SetMut {
@@ -225,7 +225,7 @@ impl FromPyArgs for SetMut {
         match elements.len() {
             0 => PySet::empty(py)?,
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                Case::PyIterable(iterable) => iterable.try_into_py()?,
+                Case::PyIterable(iterable) => iterable.try_into_py::<PySet>()?,
                 any => PySet::new(py, [any])?,
             }},
             _ => elements.into_iter().collect_bound::<PySet>(py)?,
@@ -240,6 +240,6 @@ impl FromPyArgs for SetMut {
         elements
             .into_iter()
             .collect_bound::<PySet>(py)?
-            .into_pyochain()
+            .try_into_py()
     }
 }

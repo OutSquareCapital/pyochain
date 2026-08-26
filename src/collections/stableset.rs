@@ -2,7 +2,7 @@ use crate::{
     abc::{self},
     core::SetMut,
     display::get_repr,
-    traits::{FlexWrapper, IntoPyochain, PyWrapper},
+    traits::{FlexWrapper, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -69,7 +69,7 @@ impl StableSet {
         self.inner_bind(py)
             .bitand(other)
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })?
-            .into_pyochain()
+            .try_into_py()
     }
 
     fn union<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, SetMut>> {
@@ -78,7 +78,7 @@ impl StableSet {
             .keys_view()
             .bitor(other)
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })?
-            .into_pyochain()
+            .try_into_py()
     }
 
     fn difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, SetMut>> {
@@ -87,7 +87,7 @@ impl StableSet {
             .keys_view()
             .sub(other)
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })?
-            .into_pyochain()
+            .try_into_py()
     }
 
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, SetMut>> {
@@ -96,6 +96,6 @@ impl StableSet {
             .keys_view()
             .bitxor(other)
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })?
-            .into_pyochain()
+            .try_into_py()
     }
 }
