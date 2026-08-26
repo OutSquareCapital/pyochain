@@ -12,13 +12,7 @@ use crate::{
 };
 use pyo3::{PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
-use sorted_rs::{
-    bisect,
-    bounds::{Bounds, Indexes, Pos},
-    cmp::py_cmp,
-    data::ListsData,
-    errors, ops,
-};
+use sorted_rs::{Bounds, Indexes, ListsData, Pos, bisect, errors, ops, py_cmp};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -341,13 +335,13 @@ impl BaseSortedList for SortedList {
         let mut data = self.get_data();
         let load = self.get_load();
         match ops::Update::new(&data.maxes, data.len, &values) {
-            ops::Update::EmptyMaxes => finalize_update(load, py, values, &mut data),
+            ops::Update::EmptyMaxes => finalize_update(load, py, &values, &mut data),
             ops::Update::OtherGESelf => {
                 data.lists.push(values);
                 values = data.collapse(py);
                 values.sort_by(|a, b| py_cmp(py, a, b));
                 data.clear();
-                finalize_update(load, py, values, &mut data);
+                finalize_update(load, py, &values, &mut data);
             }
             ops::Update::OtherLTSelf => {
                 drop(data);
@@ -363,7 +357,7 @@ impl BaseSortedList for SortedList {
 fn finalize_update(
     load: usize,
     py: Python<'_>,
-    values: Vec<Py<PyAny>>,
+    values: &[Py<PyAny>],
     data: &mut MutexGuard<'_, ListsData>,
 ) {
     let values_len = values.len();

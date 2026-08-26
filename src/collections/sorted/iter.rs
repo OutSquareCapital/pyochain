@@ -6,7 +6,7 @@ use crate::{
     collections::{SortedKeyList, SortedList},
 };
 use pyo3::prelude::*;
-use sorted_rs::bounds::{Bounds, Pos};
+use sorted_rs::{Bounds, Pos};
 pub enum Dir {
     Fwd,
     Bwd,
