@@ -173,9 +173,9 @@ pub(super) struct RegisteredClassVisitor {
     classes: HashSet<String>,
 }
 impl RegisteredClassVisitor {
-    pub fn visit(source: String) -> HashSet<String> {
+    pub fn visit(source: &str) -> HashSet<String> {
         let mut visitor = RegisteredClassVisitor::default();
-        visitor.visit_file(&syn::parse_file(&source).unwrap());
+        visitor.visit_file(&syn::parse_file(source).unwrap());
         visitor.classes
     }
 }

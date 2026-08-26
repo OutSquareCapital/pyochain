@@ -55,18 +55,18 @@ impl Related {
         Relative(path.strip_prefix(&self.parent).unwrap())
     }
 
-    pub fn write(&self, path: PathBuf, content: String) -> Result<String, std::io::Error> {
-        let display_path = self.make_relative(&path).0.display();
+    pub fn write(&self, path: &PathBuf, content: String) -> Result<String, std::io::Error> {
+        let display_path = self.make_relative(path).0.display();
         let result = match path.exists() {
             false => {
-                fs::write(&path, content)?;
+                fs::write(path, content)?;
                 format!("Generated {display_path} (new file)")
             }
-            true if fs::read_to_string(&path)? == content => {
+            true if fs::read_to_string(path)? == content => {
                 format!("Skipping {display_path} (no changes)")
             }
             true => {
-                fs::write(&path, content)?;
+                fs::write(path, content)?;
                 format!("Updating {display_path} (co§ntent changed)")
             }
         };

@@ -120,7 +120,7 @@ where
     I: IntoIterator<Item = PyResult<T>>,
 {
     type Item = T;
-
+    #[allow(clippy::cast_possible_wrap)]
     #[inline(always)]
     fn try_from_iter_bound(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         let mut elements = iter.into_iter();

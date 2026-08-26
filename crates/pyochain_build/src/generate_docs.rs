@@ -8,21 +8,21 @@ use std::{collections::HashSet, error::Error, fs, path::PathBuf};
 use tap::prelude::*;
 
 pub(super) fn run(
-    root: paths::Related,
-    src: paths::Related,
-    docs: paths::Related,
-    stubs: paths::Related,
+    root: &paths::Related,
+    src: &paths::Related,
+    docs: &paths::Related,
+    stubs: &paths::Related,
 ) -> Result<(), Box<dyn Error>> {
     let registered_classes = src
         .child
         .pipe_ref(fs::read_to_string)
         .unwrap()
-        .pipe(RegisteredClassVisitor::visit);
+        .pipe_ref(|source| RegisteredClassVisitor::visit(source));
     let nav_path_checks = root
         .child
         .pipe_ref(fs::read_to_string)?
         .parse::<toml::Table>()?
-        .pipe(get_nav_paths)
+        .pipe_ref(get_nav_paths)
         .into_iter()
         .filter_map(|path| {
             if docs.parent.join(&path).is_file() {
@@ -34,12 +34,12 @@ pub(super) fn run(
         });
 
     src.iter()
-        .flat_map(|path| extract_classes_from_file(path, &src, &registered_classes))
-        .map(|pyclass| pyclass.check(&stubs, &docs.child))
+        .flat_map(|path| extract_classes_from_file(&path, src, &registered_classes))
+        .map(|pyclass| pyclass.check(stubs, &docs.child))
         .chain(nav_path_checks)
         .try_fold(0, |error_count, result| match result {
             Ok((path, content)) => {
-                anstream::eprintln!("{}", root.write(path, content)?.cyan().bold());
+                anstream::eprintln!("{}", root.write(&path, content)?.cyan().bold());
                 Ok::<usize, Box<dyn std::error::Error>>(error_count)
             }
             Err(message) => {
@@ -63,7 +63,7 @@ fn finalize(error_count: usize) {
     }
 }
 fn extract_classes_from_file(
-    path: PathBuf,
+    path: &PathBuf,
     src: &paths::Related,
     registered_classes: &HashSet<String>,
 ) -> Vec<PyClass> {
@@ -73,11 +73,11 @@ fn extract_classes_from_file(
         .expect("Failed to parse source file")
         .items
         .into_iter()
-        .filter_map(|item| PyClass::from_item(item, src.make_relative(&path)))
+        .filter_map(|item| PyClass::from_item(item, src.make_relative(path)))
         .filter(|pyclass| registered_classes.contains(&pyclass.rust_name))
         .collect::<Vec<_>>()
 }
-fn get_nav_paths(parsed: toml::map::Map<String, toml::Value>) -> Vec<String> {
+fn get_nav_paths(parsed: &toml::map::Map<String, toml::Value>) -> Vec<String> {
     let api_ref = parsed
         .get("project")
         .expect("Failed to get `project` key from parsed file")

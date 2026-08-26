@@ -143,7 +143,7 @@ impl<'py> ConcatWith<'py> for Bound<'py, PyAny> {
             .into_iter()
             .collect_bound::<PyTuple>(py)
     }
-
+    #[allow(clippy::cast_possible_wrap)]
     #[inline]
     fn concat_with_2(
         self: Bound<'py, PyAny>,
@@ -169,6 +169,7 @@ impl<'py> ConcatWith<'py> for Bound<'py, PyAny> {
         }
     }
 }
+#[allow(clippy::cast_possible_wrap)]
 #[inline]
 unsafe fn concat_val_with_args<'py>(
     value: &Bound<'py, PyAny>,
@@ -191,6 +192,7 @@ unsafe fn concat_val_with_args<'py>(
         Bound::from_owned_ptr(value.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
     }
 }
+#[allow(clippy::cast_possible_wrap)]
 #[inline]
 unsafe fn concat_tup_with_args<'py>(
     value: &Args<'py>,
@@ -217,6 +219,7 @@ unsafe fn concat_tup_with_args<'py>(
         Bound::from_owned_ptr(value.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
     }
 }
+#[allow(clippy::cast_possible_wrap)]
 #[inline]
 unsafe fn concat_acc_tup_with_args<'py>(
     acc: &Bound<'py, PyAny>,

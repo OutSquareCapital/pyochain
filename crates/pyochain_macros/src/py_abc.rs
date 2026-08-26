@@ -4,7 +4,7 @@ use syn::{
     parse::ParseStream,
     parse_quote,
     punctuated::Punctuated,
-    token::Comma,
+    token,
     visit_mut::{self, VisitMut},
 };
 use tap::prelude::*;
@@ -24,13 +24,13 @@ const NAME: &str = "name";
 // Time-sink to make it pretty but also time-sink when I have issues with it.
 // But very useful for many reasons. Will have to be refactored at some point.
 
-pub(crate) fn parse_types(input: ParseStream<'_>) -> SynResult<Punctuated<Type, Comma>> {
-    Punctuated::<Type, Comma>::parse_terminated(input)
+pub(crate) fn parse_types(input: ParseStream<'_>) -> SynResult<Punctuated<Type, token::Comma>> {
+    Punctuated::<Type, token::Comma>::parse_terminated(input)
 }
 
 pub(crate) fn generate(
     mut item_trait: ItemTrait,
-    types: &Punctuated<Type, Comma>,
+    types: &Punctuated<Type, token::Comma>,
 ) -> SynResult<proc_macro2::TokenStream> {
     let methods = item_trait
         .items
@@ -156,12 +156,12 @@ fn get_quote(
 /// Since the wrapper never mutates its parameters,\
 /// keeping `mut` (or `ref`) from the original trait signature triggers `unused_mut` warnings after macro expansion.\
 /// Strip these qualifiers from the generated signature only.
-fn drop_mut_and_ref_from_pattern(inputs: &mut Punctuated<FnArg, Comma>) {
+fn drop_mut_and_ref_from_pattern(inputs: &mut Punctuated<FnArg, token::Comma>) {
     inputs
         .iter_mut()
         .filter_map(|arg| match arg {
             FnArg::Typed(arg) => Some(arg),
-            _ => None,
+            FnArg::Receiver(_) => None,
         })
         .filter_map(|arg| match arg.pat.as_mut() {
             Pat::Ident(pattern) => Some(pattern),
@@ -300,11 +300,11 @@ impl VisitMut for QualifySelfAssocType<'_> {
         *ty = Type::Path(TypePath {
             attrs: Vec::new(),
             qself: Some(QSelf {
-                lt_token: Default::default(),
+                lt_token: token::Lt::default(),
                 ty: Box::new(parse_quote!(Self)),
                 position: 1,
-                as_token: Some(Default::default()),
-                gt_token: Default::default(),
+                as_token: Some(token::As::default()),
+                gt_token: token::Gt::default(),
             }),
             path: qualified_path,
         });

@@ -34,7 +34,7 @@ fn run_pipeline(match_expr: &ExprMatch, mode: &Cast) -> SynResult<TokenStream2> 
     match_expr
         .arms
         .iter()
-        .map(|arm| generate_match_arm(arm, &mode))
+        .map(|arm| generate_match_arm(arm, mode))
         .collect::<SynResult<Vec<Vec<_>>>>()?
         .into_iter()
         .flatten()
