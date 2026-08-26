@@ -8,19 +8,19 @@ Python API.
 Run only benchmarks:
 
 ```powershell
-uv run pytest benchmarks/ --benchmark-only
+uv run pytest benchmarks/ --benchmark-only --benchmark-warmup=true --benchmark-disable-gc
 ```
 
 Group output by parametrized dataset size:
 
 ```powershell
-uv run pytest benchmarks/ --benchmark-only --benchmark-group-by=param:size
+uv run pytest benchmarks/ --benchmark-only --benchmark-group-by=param:size --benchmark-warmup=true --benchmark-disable-gc
 ```
 
 Save a run with a readable name:
 
 ```powershell
-uv run pytest benchmarks/ --benchmark-only --benchmark-save=iter-sizes
+uv run pytest benchmarks/ --benchmark-only --benchmark-warmup=true --benchmark-disable-gc --benchmark-save=iter-sizes
 ```
 
 Save stats plus raw timing data:
