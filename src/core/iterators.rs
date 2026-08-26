@@ -38,7 +38,7 @@ impl MapJuxt {
             Some(Ok(item)) => self
                 .funcs
                 .iter()
-                .map(|func| func.call1(py, (&item,)))
+                .map(|func| func.bind(py).call1((&item,)))
                 .collect::<PyResult<Vec<_>>>()?
                 .into_iter()
                 .collect_bound(py)
