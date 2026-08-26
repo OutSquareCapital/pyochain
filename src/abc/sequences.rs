@@ -56,7 +56,7 @@ impl PyoSequence {
         stop: Option<isize>,
     ) -> PyResult<isize> {
         let py = slf.py();
-        let length = slf.len()? as isize;
+        let length = slf.len()?.cast_signed();
 
         let mut i = {
             if start < 0 {
@@ -136,14 +136,11 @@ impl PyoMutableSequence {
 
     fn clear(slf: &Bound<'_, Self>) -> PyResult<()> {
         loop {
-            match slf.del_item(0) {
-                Ok(()) => continue,
-                Err(err) => {
-                    if err.is_instance_of::<PyIndexError>(slf.py()) {
-                        return Ok(());
-                    }
-                    return Err(err);
+            if let Err(err) = slf.del_item(0) {
+                if err.is_instance_of::<PyIndexError>(slf.py()) {
+                    return Ok(());
                 }
+                return Err(err);
             }
         }
     }

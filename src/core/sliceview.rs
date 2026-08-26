@@ -76,7 +76,11 @@ impl SliceView {
             .map_right(|r| {
                 r.resolve(
                     py,
-                    self.inner().clone_ref(py).into_bound(py).len()? as isize,
+                    self.inner()
+                        .clone_ref(py)
+                        .into_bound(py)
+                        .len()?
+                        .cast_signed(),
                 )
             })
             .map_left(|r| Ok(r.clone_ref(py).into_bound(py)))
@@ -94,7 +98,7 @@ impl SliceView {
         step: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
         let py = base.py();
-        let base_len = base.len()? as isize;
+        let base_len = base.len()?.cast_signed();
         let indices = match start {
             Some(s) => match s.cast_exact::<PySlice>() {
                 Ok(slice) => slice.indices(base_len),
@@ -208,7 +212,7 @@ impl SliceView {
             .into_bound(py)
             .map(Either::Left)
         } else {
-            let length = current_range.len()? as isize;
+            let length = current_range.len()?.cast_signed();
             let mut idx = index.call_method0("__index__")?.extract::<isize>()?;
             if idx < 0 {
                 idx += length;
@@ -255,7 +259,7 @@ impl SliceView {
                     }
                 }
                 (Case::PyMutableSequence(seq), Case::PySupportsIndex(support_index)) => {
-                    let length = cr.len()? as isize;
+                    let length = cr.len()?.cast_signed();
 
                     let mut idx = support_index.index()?.extract::<isize>()?;
                     if idx < 0 {
@@ -286,7 +290,7 @@ impl SliceView {
     fn advance(slf: Bound<'_, Self>, n: isize) -> PyResult<Bound<'_, Self>> {
         let py = slf.py();
         let slf_get = slf.get();
-        let b_len = slf_get.inner_bind(py).len()? as isize;
+        let b_len = slf_get.inner_bind(py).len()?.cast_signed();
         let cr = slf_get.current_range(py)?;
         let new_start = (cr.start()? + n).clamp(0, b_len);
         let delta = new_start - cr.start()?;

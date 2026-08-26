@@ -109,7 +109,7 @@ impl Seq {
     ) -> PyResult<Bound<'py, PySequence>> {
         self.inner_bind(py)
             .as_sequence()
-            .in_place_repeat(count as usize)
+            .in_place_repeat(count.cast_unsigned())
     }
     #[pyo3(signature = (value, /))]
     fn count<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {

@@ -134,11 +134,12 @@ trait PyoABC:
     #[skip]
     fn build_init() -> PyClassInitializer<Self>;
 
-    #[pyo3(signature = (*_args, **_kwargs))]
+    #[pyo3(signature = (*args, **kwargs))]
     #[new]
+    #[allow(unused_variables)]
     fn new(
-        _args: &Bound<'_, PyTuple>,
-        _kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyClassInitializer<Self> {
         Self::build_init()
     }

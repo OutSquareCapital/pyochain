@@ -65,10 +65,10 @@ impl ListsData {
         }
         let mut bound = Pos::new(0, 0);
 
-        bound.pos = bisect::left(&self.maxes, &value)?;
+        bound.pos = bisect::left(&self.maxes, value)?;
 
         if bound.pos == self.maxes.len() {
-            Ok(self.len as isize)
+            Ok(self.len.cast_signed())
         } else {
             bound.idx = bisect::left(&lists.unwrap_or(&self.lists)[bound.pos], &value)?;
             bound.loc(self)
@@ -87,7 +87,7 @@ impl ListsData {
         bound.pos = bisect::right(&self.maxes, value)?;
 
         if bound.pos == self.maxes.len() {
-            return Ok(self.len as isize);
+            return Ok(self.len.cast_signed());
         }
         bound.idx = bisect::right(&lists.unwrap_or(&self.lists)[bound.pos], value)?;
         bound.loc(self)
@@ -103,7 +103,8 @@ impl ListsData {
             .lists
             .last()
             .ok_or(PyIndexError::new_err("list index out of range"))?
-            .len() as isize;
+            .len()
+            .cast_signed();
         match (index, self.len != 0) {
             (0, true) => self.lists[0][0].clone_ref(py).into_bound(py).pipe(Ok),
             (-1, true) => self
@@ -119,16 +120,16 @@ impl ListsData {
                 let msg = "list index out of range";
                 Err(PyIndexError::new_err(msg))
             }
-            (_, true) if 0 <= index && index < self.lists[0].len() as isize => self.lists[0]
-                [index as usize]
-                .clone_ref(py)
-                .into_bound(py)
-                .pipe(Ok),
+            (_, true) if 0 <= index && index < self.lists[0].len().cast_signed() => self.lists[0]
+                [index.cast_unsigned()]
+            .clone_ref(py)
+            .into_bound(py)
+            .pipe(Ok),
             (_, true) if -len_last < index && index < 0 => self.lists.last().unwrap()
-                [(len_last + index) as usize]
-                .clone_ref(py)
-                .into_bound(py)
-                .pipe(Ok),
+                [(len_last + index).cast_unsigned()]
+            .clone_ref(py)
+            .into_bound(py)
+            .pipe(Ok),
             _ => {
                 bounds.min.set_from_pos(index, self)?;
                 self.lists[bounds.min.pos][bounds.min.idx]
@@ -145,8 +146,8 @@ impl ListsData {
     ) -> PyResult<Vec<Py<PyAny>>> {
         let PySliceIndices {
             start, stop, step, ..
-        } = slice.indices(self.len as isize)?;
-        let stop_eq_len = stop == self.len as isize;
+        } = slice.indices(self.len.cast_signed())?;
+        let stop_eq_len = stop == self.len.cast_signed();
         let mut bounds = Bounds::default();
         match (step, start.cmp(&stop)) {
             // Whole slice optimization: start to stop slices the whole sorted list.
@@ -154,7 +155,7 @@ impl ListsData {
             (1, Ordering::Less) => {
                 bounds.min.set_from_pos(start, self)?;
                 let start_list = &self.lists[bounds.min.pos];
-                bounds.max.idx = bounds.min.idx + (stop - start) as usize;
+                bounds.max.idx = bounds.min.idx + (stop - start).cast_unsigned();
                 match (start_list.len() >= bounds.max.idx, stop_eq_len) {
                     // Small slice optimization: start index and stop index are
                     // within the start list.
@@ -189,7 +190,7 @@ impl ListsData {
             // Return a list because a negative step could reverse the order
             // of the items and this could be the desired behavior.
             _ if step > 0 => (start..stop)
-                .step_by(step as usize)
+                .step_by(step.cast_unsigned())
                 .map(|i| self.getitem_from_int(py, i).map(Bound::unbind))
                 .collect::<PyResult<Vec<_>>>(),
             // Negative step with nothing to iterate (mirrors Python's `range`,
@@ -222,13 +223,12 @@ impl ListsData {
     /// An offset storing the start of the first row is also stored:
     ///     _offset = 3
     /// When built, the index can be used for efficient indexing into the list.
-    pub(crate) fn build_index(&mut self) -> PyResult<()> {
+    pub(crate) fn build_index(&mut self) {
         let row0 = self.lists.iter().map(Vec::len).collect::<Vec<usize>>();
 
         if row0.len() == 1 {
-            self.idx.extend(row0);
+            self.idx.extend(&row0);
             self.offset = 0;
-            return Ok(());
         }
 
         let mut row1 = row0
@@ -241,7 +241,6 @@ impl ListsData {
             self.idx.clear();
             self.idx.extend(combined);
             self.offset = 1;
-            Ok(())
         } else {
             let size = 1usize << ((row1.len() - 1).ilog2() + 1);
             row1.resize(size, 0);
@@ -260,7 +259,6 @@ impl ListsData {
             let flat = tree.into_iter().rev().flatten();
             self.idx.extend(flat);
             self.offset = size * 2 - 1;
-            Ok(())
         }
     }
     pub fn expand_on_empty_idx(&mut self, pos: usize) {

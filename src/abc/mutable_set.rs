@@ -98,7 +98,6 @@ impl PyoMutableSet {
                 PopResult::KeyMissing => break Ok(()),
                 PopResult::Ok(v) => {
                     slf.discard(&v)?;
-                    continue;
                 }
             }
         }

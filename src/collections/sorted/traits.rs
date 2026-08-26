@@ -196,18 +196,18 @@ pub(super) trait BaseSortedList: SortedListGetters {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));
         }
-        let len_last = data.lists.last().unwrap().len() as isize;
+        let len_last = data.lists.last().unwrap().len().cast_signed();
         match index {
             -1 => {
                 bounds.pos = data.lists.len() - 1;
                 bounds.idx = data.lists[bounds.pos].len() - 1_usize;
             }
-            _ if 0 <= index && index < data.lists[0].len() as isize => {
-                bounds.idx = index as usize;
+            _ if 0 <= index && index < data.lists[0].len().cast_signed() => {
+                bounds.idx = index.cast_unsigned();
             }
             _ if -len_last < index && index < 0 => {
                 bounds.pos = data.lists.len() - 1;
-                bounds.idx = (len_last + index) as usize;
+                bounds.idx = (len_last + index).cast_unsigned();
             }
             _ => {
                 bounds.set_from_pos(index, &mut data)?;
@@ -220,7 +220,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
     #[skip]
     fn delitem_from_slice(&self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
         let mut data = self.get_data();
-        let length = data.len as isize;
+        let length = data.len.cast_signed();
         let mut bounds = Pos::default();
         let PySliceIndices {
             start, stop, step, ..
@@ -244,7 +244,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 Ok(())
             }
             _ if step > 0 => (start..stop)
-                .step_by(step as usize)
+                .step_by(step.cast_unsigned())
                 .rev()
                 .try_for_each(|idx| {
                     bounds.set_from_pos(idx, &mut data)?;
@@ -1214,7 +1214,7 @@ impl<'a, 'py> SortedDictIter<'a, 'py> {
     fn new<D: BaseSortedDict>(owner: &'a D, py: Python<'py>) -> Self {
         let mapping = owner.get_inner().clone_ref(py).into_bound(py).into_any();
         let mapping_list = owner.get_list().get().get_data();
-        let range = 0..mapping_list.len as isize;
+        let range = 0..mapping_list.len.cast_signed();
         Self {
             py,
             mapping,

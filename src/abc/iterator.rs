@@ -921,7 +921,6 @@ impl PyoIterator {
                     if !item.is(PyNull::get(py)) {
                         return Ok(item);
                     }
-                    continue;
                 }
             }
         }

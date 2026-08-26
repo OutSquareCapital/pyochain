@@ -90,7 +90,7 @@ impl SortedCollection for SortedList {
         let py = value.py();
 
         let mut data = self.get_data();
-        let len_ = data.len as isize;
+        let len_ = data.len.cast_signed();
 
         if len_ == 0 {
             errors::not_in_list_err(&value)
@@ -317,7 +317,7 @@ impl BaseSortedList for SortedList {
 
                 if right.pos == data.maxes.len() {
                     let left_loc = left.loc(&mut data)?;
-                    Ok(data.len - left_loc as usize)
+                    Ok(data.len - left_loc.cast_unsigned())
                 } else {
                     right.idx = bisect::right(&data.lists[right.pos], &value)?;
 
@@ -326,7 +326,7 @@ impl BaseSortedList for SortedList {
                     } else {
                         let right_loc = right.loc(&mut data)?;
                         let left_loc = left.loc(&mut data)?;
-                        Ok((right_loc - left_loc) as usize)
+                        Ok((right_loc - left_loc).cast_unsigned())
                     }
                 }
             }

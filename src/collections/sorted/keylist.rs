@@ -160,7 +160,7 @@ impl SortedCollection for SortedKeyList {
     ) -> PyResult<isize> {
         let py = value.py();
         let mut data = self.get_data();
-        let length = data.len as isize;
+        let length = data.len.cast_signed();
         if length == 0 {
             errors::not_in_list_err(&value)
         } else {
@@ -299,7 +299,6 @@ impl BaseSortedListSet for SortedKeyList {
                         }
                         len_sublist = keys[bound.pos].len();
                         bound.idx = 0;
-                        continue;
                     }
                 }
                 Ok(())
