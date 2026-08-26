@@ -17,9 +17,11 @@ const SKIP: &str = "skip";
 const SETTER: &str = "setter";
 const GETTER: &str = "getter";
 const DELETER: &str = "deleter";
+const STATICMETHOD: &str = "staticmethod";
+const CLASSMETHOD: &str = "classmethod";
 
 const NAME: &str = "name";
-
+type ClassifiedAttrs = (AttrKind, Vec<Attribute>, Option<Ident>, Option<Ident>);
 // TODO: this code is frankly speaking ugly as fuck, but it works.
 // Time-sink to make it pretty but also time-sink when I have issues with it.
 // But very useful for many reasons. Will have to be refactored at some point.
@@ -71,55 +73,60 @@ enum AttrKind {
     /// #[pyo3(...)] and other attributes, already carrying an explicit `name = ...`
     SignedNamed(Vec<proc_macro2::TokenStream>),
 }
+
 fn generate_method(
     trait_ident: &Ident,
-    method: &syn::TraitItemFn,
+    method: &mut syn::TraitItemFn,
     attrs: Vec<Attribute>,
 ) -> SynResult<Option<proc_macro2::TokenStream>> {
-    let original_ident = &method.sig.ident;
     classify_attrs(attrs)
-        .map(|(kind, other_attrs, property_kind)| {
+        .map(|(kind, other_attrs, property_kind, method_kind)| {
+            let original_ident = &method.sig.ident;
             let python_name = LitStr::new(&original_ident.to_string(), original_ident.span());
+            let method_attr = method_kind.map(|kind| quote! { #[#kind] });
             let property = property_kind
                 .as_ref()
                 .map(|prop| (prop, property_python_name(original_ident, prop)));
             let tokens = match kind {
                 AttrKind::Skipped => None,
                 AttrKind::BasicMethod => Some(if let Some((prop, name)) = &property {
-                    quote! { #[#prop(#name)] }
+                    quote! { #method_attr #[#prop(#name)] }
                 } else {
-                    quote! { #[pyo3(name = #python_name)] }
+                    quote! { #method_attr #[pyo3(name = #python_name)] }
                 }),
-                AttrKind::NewNoSignature => Some(quote! {}),
-                AttrKind::New(ref tokens) => Some(quote! { #[pyo3(#(#tokens),*)] }),
+                AttrKind::NewNoSignature => Some(quote! { #[new] }),
+                AttrKind::New(ref tokens) => Some(quote! { #[new] #[pyo3(#(#tokens),*)] }),
                 AttrKind::Signed(ref tokens) => Some(if let Some((prop, name)) = &property {
-                    quote! { #[#prop(#name)] #[pyo3(#(#tokens),*)] }
+                    quote! { #method_attr #[#prop(#name)] #[pyo3(#(#tokens),*)] }
                 } else {
-                    quote! { #[pyo3(name = #python_name, #(#tokens),*)] }
+                    quote! { #method_attr #[pyo3(name = #python_name, #(#tokens),*)] }
                 }),
                 AttrKind::SignedNamed(ref tokens) => Some(if let Some((prop, name)) = &property {
-                    quote! { #[#prop(#name)] #[pyo3(#(#tokens),*)] }
+                    quote! { #method_attr #[#prop(#name)] #[pyo3(#(#tokens),*)] }
                 } else {
-                    quote! { #[pyo3(#(#tokens),*)] }
+                    quote! { #method_attr #[pyo3(#(#tokens),*)] }
                 }),
             };
             (tokens, other_attrs)
         })
-        .and_then(
-            |(tokens, other_attrs): (Option<proc_macro2::TokenStream>, Vec<Attribute>)| {
-                tokens
-                    .map(|pyo3_tokens| {
-                        get_quote(
-                            method,
-                            trait_ident,
-                            &other_attrs,
-                            &pyo3_tokens,
-                            original_ident,
-                        )
-                    })
-                    .transpose()
-            },
-        )
+        .and_then(|(tokens, other_attrs)| {
+            let generated = tokens
+                .map(|pyo3_tokens| {
+                    get_quote(
+                        method,
+                        trait_ident,
+                        &other_attrs,
+                        &pyo3_tokens,
+                        &method.sig.ident,
+                    )
+                })
+                .transpose()?;
+            Ok((generated, other_attrs))
+        })
+        .map(|(generated, attrs)| {
+            method.attrs = attrs;
+            generated
+        })
 }
 fn get_quote(
     method: &syn::TraitItemFn,
@@ -177,11 +184,12 @@ struct Classifier {
     has_new: bool,
     has_name: bool,
     property_kind: Option<Ident>,
+    method_kind: Option<Ident>,
     pyo3: Vec<proc_macro2::TokenStream>,
     other: Vec<Attribute>,
 }
 impl Classifier {
-    fn finalize(self) -> (AttrKind, Vec<Attribute>, Option<Ident>) {
+    fn finalize(self) -> ClassifiedAttrs {
         let pyo3_attrs = match (self.has_new, self.pyo3.is_empty(), self.has_name) {
             (true, true, _) => AttrKind::NewNoSignature,
             (false, true, _) => AttrKind::BasicMethod,
@@ -190,22 +198,21 @@ impl Classifier {
             (false, false, false) => AttrKind::Signed(self.pyo3),
         };
 
-        (pyo3_attrs, self.other, self.property_kind)
+        (pyo3_attrs, self.other, self.property_kind, self.method_kind)
     }
 }
-fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>, Option<Ident>)> {
+fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<ClassifiedAttrs> {
     let mut classifier = Classifier::default();
     for attr in attrs {
         let path = &attr.path();
 
         if path.is_ident(SKIP) {
             classifier.other.clear();
-            return Ok((AttrKind::Skipped, classifier.other, None));
+            return Ok((AttrKind::Skipped, classifier.other, None, None));
         }
         if path.is_ident(NEW) {
             classifier.has_new = true;
-        }
-        if path.is_ident(PYO3) {
+        } else if path.is_ident(PYO3) {
             let arg = match attr.meta {
                 Meta::List(list) => Ok(list.tokens),
                 _ => Err(syn::Error::new_spanned(
@@ -219,6 +226,8 @@ fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>,
             classifier.pyo3.push(arg);
         } else if path.is_ident(GETTER) || path.is_ident(SETTER) || path.is_ident(DELETER) {
             classifier.property_kind = Some(path.get_ident().expect("checked above").clone());
+        } else if path.is_ident(STATICMETHOD) || path.is_ident(CLASSMETHOD) {
+            classifier.method_kind = Some(path.get_ident().expect("checked above").clone());
         } else {
             classifier.other.push(attr);
         }
