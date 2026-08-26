@@ -20,10 +20,12 @@ pub struct ListsData {
 }
 impl ListsData {
     #[inline]
+    #[must_use]
     pub fn get_value(&self, pos: &Pos) -> &Py<PyAny> {
         &self.lists[pos.pos][pos.idx]
     }
     #[inline]
+    #[must_use]
     pub fn collapse(&self, py: Python<'_>) -> Vec<Py<PyAny>> {
         self.iter().map(|x| x.clone_ref(py)).collect()
     }
@@ -39,6 +41,7 @@ impl ListsData {
             .collect::<PyResult<Vec<_>>>()
     }
     #[inline]
+    #[must_use]
     pub fn repeat(&self, py: Python<'_>, num: usize) -> Vec<Py<PyAny>> {
         let values = self.collapse(py);
         (0..num)
@@ -70,7 +73,7 @@ impl ListsData {
         if bound.pos == self.maxes.len() {
             Ok(self.len.cast_signed())
         } else {
-            bound.idx = bisect::left(&lists.unwrap_or(&self.lists)[bound.pos], &value)?;
+            bound.idx = bisect::left(&lists.unwrap_or(&self.lists)[bound.pos], value)?;
             bound.loc(self)
         }
     }

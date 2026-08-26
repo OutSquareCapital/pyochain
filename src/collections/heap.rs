@@ -67,11 +67,11 @@ trait HeapType: Sized + PyWrapper<Wrapped = PyList> {
     fn push_pop<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()>;
 
-    #[pyo3(signature = (_index=None))]
+    #[pyo3(signature = (index=None))]
     fn pop<'py>(
         &self,
         py: Python<'py>,
-        _index: Option<Bound<'py, PyAny>>,
+        index: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>>;
     #[staticmethod]
     fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>>;
@@ -212,7 +212,7 @@ impl HeapType for HeapMax {
         let py = item.py();
         let inner = self.inner_bind(py);
         inner.append(item)?;
-        self._siftdown(py, 0, inner.len() - 1)
+        self.siftdown(py, 0, inner.len() - 1)
     }
     fn pop<'py>(
         &self,
@@ -226,7 +226,7 @@ impl HeapType for HeapMax {
         } else {
             let returnitem = inner.get_item(0)?;
             inner.set_item(0, lastelt)?;
-            self._siftup(py, 0)?;
+            self.siftup(py, 0)?;
             Ok(returnitem)
         }
     }
@@ -236,7 +236,7 @@ impl HeapType for HeapMax {
         let inner = self.inner_bind(py);
         let returnitem = inner.get_item(0)?; // raises appropriate IndexError if heap is empty
         inner.set_item(0, item)?;
-        self._siftup(py, 0)?;
+        self.siftup(py, 0)?;
         Ok(returnitem)
     }
     fn push_pop<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
@@ -245,7 +245,7 @@ impl HeapType for HeapMax {
         if !(inner.is_empty()) && item.lt(inner.get_item(0)?)? {
             let returnitem = inner.get_item(0)?;
             inner.set_item(0, item)?;
-            self._siftup(py, 0)?;
+            self.siftup(py, 0)?;
             Ok(returnitem)
         } else {
             Ok(item)
@@ -253,7 +253,7 @@ impl HeapType for HeapMax {
     }
 }
 impl HeapMax {
-    fn _siftdown(&self, py: Python<'_>, startpos: usize, mut pos: usize) -> PyResult<()> {
+    fn siftdown(&self, py: Python<'_>, startpos: usize, mut pos: usize) -> PyResult<()> {
         let inner = self.inner_bind(py);
         let newitem = inner.get_item(pos)?;
         // Follow the path to the root, moving parents down until finding a place
@@ -271,7 +271,7 @@ impl HeapMax {
         inner.set_item(pos, newitem)
     }
 
-    fn _siftup(&self, py: Python<'_>, mut pos: usize) -> PyResult<()> {
+    fn siftup(&self, py: Python<'_>, mut pos: usize) -> PyResult<()> {
         let inner = self.inner_bind(py);
         let endpos = inner.len();
         let startpos = pos;
@@ -292,6 +292,6 @@ impl HeapMax {
         // The leaf at pos is empty now.  Put newitem there, and bubble it up
         // to its final resting place (by sifting its parents down).
         inner.set_item(pos, newitem)?;
-        self._siftdown(py, startpos, pos)
+        self.siftdown(py, startpos, pos)
     }
 }

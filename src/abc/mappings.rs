@@ -160,30 +160,30 @@ impl PyoMutableMapping {
         other: Option<Bound<'_, PyAny>>,
         kwds: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        other.map(|x| {
+        if let Some(x) = other {
             if x.is_instance_of::<PyMapping>() {
                 x.try_iter()?
-                    .try_for_each(|key| key.and_then(|k| slf.set_item(&k, x.get_item(&k)?)))
+                    .try_for_each(|key| key.and_then(|k| slf.set_item(&k, x.get_item(&k)?)))?;
             } else if x.hasattr("keys")? {
                 x.call_method0(intern!(slf.py(), "keys"))
                     .unwrap()
                     .try_iter()?
-                    .try_for_each(|key| key.and_then(|k| slf.set_item(&k, x.get_item(&k)?)))
+                    .try_for_each(|key| key.and_then(|k| slf.set_item(&k, x.get_item(&k)?)))?;
             } else {
                 x.try_iter()?.try_for_each(|item| {
                     let tup = item?.cast_into::<PyTuple>()?;
                     let (key, value) = (tup.get_item(0)?, tup.get_item(1)?);
                     slf.set_item(&key, &value)
-                })
+                })?;
             }
-        });
-        kwds.map(|kwds| {
+        }
+        if let Some(kwds) = kwds {
             kwds.items()
                 .iter()
                 .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
                 .map(|x| unsafe { (x.get_item_unchecked(0), x.get_item_unchecked(1)) })
-                .try_for_each(|(key, value)| slf.set_item(&key, &value))
-        });
+                .try_for_each(|(key, value)| slf.set_item(&key, &value))?;
+        }
         Ok(())
     }
     #[pyo3(signature = (key, default=None))]

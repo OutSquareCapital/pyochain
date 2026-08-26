@@ -62,7 +62,7 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
         let other_set = match other {
             IntoSetComp::Set(other) => other.into_any(),
             IntoSetComp::Iterable(iterable) => py_from_iterable(&slf, &iterable)?.into_any(),
-            _ => {
+            IntoSetComp::Other(_) => {
                 return PyNotImplemented::from_cmp(py);
             }
         };
@@ -109,7 +109,7 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
         let other_set = match other {
             IntoSetComp::Set(other) => other.into_any(),
             IntoSetComp::Iterable(iterable) => py_from_iterable(&slf, &iterable)?.into_any(),
-            _ => {
+            IntoSetComp::Other(_) => {
                 return PyNotImplemented::from_cmp(py);
             }
         };

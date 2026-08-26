@@ -470,7 +470,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         self.__mul__(py, num)
     }
     #[allow(unused_variables)]
-    fn __setitem__(&self, _index: Bound<'_, PyAny>, _value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn __setitem__(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
         let msg = "use ``del sl[index]`` and ``sl.add(value)`` instead";
         Err(PyNotImplementedError::new_err(msg))
     }
@@ -486,18 +486,18 @@ pub(super) trait BaseSortedList: SortedListGetters {
     }
 
     #[allow(unused_variables)]
-    fn append(&self, _value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn append(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let msg = "use ``sl.add(value)`` instead";
         Err(PyNotImplementedError::new_err(msg))
     }
 
     #[allow(unused_variables)]
-    fn extend(&self, _values: Bound<'_, PyAny>) -> PyResult<()> {
+    fn extend(&self, values: Bound<'_, PyAny>) -> PyResult<()> {
         let msg = "use ``sl.update(values)`` instead";
         Err(PyNotImplementedError::new_err(msg))
     }
     #[allow(unused_variables)]
-    fn insert(&self, _index: Bound<'_, PyAny>, _value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
         let msg = "use ``sl.add(value)`` instead";
         Err(PyNotImplementedError::new_err(msg))
     }

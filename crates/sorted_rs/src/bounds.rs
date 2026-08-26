@@ -9,6 +9,7 @@ pub struct Indexes {
 }
 impl Indexes {
     #[inline]
+    #[must_use]
     pub fn new(start: Option<isize>, stop: Option<isize>, length: isize) -> Self {
         let mut start = start.unwrap_or(0);
         let mut stop = stop.unwrap_or(length);
@@ -30,6 +31,7 @@ pub struct Pos {
     pub idx: usize,
 }
 impl Pos {
+    #[must_use]
     pub fn new(pos: usize, idx: usize) -> Self {
         Self { pos, idx }
     }
@@ -122,6 +124,7 @@ pub struct Bounds {
     pub max: Pos,
 }
 impl Bounds {
+    #[must_use]
     pub fn new(min_pos: usize, min_idx: usize, max_pos: usize, max_idx: usize) -> Self {
         Self {
             min: Pos::new(min_pos, min_idx),

@@ -42,6 +42,7 @@ pub enum Expand {
 }
 impl Expand {
     #[inline(always)]
+    #[must_use]
     pub fn new(lists_len: usize, load: usize, idx: &[usize]) -> Self {
         if lists_len > load << 1 {
             Self::PosLenGtLoad
@@ -61,6 +62,7 @@ pub enum Delete {
 }
 impl Delete {
     #[inline(always)]
+    #[must_use]
     pub fn new<T>(lists: &[Vec<T>], load: usize, bounds: &Pos) -> Self {
         let len_pos = lists[bounds.pos].len();
         if len_pos > (load >> 1) {
