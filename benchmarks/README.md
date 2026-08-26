@@ -35,7 +35,7 @@ Compare against the latest saved run:
 uv run pytest benchmarks/ --benchmark-only --benchmark-compare
 ```
 
-Advanced example:
+## Advanced examples
 
 ```shell
 uv run pytest benchmarks/test_sequences.py::test_init --benchmark-only --benchmark-group-by=param:size --benchmark-group-by=name --benchmark-warmup=true --benchmark-disable-gc --benchmark-columns=median,mean,min,max,stddev --benchmark-sort=mean --benchmark-compare
@@ -50,6 +50,19 @@ uv run pytest benchmarks/test_sequences.py::test_init -k "10-"--benchmark-only -
 ```
 
 Here we add a `k` filter to only run the 10- element size, and group by name only.
+
+Comparing multiple runs:
+
+```shell
+uv run pytest-benchmark compare `
+  ".benchmarks\Windows-CPython-3.13-64bit\0055_map_juxt_dev.json" `
+  ".benchmarks\Windows-CPython-3.13-64bit\0056_map_juxt_tup.json" `
+  ".benchmarks\Windows-CPython-3.13-64bit\0057_map_juxt_tup_small_vec.json" `
+  --between=median `
+  --group-by=param `
+  --sort=name `
+  --time-unit=us
+```
 
 ## Saved format
 
