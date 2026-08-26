@@ -843,7 +843,8 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::group_by(&x, key))
-            .map(iterators::GroupBy::new)
+            .map(Bound::unbind)
+            .map(iterators::GroupBy)
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
     fn join<'py>(
@@ -1221,7 +1222,8 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::zip_longest(&x, others))
-            .map(iterators::ZipLongest::new)
+            .map(Bound::unbind)
+            .map(iterators::ZipLongest)
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
 }

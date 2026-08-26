@@ -689,21 +689,12 @@ impl WithPosition {
     }
 }
 #[pyclass(module = "pyochain._iterators")]
-pub struct ZipLongest {
-    iterator: Py<PyIterator>,
-}
+pub struct ZipLongest(pub Py<PyIterator>);
 #[pymethods]
 impl ZipLongest {
-    #[new]
-    pub fn new(data: Bound<'_, PyIterator>) -> Self {
-        Self {
-            iterator: data.unbind(),
-        }
-    }
-
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyTuple>>> {
         let py = slf.py();
-        let mut iter = slf.iterator.clone_ref(py).into_bound(py);
+        let mut iter = slf.0.clone_ref(py).into_bound(py);
         match iter.next() {
             None => Ok(None),
             Some(item) => item
@@ -747,20 +738,12 @@ impl Unzip {
     }
 }
 #[pyclass(module = "pyochain._iterators")]
-pub struct GroupBy {
-    iterator: Py<PyIterator>,
-}
+pub struct GroupBy(pub Py<PyIterator>);
 #[pymethods]
 impl GroupBy {
-    #[new]
-    pub fn new(data: Bound<'_, PyIterator>) -> Self {
-        Self {
-            iterator: data.unbind(),
-        }
-    }
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<(Bound<'_, PyAny>, Bound<'_, Iter>)>> {
         let py = slf.py();
-        match slf.iterator.clone_ref(py).into_bound(py).next() {
+        match slf.0.clone_ref(py).into_bound(py).next() {
             Some(item) => unsafe {
                 let tup = item?.cast_into_unchecked::<PyTuple>();
                 let (key, group) = (tup.get_item_unchecked(0), tup.get_item_unchecked(1));
@@ -804,9 +787,7 @@ impl OnceWith {
     }
 }
 #[pyclass(module = "pyochain._iterators")]
-pub struct Tail {
-    data: VecDeque<PyResult<Py<PyAny>>>,
-}
+pub struct Tail(VecDeque<PyResult<Py<PyAny>>>);
 #[pymethods]
 impl Tail {
     /// # Credits
@@ -845,12 +826,12 @@ impl Tail {
                 data
             }
         }
-        .pipe(|data| Self { data })
+        .pipe(Self)
         .pipe(Ok)
     }
 
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
-        slf.data
+        slf.0
             .pop_front()
             .transpose()?
             .map(|item| item.into_bound(slf.py()))
