@@ -959,6 +959,7 @@ impl PyoIterator {
         funcs: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
+            .map(Bound::unbind)
             .map(|x| iterators::MapJuxt::new(x, funcs))
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }

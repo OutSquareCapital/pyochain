@@ -16,7 +16,7 @@ use pyo3_ext::prelude::*;
 use smallvec::SmallVec;
 use tap::prelude::*;
 //TODO: the double collect in `Vec` => `PyTuple` is a performance tax on large Vecs of funcs. Need to optimize.
-#[pyclass(module = "pyochain._iterators")]
+#[pyclass(frozen, module = "pyochain._iterators")]
 pub struct MapJuxt {
     iterator: Py<PyIterator>,
     funcs: Vec<Py<PyAny>>,
@@ -26,29 +26,24 @@ pub struct MapJuxt {
 impl MapJuxt {
     #[new]
     #[pyo3(signature = (iterator, *funcs))]
-    pub fn new(iterator: Bound<'_, PyIterator>, funcs: &Bound<'_, PyTuple>) -> Self {
+    pub fn new(iterator: Py<PyIterator>, funcs: &Bound<'_, PyTuple>) -> Self {
         funcs
             .iter()
             .map(Bound::unbind)
             .collect::<Vec<_>>()
-            .pipe(|collected| Self {
-                iterator: iterator.unbind(),
-                funcs: collected,
-            })
+            .pipe(|funcs| Self { iterator, funcs })
     }
-    fn __next__(slf: PyRef<'_, Self>) -> PyResult<Option<Bound<'_, PyTuple>>> {
-        let py = slf.py();
-        match slf.iterator.clone_ref(py).into_bound(py).next() {
-            Some(item) => {
-                let args = item?;
-                slf.funcs
-                    .iter()
-                    .map(|func| func.call1(py, (&args,)))
-                    .collect::<PyResult<Vec<_>>>()?
-                    .into_iter()
-                    .collect_bound(py)
-                    .map(Some)
-            }
+    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyTuple>>> {
+        match self.iterator.clone_ref(py).into_bound(py).next() {
+            Some(Ok(item)) => self
+                .funcs
+                .iter()
+                .map(|func| func.call1(py, (&item,)))
+                .collect::<PyResult<Vec<_>>>()?
+                .into_iter()
+                .collect_bound(py)
+                .map(Some),
+            Some(Err(e)) => Err(e),
             None => Ok(None),
         }
     }
