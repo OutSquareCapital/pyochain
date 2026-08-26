@@ -15,7 +15,7 @@ use pyo3::{
 use pyo3_ext::prelude::*;
 use smallvec::SmallVec;
 use tap::prelude::*;
-//TODO: the double collect in `Vec` => `PyTuple` is a performance tax on large Vecs of funcs. Need to optimize.
+
 #[pyclass(frozen, module = "pyochain._iterators")]
 pub struct MapJuxt {
     iterator: Py<PyIterator>,

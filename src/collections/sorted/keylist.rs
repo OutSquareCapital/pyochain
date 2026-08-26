@@ -12,7 +12,7 @@ use crate::{
 };
 use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
-use sorted_rs::{Bounds, Indexes, ListsData, Pos, bisect, errors, ops, py_cmp_by_key};
+use sorted_rs::{Bounds, ListsData, Pos, bisect, errors, ops, py_cmp_by_key};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 use tap::Pipe;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -158,58 +158,13 @@ impl SortedCollection for SortedKeyList {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<isize> {
-        let py = value.py();
-        let mut data = self.get_data();
-        let length = data.len.cast_signed();
-        if length == 0 {
-            errors::not_in_list_err(&value)
-        } else {
-            let mut indexes = Indexes::new(start, stop, length);
-            if indexes.stop <= indexes.start {
-                errors::not_in_list_err(&value)
-            } else {
-                let key = self.key.bind(py).call1((&value,))?;
-                let mut bound = Pos {
-                    pos: bisect::left(&data.maxes, &key)?,
-                    idx: Default::default(),
-                };
-                if bound.pos == data.maxes.len() {
-                    errors::not_in_list_err(&value)
-                } else {
-                    indexes.stop -= 1;
-                    let keys = self.get_keys();
-                    let v_left = &keys[bound.pos];
-                    bound.idx = bisect::left(v_left, &key)?;
-                    let len_keys = keys.len();
-                    let mut len_sublist = v_left.len();
-
-                    loop {
-                        if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
-                            return errors::not_in_list_err(&value);
-                        }
-                        if data.get_value(&bound).bind(py).eq(&value)? {
-                            let loc = bound.loc(&mut data)?;
-                            if indexes.start <= loc && loc <= indexes.stop {
-                                return Ok(loc);
-                            } else if loc > indexes.stop {
-                                break;
-                            }
-                        }
-                        bound.idx += 1;
-                        if bound.idx == len_sublist {
-                            bound.pos += 1;
-                            if bound.pos == len_keys {
-                                return errors::not_in_list_err(&value);
-                            }
-                            len_sublist = keys[bound.pos].len();
-                            bound.idx = 0;
-                        }
-                    }
-
-                    errors::not_in_list_err(&value)
-                }
-            }
-        }
+        self.get_data().index_by_key(
+            &value,
+            start,
+            stop,
+            &self.get_keys(),
+            self.key.bind(value.py()),
+        )
     }
     fn irange<'py>(
         slf: Bound<'py, Self>,
@@ -443,38 +398,8 @@ impl BaseSortedList for SortedKeyList {
         }
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
-        let py = value.py();
-        let data = self.get_data();
-        let mut bound = Pos::default();
-        let key = self.key.bind(py).call1((&value,))?;
-        match ops::Maxes::new(&data.maxes, &mut bound, &key, bisect::left)? {
-            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(0),
-            ops::Maxes::LenNEPos => {
-                let keys = self.get_keys();
-                let v_left = &keys[bound.pos];
-                bound.idx = bisect::left(v_left, &key)?;
-                let mut total = 0;
-                let len_keys = keys.len();
-                let mut len_sublist = keys[bound.pos].len();
-                loop {
-                    if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
-                        return Ok(total);
-                    }
-                    if data.lists[bound.pos][bound.idx].bind(py).eq(&value)? {
-                        total += 1;
-                    }
-                    bound.idx += 1;
-                    if bound.idx == len_sublist {
-                        bound.pos += 1;
-                        if bound.pos == len_keys {
-                            return Ok(total);
-                        }
-                        len_sublist = keys[bound.pos].len();
-                        bound.idx = 0;
-                    }
-                }
-            }
-        }
+        self.get_data()
+            .count_by_key(&value, &self.get_keys(), self.key.bind(value.py()))
     }
     fn update(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
         let mut data = self.get_data();

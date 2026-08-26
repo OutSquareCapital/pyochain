@@ -8,8 +8,12 @@ use tap::prelude::*;
 
 use crate::{
     bisect,
-    bounds::{Bounds, Pos},
+    bounds::{Bounds, Indexes, Pos},
+    errors, ops,
 };
+
+//TODO: This struct is way too big and do way too many things.
+// Unfortunately we must first decouple as much as possible code from the main src/ folder into this crate.
 #[derive(Default)]
 pub struct ListsData {
     pub lists: Vec<Vec<Py<PyAny>>>,
@@ -307,6 +311,178 @@ impl ListsData {
                 child = (child - 1) >> 1;
             }
             self.idx[0] -= 1;
+        }
+    }
+    pub fn index(
+        &mut self,
+        value: &Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<isize> {
+        let py = value.py();
+        let len_ = self.len.cast_signed();
+
+        if len_ == 0 {
+            errors::not_in_list_err(value)
+        } else {
+            let mut indexes = Indexes::new(start, stop, len_);
+            if indexes.stop <= indexes.start {
+                errors::not_in_list_err(value)
+            } else {
+                let mut bound = Pos {
+                    pos: bisect::left(&self.maxes, value)?,
+                    idx: 0,
+                };
+                if bound.pos == self.maxes.len() {
+                    errors::not_in_list_err(value)
+                } else {
+                    bound.idx = bisect::left(&self.lists[bound.pos], value)?;
+                    if self.get_value(&bound).bind(py).ne(value)? {
+                        errors::not_in_list_err(value)
+                    } else {
+                        indexes.stop -= 1;
+                        let left = bound.loc(self)?;
+
+                        if indexes.start <= left {
+                            if left <= indexes.stop {
+                                return Ok(left);
+                            }
+                        } else {
+                            let right = self.bisect_right(None, value)? - 1;
+
+                            if indexes.start <= right {
+                                return Ok(indexes.start);
+                            }
+                        }
+                        errors::not_in_list_err(value)
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn index_by_key(
+        &mut self,
+        value: &Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+        keys: &[Vec<Py<PyAny>>],
+        key: &Bound<'_, PyAny>,
+    ) -> PyResult<isize> {
+        let py = value.py();
+        let length = self.len.cast_signed();
+        if length == 0 {
+            errors::not_in_list_err(value)
+        } else {
+            let mut indexes = Indexes::new(start, stop, length);
+            if indexes.stop <= indexes.start {
+                errors::not_in_list_err(value)
+            } else {
+                let key = key.call1((&value,))?;
+                let mut bound = Pos {
+                    pos: bisect::left(&self.maxes, &key)?,
+                    idx: Default::default(),
+                };
+                if bound.pos == self.maxes.len() {
+                    errors::not_in_list_err(value)
+                } else {
+                    indexes.stop -= 1;
+                    let v_left = &keys[bound.pos];
+                    bound.idx = bisect::left(v_left, &key)?;
+                    let len_keys = keys.len();
+                    let mut len_sublist = v_left.len();
+
+                    loop {
+                        if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
+                            return errors::not_in_list_err(value);
+                        }
+                        if self.get_value(&bound).bind(py).eq(value)? {
+                            let loc = bound.loc(self)?;
+                            if indexes.start <= loc && loc <= indexes.stop {
+                                return Ok(loc);
+                            } else if loc > indexes.stop {
+                                break;
+                            }
+                        }
+                        bound.idx += 1;
+                        if bound.idx == len_sublist {
+                            bound.pos += 1;
+                            if bound.pos == len_keys {
+                                return errors::not_in_list_err(value);
+                            }
+                            len_sublist = keys[bound.pos].len();
+                            bound.idx = 0;
+                        }
+                    }
+
+                    errors::not_in_list_err(value)
+                }
+            }
+        }
+    }
+
+    pub fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        let mut left = Pos::default();
+        match ops::Maxes::new(&self.maxes, &mut left, value, bisect::left)? {
+            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(0),
+            ops::Maxes::LenNEPos => {
+                let mut right = Pos::default();
+                left.idx = bisect::left(&self.lists[left.pos], value)?;
+                right.pos = bisect::right(&self.maxes, value)?;
+
+                if right.pos == self.maxes.len() {
+                    let left_loc = left.loc(self)?;
+                    Ok(self.len - left_loc.cast_unsigned())
+                } else {
+                    right.idx = bisect::right(&self.lists[right.pos], value)?;
+
+                    if left.pos == right.pos {
+                        Ok(right.idx - left.idx)
+                    } else {
+                        let right_loc = right.loc(self)?;
+                        let left_loc = left.loc(self)?;
+                        Ok((right_loc - left_loc).cast_unsigned())
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn count_by_key(
+        &mut self,
+        value: &Bound<'_, PyAny>,
+        keys: &[Vec<Py<PyAny>>],
+        key: &Bound<'_, PyAny>,
+    ) -> PyResult<usize> {
+        let py = value.py();
+        let mut bound = Pos::default();
+        let key = key.call1((value,))?;
+        match ops::Maxes::new(&self.maxes, &mut bound, &key, bisect::left)? {
+            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(0),
+            ops::Maxes::LenNEPos => {
+                let v_left = &keys[bound.pos];
+                bound.idx = bisect::left(v_left, &key)?;
+                let mut total = 0;
+                let len_keys = keys.len();
+                let mut len_sublist = keys[bound.pos].len();
+                loop {
+                    if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
+                        return Ok(total);
+                    }
+                    if self.lists[bound.pos][bound.idx].bind(py).eq(value)? {
+                        total += 1;
+                    }
+                    bound.idx += 1;
+                    if bound.idx == len_sublist {
+                        bound.pos += 1;
+                        if bound.pos == len_keys {
+                            return Ok(total);
+                        }
+                        len_sublist = keys[bound.pos].len();
+                        bound.idx = 0;
+                    }
+                }
+            }
         }
     }
 }

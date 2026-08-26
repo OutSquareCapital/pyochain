@@ -12,7 +12,7 @@ use crate::{
 };
 use pyo3::{PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
-use sorted_rs::{Bounds, Indexes, ListsData, Pos, bisect, errors, ops, py_cmp};
+use sorted_rs::{Bounds, ListsData, Pos, bisect, errors, ops, py_cmp};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -87,49 +87,7 @@ impl SortedCollection for SortedList {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<isize> {
-        let py = value.py();
-
-        let mut data = self.get_data();
-        let len_ = data.len.cast_signed();
-
-        if len_ == 0 {
-            errors::not_in_list_err(&value)
-        } else {
-            let mut indexes = Indexes::new(start, stop, len_);
-            if indexes.stop <= indexes.start {
-                errors::not_in_list_err(&value)
-            } else {
-                let mut bound = Pos {
-                    pos: bisect::left(&data.maxes, &value)?,
-                    idx: 0,
-                };
-                if bound.pos == data.maxes.len() {
-                    errors::not_in_list_err(&value)
-                } else {
-                    bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
-                    if data.get_value(&bound).bind(py).ne(&value)? {
-                        errors::not_in_list_err(&value)
-                    } else {
-                        indexes.stop -= 1;
-                        let left = bound.loc(&mut data)?;
-
-                        if indexes.start <= left {
-                            if left <= indexes.stop {
-                                return Ok(left);
-                            }
-                        } else {
-                            drop(data);
-                            let right = self.bisect_right(&value)? - 1;
-
-                            if indexes.start <= right {
-                                return Ok(indexes.start);
-                            }
-                        }
-                        errors::not_in_list_err(&value)
-                    }
-                }
-            }
-        }
+        self.get_data().index(&value, start, stop)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.reset_list(py, load)
@@ -306,31 +264,7 @@ impl BaseSortedList for SortedList {
         Ok(())
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
-        let mut data = self.get_data();
-        let mut left = Pos::default();
-        match ops::Maxes::new(&data.maxes, &mut left, &value, bisect::left)? {
-            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(0),
-            ops::Maxes::LenNEPos => {
-                let mut right = Pos::default();
-                left.idx = bisect::left(&data.lists[left.pos], &value)?;
-                right.pos = bisect::right(&data.maxes, &value)?;
-
-                if right.pos == data.maxes.len() {
-                    let left_loc = left.loc(&mut data)?;
-                    Ok(data.len - left_loc.cast_unsigned())
-                } else {
-                    right.idx = bisect::right(&data.lists[right.pos], &value)?;
-
-                    if left.pos == right.pos {
-                        Ok(right.idx - left.idx)
-                    } else {
-                        let right_loc = right.loc(&mut data)?;
-                        let left_loc = left.loc(&mut data)?;
-                        Ok((right_loc - left_loc).cast_unsigned())
-                    }
-                }
-            }
-        }
+        self.get_data().count(&value)
     }
 
     fn update(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
