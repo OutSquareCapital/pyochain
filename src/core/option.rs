@@ -110,20 +110,8 @@ impl PySome {
         PySome { value }
     }
 
-    fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-        match other.cast_exact::<PySome>() {
-            Ok(other_some) => self.value.bind(other.py()).eq(&other_some.get().value),
-            Err(_) => Ok(false),
-        }
-    }
-    fn __bool__(&self) -> PyResult<bool> {
-        Err(PyTypeError::new_err(
-            "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.",
-        ))
-    }
-
     fn __hash__(&self, py: Python<'_>) -> PyResult<u64> {
-        hash_fn(0_u8, self.value.bind(py).hash()?).pipe(Ok)
+        self.value.bind(py).hash().map(|h| hash_fn(0_u8, h))
     }
 
     #[pyo3(signature = (predicate, *args, **kwargs))]
@@ -393,11 +381,6 @@ impl PyNull {
     fn new(py: Python<'_>) -> Py<Self> {
         Self::get(py)
     }
-    fn __bool__(&self) -> PyResult<bool> {
-        Err(PyTypeError::new_err(
-            "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.",
-        ))
-    }
 
     fn __hash__(&self, py: Python<'_>) -> PyResult<isize> {
         py.None().bind(py).hash()
@@ -518,9 +501,9 @@ impl PyNull {
         Self::get(f.py())
     }
 
-    fn unzip(&self, py: Python<'_>) -> PyResult<(Py<Self>, Py<Self>)> {
+    fn unzip(&self, py: Python<'_>) -> (Py<Self>, Py<Self>) {
         let none = Self::get(py);
-        Ok((none.clone_ref(py), none))
+        (none.clone_ref(py), none)
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> Py<Self> {
@@ -568,13 +551,15 @@ impl PyNull {
     fn __repr__(&self) -> &'static str {
         "NONE"
     }
-
-    fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
-        other.is_none() || other.is_null()
-    }
 }
 #[py_abc(PySome, PyNull)]
 trait OptionMethods {
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool>;
+    fn __bool__(&self) -> PyResult<bool> {
+        Err(PyTypeError::new_err(
+            "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.",
+        ))
+    }
     fn is_some(&self) -> bool;
 
     fn is_none(&self) -> bool;
@@ -584,6 +569,12 @@ trait OptionMethods {
     fn py_iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoIterator>>;
 }
 impl OptionMethods for PySome {
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        match other.cast_exact::<PySome>() {
+            Ok(other_some) => self.value.bind(other.py()).eq(&other_some.get().value),
+            Err(_) => Ok(false),
+        }
+    }
     fn is_some(&self) -> bool {
         true
     }
@@ -605,6 +596,9 @@ impl OptionMethods for PySome {
     }
 }
 impl OptionMethods for PyNull {
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        Ok(other.is_none() || other.is_null())
+    }
     fn is_some(&self) -> bool {
         false
     }
