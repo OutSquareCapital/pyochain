@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, Never, assert_type
+from typing import TYPE_CHECKING, Any, Literal, assert_never, assert_type
 
 from pyochain import (
     NONE,
@@ -74,27 +74,25 @@ type AnimalLit = Literal["dog", "cat"]
 
 
 def check_iterables_covariance() -> None:
-    base = Vec[Dog]()
-    _abc_iterable: PyoIterable[Animal] = _foo(base)
-    _abc_iterator: PyoIterator[Animal] = _foo(base.iter())
-    _abc_collection: PyoCollection[Animal] = _foo(base)
-    _abc_sequence: PyoSequence[Animal] = _foo(base)
-    _peekable_iterator: Peekable[Animal] = base.iter().peekable()
-    _abc_set_immutable: PyoSet[Animal] = _foo(base.pipe(Set))
-    _seq_immutable: Seq[Animal] = base.pipe(Seq)
+    base = Vec[Dog]
+    _abc_iterable: PyoIterable[Animal] = base()
+    _abc_iterator: PyoIterator[Animal] = base().iter()
+    _abc_collection: PyoCollection[Animal] = base()
+    _abc_sequence: PyoSequence[Animal] = base()
+    _peekable_iterator: Peekable[Animal] = base().iter().peekable()
+    _abc_set_immutable: PyoSet[Animal] = base().pipe(Set)
+    _seq_immutable: Seq[Animal] = base().pipe(Seq)
     # pyrefly: ignore [bad-assignment]
-    _: PyoMutableSequence[Animal] = _foo(base)  # pyright: ignore[reportAssignmentType]
-
-
-def _foo[T: Iterable[Animal]](x: T) -> T:
-    return x
+    _: PyoMutableSequence[Animal] = base()  # pyright: ignore[reportAssignmentType]
+    # pyrefly: ignore [bad-assignment]
+    _: Vec[Animal] = base()  # pyright: ignore[reportAssignmentType]
 
 
 def check_monads_covariance() -> None:
-    opt = assert_type(Some(Dog()), Option[Dog])
-    res = assert_type(Ok(Dog()), Result[Dog, Any])
-    _as_opt: Option[Animal] = assert_type(opt, Option[Dog])
-    _as_res: Result[Animal, str] = assert_type(res.map(lambda x: x), Result[Dog, Any])
+    opt: Option[Animal] = Some(Dog())
+    res: Result[Animal, Any] = Ok(Dog()).map(lambda x: x)
+    _a = assert_type(opt, Option[Dog])
+    _b = assert_type(res, Result[Dog, Any])
 
 
 def check_option_basic() -> None:
@@ -132,7 +130,7 @@ def check_option_literal() -> None:
             # pyrefly: ignore[assert-type]
             _ = assert_type(opt_casted.unwrap(), LitCat)  # pyright: ignore[reportAssertTypeFailure]
         case Some("tyrannosaurus"):  # pyright: ignore[reportUnnecessaryComparison]
-            _ = assert_type(opt_casted.unwrap(), Never)  # pyright: ignore[reportUnreachable]
+            _ = assert_never(opt_casted.unwrap())  # pyright: ignore[reportUnreachable]
         case Null():
             _ = assert_type(opt_casted, Null[AnimalLit])
 
@@ -162,9 +160,8 @@ def check_result_transpose() -> None:
     _b = assert_type(b.transpose(), Option[Result[Any, Option[int]]])
     c = assert_type(Ok[Option[int], int](NONE), Result[Option[int], int])
     _c = assert_type(c.transpose(), Option[Result[int, int]])
-    d = assert_type(
-        Err[Option[int], Option[int]](Null()), Result[Option[int], Option[int]]
-    )
+    d = Err[Option[int], Option[int]](Null())
+    _ = assert_type(d, Result[Option[int], Option[int]])
     _d = assert_type(d.transpose(), Option[Result[int, Option[int]]])
 
 
@@ -223,23 +220,16 @@ def check_and_then_result() -> None:
     ```
     """
     msg = "error"
-    _a = assert_type(
-        Ok[Result[int, int], int](Ok[int, int](10)).and_then(lambda x: x),
-        Result[int, int],
-    )
-    _b = assert_type(
-        Ok[Result[str, str], str](Err[str, str](msg)).and_then(lambda x: x),
-        Result[str, str],
-    )
-    _c = assert_type(Err[str, str](msg).and_then(Ok), Result[str, str])
-    _d = assert_type(
-        Err(Err[str, str](msg)).and_then(_fn_str),
-        Result[Result[str, str], Result[str, str]],
-    )
-    _e = assert_type(
-        Err(Ok[int, int](10)).and_then(_fn_int),
-        Result[Result[int, int], Result[int, int]],
-    )
+    a = Ok[Result[int, int], int](Ok[int, int](10)).and_then(lambda x: x)
+    b = Ok[Result[str, str], str](Err[str, str](msg)).and_then(lambda x: x)
+    c = Err[str, str](msg).and_then(Ok)
+    d = Err(Err[str, str](msg)).and_then(_fn_str)
+    e = Err(Ok[int, int](10)).and_then(_fn_int)
+    _ = assert_type(a, Result[int, int])
+    _ = assert_type(b, Result[str, str])
+    _ = assert_type(c, Result[str, str])
+    _ = assert_type(d, Result[Result[str, str], Result[str, str]])
+    _ = assert_type(e, Result[Result[int, int], Result[int, int]])
 
 
 def _fn_str(x: Result[str, str]) -> Result[Result[str, str], Any]:
@@ -786,9 +776,8 @@ type EntryData = list[tuple[object, tuple[str, ...]]]
 
 
 def covariance_pyomapping(data: EntryData) -> None:
-    _: Dict[object, Sequence[object]] = assert_type(
-        Dict(data), Dict[object, Sequence[object]]
-    )
+    d = Dict[object, Sequence[object]](data)
+    _ = assert_type(d, Dict[object, Sequence[object]])
 
 
 def check_chain_covariance[T, S](base: Iterable[T], *others: Iterable[S]) -> None:
