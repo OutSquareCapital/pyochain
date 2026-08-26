@@ -1,4 +1,4 @@
-use crate::abc;
+use crate::abc::PyoIterator;
 use crate::core::{PyoErr, PyoOk, iterators};
 use crate::hasher::hash_fn;
 use pyo3::IntoPyObjectExt;
@@ -9,6 +9,7 @@ use pyo3::{
     types::{PyString, PyTuple},
 };
 use pyo3_ext::prelude::*;
+use pyochain_macros::py_abc;
 use tap::prelude::*;
 
 /// Singleton for NONE - initialized once per Python interpreter
@@ -125,14 +126,6 @@ impl PySome {
         hash_fn(0_u8, self.value.bind(py).hash()?).pipe(Ok)
     }
 
-    fn is_some(&self) -> bool {
-        true
-    }
-
-    fn is_none(&self) -> bool {
-        false
-    }
-
     #[pyo3(signature = (predicate, *args, **kwargs))]
     fn is_some_and(
         &self,
@@ -162,10 +155,6 @@ impl PySome {
     fn expect(&self, msg: &Bound<'_, PyString>) -> Py<PyAny> {
         self.value.clone_ref(msg.py())
     }
-    fn unwrap_or(&self, default: &Bound<'_, PyAny>) -> Py<PyAny> {
-        self.value.clone_ref(default.py())
-    }
-
     fn unwrap_or_else(&self, f: &Bound<'_, PyAny>) -> Py<PyAny> {
         self.value.clone_ref(f.py())
     }
@@ -277,7 +266,7 @@ impl PySome {
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = func.py();
 
-        PySome::new(func.call1(self.value.bind(py).cast::<PyTuple>()?)?.unbind()).into_py_any(py)
+        Self::new(func.call1(self.value.bind(py).cast::<PyTuple>()?)?.unbind()).into_py_any(py)
     }
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         func.call1(self.value.bind(func.py()).cast::<PyTuple>()?)?
@@ -329,15 +318,6 @@ impl PySome {
         } else {
             PyNull::get_any_ok(py)
         }
-    }
-
-    fn iter(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        let py = slf.py();
-        slf.get()
-            .value
-            .clone_ref(py)
-            .into_bound(py)
-            .pipe(abc::PyoIterator::once)
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -423,13 +403,6 @@ impl PyNull {
         py.None().bind(py).hash()
     }
 
-    fn is_some(&self) -> bool {
-        false
-    }
-
-    fn is_none(&self) -> bool {
-        true
-    }
     #[allow(unused_variables)]
     #[pyo3(signature = (predicate, *_args, **_kwargs))]
     fn is_some_and(
@@ -457,14 +430,10 @@ impl PyNull {
         ))
     }
 
-    fn expect(&self, msg: String) -> PyResult<Py<PyAny>> {
+    fn expect(&self, msg: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         Err(PyErr::new::<OptionUnwrapError, _>(format!(
             "{msg} (called `expect` on a `None`)"
         )))
-    }
-
-    fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {
-        default
     }
 
     fn unwrap_or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -582,11 +551,6 @@ impl PyNull {
             optb.clone().unbind().pipe(Ok)
         }
     }
-
-    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
-        iterators::Iter::empty(slf.py())
-    }
-
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         PyNull::get(py).into_any().pipe(PyoOk::new).into_py_any(py)
     }
@@ -607,5 +571,53 @@ impl PyNull {
 
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
         other.is_none() || other.is_null()
+    }
+}
+#[py_abc(PySome, PyNull)]
+trait OptionMethods {
+    fn is_some(&self) -> bool;
+
+    fn is_none(&self) -> bool;
+
+    fn unwrap_or<'py>(&self, default: Bound<'py, PyAny>) -> Bound<'py, PyAny>;
+    #[pyo3(name = "iter")]
+    fn py_iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoIterator>>;
+}
+impl OptionMethods for PySome {
+    fn is_some(&self) -> bool {
+        true
+    }
+
+    fn is_none(&self) -> bool {
+        false
+    }
+
+    fn unwrap_or<'py>(&self, default: Bound<'py, PyAny>) -> Bound<'py, PyAny> {
+        let py = default.py();
+        self.value.clone_ref(py).into_bound(py)
+    }
+
+    fn py_iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoIterator>> {
+        self.value
+            .clone_ref(py)
+            .into_bound(py)
+            .pipe(PyoIterator::once)
+    }
+}
+impl OptionMethods for PyNull {
+    fn is_some(&self) -> bool {
+        false
+    }
+
+    fn is_none(&self) -> bool {
+        true
+    }
+
+    fn unwrap_or<'py>(&self, default: Bound<'py, PyAny>) -> Bound<'py, PyAny> {
+        default
+    }
+
+    fn py_iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoIterator>> {
+        iterators::Iter::empty(py).map(Bound::into_super)
     }
 }
