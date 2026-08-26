@@ -1,51 +1,19 @@
 from __future__ import annotations
 
-import itertools
-from collections.abc import Sequence
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, assert_never, assert_type
+from collections import abc
+from typing import TYPE_CHECKING, assert_type
 
-from pyochain import (
-    NONE,
-    Dict,
-    Err,
-    Iter,
-    Null,
-    Ok,
-    Option,
-    Range,
-    Result,
-    Seq,
-    Set,
-    Some,
-    Vec,
-    option,
-)
-from pyochain.abc import PyoIterator
+from pyochain import Dict, Peekable, Seq, Set, Vec
+
+from ._utils import Animal, Dog
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Collection,
-        Container,
-        ItemsView,
-        Iterable,
-        Iterator,
-        KeysView,
-        Mapping,
-        MappingView,
-        MutableMapping,
-        MutableSequence,
-        Reversible,
-        Sized,
-        ValuesView,
-    )
-
-    from pyochain import Peekable
     from pyochain.abc import (
         PyoCollection,
         PyoContainer,
         PyoItemsView,
         PyoIterable,
+        PyoIterator,
         PyoKeysView,
         PyoMapping,
         PyoMappingView,
@@ -59,19 +27,13 @@ if TYPE_CHECKING:
     )
 
 
-@dataclass
-class Animal:
-    pass
-
-
-@dataclass
-class Dog(Animal):
-    pass
-
-
-type LitDog = Literal["dog"]
-type LitCat = Literal["cat"]
-type AnimalLit = Literal["dog", "cat"]
+def check_dict() -> None:
+    _ = assert_type(Dict({"a": 1, "b": 2}), Dict[str, int])
+    # Avoid automatic literal inference
+    data = [("a", 1), ("b", 2)]
+    _ = assert_type(Dict(data), Dict[str, int])
+    _ = assert_type(Dict(a=1, b=2), Dict[str, int])
+    _ = assert_type(Dict({"a": 1}, b=2), Dict[str, int])
 
 
 def check_iterables_covariance() -> None:
@@ -89,179 +51,15 @@ def check_iterables_covariance() -> None:
     _: Vec[Animal] = base()  # pyright: ignore[reportAssignmentType]
 
 
-def check_monads_covariance() -> None:
-    opt: Option[Animal] = Some(Dog())
-    res: Result[Animal, Any] = Ok(Dog()).map(lambda x: x)
-    _a = assert_type(opt, Option[Dog])
-    _b = assert_type(res, Result[Dog, Any])
+type EntryData = list[tuple[object, tuple[str, ...]]]
 
 
-def check_option_basic() -> None:
-    base = assert_type(Some(Dog()), Option[Dog])
-    canary = assert_type(base.unwrap_or_none(), Dog | None)
-    _ = assert_type(base.map(_value), Option[Animal])
-    if canary is not None:
-        _ = assert_type(canary, Dog)
+def covariance_pyomapping(data: EntryData) -> None:
+    d = Dict[object, abc.Sequence[object]](data)
+    _ = assert_type(d, Dict[object, abc.Sequence[object]])
 
 
-def _value(x: Animal) -> Animal:
-    return x
-
-
-def check_option_transpose() -> None:
-    _a: Result[Option[int], int] = Some(Ok(10)).transpose()
-    _b: Result[Option[int], int] = Some(Err(10)).transpose()
-    _c: Result[Option[int], int] = Null().transpose()
-
-
-def check_option_literal() -> None:
-    lit = assert_type(_get_cat(), AnimalLit | None)
-    # Inferred as Option[str]
-    _ = assert_type(option(lit), Option[str])
-    # Need to add explicit type hint to get Option[AnimalLit]
-    opt_casted: Option[AnimalLit] = assert_type(option(lit), Option[AnimalLit])
-    _ = assert_type(opt_casted.map(_literal), Option[AnimalLit])
-    # Issue: Literals aren't handled for type unions, even if both members are covariant.
-    # pyrefly: ignore [non-exhaustive-match]
-    match opt_casted:  # pyright: ignore[reportMatchNotExhaustive]
-        case Some("dog") as opt_casted:
-            # pyrefly: ignore [assert-type]
-            _ = assert_type(opt_casted.unwrap(), LitDog)  # pyright: ignore[reportAssertTypeFailure]
-        case Some("cat"):
-            # pyrefly: ignore[assert-type]
-            _ = assert_type(opt_casted.unwrap(), LitCat)  # pyright: ignore[reportAssertTypeFailure]
-        case Some("tyrannosaurus"):  # pyright: ignore[reportUnnecessaryComparison]
-            _ = assert_never(opt_casted.unwrap())  # pyright: ignore[reportUnreachable]
-        case Null():
-            _ = assert_type(opt_casted, Null[AnimalLit])
-
-
-def _get_cat() -> AnimalLit | None:
-    return "cat"
-
-
-def _literal(x: AnimalLit) -> AnimalLit:
-    return x
-
-
-def check_result_basic() -> None:
-    ok = assert_type(Ok(Dog()), Result[Dog, Any])
-    err = assert_type(Err(Dog()), Result[Any, Dog])
-    _ = assert_type(Ok[int, str](42), Result[int, str])
-    _a = assert_type(ok.map(_identity).map_err(_value), Result[Dog, Animal])
-    _b = assert_type(ok.map_err(_identity).map(_value), Result[Animal, Any])
-    _c = assert_type(err.map(_identity).map_err(_value), Result[Any, Animal])
-    _d = assert_type(err.map_err(_identity).map(_value), Result[Animal, Dog])
-
-
-def check_result_transpose() -> None:
-    a = assert_type(Ok(Some(10)), Result[Option[int], Any])
-    _a = assert_type(a.transpose(), Option[Result[int, Any]])
-    b = assert_type(Err(Some(10)), Result[Any, Option[int]])
-    _b = assert_type(b.transpose(), Option[Result[Any, Option[int]]])
-    c = assert_type(Ok[Option[int], int](NONE), Result[Option[int], int])
-    _c = assert_type(c.transpose(), Option[Result[int, int]])
-    d = Err[Option[int], Option[int]](Null())
-    _ = assert_type(d, Result[Option[int], Option[int]])
-    _d = assert_type(d.transpose(), Option[Result[int, Option[int]]])
-
-
-def check_option_flatten() -> None:
-    def _(x: int) -> int:
-        return x
-
-    _a = assert_type(Some(Some(10)).flatten(), Option[int])
-    _b = assert_type(Some(Null()).flatten(), Option[Any])
-    _c = assert_type(Null().flatten(), Option[Any])
-    _d = assert_type(Some(Null()).flatten().map(_), Option[int])
-    _e = assert_type(Some(Some(Some(10))).flatten().flatten().map(str), Option[str])
-
-
-def check_option_and_then() -> None:
-    """Rust equivalent who compiles (the type hints for variables have been added *last*, so they are not helping for inference):
-
-    ```rust
-    let _a: Option<i32> = Some(10).and_then(Some);
-    let _b: Option<Option<i32>> = Some::<Option<i32>>(None).and_then(Some);
-    let _c: Option<i32> = None::<i32>.and_then(Some);
-    ```
-    """
-    _a = assert_type(Some(10).and_then(Some), Option[int])
-    _b = assert_type(Some[Option[int]](Null()).and_then(Some), Option[Option[int]])
-    _c = assert_type(Null[int]().and_then(Some), Option[int])
-
-
-def check_result_flatten() -> None:
-    """Rust equivalent who compiles (the type hints for variables have been added *last*, so they are not helping for inference):
-
-    ```rust
-
-    let _a: Result<i32, i32> = Ok(Ok::<i32, i32>(10)).flatten();
-    let _b: Result<&str, &str> = Ok(Err::<&str, &str>("error")).flatten();
-    ```
-    """
-    _a = assert_type(Ok(Ok[int, int](10)).flatten(), Result[int, int])
-    _b = assert_type(Ok(Err[str, str]("error")).flatten(), Result[str, str])
-    _ = assert_type(Err(Err("error")), Result[Any, Result[Any, str]])
-
-
-def check_and_then_result() -> None:
-    """Rust equivalent who compiles (the type hints for variables have been added *last*, so they are not helping for inference):
-
-    ```rust
-    fn test_flatten() {
-    let _a: Result<i32, i32> = Ok(Ok::<i32, i32>(10)).and_then(|x| x);
-    let _b: Result<&str, &str> = Ok(Err::<&str, &str>("error")).and_then(|x| x);
-    let _c: Result<&str, &str> = Err::<&str, &str>("error").and_then(|x| Ok(x));
-    let _d: Result<Result<&str, &str>, Result<&str, &str>> =
-        Err(Err::<&str, &str>("error")).and_then(|x: Result<&str, &str>| Ok(x));
-    let _e: Result<Result<i32, i32>, Result<i32, i32>> =
-        Err(Ok::<i32, i32>(10)).and_then(|x: Result<i32, i32>| Ok(x));
-    }
-    ```
-    """
-    msg = "error"
-    a = Ok[Result[int, int], int](Ok[int, int](10)).and_then(lambda x: x)
-    b = Ok[Result[str, str], str](Err[str, str](msg)).and_then(lambda x: x)
-    c = Err[str, str](msg).and_then(Ok)
-    d = Err(Err[str, str](msg)).and_then(_fn_str)
-    e = Err(Ok[int, int](10)).and_then(_fn_int)
-    _ = assert_type(a, Result[int, int])
-    _ = assert_type(b, Result[str, str])
-    _ = assert_type(c, Result[str, str])
-    _ = assert_type(d, Result[Result[str, str], Result[str, str]])
-    _ = assert_type(e, Result[Result[int, int], Result[int, int]])
-
-
-def _fn_str(x: Result[str, str]) -> Result[Result[str, str], Any]:
-    return Ok(x)
-
-
-def _fn_int(x: Result[int, int]) -> Result[Result[int, int], Any]:
-    return Ok(x)
-
-
-def check_iter_flatten() -> None:
-    nested = (
-        Range(3)
-        .iter()
-        .map(
-            lambda x: (
-                Range(x)
-                .iter()
-                .map(lambda y: Range(y).iter().map(lambda z: Range(z).pipe(list)))
-            )
-        )
-    )
-    _ = assert_type(nested, PyoIterator[PyoIterator[PyoIterator[list[int]]]])
-    one = assert_type(nested.flatten(), PyoIterator[PyoIterator[list[int]]])
-    two = assert_type(one.flatten(), PyoIterator[list[int]])
-    ok = assert_type(two.flatten(), PyoIterator[int])
-    # Expected to fail
-    _fail = ok.flatten()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
-
-
-def check_iterable_args(base: PyoIterable[Dog], canary: Iterable[Dog]) -> None:
+def check_iterable_args(base: PyoIterable[Dog], canary: abc.Iterable[Dog]) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
     _iterator(base, canary)  # pyright: ignore[reportArgumentType]
@@ -279,7 +77,7 @@ def check_iterable_args(base: PyoIterable[Dog], canary: Iterable[Dog]) -> None:
     _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
 
 
-def check_iterator_args(base: PyoIterator[Dog], canary: Iterator[Dog]) -> None:
+def check_iterator_args(base: PyoIterator[Dog], canary: abc.Iterator[Dog]) -> None:
     _iterable(base, canary)
     _iterator(base, canary)
     # pyrefly: ignore [bad-argument-type]
@@ -296,7 +94,7 @@ def check_iterator_args(base: PyoIterator[Dog], canary: Iterator[Dog]) -> None:
     _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
 
 
-def check_sized_args(base: PyoSized, canary: Sized) -> None:
+def check_sized_args(base: PyoSized, canary: abc.Sized) -> None:
     # pyrefly: ignore [bad-argument-type]
     _iterable(base, canary)  # pyright: ignore[reportArgumentType]
     # pyrefly: ignore [bad-argument-type]
@@ -314,7 +112,9 @@ def check_sized_args(base: PyoSized, canary: Sized) -> None:
     _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
 
 
-def check_reversible_args(base: PyoReversible[Dog], canary: Reversible[Dog]) -> None:
+def check_reversible_args(
+    base: PyoReversible[Dog], canary: abc.Reversible[Dog]
+) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
     _iterator(base, canary)  # pyright: ignore[reportArgumentType]
@@ -331,7 +131,9 @@ def check_reversible_args(base: PyoReversible[Dog], canary: Reversible[Dog]) -> 
     _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
 
 
-def check_container_args(base: PyoContainer[Animal], canary: Container[Animal]) -> None:
+def check_container_args(
+    base: PyoContainer[Animal], canary: abc.Container[Animal]
+) -> None:
     # pyrefly: ignore [bad-argument-type]
     _iterable(base, canary)  # pyright: ignore[reportArgumentType]
     # pyrefly: ignore [bad-argument-type]
@@ -349,7 +151,9 @@ def check_container_args(base: PyoContainer[Animal], canary: Container[Animal]) 
     _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
 
 
-def check_collection_args(base: PyoCollection[Dog], canary: Collection[Dog]) -> None:
+def check_collection_args(
+    base: PyoCollection[Dog], canary: abc.Collection[Dog]
+) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
     _iterator(base, canary)  # pyright: ignore[reportArgumentType]
@@ -364,7 +168,7 @@ def check_collection_args(base: PyoCollection[Dog], canary: Collection[Dog]) -> 
     _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
 
 
-def check_sequence_args(base: PyoSequence[Dog], canary: Sequence[Dog]) -> None:
+def check_sequence_args(base: PyoSequence[Dog], canary: abc.Sequence[Dog]) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
     _iterator(base, canary)  # pyright: ignore[reportArgumentType]
@@ -378,7 +182,7 @@ def check_sequence_args(base: PyoSequence[Dog], canary: Sequence[Dog]) -> None:
 
 
 def check_mutable_sequence_args(
-    base: PyoMutableSequence[Dog], canary: MutableSequence[Dog]
+    base: PyoMutableSequence[Dog], canary: abc.MutableSequence[Dog]
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
@@ -392,7 +196,7 @@ def check_mutable_sequence_args(
 
 
 def check_mapping(
-    base: PyoMapping[Animal, Animal], canary: Mapping[Animal, Animal]
+    base: PyoMapping[Animal, Animal], canary: abc.Mapping[Animal, Animal]
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
@@ -414,7 +218,7 @@ def check_mapping(
 
 
 def check_mutable_mapping(
-    base: PyoMutableMapping[Animal, Animal], canary: MutableMapping[Animal, Animal]
+    base: PyoMutableMapping[Animal, Animal], canary: abc.MutableMapping[Animal, Animal]
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
@@ -434,7 +238,7 @@ def check_mutable_mapping(
     _mapping_view(base, canary)  # pyright: ignore[reportArgumentType]
 
 
-def check_mapping_view_args(base: PyoMappingView, canary: MappingView) -> None:
+def check_mapping_view_args(base: PyoMappingView, canary: abc.MappingView) -> None:
     # pyrefly: ignore [bad-argument-type]
     _iterable(base, canary)  # pyright: ignore[reportArgumentType]
     # pyrefly: ignore [bad-argument-type]
@@ -454,7 +258,7 @@ def check_mapping_view_args(base: PyoMappingView, canary: MappingView) -> None:
 
 
 def check_items_view_args(
-    base: PyoItemsView[Animal, Animal], canary: ItemsView[Animal, Animal]
+    base: PyoItemsView[Animal, Animal], canary: abc.ItemsView[Animal, Animal]
 ) -> None:
     # pyrefly: ignore [bad-argument-type]
     _iterable(base, canary)  # pyright: ignore[reportArgumentType]
@@ -475,7 +279,7 @@ def check_items_view_args(
 
 
 def check_values_view_args(
-    base: PyoValuesView[Animal], canary: ValuesView[Animal]
+    base: PyoValuesView[Animal], canary: abc.ValuesView[Animal]
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
@@ -495,7 +299,9 @@ def check_values_view_args(
     _values_view(base, canary)
 
 
-def check_keys_view_args(base: PyoKeysView[Animal], canary: KeysView[Animal]) -> None:
+def check_keys_view_args(
+    base: PyoKeysView[Animal], canary: abc.KeysView[Animal]
+) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
     _iterator(base, canary)  # pyright: ignore[reportArgumentType]
@@ -514,43 +320,17 @@ def check_keys_view_args(base: PyoKeysView[Animal], canary: KeysView[Animal]) ->
     _values_view(base, canary)  # pyright: ignore[reportArgumentType]
 
 
-def _iterable(*_: Iterable[Animal]) -> None: ...
-def _iterator(*_: Iterator[Animal]) -> None: ...
-def _sized(*_: Sized) -> None: ...
-def _container(*_: Container[Animal]) -> None: ...
-def _reversible(*_: Reversible[Animal]) -> None: ...
-def _collection(*_: Collection[Animal]) -> None: ...
-def _sequence(*_: Sequence[Animal]) -> None: ...
-def _mutable_sequence(*_: MutableSequence[Dog]) -> None: ...
-def _mapping_view(*_: MappingView) -> None: ...
-def _keys_view(*_: KeysView[Animal]) -> None: ...
-def _values_view(*_: ValuesView[Animal]) -> None: ...
-def _items_view(*_: ItemsView[Animal, Animal]) -> None: ...
-def _mapping(*_: Mapping[Animal, Animal]) -> None: ...
-def _mutable_mapping(*_: MutableMapping[Animal, Animal]) -> None: ...
-
-
-type EntryData = list[tuple[object, tuple[str, ...]]]
-
-
-def covariance_pyomapping(data: EntryData) -> None:
-    d = Dict[object, Sequence[object]](data)
-    _ = assert_type(d, Dict[object, Sequence[object]])
-
-
-def check_chain_covariance[T, S](base: Iterable[T], *others: Iterable[S]) -> None:
-    _ = assert_type(Iter(base).chain(*others), PyoIterator[T | S])
-    _ = assert_type(itertools.chain(base, *others), itertools.chain[T | S])
-
-
-def check_dict() -> None:
-    _ = assert_type(Dict({"a": 1, "b": 2}), Dict[str, int])
-    # Avoid automatic literal inference
-    data = [("a", 1), ("b", 2)]
-    _ = assert_type(Dict(data), Dict[str, int])
-    _ = assert_type(Dict(a=1, b=2), Dict[str, int])
-    _ = assert_type(Dict({"a": 1}, b=2), Dict[str, int])
-
-
-def _identity[T](x: T) -> T:
-    return x
+def _iterable(*_: abc.Iterable[Animal]) -> None: ...
+def _iterator(*_: abc.Iterator[Animal]) -> None: ...
+def _sized(*_: abc.Sized) -> None: ...
+def _container(*_: abc.Container[Animal]) -> None: ...
+def _reversible(*_: abc.Reversible[Animal]) -> None: ...
+def _collection(*_: abc.Collection[Animal]) -> None: ...
+def _sequence(*_: abc.Sequence[Animal]) -> None: ...
+def _mutable_sequence(*_: abc.MutableSequence[Dog]) -> None: ...
+def _mapping_view(*_: abc.MappingView) -> None: ...
+def _keys_view(*_: abc.KeysView[Animal]) -> None: ...
+def _values_view(*_: abc.ValuesView[Animal]) -> None: ...
+def _items_view(*_: abc.ItemsView[Animal, Animal]) -> None: ...
+def _mapping(*_: abc.Mapping[Animal, Animal]) -> None: ...
+def _mutable_mapping(*_: abc.MutableMapping[Animal, Animal]) -> None: ...
