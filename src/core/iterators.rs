@@ -67,10 +67,9 @@ impl UniqueIdentity {
         .pipe(Ok)
     }
 
-    fn __next__(slf: PyRef<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
-        let py = slf.py();
-        let mut iter = slf.iter.clone_ref(py).into_bound(py);
-        let seen = slf.seen.bind(py);
+    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+        let mut iter = self.iter.clone_ref(py).into_bound(py);
+        let seen = self.seen.bind(py);
 
         loop {
             match iter.next() {
@@ -109,11 +108,10 @@ impl UniqueKey {
         .pipe(Ok)
     }
 
-    fn __next__(slf: PyRef<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
-        let py = slf.py();
-        let mut iter = slf.iter.clone_ref(py).into_bound(py);
-        let key = slf.key.bind(py);
-        let seen = slf.seen.bind(py);
+    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+        let mut iter = self.iter.clone_ref(py).into_bound(py);
+        let key = self.key.bind(py);
+        let seen = self.seen.bind(py);
 
         loop {
             match iter.next() {
