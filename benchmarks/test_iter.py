@@ -184,23 +184,25 @@ def _intersperse(data: Range) -> Seq[int]:
     return data.iter().intersperse(1).collect(Seq)
 
 
-@pytest.mark.parametrize("size", (1, 4, 16, 64))
-def test_map_juxt(benchmark: BenchFixture, size: int) -> None:
+@pytest.mark.parametrize("size", SIZES)
+@pytest.mark.parametrize("nb_funcs", (1, 4, 16, 64))
+def test_map_juxt(benchmark: BenchFixture, size: int, nb_funcs: int) -> None:
+    def _map_juxt(
+        data: Range, funcs: Iterable[Callable[[int], int]]
+    ) -> tuple[int, ...]:
+        for _ in range(SIZES[size]):
+            _ = data.iter().map_juxt(*funcs).last()
 
-    data = Range(4096)
-    funcs = Range(size).iter().map(_create_fn).collect(Seq)
+        return data.iter().map_juxt(*funcs).last()
+
+    data = Range(size)
+    funcs = Range(nb_funcs).iter().map(lambda _: _create_fn()).collect(tuple)
     assert benchmark(_map_juxt, data, funcs) is not None
 
 
-def _map_juxt(data: Range, funcs: Seq[Callable[[int], int]]) -> tuple[int, ...]:
-    return data.iter().map_juxt(*funcs).last()
+def _create_fn() -> Callable[[int], int]:
 
-
-def _create_fn(i: int) -> Callable[[int], int]:
-    def fn(x: int) -> int:
-        return x * i
-
-    return fn
+    return lambda x: x
 
 
 @pytest.mark.parametrize("size", SIZES)
