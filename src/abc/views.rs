@@ -125,7 +125,7 @@ impl PyoItemsView {
 
     #[classmethod]
     fn _from_iterable<'py>(
-        cls: Bound<'py, PyType>,
+        cls: &Bound<'py, PyType>,
         it: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         PySet::type_object(cls.py())

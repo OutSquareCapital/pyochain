@@ -30,7 +30,7 @@ pub(crate) fn parse_types(input: ParseStream<'_>) -> SynResult<Punctuated<Type, 
 
 pub(crate) fn generate(
     mut item_trait: ItemTrait,
-    types: Punctuated<Type, Comma>,
+    types: &Punctuated<Type, Comma>,
 ) -> SynResult<proc_macro2::TokenStream> {
     let methods = item_trait
         .items
@@ -112,8 +112,8 @@ fn generate_method(
                         get_quote(
                             method,
                             trait_ident,
-                            other_attrs,
-                            pyo3_tokens,
+                            &other_attrs,
+                            &pyo3_tokens,
                             original_ident,
                         )
                     })
@@ -124,8 +124,8 @@ fn generate_method(
 fn get_quote(
     method: &syn::TraitItemFn,
     trait_ident: &Ident,
-    other_attrs: Vec<Attribute>,
-    pyo3_tokens: proc_macro2::TokenStream,
+    other_attrs: &[Attribute],
+    pyo3_tokens: &proc_macro2::TokenStream,
     original_ident: &Ident,
 ) -> SynResult<proc_macro2::TokenStream> {
     let mut signature = method.sig.clone();

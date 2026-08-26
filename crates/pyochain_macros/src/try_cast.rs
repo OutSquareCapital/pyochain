@@ -22,14 +22,14 @@ struct Case {
     exact: bool,
 }
 impl Cast {
-    pub(super) fn generate(self, match_expr: ExprMatch) -> TokenStream {
-        run_pipeline(match_expr, self)
+    pub(super) fn generate(self, match_expr: &ExprMatch) -> TokenStream {
+        run_pipeline(match_expr, &self)
             .unwrap_or_else(syn::Error::into_compile_error)
             .into()
     }
 }
 
-fn run_pipeline(match_expr: ExprMatch, mode: Cast) -> SynResult<TokenStream2> {
+fn run_pipeline(match_expr: &ExprMatch, mode: &Cast) -> SynResult<TokenStream2> {
     let subject = &match_expr.expr;
     match_expr
         .arms
@@ -67,7 +67,7 @@ fn generate_match_pattern(pattern: &Pat, body: &syn::Expr, mode: &Cast) -> SynRe
     let (pattern, cases) = rewrite_pattern(pattern)?;
     generate_rewritten_arm(&pattern, &cases, body, mode)
 }
-
+#[allow(clippy::unnecessary_wraps)]
 fn generate_rewritten_arm(
     pattern: &TokenStream2,
     cases: &[Case],

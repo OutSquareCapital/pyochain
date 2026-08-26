@@ -7,14 +7,14 @@ use syn::{
 };
 pub(crate) fn generate_from_input(input: DeriveInput) -> TokenStream {
     get_variants(&input)
-        .and_then(get_arms_and_names)
+        .and_then(|variants| get_arms_and_names(&variants))
         .map_or_else(syn::Error::into_compile_error, |(arms, names)| {
-            gen_impl(input, arms, names)
+            gen_impl(input, &arms, names.as_slice())
         })
         .into()
 }
 
-fn gen_impl(input: DeriveInput, arms: TokensVec, names: Vec<String>) -> proc_macro2::TokenStream {
+fn gen_impl(input: DeriveInput, arms: &TokensVec, names: &[String]) -> proc_macro2::TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let ident = input.ident;
 
@@ -44,7 +44,7 @@ fn gen_impl(input: DeriveInput, arms: TokensVec, names: Vec<String>) -> proc_mac
 }
 
 fn get_arms_and_names(
-    variants: Punctuated<syn::Variant, token::Comma>,
+    variants: &Punctuated<syn::Variant, token::Comma>,
 ) -> SynResult<(TokensVec, Vec<String>)> {
     variants
         .iter()
@@ -90,7 +90,7 @@ impl Mode {
         }
     }
 
-    fn gen_arm(&self, ident: &Ident, inner: &Type) -> proc_macro2::TokenStream {
+    fn gen_arm(self, ident: &Ident, inner: &Type) -> proc_macro2::TokenStream {
         match self {
             Self::Cast => quote! {
                 if let Ok(v) = obj.cast::<#inner>() {

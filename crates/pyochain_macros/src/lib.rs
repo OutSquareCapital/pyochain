@@ -66,7 +66,7 @@ pub fn derive_bound_from_any(input: TokenStream) -> TokenStream {
 pub fn py_abc(attr: TokenStream, item: TokenStream) -> TokenStream {
     let types = parse_macro_input!(attr with py_abc::parse_types);
     let item = parse_macro_input!(item as ItemTrait);
-    py_abc::generate(item, types)
+    py_abc::generate(item, &types)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }
@@ -99,7 +99,7 @@ pub fn py_abc(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn try_cast(input: TokenStream) -> TokenStream {
     let match_expr = parse_macro_input!(input as ExprMatch);
-    try_cast::Cast::Borrowed.generate(match_expr)
+    try_cast::Cast::Borrowed.generate(&match_expr)
 }
 
 /// Owned variant of [`try_cast`].\
@@ -108,5 +108,5 @@ pub fn try_cast(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn try_cast_into(input: TokenStream) -> TokenStream {
     let match_expr = parse_macro_input!(input as ExprMatch);
-    try_cast::Cast::Owned.generate(match_expr)
+    try_cast::Cast::Owned.generate(&match_expr)
 }

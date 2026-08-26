@@ -22,7 +22,7 @@ pub(super) fn left(lst: &[Py<PyAny>], item: &Bound<'_, PyAny>) -> PyResult<usize
 fn resolve(mut high: usize, mut func: impl FnMut(usize) -> PyResult<bool>) -> PyResult<usize> {
     let mut low = 0;
     while low < high {
-        let mid = (low + high) / 2;
+        let mid = low.midpoint(high);
         if func(mid)? {
             high = mid;
         } else {

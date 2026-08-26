@@ -13,7 +13,7 @@ impl PyoContainer {
         PyClassInitializer::from(Checkable).add_subclass(Self)
     }
     #[pyo3(name = "contains")]
-    fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn pyo_contains(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.contains(value)
     }
 }
@@ -39,7 +39,7 @@ pub struct PyoCollection;
 #[pymethods]
 impl PyoCollection {
     #[pyo3(name = "contains")]
-    fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn pyo_contains(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.contains(value)
     }
     #[pyo3(name = "len")]
