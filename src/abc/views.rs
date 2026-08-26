@@ -32,7 +32,7 @@ impl PyoValuesView {
         Self(mapping.unbind()).init()
     }
 
-    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         let mapping = self.mapping().bind(value.py());
         mapping
             .try_iter()?
@@ -46,7 +46,7 @@ impl PyoValuesView {
             .unwrap_or_else(|| Ok(false))
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> PyResult<iterators::ValuesViewIterator> {
+    fn __iter__(slf: &Bound<'_, Self>) -> PyResult<iterators::ValuesViewIterator> {
         let py = slf.py();
         slf.get()
             .mapping()
@@ -67,7 +67,7 @@ impl PyoKeysView {
 
     #[classmethod]
     fn _from_iterable<'py>(
-        cls: Bound<'py, PyType>,
+        cls: &Bound<'py, PyType>,
         it: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         PySet::type_object(cls.py())
@@ -80,25 +80,28 @@ impl PyoKeysView {
         self.mapping().bind(key.py()).contains(key)
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyIterator>> {
+    fn __iter__<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
         slf.get().mapping().bind(slf.py()).try_iter()
     }
 
     fn intersection<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.bitand(other)
             .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 
-    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, SetMut>> {
+    fn union<'py>(
+        slf: &Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, SetMut>> {
         slf.bitor(other)
             .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 
     fn difference<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.sub(other)
@@ -106,7 +109,7 @@ impl PyoKeysView {
     }
 
     fn symmetric_difference<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.bitxor(other)
@@ -140,7 +143,7 @@ impl PyoItemsView {
     /// while the former will return `False` on ANY non-tuple argument, and will NOT raise anything regarding length issues.\
     /// At the same time, the `typeshed` signature clearly stipulate that a `ItemsView` expect a `tuple` of 2 elements, and since `dict_items` is a virtual subclass of `ItemsView`, it should follow the same signature.\
     /// Thus, I choose to follow `dict_items` behavior.
-    fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __contains__(&self, item: &Bound<'_, PyAny>) -> PyResult<bool> {
         match item.extract::<(Bound<'_, PyAny>, Bound<'_, PyAny>)>() {
             Ok((key, value)) => {
                 let py = key.py();
@@ -159,7 +162,7 @@ impl PyoItemsView {
             Err(_) => Ok(false),
         }
     }
-    fn __iter__(slf: Bound<'_, Self>) -> PyResult<iterators::ItemsViewIterator> {
+    fn __iter__(slf: &Bound<'_, Self>) -> PyResult<iterators::ItemsViewIterator> {
         let py = slf.py();
         slf.get()
             .mapping()
@@ -169,20 +172,23 @@ impl PyoItemsView {
     }
 
     fn intersection<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.bitand(other)
             .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 
-    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, SetMut>> {
+    fn union<'py>(
+        slf: &Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, SetMut>> {
         slf.bitor(other)
             .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 
     fn difference<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.sub(other)
@@ -190,7 +196,7 @@ impl PyoItemsView {
     }
 
     fn symmetric_difference<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.bitxor(other)

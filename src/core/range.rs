@@ -75,9 +75,9 @@ impl Range {
         }
     }
 
-    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
-        let name = slf.get_type().name()?;
-        let inner = slf.get().inner_bind(slf.py());
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
+        let inner = self.inner_bind(py);
 
         let params = format!("{}, {}, {}", inner.start()?, inner.stop()?, inner.step()?);
         Ok(format!("{name}({params})"))
@@ -86,8 +86,8 @@ impl Range {
     fn __eq__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.inner_bind(value.py()).eq(value)
     }
-    fn __hash__(slf: Bound<'_, Self>) -> PyResult<isize> {
-        slf.get().inner_bind(slf.py()).hash()
+    fn __hash__(&self, py: Python<'_>) -> PyResult<isize> {
+        self.inner_bind(py).hash()
     }
     fn __contains__(&self, key: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.inner_bind(key.py()).contains(key)

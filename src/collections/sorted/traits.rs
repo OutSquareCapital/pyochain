@@ -54,8 +54,9 @@ pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGu
 pub(super) struct PyIdentity;
 #[pymethods]
 impl PyIdentity {
-    fn __call__(&self, py: Python<'_>, value: Py<PyAny>) -> Py<PyAny> {
-        value.clone_ref(py)
+    #[staticmethod]
+    fn __call__(value: Bound<'_, PyAny>) -> Bound<'_, PyAny> {
+        value
     }
 }
 #[py_abc(
@@ -71,7 +72,7 @@ pub(super) trait SortedCollection:
 {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py>;
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
-    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize>;
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
@@ -297,7 +298,8 @@ pub(super) trait BaseSortedList: SortedListGetters {
         Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Fwd))
     }
 
-    fn __add__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>>;
+    fn __add__<'py>(slf: Bound<'py, Self>, other: &Bound<'py, PyAny>)
+    -> PyResult<Bound<'py, Self>>;
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>>;
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -459,7 +461,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
 
     fn __radd__<'py>(
         slf: Bound<'py, Self>,
-        other: Bound<'py, PyAny>,
+        other: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         Self::__add__(slf, other)
     }
@@ -902,7 +904,7 @@ macro_rules! impl_sorted_collection_for_set {
                     .map(|tup| (Self::type_object(py), tup))
             }
 
-            fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+            fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
                 self.get_list().get().bisect_left(value)
             }
 
@@ -999,8 +1001,8 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         let py = slf.py();
         Self::VView::new(slf).into_bound(py)
     }
-    fn __or__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>>;
-    fn __ror__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>>;
+    fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>>;
+    fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>>;
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
     #[skip]

@@ -6,7 +6,7 @@ use crate::{
     traits::{IntoPyochain, PyWrapper},
 };
 use pyo3::{
-    IntoPyObjectExt,
+    IntoPyObjectExt, PyTypeInfo,
     exceptions::PyIndexError,
     ffi,
     prelude::*,
@@ -248,9 +248,8 @@ impl FilterMap {
                 None => return Ok(None),
                 Some(result) => {
                     let res = func.call1((result?,))?;
-                    match res.cast_into_exact::<PySome>() {
-                        Ok(some) => return Ok(Some(some.get().value.clone_ref(py))),
-                        Err(_) => continue,
+                    if let Ok(some) = res.cast_into_exact::<PySome>() {
+                        return Ok(Some(some.get().value.clone_ref(py)));
                     }
                 }
             }
@@ -872,14 +871,13 @@ impl Iter {
         self.inner().clone_ref(py)
     }
 
-    fn __next__<'py>(slf: &Bound<'py, Self>) -> PyResult<Option<Bound<'py, PyAny>>> {
-        slf.get().inner_into_bound(slf.py()).next().transpose()
+    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+        self.inner_into_bound(py).next().transpose()
     }
 
-    fn __repr__(slf: &Bound<'_, Self>) -> PyResult<String> {
-        let py = slf.py();
-        let name = slf.get_type().name();
-        let inner_repr = slf.get().inner_into_bound(py).repr()?;
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name();
+        let inner_repr = self.inner_bind(py).repr()?;
         Ok(format!("{name:?}({inner_repr:?})"))
     }
 }
@@ -1014,7 +1012,7 @@ impl Peekable {
         }
     }
 
-    fn next_if_map(&mut self, f: Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    fn next_if_map(&mut self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = f.py();
         self.peeked = match self.iterator.clone_ref(py).into_bound(py).next() {
             Some(item) => {

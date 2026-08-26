@@ -20,7 +20,7 @@ use pyo3_ext::{
 pub struct PyoMapping;
 #[pymethods]
 impl PyoMapping {
-    fn __contains__(slf: Bound<'_, Self>, key: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __contains__(slf: &Bound<'_, Self>, key: Bound<'_, PyAny>) -> PyResult<bool> {
         slf.get_item(key).map(|_| true).or_else(|err| {
             if err.is_instance_of::<PyKeyError>(slf.py()) {
                 Ok(false)
@@ -30,7 +30,7 @@ impl PyoMapping {
         })
     }
 
-    fn __eq__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
+    fn __eq__<'py>(slf: &Bound<'py, Self>, other: &Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         let py = slf.py();
         match other.cast::<PyMapping>() {
             Ok(other) => slf
@@ -64,7 +64,7 @@ impl PyoMapping {
 
     #[pyo3(signature = (key, default=None))]
     fn get<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         key: &Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
@@ -79,7 +79,7 @@ impl PyoMapping {
     }
 
     fn get_item<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         key: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
@@ -108,7 +108,7 @@ pub struct PyoMutableMapping;
 impl PyoMutableMapping {
     #[pyo3(signature = (key, default=None))]
     fn pop<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         key: &Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
@@ -127,7 +127,7 @@ impl PyoMutableMapping {
         }
     }
 
-    fn popitem(slf: Bound<'_, Self>) -> PyResult<(Bound<'_, PyAny>, Bound<'_, PyAny>)> {
+    fn popitem<'py>(slf: &Bound<'py, Self>) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
         slf.try_iter()?.next().map_or_else(
             || Err(PyKeyError::new_err("")),
             |k| {
@@ -139,7 +139,7 @@ impl PyoMutableMapping {
         )
     }
 
-    fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
+    fn clear(slf: &Bound<'_, Self>) -> PyResult<()> {
         let py = slf.py();
         loop {
             match slf.call_method0(intern!(py, "popitem")) {
@@ -156,7 +156,7 @@ impl PyoMutableMapping {
 
     #[pyo3(signature = (other=None, **kwds))]
     fn update(
-        slf: Bound<'_, Self>,
+        slf: &Bound<'_, Self>,
         other: Option<Bound<'_, PyAny>>,
         kwds: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
@@ -188,7 +188,7 @@ impl PyoMutableMapping {
     }
     #[pyo3(signature = (key, default=None))]
     fn setdefault<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         key: &Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
@@ -205,7 +205,7 @@ impl PyoMutableMapping {
     }
 
     fn insert<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         key: &Bound<'py, PyAny>,
         value: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
@@ -219,7 +219,7 @@ impl PyoMutableMapping {
     }
 
     fn try_insert<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         key: &Bound<'py, PyAny>,
         value: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
@@ -240,7 +240,7 @@ impl PyoMutableMapping {
         }
     }
 
-    fn remove<'py>(slf: Bound<'py, Self>, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+    fn remove<'py>(slf: &Bound<'py, Self>, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
         slf.get_item(key)
             .and_then(|value| {
@@ -257,7 +257,7 @@ impl PyoMutableMapping {
     }
 
     fn remove_entry<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         key: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();

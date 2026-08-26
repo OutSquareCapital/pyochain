@@ -165,14 +165,12 @@ impl SetCmpMethods<'_, PySet> for SetMut {}
 pub struct Set(pub Py<PyFrozenSet>);
 #[pymethods]
 impl Set {
-    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
-        let py = slf.py();
-        let name = slf.get_type().name()?;
-        slf.get()
-            .inner_bind(py)
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
+        self.inner_bind(py)
             .into_iter()
             .collect_bound::<PyTuple>(py)
-            .and_then(get_repr)
+            .and_then(|x| get_repr(&x))
             .map(|repr| format!("{name}({repr})"))
     }
 
@@ -180,12 +178,12 @@ impl Set {
         self.inner_bind(item.py()).contains(item)
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        slf.get().inner_bind(slf.py()).iter_py()
+    fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
+        self.inner_bind(py).iter_py()
     }
 
-    fn __len__(slf: Bound<'_, Self>) -> usize {
-        slf.get().inner_bind(slf.py()).len()
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self.inner_bind(py).len()
     }
 
     fn __and__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
@@ -223,8 +221,8 @@ impl Set {
         self.cmp_eq(value)
     }
 
-    fn __hash__(slf: Bound<'_, Self>) -> PyResult<isize> {
-        slf.get().inner_bind(slf.py()).hash()
+    fn __hash__(&self, py: Python<'_>) -> PyResult<isize> {
+        self.inner_bind(py).hash()
     }
 
     fn __rand__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
@@ -282,26 +280,24 @@ impl Set {
 pub struct SetMut(pub Py<PySet>);
 #[pymethods]
 impl SetMut {
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        slf.get().inner_bind(slf.py()).iter_py()
+    fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
+        self.inner_bind(py).iter_py()
     }
 
-    fn __len__(slf: Bound<'_, Self>) -> usize {
-        slf.get().inner_bind(slf.py()).len()
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self.inner_bind(py).len()
     }
 
-    fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner_bind(item.py()).contains(item)
+    fn __contains__(&self, py: Python<'_>, item: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner_bind(py).contains(item)
     }
 
-    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
-        let py = slf.py();
-        let name = slf.get_type().name()?;
-        slf.get()
-            .inner_bind(py)
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
+        self.inner_bind(py)
             .into_iter()
             .collect_bound::<PyTuple>(py)
-            .and_then(get_repr)
+            .and_then(|x| get_repr(&x))
             .map(|repr| format!("{name}({repr})"))
     }
 
@@ -374,10 +370,9 @@ impl SetMut {
         self.inner_bind(value.py()).add(value)
     }
 
-    fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
-        slf.get()
-            .inner_bind(slf.py())
-            .call_method0(intern!(slf.py(), "copy"))
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.inner_bind(py)
+            .call_method0(intern!(py, "copy"))
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
             .and_then(Bound::into_pyochain)
     }

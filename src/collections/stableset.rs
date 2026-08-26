@@ -6,6 +6,7 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
+    PyTypeInfo,
     prelude::*,
     types::{PyDict, PyIterator, PyNone, PyNotImplemented, PySet},
 };
@@ -19,21 +20,20 @@ use tap::prelude::*;
 pub struct StableSet(pub Py<PyDict>);
 #[pymethods]
 impl StableSet {
-    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
-        let name = slf.get_type().name()?;
-        slf.get()
-            .inner_bind(slf.py())
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
+        self.inner_bind(py)
             .keys()
-            .pipe(get_repr)
+            .pipe_ref(get_repr)
             .map(|repr| format!("{name}({repr})"))
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        slf.get().inner_bind(slf.py()).iter_py()
+    fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
+        self.inner_bind(py).iter_py()
     }
 
-    fn __len__(slf: Bound<'_, Self>) -> usize {
-        slf.get().inner_bind(slf.py()).len()
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self.inner_bind(py).len()
     }
 
     fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -56,8 +56,8 @@ impl StableSet {
         self.inner_bind(py).set_item(value, PyNone::get(py))
     }
 
-    fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
-        slf.get().inner_bind(slf.py()).copy().and_then(Self::wrap)
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.inner_bind(py).copy().and_then(Self::wrap)
     }
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {

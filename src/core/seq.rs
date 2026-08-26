@@ -5,6 +5,7 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
+    PyTypeInfo,
     prelude::*,
     types::{PyInt, PyIterator, PySequence, PySlice, PyTuple},
 };
@@ -16,11 +17,9 @@ use tap::Pipe;
 pub struct Seq(pub Py<PyTuple>);
 #[pymethods]
 impl Seq {
-    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
-        let py = slf.py();
-        let name = slf.get_type().name()?;
-        slf.get()
-            .inner_into_bound(py)
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
+        self.inner_bind(py)
             .pipe(get_repr)
             .map(|repr| format!("{name}({repr})"))
     }
@@ -50,7 +49,7 @@ impl Seq {
         }
     }
 
-    fn __eq__(&self, other: Bound<'_, PyAny>) -> bool {
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
         let py = other.py();
         let left = self.inner_bind(py);
         if let Ok(o) = other.cast_exact::<Self>() {
@@ -62,9 +61,8 @@ impl Seq {
         }
     }
 
-    fn __hash__(slf: Bound<'_, Self>) -> isize {
-        let py = slf.py();
-        slf.get().inner().clone_ref(py).bind(py).hash().unwrap()
+    fn __hash__(&self, py: Python<'_>) -> isize {
+        self.inner_bind(py).hash().unwrap()
     }
     fn __contains__(&self, key: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.inner_bind(key.py()).contains(key)
@@ -84,17 +82,14 @@ impl Seq {
     fn __add__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.concat(value)
     }
-    fn __mul__<'py>(slf: Bound<'_, Self>, value: Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
-        slf.get().repeat(&value)
+    fn __mul__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.repeat(value)
     }
-    fn __rmul__<'py>(
-        slf: Bound<'py, Self>,
-        value: Bound<'py, PyInt>,
-    ) -> PyResult<Bound<'py, Self>> {
-        slf.get().repeat(&value)
+    fn __rmul__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.repeat(value)
     }
-    fn __repeat__(slf: Bound<'_, Self>, count: isize) -> PyResult<Bound<'_, Self>> {
-        slf.get().repeat(&PyInt::new(slf.py(), count))
+    fn __repeat__<'py>(&self, py: Python<'py>, count: isize) -> PyResult<Bound<'py, Self>> {
+        self.repeat(&PyInt::new(py, count))
     }
     fn __concat__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.concat(other)
@@ -107,9 +102,12 @@ impl Seq {
         let tup = Self::extract_union(other)?.as_sequence();
         self.inner_bind(py).as_sequence().in_place_concat(tup)
     }
-    fn __inplace_repeat__(slf: Bound<'_, Self>, count: isize) -> PyResult<Bound<'_, PySequence>> {
-        slf.get()
-            .inner_bind(slf.py())
+    fn __inplace_repeat__<'py>(
+        &self,
+        py: Python<'py>,
+        count: isize,
+    ) -> PyResult<Bound<'py, PySequence>> {
+        self.inner_bind(py)
             .as_sequence()
             .in_place_repeat(count as usize)
     }
@@ -139,8 +137,8 @@ impl Seq {
         let other_seq = Self::extract_union(other)?.as_sequence();
         self.inner_bind(py)
             .as_sequence()
-            .concat(other_seq)?
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
-            .into_pyochain()
+            .concat(other_seq)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
+            .and_then(Bound::into_pyochain)
     }
 }

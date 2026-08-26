@@ -335,8 +335,8 @@ impl PyoErr {
         self.error.clone_ref(py)
     }
 
-    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
-        iterators::Iter::empty(slf.py())
+    fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
+        iterators::Iter::empty(py)
     }
 
     fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {

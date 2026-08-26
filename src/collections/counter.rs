@@ -66,7 +66,7 @@ impl PyoCounter {
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
         self.inner_bind(key.py()).contains(key)
     }
-    #[allow(unused)]
+    #[allow(unused, clippy::unused_self)]
     fn __missing__(&self, key: &Bound<'_, PyAny>) -> isize {
         0
     }
@@ -150,14 +150,11 @@ impl PyoCounter {
         subtract_counter(inner, iterable, kwargs)
     }
 
-    fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
-        slf.get_type()
-            .call1((slf,))
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.inner_bind(py).copy().and_then(Self::wrap)
     }
-    fn __reduce__(slf: Bound<'_, Self>) -> (Bound<'_, PyType>, (Py<PyDict>,)) {
-        let py = slf.py();
-        (Self::type_object(py), (slf.get().inner().clone_ref(py),))
+    fn __reduce__<'py>(&self, py: Python<'py>) -> (Bound<'py, PyType>, (Py<PyDict>,)) {
+        (Self::type_object(py), (self.inner().clone_ref(py),))
     }
 
     fn __delitem__(&self, elem: Bound<'_, PyAny>) -> PyResult<()> {
@@ -168,20 +165,18 @@ impl PyoCounter {
         Ok(())
     }
 
-    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
-        let py = slf.py();
-        let name = slf.get_type().name()?;
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
 
-        if slf.is_truthy()? {
-            let d_repr = slf
-                .get()
+        if self.__len__(py) > 0 {
+            let d_repr = self
                 .most_common(py, None)
                 // dict() preserves the ordering returned by most_common()
                 .and_then(|x| x.as_any().pipe(PyDict::from_sequence))
                 .or_else(|err| {
                     if err.is_instance_of::<PyTypeError>(py) {
                         // handle case where values are not orderable
-                        slf.get().inner().clone_ref(py).into_bound(py).pipe(Ok)
+                        self.inner().clone_ref(py).into_bound(py).pipe(Ok)
                     } else {
                         Err(err)
                     }
@@ -193,7 +188,7 @@ impl PyoCounter {
         }
     }
 
-    fn __add__<'py>(&self, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn __add__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let inner = self.inner_bind(py);
         let o = other.get();
@@ -212,7 +207,11 @@ impl PyoCounter {
         Self::wrap(result)
     }
 
-    fn __sub__<'py>(&self, py: Python<'py>, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn __sub__<'py>(
+        &self,
+        py: Python<'py>,
+        other: &Bound<'py, Self>,
+    ) -> PyResult<Bound<'py, Self>> {
         let inner = self.inner_bind(py);
         let o = other.get();
         let result = PyDict::new(py);
@@ -230,7 +229,7 @@ impl PyoCounter {
         Self::wrap(result)
     }
 
-    fn __or__<'py>(&self, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn __or__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let result = PyDict::new(py);
         let o = other.get();
@@ -250,7 +249,7 @@ impl PyoCounter {
         Self::wrap(result)
     }
 
-    fn __and__<'py>(&self, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn __and__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let o = other.get();
         let result = PyDict::new(py);
@@ -284,7 +283,7 @@ impl PyoCounter {
         Self::wrap(result)
     }
 
-    fn __iadd__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
+    fn __iadd__(&self, other: &Bound<'_, PySupportsItems>) -> PyResult<()> {
         let py = other.py();
         let inner = self.inner_bind(py);
         for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
@@ -295,7 +294,7 @@ impl PyoCounter {
         keep_positive(inner)
     }
 
-    fn __isub__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
+    fn __isub__(&self, other: &Bound<'_, PySupportsItems>) -> PyResult<()> {
         let py = other.py();
         let inner = self.inner_bind(py);
         for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
@@ -306,7 +305,7 @@ impl PyoCounter {
         keep_positive(inner)
     }
 
-    fn __ior__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
+    fn __ior__(&self, other: &Bound<'_, PySupportsItems>) -> PyResult<()> {
         let py = other.py();
         let inner = self.inner_bind(py);
         for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
@@ -319,7 +318,7 @@ impl PyoCounter {
         keep_positive(inner)
     }
 
-    fn __iand__(&self, other: Bound<'_, PyMapping>) -> PyResult<()> {
+    fn __iand__(&self, other: &Bound<'_, PyMapping>) -> PyResult<()> {
         let py = other.py();
         let inner = self.inner_bind(py);
         for (elem, count) in inner.iter() {
@@ -331,7 +330,7 @@ impl PyoCounter {
         keep_positive(inner)
     }
 
-    fn __ixor__(&self, other: Bound<'_, Self>) -> PyResult<()> {
+    fn __ixor__(&self, other: &Bound<'_, Self>) -> PyResult<()> {
         let py = other.py();
         let o = other.get();
         let inner = self.inner_bind(py);
@@ -423,7 +422,7 @@ impl PyoCounter {
             .pipe(Ok)
     }
 
-    fn __xor__<'py>(&self, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn __xor__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let inner = self.inner_bind(py);
         let o = other.get();

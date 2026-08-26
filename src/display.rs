@@ -20,9 +20,9 @@ pub fn pformat<'py, T: Sized + IntoPyObject<'py>>(
         .map(|x| unsafe { x.cast_into_unchecked::<PyString>() })
 }
 
-pub fn get_repr<T: Sized + PyTypeInfo + DerefToPyAny>(
-    obj: Bound<'_, T>,
-) -> PyResult<Bound<'_, PyString>> {
+pub fn get_repr<'py, T: Sized + PyTypeInfo + DerefToPyAny>(
+    obj: &Bound<'py, T>,
+) -> PyResult<Bound<'py, PyString>> {
     let py = obj.py();
     let length = obj.len()?;
 

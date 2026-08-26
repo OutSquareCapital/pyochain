@@ -20,7 +20,7 @@ pub struct PyoReversible;
 #[pymethods]
 impl PyoReversible {
     /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
-    fn rev(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Iter>> {
+    fn rev<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
             .into_pyochain()
@@ -34,7 +34,7 @@ impl PyoSequence {
         slf.pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
             .pipe(iterators::SequenceIterator::new)
     }
-    fn __contains__(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __contains__(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         for v in slf.try_iter()? {
             let item = v?;
             if item.is(value) || item.eq(value)? {
@@ -50,7 +50,7 @@ impl PyoSequence {
 
     #[pyo3(signature = (value, start=0, stop=None))]
     fn index(
-        slf: Bound<'_, Self>,
+        slf: &Bound<'_, Self>,
         value: &Bound<'_, PyAny>,
         start: isize,
         stop: Option<isize>,
@@ -81,7 +81,7 @@ impl PyoSequence {
 
         Err(PyValueError::new_err(""))
     }
-    fn count(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+    fn count(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         slf.try_iter()?.try_fold(0, |count, item| {
             item.and_then(|item| {
                 if item.is(value) || item.eq(value)? {
@@ -100,7 +100,7 @@ impl PyoSequence {
         slf.get_item(-1)
     }
 
-    fn get<'py>(slf: Bound<'py, Self>, index: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+    fn get<'py>(slf: &Bound<'py, Self>, index: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
         match slf.get_item(index) {
             Ok(ok) => ok.unbind().pipe(PySome::new).into_bound_py_any(py),
@@ -113,7 +113,7 @@ impl PyoSequence {
             }
         }
     }
-    fn rev(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Iter>> {
+    fn rev<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
             .into_pyochain()
@@ -124,17 +124,17 @@ impl PyoSequence {
 pub struct PyoMutableSequence;
 #[pymethods]
 impl PyoMutableSequence {
-    fn __iadd__(slf: Bound<'_, Self>, values: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn __iadd__(slf: &Bound<'_, Self>, values: &Bound<'_, PyAny>) -> PyResult<()> {
         slf.call_method1(intern!(slf.py(), "extend"), (values,))?;
         Ok(())
     }
 
-    fn append(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn append(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
         slf.call_method1(intern!(slf.py(), "insert"), (slf.len()?, value))?;
         Ok(())
     }
 
-    fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
+    fn clear(slf: &Bound<'_, Self>) -> PyResult<()> {
         loop {
             match slf.del_item(0) {
                 Ok(()) => continue,
@@ -165,16 +165,16 @@ impl PyoMutableSequence {
     }
 
     #[pyo3(signature = (index=-1))]
-    fn pop(slf: Bound<'_, Self>, index: isize) -> PyResult<Bound<'_, PyAny>> {
+    fn pop<'py>(slf: &Bound<'py, Self>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let v = slf.get_item(index)?;
         slf.del_item(index)?;
         Ok(v)
     }
 
-    fn remove(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn remove(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
         slf.del_item(unsafe { slf.cast_unchecked::<PySequence>() }.index(value)?)
     }
-    fn reverse(slf: Bound<'_, Self>) -> PyResult<()> {
+    fn reverse(slf: &Bound<'_, Self>) -> PyResult<()> {
         let n = slf.len()?;
         for i in 0..n / 2 {
             let tmp = slf.get_item(i)?;

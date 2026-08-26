@@ -84,11 +84,11 @@ impl SortedKeyList {
         slf.init().pipe(Ok)
     }
 
-    pub(super) fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+    pub(super) fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_data().bisect_left(Some(&self.get_keys()), key)
     }
-    pub(super) fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_right(Some(&self.get_keys()), &key)
+    pub(super) fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
+        self.get_data().bisect_right(Some(&self.get_keys()), key)
     }
 }
 impl SortedCollection for SortedKeyList {
@@ -135,18 +135,18 @@ impl SortedCollection for SortedKeyList {
         }
     }
 
-    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.key
             .bind(value.py())
             .call1((value,))
-            .and_then(|x| self.bisect_key_left(x))
+            .and_then(|x| self.bisect_key_left(&x))
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.key
             .bind(value.py())
             .call1((value,))
-            .and_then(|x| self.bisect_key_right(x))
+            .and_then(|x| self.bisect_key_right(&x))
     }
     fn clear(&self, _py: Python<'_>) {
         self.get_data().clear();
@@ -350,7 +350,10 @@ impl BaseSortedListSet for SortedKeyList {
     }
 }
 impl BaseSortedList for SortedKeyList {
-    fn __add__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    fn __add__<'py>(
+        slf: Bound<'py, Self>,
+        other: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
         let slf_ref = slf.get();
         let out = if other.is(&slf) {
@@ -482,7 +485,7 @@ impl BaseSortedList for SortedKeyList {
         let load = self.get_load();
         match ops::Update::new(&data.maxes, data.len, &values) {
             ops::Update::EmptyMaxes => {
-                finalize_update(&mut data, py, values, load, &mut keys, key_fn)
+                finalize_update(&mut data, py, &values, load, &mut keys, key_fn)
             }
             ops::Update::OtherGESelf => {
                 data.lists.push(values);
@@ -490,7 +493,7 @@ impl BaseSortedList for SortedKeyList {
                 values.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
                 data.clear();
                 keys.clear();
-                finalize_update(&mut data, py, values, load, &mut keys, key_fn)
+                finalize_update(&mut data, py, &values, load, &mut keys, key_fn)
             }
             ops::Update::OtherLTSelf => {
                 drop(data);
@@ -506,7 +509,7 @@ impl BaseSortedList for SortedKeyList {
 fn finalize_update(
     data: &mut MutexGuard<'_, ListsData>,
     py: Python<'_>,
-    values: Vec<Py<PyAny>>,
+    values: &[Py<PyAny>],
     load: usize,
     keys: &mut MutexGuard<'_, Vec<Vec<Py<PyAny>>>>,
     key_fn: &Bound<'_, PyAny>,

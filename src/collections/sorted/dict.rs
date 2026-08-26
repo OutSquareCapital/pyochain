@@ -81,13 +81,13 @@ impl BaseSortedDict for SortedDict {
             .pipe(|v| Self::try_from_iter(py, v))?
             .into_bound(py)
     }
-    fn __or__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
+    fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let items = self.iter(py).chain(value.pipe(iter_mapping)?);
         Self::try_from_iter(py, items)?.into_bound(py)
     }
 
-    fn __ror__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
+    fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let items = value.pipe(iter_mapping)?.chain(self.iter(py));
         Self::try_from_iter(py, items)?.into_bound(py)
@@ -163,7 +163,7 @@ impl SortedKeyDict {
 
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         min_key: Option<Bound<'py, PyAny>>,
         max_key: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
@@ -178,11 +178,11 @@ impl SortedKeyDict {
         )
     }
 
-    fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_list().get().bisect_key_left(key)
     }
 
-    fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_list().get().bisect_key_right(key)
     }
 }
@@ -220,13 +220,13 @@ impl BaseSortedDict for SortedKeyDict {
             .join(", ");
         Ok(format!("{type_name}({key_arg}{{{items}}})"))
     }
-    fn __ror__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
+    fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let items = value.pipe(iter_mapping)?.chain(self.iter(py));
         Self::try_from_iter(py, items, self.key.clone_ref(py))?.into_bound(py)
     }
 
-    fn __or__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
+    fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let items = self.iter(py).chain(value.pipe(iter_mapping)?);
         Self::try_from_iter(py, items, self.key.clone_ref(py))?.into_bound(py)
@@ -241,7 +241,7 @@ impl SortedCollection for SortedDict {
         self.get_inner().bind(value.py()).contains(value)
     }
 
-    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_list().get().bisect_left(value)
     }
 
@@ -305,7 +305,7 @@ impl SortedCollection for SortedKeyDict {
         self.get_inner().bind(value.py()).contains(value)
     }
 
-    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_list().get().bisect_left(value)
     }
 
@@ -356,7 +356,7 @@ impl SortedCollection for SortedKeyDict {
     }
 }
 fn iter_mapping<'py>(
-    mapping: Bound<'py, PyMapping>,
+    mapping: &Bound<'py, PyMapping>,
 ) -> PyResult<impl Iterator<Item = PyResult<DictItem<'py>>>> {
     mapping
         .call_method0("items")?

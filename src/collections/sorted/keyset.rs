@@ -58,7 +58,7 @@ impl SortedKeySet {
     #[allow(unused_variables)]
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         min_key: Option<Bound<'py, PyAny>>,
         max_key: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
@@ -69,11 +69,11 @@ impl SortedKeySet {
             .pipe(|list| SortedKeyList::irange_key(list, min_key, max_key, inclusive, reverse))
     }
 
-    fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_list().get().bisect_key_left(key)
     }
 
-    fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_list().get().bisect_key_right(key)
     }
 }

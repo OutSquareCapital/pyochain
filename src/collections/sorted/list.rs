@@ -73,7 +73,7 @@ impl SortedCollection for SortedList {
         self.get_data().clear();
     }
 
-    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_data().bisect_left(None, value)
     }
 
@@ -226,7 +226,10 @@ impl BaseSortedListSet for SortedList {
     }
 }
 impl BaseSortedList for SortedList {
-    fn __add__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    fn __add__<'py>(
+        slf: Bound<'py, Self>,
+        other: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
         let data = slf.get().get_data();
         let out = if other.is(&slf) {

@@ -133,7 +133,7 @@ impl SliceView {
         .into_bound(py)
     }
 
-    fn __contains__(slf: Bound<'_, Self>, item: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __contains__(slf: &Bound<'_, Self>, item: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.try_iter()
             .unwrap()
             .map(|el| item.eq(el?))
@@ -189,7 +189,7 @@ impl SliceView {
 
     fn __getitem__<'py>(
         &self,
-        index: Bound<'py, PyAny>,
+        index: &Bound<'py, PyAny>,
     ) -> PyResult<Either<Bound<'py, Self>, Bound<'py, PyAny>>> {
         let py = index.py();
         let inner = self.inner().clone_ref(py);

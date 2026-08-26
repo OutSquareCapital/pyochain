@@ -455,7 +455,7 @@ impl PyoIterator {
             }
         }
     }
-    fn gt(slf: &Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn gt(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         let mut slf = slf.try_iter()?;
         let mut other_iterator = other.try_iter()?;
         loop {
@@ -472,7 +472,7 @@ impl PyoIterator {
             }
         }
     }
-    fn ge(slf: &Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn ge(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         let mut slf = slf.try_iter()?;
         let mut other_iterator = other.try_iter()?;
         loop {
@@ -534,8 +534,8 @@ impl PyoIterator {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn for_each_star(
         slf: &Bound<'_, Self>,
-        func: Bound<'_, PyAny>,
-        args: Args<'_>,
+        func: &Bound<'_, PyAny>,
+        args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<()> {
         let mut slf = slf.try_iter()?;
@@ -549,11 +549,11 @@ impl PyoIterator {
                 Ok(())
             }),
             (false, None) => slf.try_for_each(|item| {
-                func.concat_star1(item?.cast_exact::<PyTuple>()?, &args)?;
+                func.concat_star1(item?.cast_exact::<PyTuple>()?, args)?;
                 Ok(())
             }),
             (false, Some(_)) => slf.try_for_each(|item| {
-                func.concat_star(item?.cast_exact::<PyTuple>()?, &args, kwargs)?;
+                func.concat_star(item?.cast_exact::<PyTuple>()?, args, kwargs)?;
                 Ok(())
             }),
         }
@@ -708,30 +708,30 @@ impl PyoIterator {
     fn fold_star<'py>(
         slf: &Bound<'py, Self>,
         init: Bound<'py, PyAny>,
-        func: Bound<'py, PyAny>,
-        args: Args<'py>,
+        func: &Bound<'py, PyAny>,
+        args: &Args<'py>,
         kwargs: Option<&Kwargs<'py>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let mut slf = slf.try_iter()?;
         match (args.is_empty(), kwargs) {
             (true, None) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, &args)
+                func.fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, args)
             }),
 
             (false, None) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, &args)
+                func.fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, args)
             }),
 
             (true, Some(_)) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, &args, kwargs)
+                func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, args, kwargs)
             }),
 
             (false, Some(_)) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, &args, kwargs)
+                func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, args, kwargs)
             }),
         }
     }
-    fn find(slf: Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    fn find(slf: &Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         slf.try_iter()?
             .find(|x| {
@@ -909,7 +909,7 @@ impl PyoIterator {
     }
     fn find_map<'py>(
         slf: &Bound<'py, Self>,
-        func: Bound<'py, PyAny>,
+        func: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
         let mut iter = slf.try_iter()?.map(|x| func.call1((x?,)));
@@ -928,10 +928,10 @@ impl PyoIterator {
     }
     fn flat_map<'py>(
         slf: &Bound<'py, Self>,
-        func: Bound<'py, PyAny>,
+        func: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|x| pylibs::builtins::map(&func, &x))
+            .and_then(|x| pylibs::builtins::map(func, &x))
             .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
             .and_then(pyiterator_into_iter)
     }
@@ -955,7 +955,7 @@ impl PyoIterator {
     }
     #[pyo3(signature = (*funcs))]
     fn map_juxt<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         funcs: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
@@ -1041,7 +1041,7 @@ impl PyoIterator {
             |x| x?.unbind().pipe(PySome::new).into_bound_py_any(py),
         )
     }
-    fn peekable(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Peekable>> {
+    fn peekable<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Peekable>> {
         slf.try_iter()?
             .unbind()
             .pipe(iterators::Peekable::new)
@@ -1172,17 +1172,20 @@ impl PyoIterator {
         };
         func.concat_star(&unpacked, args, kwargs)
     }
-    fn unique(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
+    fn unique<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(iterators::UniqueIdentity::new)
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
-    fn unique_by<'py>(slf: Bound<'py, Self>, key: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    fn unique_by<'py>(
+        slf: &Bound<'py, Self>,
+        key: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|iter| iterators::UniqueKey::new(iter, key))
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
-    fn unzip(slf: Bound<'_, Self>) -> PyResult<(Bound<'_, Self>, Bound<'_, Self>)> {
+    fn unzip<'py>(slf: &Bound<'py, Self>) -> PyResult<(Bound<'py, Self>, Bound<'py, Self>)> {
         let py = slf.py();
         slf.try_iter()
             .and_then(|data| pylibs::itertools::tee(data, 2))
@@ -1197,14 +1200,14 @@ impl PyoIterator {
                 (Err(e), _) | (_, Err(e)) => Err(e),
             })
     }
-    fn with_position(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
+    fn with_position<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .map(|x| iterators::WithPosition::new(x))
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
     #[pyo3(signature = (*others, strict=false))]
     fn zip<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         others: &Bound<'py, PyTuple>,
         strict: bool,
     ) -> PyResult<Bound<'py, Self>> {
@@ -1214,7 +1217,7 @@ impl PyoIterator {
     }
     #[pyo3(signature = (*others))]
     fn zip_longest<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         others: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()

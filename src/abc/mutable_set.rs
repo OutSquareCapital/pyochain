@@ -19,19 +19,19 @@ impl PyoMutableSet {
         unsafe { slf.cast_unchecked::<PyMutableSet>() }
     }
 
-    fn __ior__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
+    fn __ior__<'py>(slf: Bound<'py, Self>, it: &Bound<'py, PyAny>) -> PyResult<()> {
         let slf = Self::into_mutable_set(slf);
         it.try_iter()?.try_for_each(|value| slf.add(&value?))
     }
 
-    fn __iand__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
+    fn __iand__<'py>(slf: Bound<'py, Self>, it: &Bound<'py, PyAny>) -> PyResult<()> {
         let slf = Self::into_mutable_set(slf);
-        slf.sub(&it)?
+        slf.sub(it)?
             .try_iter()?
             .try_for_each(|value| slf.discard(&value?))
     }
 
-    fn __isub__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
+    fn __isub__<'py>(slf: Bound<'py, Self>, it: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = slf.py();
         if it.is(&slf) {
             slf.call_method0(intern!(py, "clear"))?;
@@ -69,9 +69,9 @@ impl PyoMutableSet {
         Ok(())
     }
 
-    fn remove(slf: Bound<'_, Self>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        if slf.contains(&value)? {
-            Self::into_mutable_set(slf).discard(&value)?;
+    fn remove(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        if slf.contains(value)? {
+            Self::into_mutable_set(slf).discard(value)?;
             Ok(())
         } else {
             Err(PyKeyError::new_err(format!("{value}")))
@@ -87,9 +87,9 @@ impl PyoMutableSet {
             })
     }
 
-    fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
+    fn clear(slf: &Bound<'_, Self>) -> PyResult<()> {
         let any = slf.as_any();
-        let slf = Self::as_mutable_set(&slf);
+        let slf = Self::as_mutable_set(slf);
         loop {
             match new_pop_result(any) {
                 PopResult::Err(e) => {

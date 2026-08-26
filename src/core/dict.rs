@@ -5,6 +5,7 @@ use crate::{
     traits::{IntoPyochain, PyWrapper},
 };
 use pyo3::{
+    PyTypeInfo,
     exceptions::PyKeyError,
     intern,
     prelude::*,
@@ -21,24 +22,23 @@ impl Dict {
     #[classmethod]
     #[pyo3(signature = (keys, value=None))]
     fn from_keys<'py>(
-        cls: Bound<'py, PyType>,
-        keys: Bound<'py, PyAny>,
+        cls: &Bound<'py, PyType>,
+        keys: &Bound<'py, PyAny>,
         value: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>> {
         value
             .map_or_else(
-                || PyDict::from_keys(&keys),
-                |v| PyDict::from_keys_with_default(&keys, v),
+                || PyDict::from_keys(keys),
+                |v| PyDict::from_keys_with_default(keys, v),
             )
             .and_then(Bound::into_pyochain)
     }
 
-    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
-        let py = slf.py();
-        let name = slf.get_type().name()?;
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
         let kwargs = PyDict::new(py);
         kwargs.set_item("sort_dicts", false)?;
-        let repr = pformat(py, slf.get().inner().clone_ref(py), false).map(|x| {
+        let repr = pformat(py, self.inner(), false).map(|x| {
             let rs_str = x.to_string();
             let length = rs_str.len();
             rs_str[1..length - 1].to_string()
@@ -47,16 +47,16 @@ impl Dict {
         Ok(format!("{name}({repr})"))
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        slf.get().inner_bind(slf.py()).iter_py()
+    fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
+        self.inner_bind(py).iter_py()
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
         self.inner_bind(key.py()).contains(key)
     }
 
-    fn __len__(slf: Bound<'_, Self>) -> usize {
-        slf.get().inner_bind(slf.py()).len()
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self.inner_bind(py).len()
     }
 
     fn __getitem__<'py>(&self, key: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
@@ -71,90 +71,84 @@ impl Dict {
         self.inner_bind(key.py()).del_item(key)
     }
 
-    fn __eq__(&self, other: Bound<'_, PyAny>) -> bool {
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
         let py = other.py();
-        Self::extract_union(&other)
+        Self::extract_union(other)
             .and_then(|r| self.inner_bind(py).eq(r))
             .unwrap_or(false)
     }
 
-    fn __or__<'py>(slf: Bound<'py, Self>, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        Self::union(slf, value)
+    fn __or__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.union(value)
     }
 
-    fn __ror__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    fn __ror__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        Self::extract_union(&value)
+        Self::extract_union(value)
             .and_then(|r| r.bitor(self.inner_bind(py)))
             .and_then(|new| unsafe { new.cast_into_unchecked::<PyDict>() }.into_pyochain())
     }
 
-    fn __ior__<'py>(slf: Bound<'py, Self>, value: Bound<'py, PyAny>) -> PyResult<()> {
+    fn __ior__<'py>(slf: Bound<'py, Self>, value: &Bound<'py, PyAny>) -> PyResult<()> {
         Self::union_mut(slf, value)?;
         Ok(())
     }
 
     #[staticmethod]
-    fn from_object(obj: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+    fn from_object<'py>(obj: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         obj.getattr(intern!(obj.py(), "__dict__"))
             .and_then(|x| unsafe { x.cast_into_unchecked::<PyDict>() }.into_pyochain())
     }
 
-    fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
-        slf.get()
-            .inner_bind(slf.py())
-            .copy()
-            .and_then(Bound::into_pyochain)
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.inner_bind(py).copy().and_then(Bound::into_pyochain)
     }
 
     #[pyo3(signature = (key, default=None, /))]
     fn pop<'py>(
         &self,
-        key: Bound<'py, PyAny>,
+        key: &Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = key.py();
-        match self.inner_bind(py).pop_or_err(&key) {
+        match self.inner_bind(py).pop_or_err(key) {
             PopResult::Ok(v) => Ok(v),
             PopResult::Err(e) => Err(e),
             PopResult::KeyMissing => default.ok_or_else(|| PyKeyError::new_err(key.to_string())),
         }
     }
 
-    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    fn union<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let rhs = Self::extract_union(&other)?;
-        slf.get()
-            .inner_bind(py)
+        let rhs = Self::extract_union(other)?;
+        self.inner_bind(py)
             .bitor(rhs)
             .and_then(|new| unsafe { new.cast_into_unchecked::<PyDict>() }.into_pyochain())
     }
 
     fn union_mut<'py>(
         slf: Bound<'py, Self>,
-        other: Bound<'py, PyAny>,
+        other: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let lhs = slf.get().inner_bind(py);
         other
             .cast_exact::<Self>()
             .map_or_else(
-                |_| lhs.ior(&other),
+                |_| lhs.ior(other),
                 |x| lhs.ior(x.get().inner_bind(py).as_any()),
             )
             .map(|_| slf)
     }
 
-    fn popitem(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyTuple>> {
-        let py = slf.py();
-        slf.get()
-            .inner_bind(py)
+    fn popitem<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyTuple>> {
+        self.inner_bind(py)
             .call_method0(intern!(py, "popitem"))
             .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
     }
 
-    fn clear(slf: Bound<'_, Self>) {
-        slf.get().inner_bind(slf.py()).clear();
+    fn clear(&self, py: Python<'_>) {
+        self.inner_bind(py).clear();
     }
     #[pyo3(signature = (m=None, /, **kwargs))]
     fn update(

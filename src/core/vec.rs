@@ -6,7 +6,7 @@ use crate::{
 
 use either::Either;
 use pyo3::{
-    ffi, intern,
+    PyTypeInfo, ffi, intern,
     prelude::*,
     types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PySlice},
 };
@@ -21,25 +21,22 @@ use tap::Pipe;
 pub struct PyoVec(pub Py<PyList>);
 #[pymethods]
 impl PyoVec {
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        slf.get().inner_bind(slf.py()).iter_py()
+    fn __iter__<'py>(&'py self, py: Python<'py>) -> Bound<'py, PyIterator> {
+        self.inner_bind(py).iter_py()
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
         self.inner_bind(key.py()).contains(key)
     }
-    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
-        let py = slf.py();
-        let name = slf.get_type().name()?;
-
-        slf.get()
-            .inner_into_bound(py)
-            .pipe(get_repr)
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
+        self.inner_bind(py)
+            .pipe_ref(get_repr)
             .map(|repr| format!("{name}({repr})"))
     }
 
-    fn __len__(slf: Bound<'_, Self>) -> usize {
-        slf.get().inner_bind(slf.py()).len()
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self.inner_bind(py).len()
     }
 
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
@@ -53,18 +50,17 @@ impl PyoVec {
             }
         }
     }
-    fn __reversed__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        let py = slf.py();
-        slf.get()
-            .inner_bind(py)
-            .pipe_as_ref(pylibs::builtins::reversed)
+    fn __reversed__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
+        self.inner_bind(py)
+            .as_any()
+            .pipe(pylibs::builtins::reversed)
     }
 
-    fn __add__<'py>(slf: Bound<'py, Self>, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    fn __add__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        Self::extract_union(&value)?
+        Self::extract_union(value)?
             .as_sequence()
-            .pipe(|x| slf.get().inner_bind(py).as_sequence().concat(x))
+            .pipe(|x| self.inner_bind(py).as_sequence().concat(x))
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
             .and_then(Bound::into_pyochain)
     }
@@ -81,51 +77,45 @@ impl PyoVec {
     fn __concat__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.concat(other)
     }
-    fn __mul__<'py>(slf: Bound<'_, Self>, value: Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
-        slf.get().repeat(&value)
+    fn __mul__<'py>(&self, value: &Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
+        self.repeat(value)
     }
-    fn __rmul__<'py>(
-        slf: Bound<'py, Self>,
-        value: Bound<'py, PyInt>,
-    ) -> PyResult<Bound<'py, Self>> {
-        slf.get().repeat(&value)
+    fn __rmul__<'py>(&self, value: &Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
+        self.repeat(value)
     }
-    fn __repeat__(slf: Bound<'_, Self>, count: isize) -> PyResult<Bound<'_, Self>> {
-        slf.get().repeat(&PyInt::new(slf.py(), count))
+    fn __repeat__<'py>(&self, py: Python<'py>, count: isize) -> PyResult<Bound<'py, Self>> {
+        self.repeat(&PyInt::new(py, count))
     }
     fn __inplace_repeat__(slf: Bound<'_, Self>, count: isize) -> PyResult<Bound<'_, Self>> {
         let py = slf.py();
         Self::repeat_mut(slf, &PyInt::new(py, count))
     }
-    fn __imul__(slf: Bound<'_, Self>, value: usize) -> PyResult<()> {
-        slf.get()
-            .inner_bind(slf.py())
-            .as_sequence()
-            .in_place_repeat(value)?;
+    fn __imul__(&self, py: Python<'_>, value: usize) -> PyResult<()> {
+        self.inner_bind(py).as_sequence().in_place_repeat(value)?;
         Ok(())
     }
 
-    fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __gt__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = Self::extract_union(&value)?;
+        let other = Self::extract_union(value)?;
         self.inner_bind(py).gt(other)
     }
 
-    fn __ge__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __ge__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = Self::extract_union(&value)?;
+        let other = Self::extract_union(value)?;
         self.inner_bind(py).ge(other)
     }
 
-    fn __lt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __lt__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = Self::extract_union(&value)?;
+        let other = Self::extract_union(value)?;
         self.inner_bind(py).lt(other)
     }
 
-    fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __le__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = Self::extract_union(&value)?;
+        let other = Self::extract_union(value)?;
         self.inner_bind(py).le(other)
     }
 
@@ -145,16 +135,12 @@ impl PyoVec {
             }
         }
     }
-    fn __setitem__(
-        slf: Bound<'_, Self>,
-        key: &Bound<'_, PyAny>,
-        value: &Bound<'_, PyAny>,
-    ) -> PyResult<()> {
-        slf.get().inner_bind(key.py()).as_any().set_item(key, value)
+    fn __setitem__(&self, key: &Bound<'_, PyAny>, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner_bind(key.py()).as_any().set_item(key, value)
     }
 
-    fn __delitem__(slf: Bound<'_, Self>, key: &Bound<'_, PyAny>) -> PyResult<()> {
-        slf.get().inner_bind(key.py()).as_any().del_item(key)
+    fn __delitem__(&self, key: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner_bind(key.py()).as_any().del_item(key)
     }
 
     #[pyo3(signature = (*, reverse=false))]
@@ -181,10 +167,10 @@ impl PyoVec {
         self.inner_bind(value.py()).append(value)
     }
 
-    pub fn extend(slf: Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn extend(slf: &Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
         let inner = slf.get().inner_bind(py);
-        let other = if iterable.is(&slf) { inner } else { iterable };
+        let other = if iterable.is(slf) { inner } else { iterable };
         inner.extend(other)
     }
 
@@ -214,20 +200,19 @@ impl PyoVec {
         self.inner_bind(py).clear();
     }
 
-    fn reverse(slf: Bound<'_, Self>) -> PyResult<()> {
-        slf.get().inner_bind(slf.py()).reverse()
+    fn reverse(&self, py: Python<'_>) -> PyResult<()> {
+        self.inner_bind(py).reverse()
     }
 
-    fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
-        slf.get()
-            .inner_bind(slf.py())
-            .call_method0(intern!(slf.py(), "copy"))
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.inner_bind(py)
+            .call_method0(intern!(py, "copy"))
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
             .and_then(Bound::into_pyochain)
     }
     #[pyo3(signature = (value, /))]
-    fn count<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        self.inner_bind(value.py()).count(&value)
+    fn count<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
+        self.inner_bind(value.py()).count(value)
     }
     #[pyo3(signature = (value, start = None, stop = None, /))]
     fn index<'py>(
@@ -253,10 +238,10 @@ impl PyoVec {
 
     fn concat_mut<'py>(
         slf: Bound<'py, Self>,
-        other: Bound<'py, PyAny>,
+        other: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let other = Self::extract_union(&other)?.as_sequence();
+        let other = Self::extract_union(other)?.as_sequence();
         slf.get()
             .inner_bind(py)
             .as_sequence()

@@ -4,6 +4,7 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
+    PyTypeInfo,
     exceptions::PyTypeError,
     intern,
     prelude::*,
@@ -62,12 +63,11 @@ impl Deque {
         data.into_pyochain()
     }
 
-    fn __repr__(slf: Bound<'_, Self>, py: Python<'_>) -> PyResult<String> {
-        slf.get()
-            .inner_bind(py)
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        self.inner_bind(py)
             .repr()?
             .to_string()
-            .replace("deque", &slf.get_type().name()?.to_string())
+            .replace("deque", &Self::type_object(py).name()?.to_string())
             .replace("maxlen", "max_length")
             .pipe(Ok)
     }
@@ -104,10 +104,10 @@ impl Deque {
         self.inner_bind(key.py()).contains(key)
     }
 
-    fn __iadd__(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn __iadd__(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let inner = slf.get().inner_bind(py);
-        let other = if value.is(&slf) { inner } else { value };
+        let other = if value.is(slf) { inner } else { value };
         inner.iadd(other)?;
         Ok(())
     }
@@ -222,10 +222,10 @@ impl Deque {
         self.inner_bind(x.py()).append_left(x)
     }
 
-    fn extend(slf: Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn extend(slf: &Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
         let inner = slf.get().inner_bind(py);
-        let other = if iterable.is(&slf) { inner } else { iterable };
+        let other = if iterable.is(slf) { inner } else { iterable };
         inner.extend(other)
     }
 
@@ -240,10 +240,10 @@ impl Deque {
             .and_then(Self::wrap)
     }
 
-    fn extend_left(slf: Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn extend_left(slf: &Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
         let inner = slf.get().inner_bind(py);
-        let other = if iterable.is(&slf) { inner } else { iterable };
+        let other = if iterable.is(slf) { inner } else { iterable };
         inner.extend_left(other)
     }
 

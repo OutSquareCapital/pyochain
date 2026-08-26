@@ -32,7 +32,7 @@ impl ListsData {
         self.lists.iter().flatten()
     }
     #[inline]
-    pub fn concat(&self, py: Python<'_>, other: Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {
+    pub fn concat(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {
         self.iter()
             .map(|x| x.clone_ref(py).pipe(Ok))
             .chain(other.try_iter()?.map(|x| x?.unbind().pipe(Ok)))
@@ -58,7 +58,7 @@ impl ListsData {
     pub fn bisect_left(
         &mut self,
         lists: Option<&Vec<Vec<Py<PyAny>>>>,
-        value: Bound<'_, PyAny>,
+        value: &Bound<'_, PyAny>,
     ) -> PyResult<isize> {
         if self.maxes.is_empty() {
             return Ok(0);
