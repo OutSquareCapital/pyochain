@@ -151,3 +151,37 @@ where
         Ok(list)
     }
 }
+impl<'py, I> TryFromBoundIterator<'py, I> for PyTuple
+where
+    I: ExactSizeIterator<Item = PyResult<Bound<'py, PyAny>>>,
+{
+    type Item = Bound<'py, PyAny>;
+    #[inline]
+    fn try_from_iter_bound(iter: I, py: Python<'py>) -> PyResult<Bound<'py, PyTuple>> {
+        // PyTuple_New checks for overflow but has a bad error message, so we check ourselves
+        let len: ffi::Py_ssize_t = iter
+            .len()
+            .try_into()
+            .expect("out of range integral type conversion attempted on `elements.len()`");
+
+        let (tup, counter) = unsafe {
+            let ptr = ffi::PyTuple_New(len);
+            let tup = Bound::from_owned_ptr(py, ptr).cast_into_unchecked::<PyTuple>();
+
+            let mut counter: ffi::Py_ssize_t = 0;
+
+            for obj in iter {
+                ffi::PyTuple_SET_ITEM(ptr, counter, obj?.into_ptr());
+                counter += 1;
+            }
+
+            (tup, counter)
+        };
+        assert_eq!(
+            len, counter,
+            "Attempted to create PyTuple but `elements` was not the same length as reported by its `ExactSizeIterator` implementation."
+        );
+
+        Ok(tup)
+    }
+}
