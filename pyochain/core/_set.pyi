@@ -25,7 +25,7 @@ class Set[T](PyoSet[T], ArgsWrapper[T]):
     @overload
     def __new__(cls, data: T, /, *more: T) -> Self: ...
     @overload
-    def __new__(cls) -> Self: ...
+    def __new__(cls, /) -> Self: ...
     def __new__(cls, data: Iterable[T] | T = (), /, *more: T) -> Self:
         """Create a new `Set` instance.
 
@@ -297,8 +297,8 @@ class SetMut[T](PyoMutableSet[T], ArgsWrapper[T]):
     @overload
     def __new__(cls, data: T, *more: T) -> Self: ...
     @overload
-    def __new__(cls) -> Self: ...
-    def __new__(cls, data: Iterable[T] | T = (), *more: T) -> Self:
+    def __new__(cls, /) -> Self: ...
+    def __new__(cls, data: Iterable[T] | T = (), /, *more: T) -> Self:
         """Create a new `SetMut` instance.
 
         If no arguments are provided, an empty `SetMut` is created.

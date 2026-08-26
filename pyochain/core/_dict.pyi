@@ -22,9 +22,9 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K], KwargsWrapper[K, V])
     def __new__(cls, **kwargs: V) -> Dict[str, V]: ...
     @overload
     def __new__[K1, V1](
-        cls, iterable: DictConvertible[str, V], **kwargs: V
+        cls, iterable: DictConvertible[str, V], /, **kwargs: V
     ) -> Dict[str, V]: ...
-    def __new__(cls, iterable: DictConvertible[K, V] = (), **kwargs: V) -> Self:
+    def __new__(cls, iterable: DictConvertible[K, V] = (), /, **kwargs: V) -> Self:
         """Create a new `Dict` instance.
 
         Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.

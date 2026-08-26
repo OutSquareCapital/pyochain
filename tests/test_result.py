@@ -8,18 +8,20 @@ def test_ok_map() -> None:
 
 
 def test_err_map_noop() -> None:
-    assert Err("error message").map(lambda x: x).unwrap_err() == "error message"  # pyright: ignore[reportAny]
+    assert Err[object, int](1).map(lambda x: x).unwrap_err() == 1
 
 
 def test_ok_and_then() -> None:
 
+    msg = "Division by zero"
+
     def safe_divide(x: int) -> Result[int, str]:
         if x == 0:
-            return Err("Division by zero")
+            return Err(msg)
         return Ok(100 // x)
 
     assert Ok(10).and_then(safe_divide).unwrap() == 10
-    assert Ok(0).and_then(safe_divide).unwrap_err() == "Division by zero"
+    assert Ok(0).and_then(safe_divide).unwrap_err() == msg
 
 
 def test_ok_pipe() -> None:

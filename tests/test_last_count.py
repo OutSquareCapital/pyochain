@@ -1,5 +1,7 @@
 from pyochain import Seq
 
+DATA = Seq("cat", "mouse", "dog", "hen")
+
 
 def test_last() -> None:
     data = Seq((1, 2, 3, 4))
@@ -12,8 +14,7 @@ def test_last_unique() -> None:
 
 
 def test_last_unique_by() -> None:
-    data = Seq(("cat", "mouse", "dog", "hen"))
-    assert data.iter().unique_by(len).last() == "mouse"
+    assert DATA.iter().unique_by(len).last() == "mouse"
 
 
 def test_count_unique() -> None:
@@ -22,5 +23,4 @@ def test_count_unique() -> None:
 
 
 def test_count_unique_by() -> None:
-    data = Seq(("cat", "mouse", "dog", "hen"))
-    assert data.iter().unique_by(len).count() == 2
+    assert DATA.iter().unique_by(len).count() == 2
