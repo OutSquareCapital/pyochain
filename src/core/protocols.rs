@@ -12,8 +12,7 @@ use crate::{
     core::{Dict, PyoVec, Seq, Set, SetMut, iterators},
     traits::{IntoInit, PyWrapper},
 };
-#[pyclass(module = "pyochain.core", frozen, generic)]
-pub struct FlexibleInit;
+
 #[py_abc(
     Seq,
     PyoVec,

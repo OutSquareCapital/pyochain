@@ -79,9 +79,6 @@ nav = [
                 { "OptionUnwrapError" = "reference/optionunwraperror.md" },
                 { "Some" = "reference/some.md" },
             ] },
-            { "Protocols" = [
-                { "FlexibleInit" = "reference/flexibleinit.md" },
-            ] },
         ] },
         { "Overview" = "api-reference.md" },
     ] },
