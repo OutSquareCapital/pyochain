@@ -1,10 +1,10 @@
 use crate::{
+    abc::PyoIterator,
     core::{
         iterators,
         option::{PyNull, PySome},
     },
     hasher::hash_fn,
-    traits::IntoPyochain,
 };
 use pyderive::*;
 use pyo3::{
@@ -42,6 +42,8 @@ trait ResultMethods: Sized {
         self.__eq__(other).map(|eq| !eq)
     }
     fn flatten(slf: Bound<'_, Self>) -> Bound<'_, PyAny>;
+    #[pyo3(name = "iter")]
+    fn py_iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoIterator>>;
 }
 /// Exception raised when unwrapping fails on Result types
 #[pyclass(module = "pyochain.core",frozen, extends = PyValueError)]
@@ -161,14 +163,6 @@ impl PyoOk {
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
             "{msg}: expected Err, got Ok({ok_repr})"
         )))
-    }
-
-    fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
-        self.value
-            .clone_ref(py)
-            .pipe(|x| PyTuple::new(py, &[x]))?
-            .iter_py()
-            .into_pyochain()
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {
@@ -335,10 +329,6 @@ impl PyoErr {
         self.error.clone_ref(py)
     }
 
-    fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
-        iterators::Iter::empty(py)
-    }
-
     fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {
         default
     }
@@ -491,6 +481,13 @@ impl ResultMethods for PyoOk {
         let py = slf.py();
         slf.get().value.clone_ref(py).into_bound(py)
     }
+
+    fn py_iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoIterator>> {
+        self.value
+            .clone_ref(py)
+            .into_bound(py)
+            .pipe(PyoIterator::once)
+    }
 }
 impl ResultMethods for PyoErr {
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -501,5 +498,9 @@ impl ResultMethods for PyoErr {
     }
     fn flatten(slf: Bound<'_, Self>) -> Bound<'_, PyAny> {
         slf.into_any()
+    }
+
+    fn py_iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoIterator>> {
+        iterators::Iter::empty(py).map(Bound::into_super)
     }
 }

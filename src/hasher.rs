@@ -12,15 +12,15 @@ pub fn hash_fn(tag: u8, value: isize) -> u64 {
 /// This is equivalent to doing the whole computation with wrapping u64 arithmetic,\
 /// and reinterpreting the final bit pattern as a signed 64-bit hash.
 pub fn set_hash<T: PyClass + DerefToPyAny>(slf: &Bound<'_, T>) -> PyResult<isize> {
-    let length = slf.len()? as u64;
-    let mut h = 1_927_868_237_u64.wrapping_mul(length.wrapping_add(1));
+    let length = slf.len()?;
+    let mut h = 1_927_868_237_usize.wrapping_mul(length.wrapping_add(1));
     for x in slf.try_iter()? {
-        let hx = x?.hash()? as u64;
-        let mixed = hx ^ (hx << 16) ^ 89_869_747;
-        h ^= mixed.wrapping_mul(3_644_798_167);
+        let hx = x?.hash()?.cast_unsigned();
+        let mixed = hx ^ (hx << 16) ^ 0x055b_4db3;
+        h ^= mixed.wrapping_mul(3_644_798_167_usize);
     }
     h ^= (h >> 11) ^ (h >> 25);
-    h = h.wrapping_mul(69069).wrapping_add(907_133_923);
-    let h = h as isize;
+    h = h.wrapping_mul(69_069).wrapping_add(907_133_923);
+    let h = h.cast_signed();
     Ok(if h == -1 { 590_923_713 } else { h })
 }
