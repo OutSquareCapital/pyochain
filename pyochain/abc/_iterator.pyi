@@ -4,6 +4,7 @@ from typing import (
     Any,
     Concatenate,
     Literal,
+    Never,
     Protocol,
     TypeGuard,
     TypeIs,
@@ -1582,7 +1583,12 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert out == Seq(0, 0, 1, 0, 1, 2)
             ```
         """
-
+    # NOTE: I'm not sure if that's the best way to type this, but at least it allows to have a `Never` return type when the `Iterator` is not of `Iterable` type.
+    # It clearly separates it from an `Unknown` return type, that may be shrugged off as a typing limitation, but in this case it is a clear indication that the `Iterator` is not of `Iterable` type and thus cannot be flattened.
+    @overload
+    def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten(self) -> Never: ...
     def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]:
         """Creates an `Iterator` that flattens nested structures.
 
@@ -2335,7 +2341,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert b == Seq("A", "B", "C")
             ```
         """
-
+    @overload
+    def map_juxt[R1](self, func1: Callable[[T], R1], /) -> PyoIterator[tuple[R1]]: ...
     @overload
     def map_juxt[R1, R2](
         self,
@@ -2450,7 +2457,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             *funcs (Callable[[T], Any]): Functions to apply to each item.
 
         Returns:
-            PyoIterator[tuple[Any, ...]]: An iterable of tuples containing the results of each function.
+            PyoIterator[tuple[Any, ...]]: An `Iterator` of tuples containing the results of each function.
 
         Example:
             ```python
@@ -2488,8 +2495,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             Example with `filter_star`:
             ```python
-            from pyochain import Range, Seq
-
             res = (
                 Range(5)
                 .iter()
@@ -2548,16 +2553,17 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
     ) -> PyoIterator[R]: ...
     @overload
-    def map_star[R](
-        self: PyoIterator[tuple[Any, ...]],
-        func: Callable[..., R],
-    ) -> PyoIterator[R]: ...
-    def map_star[U: Iterable[Any], R](
+    def map_star[U: tuple[Any, ...], R](
         self: PyoIterator[U], func: Callable[..., R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star(self, func: Callable[..., Any]) -> Never: ...
+    def map_star[R](
+        self: PyoIterator[tuple[Any, ...]], func: Callable[..., R]
     ) -> PyoIterator[R]:
-        """Applies a function to each element.where each element is an iterable.
+        """Applies a function to each element.where each element is a `tuple`.
 
-        Unlike `.map()`, which passes each element as a single argument, `.map_star()` unpacks each element into positional arguments for the function.
+        Unlike `.map()`, which passes each element as a single argument, `.map_star()` unpacks the tuple into positional arguments for the function.
 
         In short, for each element in the `Iterator`, it computes `func(*element)`.
 

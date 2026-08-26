@@ -1,19 +1,16 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, assert_type
+from typing import TYPE_CHECKING, Never, assert_never, assert_type
 
-from pyochain import (
-    Iter,
-    Range,
-)
+from pyochain import Iter, Range, Seq
 from pyochain.abc import PyoIterator
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
 
-def check_iter_flatten() -> None:
+def check_iter_flatten() -> Never:
     nested = (
         Range(3)
         .iter()
@@ -30,9 +27,40 @@ def check_iter_flatten() -> None:
     two = assert_type(one.flatten(), PyoIterator[list[int]])
     ok = assert_type(two.flatten(), PyoIterator[int])
     # Expected to fail
-    _fail = ok.flatten()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
+    _fail = assert_type(ok.flatten(), Never)
 
 
 def check_chain_covariance[T, S](base: Iterable[T], *others: Iterable[S]) -> None:
     _ = assert_type(Iter(base).chain(*others), PyoIterator[T | S])
     _ = assert_type(itertools.chain(base, *others), itertools.chain[T | S])
+
+
+def check_map_juxt() -> None:
+    funcs = (float, str, bool)
+    out = (
+        Range(3)
+        .iter()
+        .map_juxt(float, str, bool, lambda x: [x, "hello"], *funcs)
+        .filter_star(
+            lambda f, s, b, lst, _, _a, _b: (
+                f > 1.0 and s == "2" and b is True and lst[1] == "hello"
+            )
+        )
+        .collect(Seq)
+    )
+    _ = assert_type(
+        out, Seq[tuple[float, str, bool, list[int | str], float, str, bool]]
+    )
+
+
+def check_map_star() -> Never:
+    out = (
+        Range(3)
+        .iter()
+        .map(lambda x: (x, str(x), bool(x)))
+        .map_star(lambda x, s, b: (x + 1, s + "!", not b))
+        .collect(Seq)
+    )
+    _ = assert_type(out, Seq[tuple[int, str, bool]])
+    # Expected to fail
+    _ = assert_never(Range(3).iter().map_star(str))
