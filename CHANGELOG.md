@@ -12,6 +12,10 @@
 
 - `core::Peekable` can only be constructed from `PyoIterator::peekable`.
 
+### 🚀 Performance improvements
+
+- `PyoIterator::map_juxt` is now **1.5×** faster when provided with 1 function, **1.29×** faster with 4–16 functions, and **1.13×** faster with 64 functions. Results are consistent across iterables of sizes ranging from 10 to 10,000 items.
+
 ### 🆕 New features
 
 - `Result::{__eq__, __ne__}`  are now implemented, allowing to compare `Result` instances for equality.
@@ -19,6 +23,10 @@
 ### 🐞 Bug fixes
 
 - `Err::flatten` was actually not implemented. To prevent similar issues, the code for monads has started to be refactored to use `py_abc` macro.
+
+### ✨ Enhancements
+
+- Added `Never` return types to a few methods of `PyoIterator` to clearly mark situations that will raise an error at runtime, and to help static type checkers to detect unreachable code.
 
 ### 🛠️ Other improvements
 

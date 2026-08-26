@@ -19,7 +19,7 @@ use tap::prelude::*;
 #[pyclass(frozen, module = "pyochain._iterators")]
 pub struct MapJuxt {
     iterator: Py<PyIterator>,
-    funcs: Vec<Py<PyAny>>,
+    funcs: SmallVec<[Py<PyAny>; 8]>,
 }
 
 #[pymethods]
@@ -30,18 +30,17 @@ impl MapJuxt {
         funcs
             .iter()
             .map(Bound::unbind)
-            .collect::<Vec<_>>()
+            .collect::<SmallVec<[_; 8]>>()
             .pipe(|funcs| Self { iterator, funcs })
     }
     fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyTuple>>> {
+        // NOTE: We could use `.next().transpose()` here, but since we then end again with a `Result` it seem better to match once explicitly.
         match self.iterator.clone_ref(py).into_bound(py).next() {
             Some(Ok(item)) => self
                 .funcs
                 .iter()
                 .map(|func| func.bind(py).call1((&item,)))
-                .collect::<PyResult<Vec<_>>>()?
-                .into_iter()
-                .collect_bound(py)
+                .try_collect_bound(py)
                 .map(Some),
             Some(Err(e)) => Err(e),
             None => Ok(None),
