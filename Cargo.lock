@@ -378,6 +378,7 @@ version = "0.1.0"
 dependencies = [
  "anstream",
  "owo-colors",
+ "proc-macro2",
  "syn 3.0.1",
  "tap",
  "toml",
