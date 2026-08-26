@@ -4,7 +4,7 @@ use crate::{
         bisect,
         bounds::{Bounds, Indexes, Pos},
         cmp::py_cmp_by_key,
-        data::{ListsData, islice_list, reset_list},
+        data::ListsData,
         errors, iter, ops,
         traits::{
             BaseSortedList, BaseSortedListSet, DEFAULT_LOAD_FACTOR, PyIdentity, Reduced,
@@ -230,10 +230,10 @@ impl SortedCollection for SortedKeyList {
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        islice_list(slf, start, stop, reverse)
+        Self::islice_list(slf, start, stop, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        reset_list(self, py, load)
+        self.reset_list(py, load)
     }
 }
 impl BaseSortedListSet for SortedKeyList {
@@ -256,7 +256,7 @@ impl BaseSortedListSet for SortedKeyList {
                 keys[bound.pos].push(v.clone_ref(py));
                 data.maxes[bound.pos] = v;
                 drop(keys);
-                self.expand(py, &mut data, bound.pos)?;
+                self.expand(py, &mut data, bound.pos);
             }
             ops::Maxes::LenNEPos => {
                 let v = &keys[bound.pos];
@@ -264,7 +264,7 @@ impl BaseSortedListSet for SortedKeyList {
                 data.lists[bound.pos].insert(bound.idx, value);
                 keys[bound.pos].insert(bound.idx, key.unbind());
                 drop(keys);
-                self.expand(py, &mut data, bound.pos)?;
+                self.expand(py, &mut data, bound.pos);
             }
         }
         data.len += 1;
@@ -411,7 +411,7 @@ impl BaseSortedList for SortedKeyList {
                 data.maxes[prev] = left[prev].last().unwrap().clone_ref(py);
                 keys.remove(bounds.pos);
                 drop(keys);
-                self.expand(py, data, prev)?;
+                self.expand(py, data, prev);
             }
             ops::Delete::LenPosNotZero => {
                 data.maxes[bounds.pos] = keys[bounds.pos].last().unwrap().clone_ref(py);
@@ -423,12 +423,7 @@ impl BaseSortedList for SortedKeyList {
         }
         Ok(())
     }
-    fn expand(
-        &self,
-        py: Python<'_>,
-        data: &mut MutexGuard<'_, ListsData>,
-        pos: usize,
-    ) -> PyResult<()> {
+    fn expand(&self, py: Python<'_>, data: &mut MutexGuard<'_, ListsData>, pos: usize) {
         let load = self.get_load();
         let mut keys = self.get_keys();
         match ops::Expand::new(keys[pos].len(), load, &data.idx) {
@@ -439,10 +434,9 @@ impl BaseSortedList for SortedKeyList {
                 let last_max = half_keys.last().unwrap().clone_ref(py);
                 data.expand_at_pos(pos, half, last_max, new_max_at_pos);
                 keys.insert(pos + 1, half_keys);
-                Ok(())
             }
             ops::Expand::IdxNotEmpty => data.expand_on_empty_idx(pos),
-            ops::Expand::Other => Ok(()),
+            ops::Expand::Other => (),
         }
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {

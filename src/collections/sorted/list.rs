@@ -4,7 +4,7 @@ use crate::{
         bisect,
         bounds::{Bounds, Indexes, Pos},
         cmp::py_cmp,
-        data::{ListsData, islice_list, reset_list},
+        data::ListsData,
         errors, iter, ops,
         traits::{
             BaseSortedList, BaseSortedListSet, DEFAULT_LOAD_FACTOR, Reduced, SortedCollection,
@@ -134,7 +134,7 @@ impl SortedCollection for SortedList {
         }
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        reset_list(self, py, load)
+        self.reset_list(py, load)
     }
     fn irange<'py>(
         slf: Bound<'py, Self>,
@@ -161,7 +161,7 @@ impl SortedCollection for SortedList {
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        islice_list(slf, start, stop, reverse)
+        Self::islice_list(slf, start, stop, reverse)
     }
 }
 impl BaseSortedListSet for SortedList {
@@ -177,12 +177,12 @@ impl BaseSortedListSet for SortedList {
                 bound.pos -= 1;
                 data.lists[bound.pos].push(value.clone_ref(py));
                 data.maxes[bound.pos] = value;
-                self.expand(py, &mut data, bound.pos)?;
+                self.expand(py, &mut data, bound.pos);
             }
             ops::Maxes::LenNEPos => {
                 let res = bisect::right(&data.lists[bound.pos], value.bind(py))?;
                 data.lists[bound.pos].insert(res, value.clone_ref(py));
-                self.expand(py, &mut data, bound.pos)?;
+                self.expand(py, &mut data, bound.pos);
             }
         }
         data.len += 1;
@@ -259,12 +259,7 @@ impl BaseSortedList for SortedList {
             .into_bound(py)
             .map(Bound::into_super)
     }
-    fn expand(
-        &self,
-        py: Python<'_>,
-        data: &mut MutexGuard<'_, ListsData>,
-        pos: usize,
-    ) -> PyResult<()> {
+    fn expand(&self, py: Python<'_>, data: &mut MutexGuard<'_, ListsData>, pos: usize) {
         let load = self.get_load();
         match ops::Expand::new(data.lists[pos].len(), load, &data.idx) {
             ops::Expand::PosLenGtLoad => {
@@ -272,10 +267,9 @@ impl BaseSortedList for SortedList {
                 let new_max_at_pos = data.lists[pos].last().unwrap().clone_ref(py);
                 let last_max = half.last().unwrap().clone_ref(py);
                 data.expand_at_pos(pos, half, last_max, new_max_at_pos);
-                Ok(())
             }
             ops::Expand::IdxNotEmpty => data.expand_on_empty_idx(pos),
-            ops::Expand::Other => Ok(()),
+            ops::Expand::Other => (),
         }
     }
 
@@ -299,7 +293,7 @@ impl BaseSortedList for SortedList {
                 let prev = bounds.pos - 1;
                 data.set_prev_from_removed(py, bounds, prev);
                 data.maxes[prev] = data.lists[prev].last().unwrap().clone_ref(py);
-                self.expand(py, data, prev)?;
+                self.expand(py, data, prev);
             }
             ops::Delete::LenPosNotZero => {
                 data.maxes[bounds.pos] = data.lists[bounds.pos].last().unwrap().clone_ref(py);

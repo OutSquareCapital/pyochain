@@ -442,9 +442,9 @@ pub mod itertools {
     #[inline(always)]
     pub fn slice<'py>(
         iterator: &Bound<'py, PyIterator>,
-        start: &Option<&Bound<'py, PyInt>>,
-        stop: &Option<&Bound<'py, PyInt>>,
-        step: &Option<&Bound<'py, PyInt>>,
+        start: Option<&Bound<'py, PyInt>>,
+        stop: Option<&Bound<'py, PyInt>>,
+        step: Option<&Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, PyIterator>> {
         let py = iterator.py();
         ISLICE

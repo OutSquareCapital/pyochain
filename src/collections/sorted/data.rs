@@ -8,13 +8,11 @@ use std::cmp::Ordering;
 use tap::prelude::*;
 
 use crate::{
-    abc,
     collections::sorted::{
         bisect,
         bounds::{Bounds, Pos},
-        traits::BaseSortedList,
     },
-    core::{PyoVec, iterators},
+    core::PyoVec,
     traits::IntoPyochain,
 };
 
@@ -182,14 +180,14 @@ impl ListsData {
                     (false, true) => {
                         bounds.max.pos = self.lists.len() - 1;
                         bounds.max.idx = (&self.lists)[bounds.max.pos].len();
-                        get_slice(self, bounds)
+                        get_slice(self, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                             .pipe(Ok)
                     }
                     (false, false) => {
                         bounds.max.set_from_pos(stop, self)?;
-                        get_slice(self, bounds)
+                        get_slice(self, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                             .pipe(Ok)
@@ -279,14 +277,13 @@ impl ListsData {
             Ok(())
         }
     }
-    pub(super) fn expand_on_empty_idx(&mut self, pos: usize) -> PyResult<()> {
+    pub(super) fn expand_on_empty_idx(&mut self, pos: usize) {
         let mut child = self.offset + pos;
         while child != 0 {
             self.idx[child] += 1;
             child = (child - 1) >> 1;
         }
         self.idx[0] += 1;
-        Ok(())
     }
     pub(super) fn remove_pos(&mut self, bound: &Pos) {
         self.lists.remove(bound.pos);
@@ -326,7 +323,7 @@ impl ListsData {
         }
     }
 }
-fn get_slice(data: &ListsData, bounds: Bounds) -> impl Iterator<Item = &Py<PyAny>> + '_ {
+fn get_slice<'a>(data: &'a ListsData, bounds: &Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {
     data.lists[bounds.min.pos][bounds.min.idx..]
         .iter()
         .chain(
@@ -335,26 +332,4 @@ fn get_slice(data: &ListsData, bounds: Bounds) -> impl Iterator<Item = &Py<PyAny
                 .flatten(),
         )
         .chain(data.lists[bounds.max.pos][0..bounds.max.idx].iter())
-}
-
-#[inline]
-pub(super) fn reset_list<T: BaseSortedList>(slf: &T, py: Python<'_>, load: usize) -> PyResult<()> {
-    let values = slf.get_data().collapse(py);
-    slf.clear(py);
-    slf.set_load(load);
-    slf.update(py, values)
-}
-#[inline(always)]
-pub(super) fn islice_list<T: BaseSortedList>(
-    slf: Bound<'_, T>,
-    start: Option<isize>,
-    stop: Option<isize>,
-    reverse: bool,
-) -> PyResult<Bound<'_, abc::PyoIterator>> {
-    let py = slf.py();
-    let specs = Bounds::get_islice_specs(&mut slf.get().get_data(), py, start, stop)?;
-    match specs {
-        None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-        Some(bounds) => T::islice_iter(slf, bounds, reverse),
-    }
 }

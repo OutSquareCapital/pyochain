@@ -24,11 +24,11 @@ pub struct PyoSized;
 #[pymethods]
 impl PyoSized {
     #[pyo3(name = "len")]
-    fn pyo_len(slf: Bound<'_, Self>) -> PyResult<usize> {
+    fn pyo_len(slf: &Bound<'_, Self>) -> PyResult<usize> {
         slf.len()
     }
     #[pyo3(name = "is_empty")]
-    fn pyo_is_empty(slf: Bound<'_, Self>) -> PyResult<bool> {
+    fn pyo_is_empty(slf: &Bound<'_, Self>) -> PyResult<bool> {
         slf.is_empty()
     }
 }
@@ -43,11 +43,11 @@ impl PyoCollection {
         slf.contains(value)
     }
     #[pyo3(name = "len")]
-    fn pyo_len(slf: Bound<'_, Self>) -> PyResult<usize> {
+    fn pyo_len(slf: &Bound<'_, Self>) -> PyResult<usize> {
         slf.len()
     }
     #[pyo3(name = "is_empty")]
-    fn pyo_is_empty(slf: Bound<'_, Self>) -> PyResult<bool> {
+    fn pyo_is_empty(slf: &Bound<'_, Self>) -> PyResult<bool> {
         slf.is_empty()
     }
 }

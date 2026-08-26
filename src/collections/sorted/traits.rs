@@ -12,7 +12,7 @@ use crate::{
             views::BaseSortedView,
         },
     },
-    core::PyoVec,
+    core::{PyoVec, iterators},
     traits::{IntoInit, IntoPyochain},
 };
 use either::Either;
@@ -151,13 +151,32 @@ pub(super) trait BaseSortedList: SortedListGetters {
         bounds: &mut Pos,
     ) -> PyResult<()>;
     #[skip]
-    fn expand(
-        &self,
-        py: Python<'_>,
-        data: &mut MutexGuard<'_, ListsData>,
-        pos: usize,
-    ) -> PyResult<()>;
+    fn expand(&self, py: Python<'_>, data: &mut MutexGuard<'_, ListsData>, pos: usize);
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
+    #[skip]
+    #[inline]
+    fn reset_list(&self, py: Python<'_>, load: usize) -> PyResult<()> {
+        let values = self.get_data().collapse(py);
+        self.clear(py);
+        self.set_load(load);
+        self.update(py, values)
+    }
+    #[skip]
+    #[inline(always)]
+    fn islice_list<T: BaseSortedList>(
+        slf: Bound<'_, T>,
+        start: Option<isize>,
+        stop: Option<isize>,
+        reverse: bool,
+    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        let py = slf.py();
+        let specs = Bounds::get_islice_specs(&mut slf.get().get_data(), py, start, stop)?;
+        match specs {
+            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
+            Some(bounds) => T::islice_iter(slf, bounds, reverse),
+        }
+    }
+
     #[pyo3(name = "update")]
     fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();

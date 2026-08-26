@@ -387,7 +387,7 @@ impl PyoIterator {
         }
     }
 
-    fn eq(slf: &Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn eq(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         let mut slf = slf.try_iter()?;
         let py = slf.py();
         let sentinel = pylibs::builtins::sentinel(py)?;
@@ -406,7 +406,7 @@ impl PyoIterator {
             }
         }
     }
-    fn ne(slf: &Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn ne(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         let mut slf = slf.try_iter()?;
         let mut other_iterator = other.try_iter()?;
         loop {
@@ -421,7 +421,7 @@ impl PyoIterator {
             }
         }
     }
-    fn le(slf: &Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn le(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         let mut slf = slf.try_iter()?;
         let mut other_iterator = other.try_iter()?;
         loop {
@@ -438,7 +438,7 @@ impl PyoIterator {
             }
         }
     }
-    fn lt(slf: &Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn lt(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         let mut slf = slf.try_iter()?;
         let mut other_iterator = other.try_iter()?;
         loop {
@@ -1101,7 +1101,7 @@ impl PyoIterator {
         step: Option<&Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|x| pylibs::itertools::slice(&x, &start, &stop, &step))
+            .and_then(|x| pylibs::itertools::slice(&x, start, stop, step))
             .and_then(pyiterator_into_iter)
     }
     fn skip<'py>(slf: &Bound<'py, Self>, n: &Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
