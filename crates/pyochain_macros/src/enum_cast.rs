@@ -135,7 +135,7 @@ fn bound_inner(ty: &Type) -> SynResult<&Type> {
                         GenericArgument::Type(t) => Some(t),
                         _ => None,
                     })
-                    .last(),
+                    .next_back(),
                 _ => None,
             })
             .ok_or_else(|| expected_bound_err(ty)),
