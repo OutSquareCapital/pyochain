@@ -6,7 +6,17 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import NONE, Iter, Null, Option, Range, Seq, Some, Vec
+from pyochain import (
+    NONE,
+    Iter,
+    Null,
+    Option,
+    Range,
+    Seq,
+    Some,
+    Vec,
+    then_if_true,
+)
 
 from ._utils import SIZES, Sizes
 
@@ -40,15 +50,21 @@ def _iter(data: Range) -> Option[int]:
     return data.iter().next()
 
 
-@pytest.mark.benchmark(group="filter_map")
-@pytest.mark.parametrize("size", (64, 256, 1024, 4096))
+@pytest.mark.parametrize("size", SIZES)
 def test_filter_map(benchmark: BenchFixture, size: int) -> None:
-    data = Range(size)
-    assert benchmark(_filter_map, data) == size - 2
+    data = (
+        Range(size)
+        .iter()
+        .map(lambda i: then_if_true(i, predicate=lambda i: i % 2 == 0))
+        .collect(Seq)
+    )
+    assert benchmark(_filter_map, data, size) == size - 2
 
 
-def _filter_map(data: Range) -> int:
-    return data.iter().filter_map(lambda i: Some(i) if i % 2 == 0 else Null()).last()
+def _filter_map(data: Seq[Option[int]], size: int) -> int:
+    for _ in range(SIZES[size]):
+        _ = data.iter().filter_map(lambda x: x).last()
+    return data.iter().filter_map(lambda x: x).last()
 
 
 @pytest.mark.parametrize("size", (64, 256, 1024, 4096))
@@ -201,7 +217,6 @@ def test_map_juxt(benchmark: BenchFixture, size: int, nb_funcs: int) -> None:
 
 
 def _create_fn() -> Callable[[int], int]:
-
     return lambda x: x
 
 

@@ -28,6 +28,7 @@ class Sizes(IntEnum):
     SIZE_4096 = 4096
 
 
+# TODO: Make this a Dict[int, Range]
 SIZES = Dict({10: 10_000, 100: 1000, 1_000: 100, 10_000: 10})
 
 
