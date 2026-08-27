@@ -4,7 +4,7 @@ pub use super::ext_methods::{
     ABCRegister, PyDictExtConstructors, PyDictExtMethods, PyListExtMethods, PyRangeExtMethods,
     PySequenceExtMethods, PySetExtMethods, PySetExtMethodsMut,
 };
-pub use super::iter::{CollectBoundIterator, FromBoundIterator, TryFromBoundIterator};
+pub use super::iter::{CollectBoundIterator, FromBoundIterator, TryFromBoundIterator, TryIterator};
 pub use super::pyany::PyAnyInPlaceMethods;
 pub use super::types::{
     PyDequeMethods, PyMutableSequenceMethods, PyMutableSetMethods, PySupportsIndexMethods,
