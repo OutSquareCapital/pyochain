@@ -189,7 +189,32 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
     @override
     def clear(self) -> None: ...
     @override
-    def extend(self, values: Iterable[T], /) -> None: ...
+    def extend(self, values: Iterable[T], /) -> None:
+        """Extend a `MutableSequence` with the contents of an `Iterable`.
+
+        `Iterable::__iter__` returns an `Iterator` that produces a series of values, and a `MutableSequence` can also be thought of as a series of values.
+
+        This method bridges this gap, allowing you to *extend* a `MutableSequence` by including the contents of that `Iterable`.
+
+        Args:
+            values (Iterable[T]): An `Iterable` of values to extend the `MutableSequence` with.
+
+        Example:
+            ```python
+            from pyochain import Vec
+
+            a = Vec(1, 2)
+            b = Vec(3, 4)
+            a.extend(b)
+            assert a == Vec(1, 2, 3, 4)
+
+            # extend and collect can be considered two sides of the same coin:
+            collected = Range(5).iter().collect(Vec)
+            extended = Vec()
+            extended.extend(collected)
+            assert collected == extended
+            ```
+        """
     @override
     def pop(self, index: int = -1, /) -> T: ...
     @override

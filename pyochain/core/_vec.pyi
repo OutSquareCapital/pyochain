@@ -311,7 +311,7 @@ class Vec[T](PyoMutableSequence[T], ArgsWrapper[T]):
 
         See Also:
             - [`Vec::concat`][concat] which returns a new `Vec` (copy).
-            - [`Vec::extend`][extend] which can take any `Iterable`.
+            - [`PyoMutableSequence::extend`][PyoMutableSequence.extend] which can take any `Iterable`.
 
         Example:
             ```python
