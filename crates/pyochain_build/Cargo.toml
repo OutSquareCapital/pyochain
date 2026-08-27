@@ -8,11 +8,15 @@ name = "pyochain_build"
 
 [dependencies]
 anstream = "1.0"
+comfy-table = "7.2.1"
+ruff_python_ast = "0.0.7"
+ruff_text_size = "0.0.7"
 owo-colors = "4.3.0"
 proc-macro2 = { version = "1", features = ["span-locations"] }
 syn = { version = "3.0.1", features = ["full", "visit"] }
 tap = "1.0.1"
 toml = "1.1.0"
 walkdir = "2.5.0"
+ruff_python_parser = "0.0.7"
 [lints]
 workspace = true

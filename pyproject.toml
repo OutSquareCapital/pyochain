@@ -20,7 +20,7 @@ dev = [
     "ruff>=0.16.5",
     "sdsort",
 ]
-doc = ["mkdocstrings-python>=2.0.7", "rich>=15.0.0", "zensical>=0.0.57"]
+doc = ["mkdocstrings-python>=2.0.7", "zensical>=0.0.57"]
 [tool.pydoclint]
 arg-type-hints-in-docstring = true
 arg-type-hints-in-signature = true

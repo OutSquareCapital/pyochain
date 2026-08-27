@@ -1,3 +1,4 @@
+mod check_docstrings;
 mod generate_docs;
 mod parse;
 mod paths;
@@ -9,5 +10,6 @@ pub fn run(root: PathBuf) -> Result<(), Box<dyn Error>> {
     let docs = paths::Related::new(root.join("docs"), "reference", "md");
     let src = paths::Related::new(root.join("src"), "lib.rs", "rs");
     let zensical = paths::Related::new(root, "zensical.toml", "toml");
-    generate_docs::run(&zensical, &src, &docs, &stubs)
+    generate_docs::run(&zensical, &src, &docs, &stubs)?;
+    check_docstrings::run(&stubs)
 }
