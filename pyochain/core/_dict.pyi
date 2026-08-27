@@ -266,7 +266,7 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K], KwargsWrapper[K, V])
 
         See Also:
             - [`Dict::union`][union]: Merge another mapping with `Self` in a new `Dict`.
-            - `Dict::update` to accept any compatible `Iterable`.
+            - [`Dict::update`][update] to accept any compatible `Iterable`.
 
         Example:
             ```python
@@ -313,4 +313,4 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K], KwargsWrapper[K, V])
     @overload
     def setdefault[T](self, key: K, default: object = None, /) -> V: ...
     @override
-    def setdefault[T](self, key: K, default: object = None, /) -> V | T | None: ...
+    def setdefault[T](self, key: K, default: object = None, /) -> V | None: ...

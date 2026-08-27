@@ -1183,7 +1183,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def filter(self, func: Callable[[T], object] | None) -> PyoIterator[T]: ...
     def filter[R, N](
         self, func: FilterFn[T, R] = None
-    ) -> PyoIterator[T] | PyoIterator[R] | PyoIterator[N]:
+    ) -> PyoIterator[T] | PyoIterator[R]:
         """Creates an `Iterator` with an optional closure to determine if an element should be yielded.
 
         Given an element the closure must return `True` or `False`.

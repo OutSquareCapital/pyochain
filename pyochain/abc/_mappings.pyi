@@ -114,13 +114,13 @@ class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # 
     def get_item(self, key: _K) -> Option[_V_co]:
         """Retrieve a value from the `MutableMapping`.
 
-        Returns `Some(value)` if the **key** exists, or `None` if it does not.
+        Returns `Some(value)` if the **key** exists, or `Null` if it does not.
 
         Args:
             key (_K): The key to look up.
 
         Returns:
-            Option[_V_co]: `Some(value)` that is associated with the **key**, or `None` if not found.
+            Option[_V_co]: `Some(value)` that is associated with the **key**, or `Null` if not found.
 
         Example:
             ```python
@@ -219,10 +219,8 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
 
         Keywords will be applied after the *m* argument, allowing for additional updates.
 
-
         If a key already exists in *self*, its value will be overwritten.
 
-        Note:
         If a given key is present in both *m* and *kwargs*, the value from the latter will be the one effectively present in the resulting `Dict`.
 
         Args:

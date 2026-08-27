@@ -34,7 +34,7 @@ class PyoKeysView(PyoMappingView, PyoSet[_K_co], KeysView[_K_co]):  # pyright: i
     Keys views support set-like operations since dictionary keys are unique.
 
     See Also:
-        `PyoMapping::keys`: Method that returns this view.
+        [`PyoMapping::keys`][pyochain.abc.PyoMapping.keys]: Method that returns this view.
     """
 
     def __init__(self, mapping: Viewable[_K_co]) -> None: ...
@@ -85,7 +85,7 @@ class PyoValuesView[V](PyoMappingView, PyoCollection[V], ValuesView[V]):  # pyri
     """A view of the values in a pyochain mapping.
 
     See Also:
-        `PyoMapping::values`: Method that returns this view.
+        [`PyoMapping::values`][pyochain.abc.PyoMapping.values]: Method that returns this view.
     """
     def __init__(self, mapping: SupportsGetItemViewable[Any, V]) -> None: ...
     @override
@@ -104,7 +104,7 @@ class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance]
     Items are represented as tuples of `(key, value)` pairs, and the view supports set-like operations.
 
     See Also:
-        `PyoMapping::items`: Method that returns this view.
+        [`PyoMapping::items`][pyochain.abc.PyoMapping.items]: Method that returns this view.
     """
     def __new__(cls, mapping: SupportsGetItemViewable[_K_co, _V_co]) -> Self: ...  # pyright: ignore[reportInconsistentConstructor]
     @override
