@@ -3,7 +3,8 @@
 //! This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
 //! We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::{
-    intern,
+    call::PyCallArgs,
+    ffi, intern,
     prelude::*,
     sync::PyOnceLock,
     types::{PyBool, PyDict, PyInt, PyIterator, PyList, PyNone, PyTuple},
@@ -16,7 +17,6 @@ use crate::tuple;
 /// Python `builtins` functions and objects
 pub mod builtins {
     use super::*;
-    use pyo3::{call::PyCallArgs, ffi};
 
     const BUILTINS: &str = "builtins";
     static ID: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
@@ -519,8 +519,6 @@ pub mod functools {
     }
 }
 pub mod heapq {
-    use pyo3::call::PyCallArgs;
-
     use super::*;
     const HEAPQ: &str = "heapq";
     static MERGE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();

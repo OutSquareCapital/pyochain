@@ -8,7 +8,7 @@ use crate::{
 use pyo3::{
     IntoPyObjectExt, PyTypeInfo,
     exceptions::{PyIndexError, PyTypeError},
-    ffi,
+    ffi, intern,
     prelude::*,
     types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple},
 };
@@ -613,7 +613,6 @@ impl FilterStar {
 /// Defining an Enum here, I feel isn't needed since we only pass around the string values, and we don't need to do anything with them later.
 mod position {
     use super::*;
-    use pyo3::intern;
     const FIRST: &str = "first";
     const MIDDLE: &str = "middle";
     const LAST: &str = "last";

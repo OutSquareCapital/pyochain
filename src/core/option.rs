@@ -1,12 +1,11 @@
 use crate::abc::PyoIterator;
 use crate::core::{PyoErr, PyoOk, iterators};
-use pyo3::IntoPyObjectExt;
-use pyo3::exceptions::{PyTypeError, PyValueError};
-use pyo3::types::PyNone;
 use pyo3::{
+    IntoPyObjectExt,
+    exceptions::{PyTypeError, PyValueError},
     prelude::*,
     sync::PyOnceLock,
-    types::{PyString, PyTuple},
+    types::{PyNone, PyString, PyTuple},
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
