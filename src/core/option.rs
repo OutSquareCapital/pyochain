@@ -1,8 +1,8 @@
 use crate::abc::PyoIterator;
 use crate::core::{PyoErr, PyoOk, iterators};
-use crate::hasher::hash_fn;
 use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::{PyTypeError, PyValueError};
+use pyo3::types::PyNone;
 use pyo3::{
     prelude::*,
     sync::PyOnceLock,
@@ -115,10 +115,6 @@ impl PySome {
         PySome { value }
     }
 
-    fn __hash__(&self, py: Python<'_>) -> PyResult<u64> {
-        self.value.bind(py).hash().map(|h| hash_fn(0_u8, h))
-    }
-
     #[pyo3(signature = (predicate, *args, **kwargs))]
     fn is_some_and(
         &self,
@@ -165,7 +161,7 @@ impl PySome {
             .pipe(Self::new)
             .into_py_any(py)
     }
-
+    #[allow(clippy::unused_self)]
     fn and_<'py, 'a>(&self, optb: &'a Bound<'py, PyAny>) -> &'a Bound<'py, PyAny> {
         optb
     }
@@ -379,7 +375,6 @@ impl PyNull {
         Self::get(py).into_any().pipe(Ok)
     }
 }
-
 #[pymethods]
 impl PyNull {
     #[new]
@@ -387,150 +382,148 @@ impl PyNull {
         Self::get(py)
     }
 
-    fn __hash__(&self, py: Python<'_>) -> PyResult<isize> {
-        py.None().bind(py).hash()
-    }
-
-    #[allow(unused_variables)]
-    #[pyo3(signature = (predicate, *_args, **_kwargs))]
+    #[allow(unused_variables, clippy::unused_self)]
+    #[pyo3(signature = (predicate, *args, **kwargs))]
     fn is_some_and(
         &self,
         predicate: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> bool {
         false
     }
-
-    #[pyo3(signature = (_func, *_args, **_kwargs))]
+    #[allow(unused_variables, clippy::unused_self)]
+    #[pyo3(signature = (func, *args, **kwargs))]
     fn is_none_or(
         &self,
-        _func: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        func: &Bound<'_, PyAny>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> bool {
         true
     }
-
+    #[allow(clippy::unused_self)]
     fn unwrap(&self) -> PyResult<Py<PyAny>> {
         Err(PyErr::new::<OptionUnwrapError, _>(
             "called `unwrap` on a `None`",
         ))
     }
-
+    #[allow(clippy::unused_self)]
     fn expect(&self, msg: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         Err(PyErr::new::<OptionUnwrapError, _>(format!(
             "{msg} (called `expect` on a `None`)"
         )))
     }
-
+    #[allow(clippy::unused_self)]
     fn unwrap_or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         f.call0()?.unbind().pipe(Ok)
     }
-
-    #[pyo3(signature = (func, *_args, **_kwargs))]
+    #[allow(unused_variables, clippy::unused_self)]
+    #[pyo3(signature = (func, *args, **kwargs))]
     fn map(
         &self,
         func: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> Py<Self> {
         Self::get(func.py())
     }
+    #[allow(clippy::unused_self)]
     fn and_(&self, optb: &Bound<'_, PyAny>) -> Py<Self> {
         Self::get(optb.py())
     }
-
+    #[allow(clippy::unused_self)]
     fn or_(&self, optb: Py<PyAny>) -> Py<PyAny> {
         optb
     }
-
-    #[pyo3(signature = (func, *_args, **_kwargs))]
+    #[allow(unused_variables, clippy::unused_self)]
+    #[pyo3(signature = (func, *args, **kwargs))]
     fn and_then(
         &self,
         func: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> Py<Self> {
         Self::get(func.py())
     }
-
+    #[allow(clippy::unused_self)]
     fn or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         f.call0()?.unbind().pipe(Ok)
     }
-
+    #[allow(clippy::unused_self)]
     fn ok_or(&self, err: &Bound<'_, PyAny>) -> PyoErr {
         err.to_owned().unbind().pipe(PyoErr::new)
     }
-
+    #[allow(clippy::unused_self)]
     fn ok_or_else(&self, err: &Bound<'_, PyAny>) -> PyResult<PyoErr> {
         err.call0()?.unbind().pipe(PyoErr::new).pipe(Ok)
     }
-
-    #[pyo3(signature = (default, _f, *_args, **_kwargs))]
+    #[allow(unused_variables, clippy::unused_self)]
+    #[pyo3(signature = (default, f, *args, **kwargs))]
     fn map_or(
         &self,
         default: Py<PyAny>,
-        _f: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        f: &Bound<'_, PyAny>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> Py<PyAny> {
         default
     }
+    #[allow(clippy::unused_self)]
     #[allow(unused_variables)]
     fn map_or_else(&self, default: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         default.call0()?.unbind().pipe(Ok)
     }
-
-    #[pyo3(signature = (predicate, *_args, **_kwargs))]
+    #[allow(unused_variables, clippy::unused_self)]
+    #[pyo3(signature = (predicate, *args, **kwargs))]
     fn filter(
         &self,
         predicate: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> Py<Self> {
         Self::get(predicate.py())
     }
-
+    #[allow(clippy::unused_self)]
     fn flatten(&self, py: Python<'_>) -> Py<Self> {
         Self::get(py)
     }
-
-    #[pyo3(signature = (f, *_args, **_kwargs))]
+    #[allow(unused_variables, clippy::unused_self)]
+    #[pyo3(signature = (f, *args, **kwargs))]
     fn inspect(
         &self,
         f: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> Py<Self> {
         Self::get(f.py())
     }
-
+    #[allow(clippy::unused_self)]
     fn unzip(&self, py: Python<'_>) -> (Py<Self>, Py<Self>) {
         let none = Self::get(py);
         (none.clone_ref(py), none)
     }
-
+    #[allow(clippy::unused_self)]
     fn map_star(&self, func: &Bound<'_, PyAny>) -> Py<Self> {
         Self::get(func.py())
     }
-
+    #[allow(clippy::unused_self)]
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> Py<Self> {
         Self::get(func.py())
     }
-
+    #[allow(clippy::unused_self)]
     fn zip(&self, other: &Bound<'_, PyAny>) -> Py<Self> {
         Self::get(other.py())
     }
-
+    #[allow(clippy::unused_self)]
     fn zip_with(&self, other: &Bound<'_, PyAny>, _f: &Bound<'_, PyAny>) -> Py<Self> {
         Self::get(other.py())
     }
-
+    #[allow(clippy::unused_self)]
     fn reduce(&self, other: Py<PyAny>, _func: &Bound<'_, PyAny>) -> Py<PyAny> {
         other
     }
-
+    #[allow(clippy::unused_self)]
     fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         if optb.is_null() {
             let py = optb.py();
@@ -539,6 +532,7 @@ impl PyNull {
             optb.clone().unbind().pipe(Ok)
         }
     }
+    #[allow(clippy::unused_self)]
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         Self::get(py).into_any().pipe(PyoOk::new).into_py_any(py)
     }
@@ -550,9 +544,11 @@ impl PyNull {
     fn ne(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> bool {
         !slf.is(other)
     }
+    #[allow(clippy::unused_self)]
     fn unwrap_or_none(&self, py: Python<'_>) -> Py<PyAny> {
         py.None()
     }
+    #[allow(clippy::unused_self)]
     fn __repr__(&self) -> &'static str {
         "NONE"
     }
@@ -565,6 +561,8 @@ trait OptionMethods {
             "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.",
         ))
     }
+
+    fn __hash__(&self, py: Python<'_>) -> PyResult<isize>;
     fn is_some(&self) -> bool;
 
     fn is_none(&self) -> bool;
@@ -579,6 +577,14 @@ impl OptionMethods for PySome {
             Ok(other_some) => self.value.bind(other.py()).eq(&other_some.get().value),
             Err(_) => Ok(false),
         }
+    }
+
+    fn __hash__(&self, py: Python<'_>) -> PyResult<isize> {
+        tuple!(
+            0_u8.into_pyobject(py)?.into_any(),
+            self.value.clone_ref(py).into_bound(py).into_any(),
+        )?
+        .hash()
     }
     fn is_some(&self) -> bool {
         true
@@ -604,6 +610,10 @@ impl OptionMethods for PyNull {
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         Ok(other.is_none() || other.is_null())
     }
+    fn __hash__(&self, py: Python<'_>) -> PyResult<isize> {
+        PyNone::get(py).as_any().hash()
+    }
+
     fn is_some(&self) -> bool {
         false
     }

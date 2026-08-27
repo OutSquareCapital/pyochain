@@ -4,7 +4,6 @@ use crate::{
         iterators,
         option::{PyNull, PySome},
     },
-    hasher::hash_fn,
 };
 use pyderive::*;
 use pyo3::{
@@ -42,6 +41,8 @@ trait ResultMethods: Sized {
         self.__eq__(other).map(|eq| !eq)
     }
     fn flatten(slf: Bound<'_, Self>) -> Bound<'_, PyAny>;
+    fn is_ok(&self) -> bool;
+    fn is_err(&self) -> bool;
     #[pyo3(name = "iter")]
     fn py_iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoIterator>>;
 }
@@ -79,22 +80,19 @@ impl PyoOk {
         let value_repr = self.value.bind(py).repr()?;
         Ok(format!("Ok({value_repr})"))
     }
-    fn is_ok(&self) -> bool {
-        true
-    }
 
-    fn is_err(&self) -> bool {
-        false
-    }
-
-    fn __hash__(&self, py: Python<'_>) -> PyResult<u64> {
-        hash_fn(0_u8, self.value.bind(py).hash()?).pipe(Ok)
+    fn __hash__(&self, py: Python<'_>) -> PyResult<isize> {
+        tuple!(
+            0_u8.into_pyobject(py)?.into_any(),
+            self.value.clone_ref(py).into_bound(py).into_any(),
+        )?
+        .hash()
     }
 
     fn ok(&self, py: Python<'_>) -> PySome {
         self.value.clone_ref(py).pipe(PySome::new)
     }
-
+    #[allow(clippy::unused_self)]
     fn err(&self, py: Python<'_>) -> Py<PyNull> {
         PyNull::get(py)
     }
@@ -127,7 +125,7 @@ impl PyoOk {
             .pipe(Self::new)
             .pipe(Ok)
     }
-
+    #[allow(clippy::unused_self)]
     fn and_(&self, resb: &Bound<'_, PyAny>) -> Py<PyAny> {
         resb.to_owned().unbind()
     }
@@ -151,7 +149,7 @@ impl PyoOk {
     fn or_else(&self, f: &Bound<'_, PyAny>) -> Self {
         self.value.clone_ref(f.py()).pipe(Self::new)
     }
-
+    #[allow(clippy::unused_self)]
     fn unwrap_err(&self) -> PyResult<Py<PyAny>> {
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(
             "called `unwrap_err` on Ok",
@@ -194,33 +192,33 @@ impl PyoOk {
         pred.concat(self.value.bind(pred.py()), args, kwargs)?
             .is_truthy()
     }
-
-    #[pyo3(signature = (_pred, *_args, **_kwargs))]
+    #[allow(unused_variables, clippy::unused_self)]
+    #[pyo3(signature = (pred, *args, **kwargs))]
     fn is_err_and(
         &self,
-        _pred: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        pred: &Bound<'_, PyAny>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> bool {
         false
     }
-
-    #[pyo3(signature = (func, *_args, **_kwargs))]
+    #[allow(unused_variables)]
+    #[pyo3(signature = (func, *args, **kwargs))]
     fn map_err(
         &self,
         func: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> Self {
         Self::new(self.value.clone_ref(func.py()))
     }
-
-    #[pyo3(signature = (func, *_args, **_kwargs))]
+    #[allow(unused_variables)]
+    #[pyo3(signature = (func, *args, **kwargs))]
     fn inspect_err(
         &self,
         func: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> Self {
         Self::new(self.value.clone_ref(func.py()))
     }
@@ -291,18 +289,14 @@ impl PyoErr {
         Ok(format!("Err({error_repr})"))
     }
 
-    fn is_ok(&self) -> bool {
-        false
+    fn __hash__(&self, py: Python<'_>) -> PyResult<isize> {
+        tuple!(
+            1_u8.into_pyobject(py)?.into_any(),
+            self.error.clone_ref(py).into_bound(py).into_any()
+        )?
+        .hash()
     }
-
-    fn is_err(&self) -> bool {
-        true
-    }
-
-    fn __hash__(&self, py: Python<'_>) -> PyResult<u64> {
-        hash_fn(1, self.error.bind(py).hash()?).pipe(Ok)
-    }
-
+    #[allow(clippy::unused_self)]
     fn ok(&self, py: Python<'_>) -> Py<PyNull> {
         PyNull::get(py)
     }
@@ -328,7 +322,7 @@ impl PyoErr {
     fn expect_err(&self, _msg: String, py: Python<'_>) -> Py<PyAny> {
         self.error.clone_ref(py)
     }
-
+    #[allow(clippy::unused_self)]
     fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {
         default
     }
@@ -336,26 +330,26 @@ impl PyoErr {
     fn unwrap_or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         f.call1((&self.error,))?.unbind().pipe(Ok)
     }
-
-    #[pyo3(signature = (func, *_args, **_kwargs))]
-    fn map(&self, func: &Bound<'_, PyAny>, _args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
+    #[allow(unused_variables)]
+    #[pyo3(signature = (func, *args, **kwargs))]
+    fn map(&self, func: &Bound<'_, PyAny>, args: &Args<'_>, kwargs: Option<&Kwargs<'_>>) -> Self {
         self.error.clone_ref(func.py()).pipe(Self::new)
     }
 
     fn and_(&self, resb: &Bound<'_, PyAny>) -> Self {
         self.error.clone_ref(resb.py()).pipe(Self::new)
     }
-
+    #[allow(clippy::unused_self)]
     fn or_(&self, rese: &Bound<'_, PyAny>) -> Py<PyAny> {
         rese.to_owned().unbind()
     }
-
-    #[pyo3(signature = (func, *_args, **_kwargs))]
+    #[allow(unused_variables)]
+    #[pyo3(signature = (func, *args, **kwargs))]
     fn and_then(
         &self,
         func: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> Self {
         self.error.clone_ref(func.py()).pipe(Self::new)
     }
@@ -375,13 +369,13 @@ impl PyoErr {
     fn unwrap_err(&self, py: Python<'_>) -> Py<PyAny> {
         self.error.clone_ref(py)
     }
-
-    #[pyo3(signature = (_pred, *_args, **_kwargs))]
+    #[allow(clippy::unused_self, unused_variables)]
+    #[pyo3(signature = (pred, *args, **kwargs))]
     fn is_ok_and(
         &self,
-        _pred: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        pred: &Bound<'_, PyAny>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> bool {
         false
     }
@@ -430,14 +424,14 @@ impl PyoErr {
             .pipe(PySome::new)
             .into_py_any(py)
     }
-
-    #[pyo3(signature = (default, _func, *_args, **_kwargs))]
+    #[allow(clippy::unused_self, unused_variables)]
+    #[pyo3(signature = (default, func, *args, **kwargs))]
     fn map_or(
         &self,
         default: &Bound<'_, PyAny>,
-        _func: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        func: &Bound<'_, PyAny>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> Py<PyAny> {
         default.to_owned().unbind()
     }
@@ -445,24 +439,19 @@ impl PyoErr {
     fn map_or_else(&self, _ok: &Bound<'_, PyAny>, err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         err.call1((&self.error,))?.unbind().pipe(Ok)
     }
-
-    #[pyo3(signature = (func, *_args, **_kwargs))]
+    #[allow(unused_variables)]
+    #[pyo3(signature = (func, *args, **kwargs))]
     fn filter(
         &self,
         func: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> Self {
         self.error.clone_ref(func.py()).pipe(Self::new)
     }
-
-    #[pyo3(signature = (f, *_args, **_kwargs))]
-    fn inspect(
-        &self,
-        f: &Bound<'_, PyAny>,
-        _args: &Args<'_>,
-        _kwargs: Option<&Kwargs<'_>>,
-    ) -> Self {
+    #[allow(unused_variables)]
+    #[pyo3(signature = (f, *args, **kwargs))]
+    fn inspect(&self, f: &Bound<'_, PyAny>, args: &Args<'_>, kwargs: Option<&Kwargs<'_>>) -> Self {
         self.error.clone_ref(f.py()).pipe(Self::new)
     }
     fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -476,6 +465,15 @@ impl ResultMethods for PyoOk {
             self.value.bind(py).eq(other_ok.get().value.bind(py))
         })
     }
+
+    fn is_ok(&self) -> bool {
+        true
+    }
+
+    fn is_err(&self) -> bool {
+        false
+    }
+
     fn flatten(slf: Bound<'_, Self>) -> Bound<'_, PyAny> {
         // For Ok[Result[T, E], E], the self.value IS the inner Result
         let py = slf.py();
@@ -498,6 +496,14 @@ impl ResultMethods for PyoErr {
     }
     fn flatten(slf: Bound<'_, Self>) -> Bound<'_, PyAny> {
         slf.into_any()
+    }
+
+    fn is_ok(&self) -> bool {
+        false
+    }
+
+    fn is_err(&self) -> bool {
+        true
     }
 
     fn py_iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoIterator>> {

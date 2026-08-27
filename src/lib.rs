@@ -2,7 +2,6 @@ mod abc;
 mod collections;
 mod core;
 mod display;
-mod hasher;
 mod traits;
 use crate::collections::sorted::debug;
 use pyo3::{
