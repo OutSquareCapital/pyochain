@@ -67,19 +67,19 @@ def _filter_map(data: Seq[Option[int]], size: int) -> int:
     return data.iter().filter_map(lambda x: x).last()
 
 
-@pytest.mark.parametrize("size", (64, 256, 1024, 4096))
+@pytest.mark.parametrize("size", SIZES)
 def test_filter_map_star(benchmark: BenchFixture, size: int) -> None:
     data = Range(size).iter().enumerate().collect(Seq)
-    assert benchmark(_filter_map_star, data) == size - 2
+    assert benchmark(_filter_map_star, data, size) == size - 2
 
 
-def _filter_map_star(data: Seq[tuple[int, int]]) -> int:
-    return (
-        data
-        .iter()
-        .filter_map_star(lambda x, y: Some((x, y)) if x % 2 == 0 else Null())
-        .last()[0]
-    )
+def _filter_map_star(data: Seq[tuple[int, int]], size: int) -> int:
+    def f(x: int, _: int) -> Option[int]:
+        return Some(x) if x % 2 == 0 else Null()
+
+    for _ in range(SIZES[size]):
+        _ = data.iter().filter_map_star(f).last()
+    return data.iter().filter_map_star(f).last()
 
 
 @pytest.mark.parametrize("size", SIZES)
@@ -237,7 +237,14 @@ def test_map_while(benchmark: BenchFixture, size: int) -> None:
 
 
 def _map_while(data: Range, size: int) -> int:
-    return data.iter().map_while(lambda x: Some(x) if x < size else Null()).last()
+    limit = size // 2
+
+    def f(x: int) -> Option[int]:
+        return Some(x) if x < limit else Null()
+
+    for _ in range(SIZES[size]):
+        _ = data.iter().map_while(f).last()
+    return data.iter().map_while(f).last()
 
 
 def _from_fn() -> int:

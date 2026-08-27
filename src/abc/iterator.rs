@@ -42,10 +42,10 @@ impl PyoIterator {
     fn from_fn<'py>(
         cls: &Bound<'py, PyType>,
         f: Bound<'py, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: Args<'_>,
+        kwargs: Option<Kwargs<'_>>,
     ) -> PyResult<Bound<'py, Self>> {
-        iterators::FromFn::new(f, args, kwargs).pipe(|x| iterator_into_iter(x, cls.py()))
+        iterators::FromFn::new(f.unbind(), args, kwargs).pipe(|x| iterator_into_iter(x, cls.py()))
     }
     #[allow(unused)]
     #[pyo3(signature = (obj, n=None))]

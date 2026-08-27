@@ -33,6 +33,7 @@ ignore = [
     "unnecessary-call-around-sorted",            # Can be a behavioral change who introduce subtle bugs
     "unnecessary-dunder-call",
     "unnecessary-map",
+    "lambda-assignment",
 ]
 
 preview = true
