@@ -6,8 +6,21 @@ from typing import TYPE_CHECKING, Never, assert_never, assert_type
 from pyochain import Iter, Range, Seq
 from pyochain.abc import PyoIterator
 
+from ._utils import Animal, Dog
+
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
+
+
+def check_iter_covariance() -> None:
+    a = assert_type(Iter(Dog()), Iter[Dog])
+    b = assert_type(a.batched(1).flatten(), PyoIterator[Dog])
+    _a = assert_type(a.batched(1).map_star(str), PyoIterator[str])
+    _b: Iter[Animal] = a
+    _c: PyoIterator[Animal] = a
+    _f: Iterator[Animal] = a
+    _g: PyoIterator[Animal] = b
+    _j: Iterator[Animal] = b
 
 
 def check_iter_flatten() -> Never:
