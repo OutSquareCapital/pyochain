@@ -2599,38 +2599,83 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def map_while[R](self, func: Callable[[T], Option[R]]) -> PyoIterator[R]:
         """Creates an `Iterator` that both yields elements based on a predicate and maps.
 
-        `map_while()` takes a closure as an argument.
+        `map_while()` takes a closure *func* as an argument.
 
         It will call this closure on each element of the `Iterator`, and yield elements while it returns `Some(_)`.
 
-        After `NONE` is returned, `PyoIterator::map_while` stops and the rest of the elements are ignored.
-
         Args:
-            func (Callable[[T], Option[R]]): Function to apply to each element that returns `Option[R]`.
+            func (Callable[[T], Option[R]]): Function to apply to each element`.
 
         Returns:
             PyoIterator[R]: An `Iterator` of transformed elements until `NONE` is encountered.
 
-        Example:
+        Examples:
+            Basic usage:
             ```python
-            from pyochain import Iter, Some, NONE, Seq, Option
+            from pyochain import Vec, Some, NONE
 
-            def checked_div(x: int) -> Option[int]:
-                return Some(16 // x) if x != 0 else NONE
+            a = Vec(-1, 4, 0, 1)
 
-            data = Seq(-1, 4, 0, 1)
-            divided = data.iter().map_while(checked_div).collect(Seq)
-            assert divided == Seq(-16, 4)
-            data = Seq(0, 1, 2, -3, 4, 5, -6)
-            # Convert to positive ints, stop at first negative
-            converted = (
-                data
-                .iter()
-                .map_while(lambda x: Some(x) if x >= 0 else NONE)
-                .collect(Seq)
-            )
-            assert converted == Seq(0, 1, 2)
+            def checked_divide(x: int) -> Option[int]:
+                if x == 0:
+                    return NONE
+                return Some(16 // x)
+
+            iterator = a.iter().map_while(checked_divide)
+
+            assert iterator.next() == Some(-16)
+            assert iterator.next() == Some(4)
+            assert iterator.next().is_none()
             ```
+            Here's the same example, but with take_while and map:
+            ```python
+            a = Vec(-1, 4, 0, 1)
+
+            iterator = (
+                a
+                .iter()
+                .map(checked_divide)
+                .take_while(lambda x: x.is_some())
+                .map(lambda x: x.unwrap())
+            )
+
+            assert iterator.next() == Some(-16)
+            assert iterator.next() == Some(4)
+            assert iterator.next().is_none()
+            ```
+            Stopping after an initial None:
+            ```python
+            from pyochain import Result, Ok, Err
+
+            a = Vec(0, 1, 2, -3, 4, 5, -6)
+
+            def check_positive(x: int) -> Result[int, str]:
+                if x < 0:
+                    return Err("Negative value cannot be converted to u32")
+                return Ok(x)
+
+            iterator = a.iter().map_while(lambda x: check_positive(x).ok())
+            vec = iterator.collect(Vec)
+
+            # We have more elements that are positive (such as 4, 5),
+            # but `map_while` returned `NONE` for `-3` (as the `predicate` returned `None`).
+            assert vec == [0, 1, 2]
+            ```
+            Because map_while() needs to look at the value in order to see if it should be included or not, consuming iterators will see that it is removed:
+            ```
+            a = Vec(1, 2, -3, 4)
+            iterator = a.iter()
+
+            result = iterator.map_while(lambda n: u32_try_from(n).ok()).collect(Vec)
+
+            assert result == [1, 2]
+
+            result = iterator.collect(Vec)
+
+            assert result == [4]
+            ```
+
+            The -3 is no longer there, because it was consumed in order to see if the iteration should stop, but wasn't placed back into the `Iterator`.
         """
 
     @overload
