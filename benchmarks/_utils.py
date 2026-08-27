@@ -2,11 +2,7 @@ from collections.abc import Callable
 from enum import IntEnum, StrEnum, auto
 from typing import Protocol
 
-from rich.traceback import install
-
 from pyochain import Dict
-
-_ = install(show_locals=True)
 
 type BenchFn = Callable[[int], object]
 
