@@ -15,6 +15,8 @@
 ### 🚀 Performance improvements
 
 - `PyoIterator::map_juxt` is now **1.5×** faster when provided with 1 function, **1.29×** faster with 4–16 functions, and **1.13×** faster with 64 functions. Results are consistent across iterables of sizes ranging from 10 to 10,000 items.
+- `Pyoiterator::zip_longest` is now between **1.6x** to **1.8x** faster when provided with a single iterable, across tested sizes(10, 100, 1_000 and 10_000).
+Expect faster speed-ups with more arguments, as it's the overhead of creating the `Option` values that has been greatly reduced.
 
 ### 🆕 New features
 

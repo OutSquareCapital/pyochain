@@ -7,7 +7,7 @@ use crate::{
 };
 use pyo3::{
     IntoPyObjectExt, PyTypeInfo,
-    exceptions::PyIndexError,
+    exceptions::{PyIndexError, PyTypeError},
     ffi,
     prelude::*,
     types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple},
@@ -242,7 +242,7 @@ impl FilterMap {
         })
     }
 }
-#[pyclass(module = "pyochain._iterators")]
+#[pyclass(module = "pyochain._iterators", frozen)]
 pub struct FilterMapStar {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
@@ -256,21 +256,15 @@ impl FilterMapStar {
             func: func.unbind(),
         }
     }
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
-        let py = slf.py();
-        let func = slf.func.bind(py);
-        let mut iter = slf.iter.clone_ref(py).into_bound(py);
-        loop {
-            match iter.next() {
-                None => return Ok(None),
-                Some(result) => {
-                    let res = func.call1(result?.cast_exact::<PyTuple>()?)?;
-                    if let Ok(some) = res.cast_into_exact::<PySome>() {
-                        return Ok(Some(some.get().value.clone_ref(py)));
-                    }
-                }
-            }
-        }
+    fn __next__(&self, py: Python<'_>) -> PyResult<Option<Py<PyAny>>> {
+        let func = self.func.bind(py);
+        self.iter.clone_ref(py).into_bound(py).try_find_map(|item| {
+            func.call1(item?.cast_exact::<PyTuple>()?).map(|res| {
+                res.cast_into_exact::<PySome>()
+                    .ok()
+                    .map(|some| some.get().value.clone_ref(py))
+            })
+        })
     }
 }
 
@@ -318,7 +312,7 @@ impl Scan {
     }
 }
 
-#[pyclass(module = "pyochain._iterators")]
+#[pyclass(module = "pyochain._iterators", frozen)]
 pub struct MapWhile {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
@@ -332,15 +326,19 @@ impl MapWhile {
             func: func.unbind(),
         }
     }
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
-        let py = slf.py();
-        let mut iter = slf.iter.clone_ref(py).into_bound(py);
-        match iter.next() {
+    fn __next__(&self, py: Python<'_>) -> PyResult<Option<Py<PyAny>>> {
+        // NOTE: It's better to "manually" match here instead of a chain of `transpose()` and `map` calls, since we need to return early on `None` and `Err` cases.
+        match self.iter.clone_ref(py).into_bound(py).next() {
             None => Ok(None),
-            Some(result) => match slf.func.bind(py).call1((result?,))?.cast_exact::<PySome>() {
-                Ok(some) => Ok(Some(some.get().value.clone_ref(py))),
-                Err(_) => Ok(None),
-            },
+            Some(Err(e)) => Err(e),
+            Some(Ok(item)) => self
+                .func
+                .bind(py)
+                .call1((item,))?
+                .cast_exact::<PySome>()
+                .ok()
+                .map(|some| some.get().value.clone_ref(py))
+                .pipe(Ok),
         }
     }
 }
@@ -352,18 +350,27 @@ enum FromFnStrategy {
     HasBoth(Py<PyTuple>, Py<PyDict>),
 }
 impl FromFnStrategy {
-    fn new(args: &Args<'_>, kwargs: Option<&Kwargs<'_>>) -> Self {
+    fn new(args: Args<'_>, kwargs: Option<Kwargs<'_>>) -> Self {
         match (args.is_empty(), kwargs) {
             (true, None) => Self::NoArgs,
-            (false, None) => Self::HasArgs(args.to_owned().unbind()),
-            (true, Some(kwargs)) => Self::HasKwargs(kwargs.to_owned().unbind()),
-            (false, Some(kwargs)) => {
-                Self::HasBoth(args.to_owned().unbind(), kwargs.to_owned().unbind())
-            }
+            (false, None) => Self::HasArgs(args.unbind()),
+            (true, Some(kwargs)) => Self::HasKwargs(kwargs.unbind()),
+            (false, Some(kwargs)) => Self::HasBoth(args.unbind(), kwargs.unbind()),
+        }
+    }
+    #[inline(always)]
+    fn call<'py>(&self, func: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        let py = func.py();
+        match self {
+            Self::NoArgs => func.call0(),
+            Self::HasArgs(args) => func.call1(args.bind(py)),
+            Self::HasKwargs(kwargs) => func.call((), Some(kwargs.bind(py))),
+            Self::HasBoth(args, kwargs) => func.call(args.bind(py), Some(kwargs.bind(py))),
         }
     }
 }
-#[pyclass(module = "pyochain._iterators")]
+//TODO: Looking back at it, it would be better to avoid blindly make it `rust-compliant`, and instead make it a decorator to wrap generators.
+#[pyclass(module = "pyochain._iterators", frozen)]
 pub struct FromFn {
     func: Py<PyAny>,
     strategy: FromFnStrategy,
@@ -372,28 +379,20 @@ pub struct FromFn {
 impl FromFn {
     #[pyo3(signature = (func, *args, **kwargs))]
     #[new]
-    pub fn new(func: Bound<'_, PyAny>, args: &Args<'_>, kwargs: Option<&Kwargs<'_>>) -> Self {
+    pub fn new(func: Py<PyAny>, args: Args<'_>, kwargs: Option<Kwargs<'_>>) -> Self {
         Self {
-            func: func.unbind(),
+            func,
             strategy: FromFnStrategy::new(args, kwargs),
         }
     }
 
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
-        let py = slf.py();
-        let py_fn = slf.func.bind(py);
-        let res = match slf.strategy {
-            FromFnStrategy::NoArgs => py_fn.call0()?,
-            FromFnStrategy::HasArgs(ref args) => py_fn.call1(args.bind(py))?,
-            FromFnStrategy::HasKwargs(ref kwargs) => py_fn.call((), Some(kwargs.bind(py)))?,
-            FromFnStrategy::HasBoth(ref args, ref kwargs) => {
-                py_fn.call(args.bind(py), Some(kwargs.bind(py)))?
-            }
-        };
-        match res.cast_into_exact::<PySome>() {
-            Ok(some) => Ok(Some(some.get().value.clone_ref(py))),
-            Err(_) => Ok(None),
-        }
+    fn __next__(&self, py: Python<'_>) -> PyResult<Option<Py<PyAny>>> {
+        let py_fn = self.func.bind(py);
+        self.strategy.call(py_fn).map(|res| {
+            res.cast_into_exact::<PySome>()
+                .ok()
+                .map(|some| some.get().value.clone_ref(py))
+        })
     }
 }
 #[pyclass(module = "pyochain._iterators")]
@@ -574,7 +573,7 @@ impl Successors {
         }
     }
 }
-#[pyclass(module = "pyochain._iterators")]
+#[pyclass(module = "pyochain._iterators", frozen)]
 pub struct FilterStar {
     iter: Py<PyIterator>,
     predicate: Py<PyAny>,
@@ -590,24 +589,23 @@ impl FilterStar {
         }
     }
 
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
-        let py = slf.py();
-        let mut iter = slf.iter.clone_ref(py).into_bound(py);
-        let predicate = slf.predicate.bind(py);
-        loop {
-            match iter.next() {
-                None => return Ok(None),
-                Some(result) => {
-                    let item = result?;
-                    if predicate
-                        .call1(item.cast_exact::<PyTuple>()?)?
-                        .is_truthy()?
-                    {
-                        return Ok(Some(item.unbind()));
-                    }
+    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyTuple>>> {
+        let predicate = self.predicate.bind(py);
+        self.iter
+            .clone_ref(py)
+            .into_bound(py)
+            .map(|res| {
+                res?.cast_into_exact::<PyTuple>()
+                    .map_err(|_| PyTypeError::new_err("Expected a tuple from the iterator"))
+            })
+            .try_find_map(|res| {
+                let tup = res?;
+                if predicate.call1(&tup)?.is_truthy()? {
+                    Ok(Some(tup))
+                } else {
+                    Ok(None)
                 }
-            }
-        }
+            })
     }
 }
 
@@ -674,25 +672,23 @@ impl WithPosition {
         Ok(Some((position, current)))
     }
 }
-#[pyclass(module = "pyochain._iterators")]
+#[pyclass(module = "pyochain._iterators", frozen)]
 pub struct ZipLongest(pub Py<PyIterator>);
 #[pymethods]
 impl ZipLongest {
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyTuple>>> {
-        let py = slf.py();
-        let mut iter = slf.0.clone_ref(py).into_bound(py);
+    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyTuple>>> {
+        let mut iter = self.0.clone_ref(py).into_bound(py);
         match iter.next() {
             None => Ok(None),
-            Some(item) => item
-                // SAFETY: we know the passed `PyIterator` is from `itertools::zip_longest`, which yields tuples, so we can safely cast the result to a `PyTuple`.
-                .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })?
-                .iter()
-                .map(|x| PyochainOption::dispatch(&x))
-                .collect::<PyResult<Vec<_>>>()?
-                .into_iter()
-                .collect_bound(py)
-                .map(Bound::unbind)
-                .map(Some),
+            Some(Err(e)) => Err(e),
+            Some(Ok(item)) => {
+                // SAFETY: we know the passed `PyIterator` is from `itertools::zip_longest`, which yields tuples, so we can safely cast the result to a `PyTuple`
+                unsafe { item.cast_into_unchecked::<PyTuple>() }
+                    .into_iter()
+                    .map(PyochainOption::dispatch)
+                    .collect_bound(py)
+                    .map(Some)
+            }
         }
     }
 }

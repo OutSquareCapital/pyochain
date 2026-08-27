@@ -453,10 +453,14 @@ def _unpack_into(data: Range) -> int:
 def test_zip_longest(benchmark: BenchFixture, size: int) -> None:
     data1 = Range(size)
     data2 = Range(size // 2)
-    assert benchmark(_zip_longest, data1, data2) == (Some(size - 1), NONE)
+    assert benchmark(_zip_longest, data1, data2, size) == (Some(size - 1), NONE)
 
 
-def _zip_longest(data1: Range, data2: Range) -> tuple[Option[int], Option[int]]:
+def _zip_longest(
+    data1: Range, data2: Range, size: int
+) -> tuple[Option[int], Option[int]]:
+    for _ in range(SIZES[size]):
+        _ = data1.iter().zip_longest(data2).last()
     return data1.iter().zip_longest(data2).last()
 
 

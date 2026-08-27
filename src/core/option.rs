@@ -33,12 +33,17 @@ impl IsNull<'_> for Bound<'_, PyAny> {
 pub struct PyochainOption;
 
 impl PyochainOption {
-    pub fn dispatch(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    pub fn dispatch(value: Bound<'_, PyAny>) -> Bound<'_, PyAny> {
         let py = value.py();
         if value.is_none() {
-            PyNull::get_any_ok(py)
+            PyNull::get(py).into_bound(py).into_any()
         } else {
-            value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
+            value
+                .unbind()
+                .pipe(PySome::new)
+                .into_pyobject(py)
+                .expect("Failed to convert PySome to a pyobject")
+                .into_any()
         }
     }
 
@@ -78,7 +83,7 @@ impl OptionUnwrapError {
 #[pyclass(module = "pyochain.core", frozen, name = "OptionType", generic)]
 pub struct PyochainOptionType;
 #[pyfunction(name = "option")]
-pub fn new_option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+pub fn new_option(value: Bound<'_, PyAny>) -> Bound<'_, PyAny> {
     PyochainOption::dispatch(value)
 }
 

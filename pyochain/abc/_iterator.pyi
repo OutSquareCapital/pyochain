@@ -4256,7 +4256,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         Otherwise, wrap elements in `Some` when they are present.
 
         Iteration continues until the longest iterable is exhausted.
-        If one of the iterables is potentially infinite, then the zip_longest() function should be wrapped with something that limits the number of calls.
+
+        If one of the iterables is potentially infinite, then the resulting `Iterator` should be followed with a method that limits the number of calls.
 
         For example, `PyoIterator::islice` or `PyoIterator::take_while`.
 
