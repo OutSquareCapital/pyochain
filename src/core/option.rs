@@ -371,7 +371,7 @@ impl PyNull {
     }
     #[inline]
     pub fn get_any_ok(py: Python<'_>) -> PyResult<Py<PyAny>> {
-        PyNull::get(py).into_any().pipe(Ok)
+        Self::get(py).into_any().pipe(Ok)
     }
 }
 
@@ -535,7 +535,7 @@ impl PyNull {
         }
     }
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        PyNull::get(py).into_any().pipe(PyoOk::new).into_py_any(py)
+        Self::get(py).into_any().pipe(PyoOk::new).into_py_any(py)
     }
 
     fn eq(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> bool {
