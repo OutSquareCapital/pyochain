@@ -216,7 +216,7 @@ impl MapWindow {
         Ok(Some(slf.prev.iter().collect_bound(py)?))
     }
 }
-#[pyclass(module = "pyochain._iterators")]
+#[pyclass(frozen, module = "pyochain._iterators")]
 pub struct FilterMap {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
@@ -231,21 +231,15 @@ impl FilterMap {
         }
     }
 
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
-        let py = slf.py();
-        let func = slf.func.bind(py);
-        let mut iter = slf.iter.clone_ref(py).into_bound(py);
-        loop {
-            match iter.next() {
-                None => return Ok(None),
-                Some(result) => {
-                    let res = func.call1((result?,))?;
-                    if let Ok(some) = res.cast_into_exact::<PySome>() {
-                        return Ok(Some(some.get().value.clone_ref(py)));
-                    }
-                }
-            }
-        }
+    fn __next__(&self, py: Python<'_>) -> PyResult<Option<Py<PyAny>>> {
+        let func = self.func.bind(py);
+        self.iter.clone_ref(py).into_bound(py).try_find_map(|item| {
+            func.call1((item?,)).map(|res| {
+                res.cast_into_exact::<PySome>()
+                    .ok()
+                    .map(|some| some.get().value.clone_ref(py))
+            })
+        })
     }
 }
 #[pyclass(module = "pyochain._iterators")]
