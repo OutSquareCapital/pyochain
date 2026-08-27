@@ -11,20 +11,16 @@ classifiers = ["License :: OSI Approved :: MIT License"]
 
 [dependency-groups]
 dev = [
-    "basedpyright>=1.39.9",
-    "maturin>=1.14.1",
-    "mkdocstrings-python>=2.0.5",
+    "basedpyright>=1.39.10",
+    "maturin>=1.15.0",
     "pydoclint>=0.9.1",
     "pytest-benchmark>=5.2.3",
-    "pytest-cov>=7.0.0",
     "pytest-docflex",
     "pytest>=9.1.1",
-    "rich>=15.0.0",
-    "ruff>=0.16.1",
+    "ruff>=0.16.5",
     "sdsort",
-    "toml>=0.10.2",
-    "zensical>=0.0.53",
 ]
+doc = ["mkdocstrings-python>=2.0.7", "rich>=15.0.0", "zensical>=0.0.57"]
 [tool.pydoclint]
 arg-type-hints-in-docstring = true
 arg-type-hints-in-signature = true

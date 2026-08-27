@@ -89,10 +89,13 @@ def my_function(param1: int, param2: str) -> bool:
 
 ## Setup
 
-After cloning the repo, set up the development environment (the project uses `uv` for both Python and Rust):
+After cloning the repo, set up the development environment (the project uses `uv` for both Python and Rust).
+
+`--all-groups` will also install the dependencies necessary for the website documentation.
 
 ```bash
 uv sync --dev
+uv sync --all-groups
 ```
 
 ### Building the Rust extension
