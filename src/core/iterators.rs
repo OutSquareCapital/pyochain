@@ -692,7 +692,7 @@ impl ZipLongest {
         }
     }
 }
-#[pyclass(module = "pyochain._iterators")]
+#[pyclass(module = "pyochain._iterators", frozen)]
 pub struct Unzip {
     iterator: Py<PyIterator>,
     n: usize,
@@ -701,31 +701,32 @@ pub struct Unzip {
 impl Unzip {
     #[new]
     pub fn new(data: &Bound<'_, PyTuple>, n: usize) -> Self {
-        let iterator = data
-            .get_item(n)
-            .unwrap()
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
-            .unbind();
+        let iterator = unsafe {
+            data.get_item_unchecked(n)
+                .cast_into_unchecked::<PyIterator>()
+        }
+        .unbind();
         Self { iterator, n }
     }
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
-        let py = slf.py();
-        match slf.iterator.clone_ref(py).into_bound(py).next() {
-            Some(item) => item?
-                .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
-                .get_item(slf.n)
+    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+        match self.iterator.clone_ref(py).into_bound(py).next() {
+            Some(Ok(item)) => unsafe { item.cast_into_unchecked::<PyTuple>() }
+                .get_item(self.n)
                 .map(Some),
+            Some(Err(e)) => Err(e),
             None => Ok(None),
         }
     }
 }
-#[pyclass(module = "pyochain._iterators")]
+#[pyclass(module = "pyochain._iterators", frozen)]
 pub struct GroupBy(pub Py<PyIterator>);
 #[pymethods]
 impl GroupBy {
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<(Bound<'_, PyAny>, Bound<'_, Iter>)>> {
-        let py = slf.py();
-        match slf.0.clone_ref(py).into_bound(py).next() {
+    fn __next__<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<Option<(Bound<'py, PyAny>, Bound<'py, Iter>)>> {
+        match self.0.clone_ref(py).into_bound(py).next() {
             Some(item) => unsafe {
                 let tup = item?.cast_into_unchecked::<PyTuple>();
                 let (key, group) = (tup.get_item_unchecked(0), tup.get_item_unchecked(1));
