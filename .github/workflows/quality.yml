@@ -13,40 +13,60 @@ env:
 
 jobs:
   quality:
-    name: Type checking, linting, and formatting
+    name: Quality - ${{ matrix.check }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - rust-lint
+          - rust-format
+          - python-lint
+          - python-format
+          - python-order
+          - stub-docstrings
+          - python-types
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
 
       - name: Install dependencies
         run: uv sync --group dev
 
-      - name: lint Rust files
+      - name: Run quality check
         run: uv run cargo clippy --workspace
+        if: matrix.check == 'rust-lint'
 
-      - name: format Rust files
+      - name: Run quality check
         run: cargo fmt --all -- --check
+        if: matrix.check == 'rust-format'
 
-      - name: Lint Python files
+      - name: Run quality check
         run: uv run ruff check .
+        if: matrix.check == 'python-lint'
 
-      - name: Check Python formatting
+      - name: Run quality check
         run: uv run ruff format --check --preview .
+        if: matrix.check == 'python-format'
 
-      - name: Check python ordering
+      - name: Run quality check
         run: uv run sdsort . --stubs --check
+        if: matrix.check == 'python-order'
 
-      - name: Check stub docstrings
+      - name: Run quality check
         run: |
           shopt -s globstar
           uv run pydoclint pyochain/**/*.pyi
+        if: matrix.check == 'stub-docstrings'
 
-      - name: Type-check Python package
+      - name: Run quality check
         run: uv run basedpyright .
+        if: matrix.check == 'python-types'
 
   compile:
     name: Compile on ${{ matrix.os }} with Python ${{ matrix.python-version }}
