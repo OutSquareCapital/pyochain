@@ -1205,7 +1205,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             func (FilterFn[T, R]): Function to evaluate each item.
 
         Returns:
-            PyoIterator[T] | PyoIterator[R] | PyoIterator[N]: An `Iterator` of the items that satisfy the predicate.
+            PyoIterator[T] | PyoIterator[R]: An `Iterator` of the items that satisfy the predicate.
 
         Example:
             ```python
