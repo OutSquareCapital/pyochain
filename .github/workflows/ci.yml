@@ -1,4 +1,4 @@
-name: Quality Checks
+name: CI
 
 on:
   push:
@@ -12,65 +12,65 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
-  quality:
-    name: Quality - ${{ matrix.check }}
+  static-analysis:
+    name: Static analysis - ${{ matrix.check }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         check:
-          - rust-lint
+          - rust-clippy
           - rust-format
-          - python-lint
-          - python-format
-          - python-order
+          - ruff-lint
+          - ruff-format
+          - stub-order
           - stub-docstrings
-          - python-types
+          - basedpyright
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install uv
+      - name: Set up uv
         uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
 
-      - name: Install dependencies
-        run: uv sync --group dev
+      - name: Sync development environment
+        run: uv sync --dev
 
-      - name: Run quality check
+      - name: Check Rust with Clippy
         run: uv run cargo clippy --workspace
-        if: matrix.check == 'rust-lint'
+        if: matrix.check == 'rust-clippy'
 
-      - name: Run quality check
+      - name: Check Rust formatting
         run: cargo fmt --all -- --check
         if: matrix.check == 'rust-format'
 
-      - name: Run quality check
+      - name: Check Python with Ruff
         run: uv run ruff check .
-        if: matrix.check == 'python-lint'
+        if: matrix.check == 'ruff-lint'
 
-      - name: Run quality check
+      - name: Check formatting with Ruff
         run: uv run ruff format --check --preview .
-        if: matrix.check == 'python-format'
+        if: matrix.check == 'ruff-format'
 
-      - name: Run quality check
+      - name: Check stub ordering
         run: uv run sdsort . --stubs --check
-        if: matrix.check == 'python-order'
+        if: matrix.check == 'stub-order'
 
-      - name: Run quality check
+      - name: Check stub docstrings
         run: |
           shopt -s globstar
           uv run pydoclint pyochain/**/*.pyi
         if: matrix.check == 'stub-docstrings'
 
-      - name: Run quality check
+      - name: Check Python types with basedpyright
         run: uv run basedpyright .
-        if: matrix.check == 'python-types'
+        if: matrix.check == 'basedpyright'
 
-  compile:
-    name: Compile on ${{ matrix.os }} with Python ${{ matrix.python-version }}
-    needs: quality
+  tests:
+    name: Tests - ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    needs: static-analysis
     strategy:
       fail-fast: true
       matrix:
@@ -81,8 +81,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install uv
+      - name: Set up uv
         uses: astral-sh/setup-uv@v4
 
-      - name: Check compilation
-        run: uv run --python ${{ matrix.python-version }} --group dev cargo check --workspace --all-targets
+      - name: Sync test environment
+        run: uv sync --python ${{ matrix.python-version }} --dev
+
+      - name: Run Python tests
+        run: uv run --python ${{ matrix.python-version }} pytest

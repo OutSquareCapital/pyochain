@@ -1,4 +1,4 @@
-name: Publish Package to PyPI
+name: Release
 
 on:
   release:
@@ -9,100 +9,112 @@ permissions:
   id-token: write
 
 jobs:
-  linux:
+  build-linux:
+    name: Build Linux wheel - ${{ matrix.target }} - Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.13', '3.14']
         target: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Build wheels
+      - name: Build wheel
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --interpreter ${{ matrix.python-version }}
           sccache: 'true'
           manylinux: auto
-      - name: Upload wheels
+      - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-linux-${{ matrix.target }}-${{ matrix.python-version }}
+          name: wheel-linux-${{ matrix.target }}-${{ matrix.python-version }}
           path: dist
 
-  windows:
+  build-windows:
+    name: Build Windows wheel - ${{ matrix.target }} - Python ${{ matrix.python-version }}
     runs-on: windows-latest
     strategy:
       matrix:
         python-version: ['3.13', '3.14']
         target: [x64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Build wheels
+      - name: Build wheel
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --interpreter ${{ matrix.python-version }}
-      - name: Upload wheels
+      - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-windows-${{ matrix.target }}-${{ matrix.python-version }}
+          name: wheel-windows-${{ matrix.target }}-${{ matrix.python-version }}
           path: dist
 
-  macos:
+  build-macos:
+    name: Build macOS wheel - ${{ matrix.target }} - Python ${{ matrix.python-version }}
     runs-on: macos-latest
     strategy:
       matrix:
         python-version: ['3.13', '3.14']
         target: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Build wheels
+      - name: Build wheel
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --interpreter ${{ matrix.python-version }}
-      - name: Upload wheels
+      - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-macos-${{ matrix.target }}-${{ matrix.python-version }}
+          name: wheel-macos-${{ matrix.target }}-${{ matrix.python-version }}
           path: dist
 
-  sdist:
+  build-sdist:
+    name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Build sdist
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Build source distribution
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
           args: --out dist
-      - name: Upload sdist
+      - name: Upload source distribution artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-sdist
+          name: source-distribution
           path: dist/*.tar.gz
 
-  release:
-    name: Release
+  publish-pypi:
+    name: Publish packages to PyPI
     runs-on: ubuntu-latest
-    needs: [linux, windows, macos, sdist]
+    needs: [build-linux, build-windows, build-macos, build-sdist]
     environment:
       name: pypi
       url: https://pypi.org/project/pyochain/
     steps:
-      - uses: actions/download-artifact@v4
-      - name: Publish to PyPI
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+      - name: Publish packages to PyPI
         uses: PyO3/maturin-action@v1
         with:
           command: upload
-          args: --non-interactive --skip-existing wheels-*/*
+          args: --non-interactive --skip-existing wheel-*/* source-distribution/*

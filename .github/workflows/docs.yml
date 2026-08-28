@@ -1,4 +1,4 @@
-name: Deploy Documentation
+name: Documentation
 
 on:
   release:
@@ -8,29 +8,24 @@ permissions:
   contents: write
 
 jobs:
-  deploy:
+  build-and-deploy:
+    name: Build and deploy documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
       
-      - name: Install uv
+      - name: Set up uv
         uses: astral-sh/setup-uv@v4
-      
-      - name: Setup Python
-        run: uv python install 3.13
-      
-      - name: Install dependencies
-        run: uv sync --group dev
-      
+
+      - name: Sync documentation environment
+        run: uv sync --all-groups
+
       - name: Build documentation
-        run: uv run zensical build
+        run: uv run zensical build -c
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site
-      - name: Check build output
-        run: |
-          ls -la ./site
-          cat ./site/index.html || echo "No index.html found"
