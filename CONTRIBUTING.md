@@ -151,8 +151,8 @@ uv run sdsort . --stubs;
 uv run ruff check . --fix --unsafe-fixes;
 uv run ruff format . --preview;
 uv run basedpyright .;
-uv run scripts/check_docstrings.py;
 uv run pydoclint pyochain/**/*.pyi
+cargo run --release -p pyochain-build
 ```
 
 If you need to fix a single lint rule for rust:

@@ -269,7 +269,7 @@ class ResultType[T, E](Pipe, Protocol):
     ) -> Result[R, E]:
         """Maps a `Result[tuple, E]` to `Result[R, E]` by unpacking the tuple.
 
-        Done by applying a function to a contained `Ok` value (which is expected to be a tuple).
+        Done by applying a function to a contained `Ok` value (which is expected to be a `tuple`).
 
         Args:
             func (Callable[..., R]): The function to apply to the unpacked `Ok` value.
@@ -280,9 +280,10 @@ class ResultType[T, E](Pipe, Protocol):
         Example:
             ```python
             from pyochain import Ok, Err
+            from operator import add
 
-            assert Ok((2, 3)).map_star(lambda x, y: x + y).unwrap() == 5
-            assert Err("error").map_star(lambda x, y: x + y).unwrap_err() == "error"
+            assert Ok((2, 3)).map_star(add).unwrap() == 5
+            assert Err("error").map_star(add).unwrap_err() == "error"
             ```
         """
 
@@ -557,8 +558,7 @@ class ResultType[T, E](Pipe, Protocol):
     ) -> Result[R, E]:
         """Maps a `Result[T, E]` to `Result[U, E]`.
 
-        Done by applying a function to a contained `Ok` value,
-        leaving an `Err` value untouched.
+        Done by applying a function to a contained `Ok` value, leaving an `Err` value untouched.
 
         Args:
             fn (Callable[Concatenate[T, P], R]): The function to apply to the `Ok` value.
@@ -582,8 +582,7 @@ class ResultType[T, E](Pipe, Protocol):
     ) -> Result[T, R]:
         """Maps a `Result[T, E]` to `Result[T, R]`.
 
-        Done by applying a function to a contained `Err` value,
-        leaving an `Ok` value untouched.
+        Done by applying a function to a contained `Err` value, leaving an `Ok` value untouched.
 
         Args:
             fn (Callable[Concatenate[E, P], R]): The function to apply to the `Err` value.
@@ -607,8 +606,7 @@ class ResultType[T, E](Pipe, Protocol):
     ) -> Result[T, E]:
         """Applies a function to the contained `Ok` value, returning the original `Result`.
 
-        This is primarily useful for debugging or logging, allowing side effects to be
-        performed on the `Ok` value without changing the result.
+        This is primarily useful for debugging or logging, allowing side effects to be performed on the `Ok` value without changing the result.
 
         Args:
             fn (Callable[Concatenate[T, P], object]): Function to apply to the `Ok` value.
@@ -633,8 +631,9 @@ class ResultType[T, E](Pipe, Protocol):
     ) -> Result[T, E]:
         """Applies a function to the contained `Err` value, returning the original `Result`.
 
-        This mirrors :meth:`inspect` but operates on the error value. It is useful for
-        logging or debugging error paths while keeping the `Result` unchanged.
+        This mirrors :meth:`inspect` but operates on the error value.
+
+        It is useful for logging or debugging error paths while keeping the `Result` unchanged.
 
         Args:
             fn (Callable[Concatenate[E, P], object]): Function to apply to the `Err` value.

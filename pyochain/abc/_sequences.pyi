@@ -201,7 +201,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
 
         Example:
             ```python
-            from pyochain import Vec
+            from pyochain import Vec, Range
 
             a = Vec(1, 2)
             b = Vec(3, 4)
