@@ -4,6 +4,7 @@ use pyo3::{
     types::{PyList, PySet},
 };
 use pyo3_ext::prelude::CollectBoundIterator;
+use sorted_rs::ListsDataMethods;
 use tap::Pipe;
 
 use crate::{

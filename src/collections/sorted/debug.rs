@@ -8,6 +8,7 @@ use crate::collections::{
 };
 use either::Either;
 use pyo3::{exceptions::PyAssertionError, prelude::*};
+use sorted_rs::ListsDataMethods;
 use std::ops::Index;
 use tap::prelude::*;
 type InnerSorted = Either<Py<SortedList>, Py<SortedKeyList>>;

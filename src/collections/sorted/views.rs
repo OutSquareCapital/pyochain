@@ -6,6 +6,7 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::{py_abc, try_cast_into};
+use sorted_rs::ListsDataMethods;
 
 use crate::{
     abc,

@@ -12,7 +12,7 @@ use crate::{
 };
 use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
-use sorted_rs::{Bounds, ListsData, Pos, bisect, errors, ops, py_cmp_by_key};
+use sorted_rs::{Bounds, ListsData, ListsDataMethods, Pos, bisect, errors, ops, py_cmp_by_key};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 use tap::Pipe;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]

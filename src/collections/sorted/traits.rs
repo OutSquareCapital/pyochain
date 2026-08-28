@@ -29,7 +29,7 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
-use sorted_rs::{Bounds, ListsData, Pos};
+use sorted_rs::{Bounds, ListsData, ListsDataMethods, Pos};
 use std::{
     cmp::Ordering,
     sync::{Mutex, MutexGuard, TryLockError, atomic::Ordering as AtomicOrdering},
@@ -170,7 +170,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         reverse: bool,
     ) -> PyResult<Bound<'_, abc::PyoIterator>> {
         let py = slf.py();
-        let specs = Bounds::get_islice_specs(&mut slf.get().get_data(), py, start, stop)?;
+        let specs = slf.get().get_data().get_islice_specs(py, start, stop)?;
         match specs {
             None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
             Some(bounds) => T::islice_iter(slf, bounds, reverse),
@@ -210,7 +210,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 bounds.idx = (len_last + index).cast_unsigned();
             }
             _ => {
-                bounds.set_from_pos(index, &mut data)?;
+                data.set_pos(index, &mut bounds)?;
             }
         }
         let val = data.get_value(&bounds).clone_ref(py);
@@ -247,7 +247,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 .step_by(step.cast_unsigned())
                 .rev()
                 .try_for_each(|idx| {
-                    bounds.set_from_pos(idx, &mut data)?;
+                    data.set_pos(idx, &mut bounds)?;
                     self.delete(py, &mut data, &mut bounds)
                 }),
             // Negative step with nothing to delete (mirrors Python's
@@ -257,7 +257,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .try_for_each(|idx| {
-                        bounds.set_from_pos(idx, &mut data)?;
+                        data.set_pos(idx, &mut bounds)?;
                         self.delete(py, &mut data, &mut bounds)
                     })
             }
@@ -266,7 +266,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
     fn delitem_from_int(&self, py: Python<'_>, index: isize) -> PyResult<()> {
         let mut data = self.get_data();
         let mut bounds = Pos::default();
-        bounds.set_from_pos(index, &mut data)?;
+        data.set_pos(index, &mut bounds)?;
         self.delete(py, &mut data, &mut bounds)
     }
     /// Return an iterator that slices sorted list using two index pairs.\

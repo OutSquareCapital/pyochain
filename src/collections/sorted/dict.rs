@@ -16,6 +16,7 @@ use pyo3::{
     types::{PyDict, PyMapping},
 };
 use pyo3_ext::prelude::*;
+use sorted_rs::ListsDataMethods;
 use tap::prelude::*;
 /// Key-value pair type from a Python `Mapping`
 type DictItem<'py> = (Bound<'py, PyAny>, Bound<'py, PyAny>);

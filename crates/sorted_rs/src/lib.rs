@@ -6,4 +6,4 @@ pub mod errors;
 pub mod ops;
 pub use bounds::{Bounds, Pos};
 pub use cmp::{py_cmp, py_cmp_by_key};
-pub use data::ListsData;
+pub use data::{ListsData, ListsDataMethods};
