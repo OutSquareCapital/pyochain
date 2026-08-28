@@ -30,25 +30,6 @@ impl KeysListsData {
             load: DEFAULT_LOAD_FACTOR,
         }
     }
-    fn bisect(
-        &mut self,
-        value: &Bound<'_, PyAny>,
-        func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
-    ) -> PyResult<isize> {
-        if self.maxes().is_empty() {
-            return Ok(0);
-        }
-        let mut bound = Pos::new(0, 0);
-
-        bound.pos = func(self.maxes(), value)?;
-
-        if bound.pos == self.maxes().len() {
-            Ok(self.length().cast_signed())
-        } else {
-            bound.idx = func(&self.keys[bound.pos], value)?;
-            bound.loc(self)
-        }
-    }
     pub fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
         let key_fn = &self.key.bind(py);
         let values_len = values.len();
@@ -110,13 +91,25 @@ impl ListsDataMethods for KeysListsData {
         Ok(())
     }
 
-    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.bisect(value, bisect::left)
-    }
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.bisect(value, bisect::right)
-    }
+    fn bisect(
+        &mut self,
+        value: &Bound<'_, PyAny>,
+        func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
+    ) -> PyResult<isize> {
+        if self.maxes().is_empty() {
+            return Ok(0);
+        }
+        let mut bound = Pos::new(0, 0);
 
+        bound.pos = func(self.maxes(), value)?;
+
+        if bound.pos == self.maxes().len() {
+            Ok(self.length().cast_signed())
+        } else {
+            bound.idx = func(&self.keys[bound.pos], value)?;
+            bound.loc(self)
+        }
+    }
     #[inline]
     fn clear(&mut self) {
         self.lists_mut().clear();

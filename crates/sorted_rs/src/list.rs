@@ -31,28 +31,6 @@ impl Default for ListsData {
     }
 }
 impl ListsData {
-    // NOTE: code is unfortunately completely duplicated between SortedList and SortedKeyList, but borrow checker cause issues.
-    // TODO: find a way to refactor this code to avoid duplication.
-    #[inline]
-    fn bisect(
-        &mut self,
-        value: &Bound<'_, PyAny>,
-        func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
-    ) -> PyResult<isize> {
-        if self.maxes().is_empty() {
-            return Ok(0);
-        }
-        let mut bound = Pos::new(0, 0);
-
-        bound.pos = func(self.maxes(), value)?;
-
-        if bound.pos == self.maxes().len() {
-            Ok(self.length().cast_signed())
-        } else {
-            bound.idx = func(&self.lists()[bound.pos], value)?;
-            bound.loc(self)
-        }
-    }
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) {
         let values_len = values.len();
         let new_lists = (0..values_len).step_by(self.load).map(|pos| {
@@ -97,13 +75,26 @@ impl ListsDataMethods for ListsData {
         self.len += 1;
         Ok(())
     }
-    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.bisect(value, bisect::left)
-    }
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.bisect(value, bisect::right)
-    }
+    #[inline]
+    fn bisect(
+        &mut self,
+        value: &Bound<'_, PyAny>,
+        func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
+    ) -> PyResult<isize> {
+        if self.maxes().is_empty() {
+            return Ok(0);
+        }
+        let mut bound = Pos::new(0, 0);
 
+        bound.pos = func(self.maxes(), value)?;
+
+        if bound.pos == self.maxes().len() {
+            Ok(self.length().cast_signed())
+        } else {
+            bound.idx = func(&self.lists()[bound.pos], value)?;
+            bound.loc(self)
+        }
+    }
     #[inline]
     fn clear(&mut self) {
         self.lists_mut().clear();

@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::{Bounds, Pos, errors};
+use crate::{Bounds, Pos, bisect, errors};
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
@@ -25,8 +25,6 @@ pub trait ListDataGetters: Sized {
 }
 pub trait ListsDataMethods: ListDataGetters {
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
-    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
     fn delete(&mut self, py: Python<'_>, bounds: &mut Pos) -> PyResult<()>;
@@ -55,6 +53,18 @@ pub trait ListsDataMethods: ListDataGetters {
     fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
         self.lists().iter().flatten()
     }
+    fn bisect(
+        &mut self,
+        value: &Bound<'_, PyAny>,
+        func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
+    ) -> PyResult<isize>;
+    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+        self.bisect(value, bisect::left)
+    }
+    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+        self.bisect(value, bisect::right)
+    }
+
     #[inline]
     fn concat(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {
         self.iter()
