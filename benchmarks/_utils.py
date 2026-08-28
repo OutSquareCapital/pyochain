@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from enum import IntEnum, StrEnum, auto
-from typing import Protocol
+from typing import Final, Protocol
 
 from pyochain import Dict
 
@@ -24,8 +24,12 @@ class Sizes(IntEnum):
     SIZE_4096 = 4096
 
 
-# TODO: Make this a Dict[int, Range]
-SIZES = Dict({10: 10_000, 100: 1000, 1_000: 100, 10_000: 10})
+SIZES: Final[Dict[int, range]] = Dict({
+    10: range(10_000),
+    100: range(1000),
+    1_000: range(100),
+    10_000: range(10),
+})
 
 
 class VariantGroups(StrEnum):

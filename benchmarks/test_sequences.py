@@ -88,7 +88,7 @@ def test_init_range(benchmark: BenchFixture, size: int) -> None:
 
 
 def _init_range(size: int) -> Range:
-    for _ in range(SIZES[size]):
+    for _ in SIZES[size]:
         _ = Range(size)
     return Range(size)
 
@@ -100,6 +100,6 @@ def test_concat(benchmark: BenchFixture, size: int) -> None:
 
 
 def _concat(data: Seq[int], size: int) -> Seq[int]:
-    for _ in range(SIZES[size]):
+    for _ in SIZES[size]:
         _ = data.concat(data)
     return data.concat(data)

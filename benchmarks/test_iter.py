@@ -62,7 +62,7 @@ def test_filter_map(benchmark: BenchFixture, size: int) -> None:
 
 
 def _filter_map(data: Seq[Option[int]], size: int) -> int:
-    for _ in range(SIZES[size]):
+    for _ in SIZES[size]:
         _ = data.iter().filter_map(lambda x: x).last()
     return data.iter().filter_map(lambda x: x).last()
 
@@ -77,7 +77,7 @@ def _filter_map_star(data: Seq[tuple[int, int]], size: int) -> int:
     def f(x: int, _: int) -> Option[int]:
         return Some(x) if x % 2 == 0 else Null()
 
-    for _ in range(SIZES[size]):
+    for _ in SIZES[size]:
         _ = data.iter().filter_map_star(f).last()
     return data.iter().filter_map_star(f).last()
 
@@ -206,7 +206,7 @@ def test_map_juxt(benchmark: BenchFixture, size: int, nb_funcs: int) -> None:
     def _map_juxt(
         data: Range, funcs: Iterable[Callable[[int], int]]
     ) -> tuple[int, ...]:
-        for _ in range(SIZES[size]):
+        for _ in SIZES[size]:
             _ = data.iter().map_juxt(*funcs).last()
 
         return data.iter().map_juxt(*funcs).last()
@@ -242,7 +242,7 @@ def _map_while(data: Range, size: int) -> int:
     def f(x: int) -> Option[int]:
         return Some(x) if x < limit else Null()
 
-    for _ in range(SIZES[size]):
+    for _ in SIZES[size]:
         _ = data.iter().map_while(f).last()
     return data.iter().map_while(f).last()
 
@@ -459,7 +459,7 @@ def test_zip_longest(benchmark: BenchFixture, size: int) -> None:
 def _zip_longest(
     data1: Range, data2: Range, size: int
 ) -> tuple[Option[int], Option[int]]:
-    for _ in range(SIZES[size]):
+    for _ in SIZES[size]:
         _ = data1.iter().zip_longest(data2).last()
     return data1.iter().zip_longest(data2).last()
 

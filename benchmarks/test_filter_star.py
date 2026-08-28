@@ -22,7 +22,7 @@ def test_2(benchmark: BenchFixture, size: int) -> None:
 
 def _2(data: Seq[tuple[int, int]], size: int) -> tuple[int, int]:
     f: Callable[[int, int], bool] = lambda x, _a: x % 2 == 0
-    for _ in range(SIZES[size]):
+    for _ in SIZES[size]:
         _ = data.iter().filter_star(f).last()
     return data.iter().filter_star(f).last()
 
