@@ -12,8 +12,8 @@ use crate::{
 };
 use pyo3::{PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
-use sorted_rs::{Bounds, ListsData, ListsDataMethods, Pos, bisect, errors, ops, py_cmp};
-use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
+use sorted_rs::{Bounds, ListsData, ListsDataMethods};
+use std::sync::{Mutex, atomic::AtomicUsize};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedList {
@@ -31,7 +31,10 @@ impl SortedList {
     #[inline]
     pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
         let new_inst = Self::new();
-        new_inst.update(py, values).map(|()| new_inst)
+        new_inst
+            .get_data()
+            .update(py, values, new_inst.get_load())?;
+        Ok(new_inst)
     }
 }
 #[pymethods]
@@ -49,16 +52,7 @@ impl SortedList {
 }
 impl SortedCollection for SortedList {
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        let py = value.py();
-        let data = self.get_data();
-        let mut bound = Pos::default();
-        match ops::Maxes::new(&data.maxes, &mut bound, value, bisect::left)? {
-            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(false),
-            ops::Maxes::LenNEPos => {
-                bound.idx = bisect::left(&data.lists[bound.pos], value)?;
-                data.get_value(&bound).bind(py).eq(value)
-            }
-        }
+        self.get_data().contains(value)
     }
 
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
@@ -122,61 +116,15 @@ impl SortedCollection for SortedList {
 }
 impl BaseSortedListSet for SortedList {
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        let mut bound = Pos::default();
-        let mut data = self.get_data();
-        match ops::Maxes::new(&data.maxes, &mut bound, value.bind(py), bisect::right)? {
-            ops::Maxes::Empty => {
-                data.lists.push(vec![value.clone_ref(py)]);
-                data.maxes.push(value);
-            }
-            ops::Maxes::LenEQPos => {
-                bound.pos -= 1;
-                data.lists[bound.pos].push(value.clone_ref(py));
-                data.maxes[bound.pos] = value;
-                self.expand(py, &mut data, bound.pos);
-            }
-            ops::Maxes::LenNEPos => {
-                let res = bisect::right(&data.lists[bound.pos], value.bind(py))?;
-                data.lists[bound.pos].insert(res, value.clone_ref(py));
-                self.expand(py, &mut data, bound.pos);
-            }
-        }
-        data.len += 1;
-        Ok(())
+        self.get_data().add(py, value, self.get_load())
     }
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let py = value.py();
-        let mut data = self.get_data();
-        let mut bound = Pos::default();
-        match ops::Maxes::new(&data.maxes, &mut bound, &value, bisect::left)? {
-            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(()),
-            ops::Maxes::LenNEPos => {
-                bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
-                if data.get_value(&bound).bind(py).eq(&value)? {
-                    self.delete(py, &mut data, &mut bound)
-                } else {
-                    Ok(())
-                }
-            }
-        }
+        self.get_data().discard(value, self.get_load())
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        let py = value.py();
-        let mut data = self.get_data();
-        let mut bound = Pos::default();
-        match ops::Maxes::new(&data.maxes, &mut bound, value, bisect::left)? {
-            ops::Maxes::Empty | ops::Maxes::LenEQPos => errors::not_in_list_err(value),
-            ops::Maxes::LenNEPos => {
-                bound.idx = bisect::left(&data.lists[bound.pos], value)?;
-                if data.get_value(&bound).bind(py).eq(value)? {
-                    self.delete(py, &mut data, &mut bound)
-                } else {
-                    errors::not_in_list_err(value)
-                }
-            }
-        }
+        self.get_data().remove(value, self.get_load())
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -220,97 +168,7 @@ impl BaseSortedList for SortedList {
             .into_bound(py)
             .map(Bound::into_super)
     }
-    fn expand(&self, py: Python<'_>, data: &mut MutexGuard<'_, ListsData>, pos: usize) {
-        let load = self.get_load();
-        match ops::Expand::new(data.lists[pos].len(), load, &data.idx) {
-            ops::Expand::PosLenGtLoad => {
-                let half = data.lists[pos].split_off(load);
-                let new_max_at_pos = data.lists[pos].last().unwrap().clone_ref(py);
-                let last_max = half.last().unwrap().clone_ref(py);
-                data.expand_at_pos(pos, half, last_max, new_max_at_pos);
-            }
-            ops::Expand::IdxNotEmpty => data.expand_on_empty_idx(pos),
-            ops::Expand::Other => (),
-        }
-    }
-
-    fn delete(
-        &self,
-        py: Python<'_>,
-        data: &mut MutexGuard<'_, ListsData>,
-        bounds: &mut Pos,
-    ) -> PyResult<()> {
-        data.lists[bounds.pos].remove(bounds.idx);
-        data.len -= 1;
-        match ops::Delete::new(&data.lists, self.get_load(), bounds) {
-            ops::Delete::PosSupToLoad => {
-                let max_at_pos = data.lists[bounds.pos].last().unwrap().clone_ref(py);
-                data.delete_on_idx(bounds, max_at_pos);
-            }
-            ops::Delete::DataLenGTOne => {
-                if bounds.pos == 0 {
-                    bounds.pos += 1;
-                }
-                let prev = bounds.pos - 1;
-                data.set_prev_from_removed(py, bounds, prev);
-                data.maxes[prev] = data.lists[prev].last().unwrap().clone_ref(py);
-                self.expand(py, data, prev);
-            }
-            ops::Delete::LenPosNotZero => {
-                data.maxes[bounds.pos] = data.lists[bounds.pos].last().unwrap().clone_ref(py);
-            }
-            ops::Delete::Other => data.remove_pos(bounds),
-        }
-        Ok(())
-    }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         self.get_data().count(&value)
     }
-
-    fn update(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
-        values.sort_by(|a, b| py_cmp(py, a, b));
-        let mut data = self.get_data();
-        let load = self.get_load();
-        match ops::Update::new(&data.maxes, data.len, &values) {
-            ops::Update::EmptyMaxes => finalize_update(load, py, &values, &mut data),
-            ops::Update::OtherGESelf => {
-                data.lists.push(values);
-                values = data.collapse(py);
-                values.sort_by(|a, b| py_cmp(py, a, b));
-                data.clear();
-                finalize_update(load, py, &values, &mut data);
-            }
-            ops::Update::OtherLTSelf => {
-                drop(data);
-                for val in values {
-                    self.add(py, val)?;
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-fn finalize_update(
-    load: usize,
-    py: Python<'_>,
-    values: &[Py<PyAny>],
-    data: &mut MutexGuard<'_, ListsData>,
-) {
-    let values_len = values.len();
-    let new_lists = (0..values_len).step_by(load).map(|pos| {
-        values[pos..(pos + load).min(values_len)]
-            .iter()
-            .map(|x| x.clone_ref(py))
-            .collect::<Vec<_>>()
-    });
-    data.lists.extend(new_lists);
-    let mut new_maxes = data
-        .lists
-        .iter()
-        .map(|x| x.last().unwrap().clone_ref(py))
-        .collect::<Vec<_>>();
-    data.maxes.append(new_maxes.as_mut());
-    data.len = values_len;
-    data.idx.clear();
 }

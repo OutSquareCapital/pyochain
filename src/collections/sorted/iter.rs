@@ -6,7 +6,8 @@ use crate::{
     collections::{SortedKeyList, SortedList},
 };
 use pyo3::prelude::*;
-use sorted_rs::{Bounds, Pos};
+use sorted_rs::{Bounds, ListDataGetters, Pos};
+use tap::Pipe;
 pub enum Dir {
     Fwd,
     Bwd,
@@ -24,8 +25,8 @@ impl<T: BaseSortedList> BoundedIter<T> {
 
     pub fn full(owner: Py<T>, dir: Dir) -> Self {
         let data = owner.get().get_data();
-        let last = data.lists.len().saturating_sub(1);
-        let bounds = Bounds::new(0, 0, last, data.lists.last().map_or(0, Vec::len));
+        let last = data.lists().len().saturating_sub(1);
+        let bounds = Bounds::new(0, 0, last, data.lists().last().map_or(0, Vec::len));
         drop(data);
         Self::new(owner, bounds, dir)
     }
@@ -34,18 +35,21 @@ impl<T: BaseSortedList> BoundedIter<T> {
         if self.bounds.min == self.bounds.max {
             None
         } else {
-            let lists = &self.owner.get().get_data().lists;
-            match self.dir {
-                Dir::Fwd => {
-                    let item = lists[self.bounds.min.pos][self.bounds.min.idx].clone_ref(py);
-                    increment(&mut self.bounds.min, lists);
-                    Some(item)
-                }
-                Dir::Bwd => {
-                    decrement(&mut self.bounds.max, lists);
-                    Some(lists[self.bounds.max.pos][self.bounds.max.idx].clone_ref(py))
-                }
-            }
+            self.owner
+                .get()
+                .get_data()
+                .lists()
+                .pipe(|lists| match self.dir {
+                    Dir::Fwd => {
+                        let item = lists[self.bounds.min.pos][self.bounds.min.idx].clone_ref(py);
+                        increment(&mut self.bounds.min, lists);
+                        Some(item)
+                    }
+                    Dir::Bwd => {
+                        decrement(&mut self.bounds.max, lists);
+                        Some(lists[self.bounds.max.pos][self.bounds.max.idx].clone_ref(py))
+                    }
+                })
         }
     }
 }

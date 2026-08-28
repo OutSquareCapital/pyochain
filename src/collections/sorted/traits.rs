@@ -17,11 +17,11 @@ use either::Either;
 use pyo3::{
     PyClass, PyTypeInfo,
     call::PyCallArgs,
-    exceptions::{PyIndexError, PyKeyError, PyNotImplementedError},
+    exceptions::{PyKeyError, PyNotImplementedError},
     prelude::*,
     types::{
-        PyBool, PyDict, PyList, PyMapping, PyNotImplemented, PySequence, PySet, PySlice,
-        PySliceIndices, PyTuple, PyType,
+        PyBool, PyDict, PyList, PyMapping, PyNotImplemented, PySequence, PySet, PySlice, PyTuple,
+        PyType,
     },
 };
 use pyo3_ext::{
@@ -29,11 +29,8 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
-use sorted_rs::{Bounds, ListsData, ListsDataMethods, Pos};
-use std::{
-    cmp::Ordering,
-    sync::{Mutex, MutexGuard, TryLockError, atomic::Ordering as AtomicOrdering},
-};
+use sorted_rs::{Bounds, KeysListsData, ListDataGetters, ListsData, ListsDataMethods};
+use std::sync::{Mutex, MutexGuard, TryLockError, atomic::Ordering as AtomicOrdering};
 use tap::prelude::*;
 
 pub const DEFAULT_LOAD_FACTOR: usize = 1000;
@@ -110,17 +107,19 @@ pub(super) trait BaseSortedListSet: SortedCollection {
 
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedListGetters: BaseSortedListSet {
+    type L: ListsDataMethods;
     #[skip]
-    fn get_data(&self) -> MutexGuard<'_, ListsData>;
+    fn get_data(&self) -> MutexGuard<'_, Self::L>;
     fn set_load(&self, load: usize);
     #[getter]
     fn get_load(&self) -> usize;
 }
 macro_rules! impl_inner_sorted_rs {
-    ($t:ty) => {
+    ($t:ty, $l:ty) => {
         impl SortedListGetters for $t {
+            type L = $l;
             #[inline(always)]
-            fn get_data(&self) -> MutexGuard<'_, ListsData> {
+            fn get_data(&self) -> MutexGuard<'_, Self::L> {
                 try_lock_recover(&self.data, "data already locked - reentrant bug")
             }
             #[inline(always)]
@@ -134,8 +133,8 @@ macro_rules! impl_inner_sorted_rs {
         }
     };
 }
-impl_inner_sorted_rs!(SortedList);
-impl_inner_sorted_rs!(SortedKeyList);
+impl_inner_sorted_rs!(SortedList, ListsData);
+impl_inner_sorted_rs!(SortedKeyList, KeysListsData);
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait BaseSortedList: SortedListGetters {
     #[skip]
@@ -143,23 +142,15 @@ pub(super) trait BaseSortedList: SortedListGetters {
         py: Python<'_>,
         inner: iter::BoundedIter<Self>,
     ) -> PyResult<Bound<'_, abc::PyoIterator>>;
-    #[skip]
-    fn delete(
-        &self,
-        py: Python<'_>,
-        data: &mut MutexGuard<'_, ListsData>,
-        bounds: &mut Pos,
-    ) -> PyResult<()>;
-    #[skip]
-    fn expand(&self, py: Python<'_>, data: &mut MutexGuard<'_, ListsData>, pos: usize);
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
     #[skip]
     #[inline]
     fn reset_list(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        let values = self.get_data().collapse(py);
-        self.clear(py);
+        let mut data = self.get_data();
+        let values = data.collapse(py);
+        data.clear();
         self.set_load(load);
-        self.update(py, values)
+        data.update(py, values, self.get_load())
     }
     #[skip]
     #[inline(always)]
@@ -184,90 +175,11 @@ pub(super) trait BaseSortedList: SortedListGetters {
             .try_iter()?
             .map(|x| x?.unbind().pipe(Ok))
             .collect::<PyResult<Vec<_>>>()?;
-        self.update(py, values)
+        self.get_data().update(py, values, self.get_load())
     }
-    #[skip]
-    fn update(&self, py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<()>;
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let mut data = self.get_data();
-        let mut bounds = Pos::default();
-        if data.len == 0 {
-            let msg = "pop index out of range";
-            return Err(PyIndexError::new_err(msg));
-        }
-        let len_last = data.lists.last().unwrap().len().cast_signed();
-        match index {
-            -1 => {
-                bounds.pos = data.lists.len() - 1;
-                bounds.idx = data.lists[bounds.pos].len() - 1_usize;
-            }
-            _ if 0 <= index && index < data.lists[0].len().cast_signed() => {
-                bounds.idx = index.cast_unsigned();
-            }
-            _ if -len_last < index && index < 0 => {
-                bounds.pos = data.lists.len() - 1;
-                bounds.idx = (len_last + index).cast_unsigned();
-            }
-            _ => {
-                data.set_pos(index, &mut bounds)?;
-            }
-        }
-        let val = data.get_value(&bounds).clone_ref(py);
-        self.delete(py, &mut data, &mut bounds)?;
-        Ok(val.into_bound(py))
-    }
-    #[skip]
-    fn delitem_from_slice(&self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
-        let mut data = self.get_data();
-        let length = data.len.cast_signed();
-        let mut bounds = Pos::default();
-        let PySliceIndices {
-            start, stop, step, ..
-        } = slice.indices(length)?;
-        match (step, start.cmp(&stop)) {
-            (1, Ordering::Less) if start == 0 && stop == length => {
-                drop(data);
-                self.clear(py);
-                Ok(())
-            }
-            (1, Ordering::Less) if length <= 8 * (stop - start) => {
-                let mut values = data.getitem_from_slice(py, &PySlice::new(py, 0, start, 1))?;
-                if stop < length {
-                    let new_slice =
-                        data.getitem_from_slice(py, &PySlice::new(py, stop, length, 1))?;
-                    values.extend(new_slice);
-                }
-                drop(data);
-                self.clear(py);
-                self.update(py, values)?;
-                Ok(())
-            }
-            _ if step > 0 => (start..stop)
-                .step_by(step.cast_unsigned())
-                .rev()
-                .try_for_each(|idx| {
-                    data.set_pos(idx, &mut bounds)?;
-                    self.delete(py, &mut data, &mut bounds)
-                }),
-            // Negative step with nothing to delete (mirrors Python's
-            // `range`, which is empty when `start <= stop`).
-            (_, Ordering::Less | Ordering::Equal) => Ok(()),
-            _ => {
-                // Negative step, `start > stop` guaranteed by the arm above.
-                std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
-                    .try_for_each(|idx| {
-                        data.set_pos(idx, &mut bounds)?;
-                        self.delete(py, &mut data, &mut bounds)
-                    })
-            }
-        }
-    }
-    fn delitem_from_int(&self, py: Python<'_>, index: isize) -> PyResult<()> {
-        let mut data = self.get_data();
-        let mut bounds = Pos::default();
-        data.set_pos(index, &mut bounds)?;
-        self.delete(py, &mut data, &mut bounds)
+        self.get_data().pop(py, index, self.get_load())
     }
     /// Return an iterator that slices sorted list using two index pairs.\
     /// The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the first inclusive and the latter exclusive.\
@@ -309,7 +221,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         let data = self.get_data();
         match other {
             Either::Left(seq) => {
-                if data.len.ne(&seq.len()?) {
+                if data.length().ne(&seq.len()?) {
                     Either::Left(false).pipe(Ok)
                 } else {
                     let py = seq.py();
@@ -334,7 +246,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         let data = self.get_data();
         match other {
             Either::Left(seq) => {
-                if data.len.ne(&seq.len()?) {
+                if data.length().ne(&seq.len()?) {
                     Either::Left(true).pipe(Ok)
                 } else {
                     let py = seq.py();
@@ -367,7 +279,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                     }
                 }
 
-                data.len.lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
+                data.length().lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
 
             Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
@@ -386,7 +298,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                         return Either::Left(a.gt(&b)?).pipe(Ok);
                     }
                 }
-                data.len.gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
+                data.length().gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
 
             Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
@@ -406,7 +318,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                     }
                 }
 
-                data.len.le(&seq.len()?).pipe(Either::Left).pipe(Ok)
+                data.length().le(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
 
             Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
@@ -426,7 +338,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                     }
                 }
 
-                data.len.ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
+                data.length().ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
             Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
         }
@@ -437,9 +349,11 @@ pub(super) trait BaseSortedList: SortedListGetters {
         py: Python<'_>,
         index: Either<isize, Bound<'_, PySlice>>,
     ) -> PyResult<()> {
+        let mut data = self.get_data();
+        let load = self.get_load();
         match index {
-            Either::Right(slice) => self.delitem_from_slice(py, slice),
-            Either::Left(index) => self.delitem_from_int(py, index),
+            Either::Right(slice) => data.delitem_from_slice(py, slice, load),
+            Either::Left(index) => data.delitem_from_int(py, index, load),
         }
     }
 
@@ -456,7 +370,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         }
     }
     fn __len__(&self) -> usize {
-        self.get_data().len
+        self.get_data().length()
     }
 
     fn __radd__<'py>(
@@ -480,9 +394,10 @@ pub(super) trait BaseSortedList: SortedListGetters {
     }
 
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let values = self.get_data().repeat(py, num);
-        self.clear(py);
-        self.update(py, values)
+        let mut data = self.get_data();
+        let values = data.repeat(py, num);
+        data.clear();
+        data.update(py, values, self.get_load())
     }
 
     #[allow(unused_variables)]
@@ -532,8 +447,13 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         if (4 * values.len()) > set.len() {
             set.update((values,))?;
             let list = self.get_list().get();
-            list.clear(py);
-            list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
+            let mut data = list.get_data();
+            data.clear();
+            data.update(
+                py,
+                set.iter().map(Bound::unbind).collect::<Vec<_>>(),
+                list.get_load(),
+            )?;
         } else {
             for value in values.iter().map(Bound::unbind) {
                 self.add(py, value)?;
@@ -581,8 +501,13 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
             let list = self.get_list().get();
-            list.clear(py);
-            list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
+            let mut data = list.get_data();
+            data.clear();
+            data.update(
+                py,
+                set.iter().map(Bound::unbind).collect::<Vec<_>>(),
+                list.get_load(),
+            )?;
         } else {
             for value in values {
                 self.discard(value)?;
@@ -599,8 +524,13 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let set = self.get_set().bind(py);
         set.intersection_update(iterables)?;
         let list = self.get_list().get();
-        list.clear(py);
-        list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
+        let mut data = list.get_data();
+        data.clear();
+        data.update(
+            py,
+            set.iter().map(Bound::unbind).collect::<Vec<_>>(),
+            list.get_load(),
+        )
     }
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
         self.get_list().get().__getitem__(py, index)
@@ -616,12 +546,17 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
                     .iter()
                     .collect_bound::<PySet>(py)?;
                 self.get_set().bind(py).difference_update((values,))?;
-                self.get_list().get().delitem_from_slice(py, slice)?;
+                self.get_list().get().pipe(|list| {
+                    list.get_data()
+                        .delitem_from_slice(py, slice, list.get_load())
+                })?;
             }
             Either::Left(int) => {
                 let value = self.get_list().get().get_data().getitem_from_int(py, int)?;
                 self.get_set().bind(py).remove(&value)?;
-                self.get_list().get().delitem_from_int(py, int)?;
+                self.get_list()
+                    .get()
+                    .pipe(|list| list.get_data().delitem_from_int(py, int, list.get_load()))?;
             }
         }
         Ok(())
@@ -802,8 +737,13 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
             let list = slf_ref.get_list().get();
-            list.clear(py);
-            list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
+            let mut data = list.get_data();
+            data.clear();
+            data.update(
+                py,
+                set.iter().map(Bound::unbind).collect::<Vec<_>>(),
+                list.get_load(),
+            )?;
         } else {
             for value in values {
                 slf_ref.discard(value)?;
@@ -843,13 +783,16 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let slf_ref = slf.get();
-        let set = slf_ref.get_set().bind(other.py());
+        let slf_clone = slf.get();
+        let set = slf_clone.get_set().bind(other.py());
+        let list = slf_clone.get_list().get();
+        let load = list.get_load();
+        let mut data = list.get_data();
         set.symmetric_difference_update(other)?;
-        let list = slf_ref.get_list().get();
-        list.clear(py);
-        list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
-        Ok(slf)
+        data.clear();
+        data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>(), load)?;
+        // NOTE: the clone here is cheap (just an incref) and necessary to return `Self`
+        Ok(slf.clone())
     }
     fn __ixor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
         Self::symmetric_difference_update(slf, other).map(|_| ())
@@ -1014,7 +957,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         self.__len__(py)
     }
     #[skip]
-    fn iter<'py>(&self, py: Python<'py>) -> SortedDictIter<'_, 'py> {
+    fn iter<'py>(&self, py: Python<'py>) -> SortedDictIter<'_, 'py, Self> {
         SortedDictIter::new(self, py)
     }
     fn __len__(&self, py: Python<'_>) -> usize {
@@ -1135,6 +1078,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let list = self.get_list().get();
+        let load = list.get_load();
         let inner = self.get_inner().bind(py);
         if self.len(py) == 0 {
             if let Some(it) = m {
@@ -1154,7 +1098,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
                 .iter()
                 .map(|(k, _)| k.unbind())
                 .collect::<Vec<_>>()
-                .pipe(|v| list.update(py, v))?;
+                .pipe(|v| list.get_data().update(py, v, load))?;
             Ok(())
         } else {
             let pairs = try_cast_into! {match (m, kwargs) {
@@ -1190,7 +1134,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
                     .iter()
                     .map(|(k, _)| k.unbind())
                     .collect::<Vec<_>>()
-                    .pipe(|v| list.update(py, v))?;
+                    .pipe(|v| list.get_data().update(py, v, load))?;
                 Ok(())
             } else {
                 for key in pairs.keys_view().iter_py() {
@@ -1204,17 +1148,17 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
     }
 }
 
-pub(super) struct SortedDictIter<'a, 'py> {
+pub(super) struct SortedDictIter<'a, 'py, D: BaseSortedDict> {
     py: Python<'py>,
     mapping: Bound<'py, PyAny>,
-    mapping_list: MutexGuard<'a, ListsData>,
+    mapping_list: MutexGuard<'a, <<D as ListGetter>::T as SortedListGetters>::L>,
     range: std::ops::Range<isize>,
 }
-impl<'a, 'py> SortedDictIter<'a, 'py> {
-    fn new<D: BaseSortedDict>(owner: &'a D, py: Python<'py>) -> Self {
+impl<'a, 'py, D: BaseSortedDict> SortedDictIter<'a, 'py, D> {
+    fn new(owner: &'a D, py: Python<'py>) -> Self {
         let mapping = owner.get_inner().clone_ref(py).into_bound(py).into_any();
         let mapping_list = owner.get_list().get().get_data();
-        let range = 0..mapping_list.len.cast_signed();
+        let range = 0..mapping_list.length().cast_signed();
         Self {
             py,
             mapping,
@@ -1223,7 +1167,7 @@ impl<'a, 'py> SortedDictIter<'a, 'py> {
         }
     }
 }
-impl<'py> Iterator for SortedDictIter<'_, 'py> {
+impl<'py, D: BaseSortedDict> Iterator for SortedDictIter<'_, 'py, D> {
     type Item = PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>;
     fn next(&mut self) -> Option<PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>> {
         let index = self.range.next()?;

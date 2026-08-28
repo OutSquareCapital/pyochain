@@ -40,8 +40,9 @@ where
         try_cast_into! {
             match index {
                 Case::PySlice(slice) => {
-                    let keys = list.get_data().getitem_from_slice(py, &slice)?;
-                    list.delitem_from_slice(py, slice)?;
+                    let mut data = list.get_data();
+                    let keys = data.getitem_from_slice(py, &slice)?;
+                    data.delitem_from_slice(py, slice, list.get_load())?;
                     for key in keys {
                         dict.del_item(key)?;
                     }
