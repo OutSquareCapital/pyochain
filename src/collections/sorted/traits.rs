@@ -30,10 +30,9 @@ use pyo3_ext::{
 };
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
 use sorted_rs::{Bounds, KeysListsData, ListDataGetters, ListsData, ListsDataMethods};
-use std::sync::{Mutex, MutexGuard, TryLockError, atomic::Ordering as AtomicOrdering};
+use std::sync::{Mutex, MutexGuard, TryLockError};
 use tap::prelude::*;
 
-pub const DEFAULT_LOAD_FACTOR: usize = 1000;
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
 pub(crate) type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
@@ -110,7 +109,6 @@ pub(super) trait SortedListGetters: BaseSortedListSet {
     type L: ListsDataMethods;
     #[skip]
     fn get_data(&self) -> MutexGuard<'_, Self::L>;
-    fn set_load(&self, load: usize);
     #[getter]
     fn get_load(&self) -> usize;
 }
@@ -120,15 +118,11 @@ macro_rules! impl_inner_sorted_rs {
             type L = $l;
             #[inline(always)]
             fn get_data(&self) -> MutexGuard<'_, Self::L> {
-                try_lock_recover(&self.data, "data already locked - reentrant bug")
-            }
-            #[inline(always)]
-            fn set_load(&self, load: usize) {
-                self.load.store(load, AtomicOrdering::Relaxed);
+                try_lock_recover(&self.0, "data already locked - reentrant bug")
             }
             #[inline(always)]
             fn get_load(&self) -> usize {
-                self.load.load(AtomicOrdering::Relaxed)
+                self.get_data().load
             }
         }
     };
@@ -143,15 +137,6 @@ pub(super) trait BaseSortedList: SortedListGetters {
         inner: iter::BoundedIter<Self>,
     ) -> PyResult<Bound<'_, abc::PyoIterator>>;
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
-    #[skip]
-    #[inline]
-    fn reset_list(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        let mut data = self.get_data();
-        let values = data.collapse(py);
-        data.clear();
-        self.set_load(load);
-        data.update(py, values, self.get_load())
-    }
     #[skip]
     #[inline(always)]
     fn islice_list<T: BaseSortedList>(
@@ -175,11 +160,11 @@ pub(super) trait BaseSortedList: SortedListGetters {
             .try_iter()?
             .map(|x| x?.unbind().pipe(Ok))
             .collect::<PyResult<Vec<_>>>()?;
-        self.get_data().update(py, values, self.get_load())
+        self.get_data().update(py, values)
     }
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        self.get_data().pop(py, index, self.get_load())
+        self.get_data().pop(py, index)
     }
     /// Return an iterator that slices sorted list using two index pairs.\
     /// The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the first inclusive and the latter exclusive.\
@@ -350,10 +335,9 @@ pub(super) trait BaseSortedList: SortedListGetters {
         index: Either<isize, Bound<'_, PySlice>>,
     ) -> PyResult<()> {
         let mut data = self.get_data();
-        let load = self.get_load();
         match index {
-            Either::Right(slice) => data.delitem_from_slice(py, slice, load),
-            Either::Left(index) => data.delitem_from_int(py, index, load),
+            Either::Right(slice) => data.delitem_from_slice(py, slice),
+            Either::Left(index) => data.delitem_from_int(py, index),
         }
     }
 
@@ -397,7 +381,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         let mut data = self.get_data();
         let values = data.repeat(py, num);
         data.clear();
-        data.update(py, values, self.get_load())
+        data.update(py, values)
     }
 
     #[allow(unused_variables)]
@@ -449,11 +433,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             let list = self.get_list().get();
             let mut data = list.get_data();
             data.clear();
-            data.update(
-                py,
-                set.iter().map(Bound::unbind).collect::<Vec<_>>(),
-                list.get_load(),
-            )?;
+            data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values.iter().map(Bound::unbind) {
                 self.add(py, value)?;
@@ -503,11 +483,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             let list = self.get_list().get();
             let mut data = list.get_data();
             data.clear();
-            data.update(
-                py,
-                set.iter().map(Bound::unbind).collect::<Vec<_>>(),
-                list.get_load(),
-            )?;
+            data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values {
                 self.discard(value)?;
@@ -526,11 +502,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let list = self.get_list().get();
         let mut data = list.get_data();
         data.clear();
-        data.update(
-            py,
-            set.iter().map(Bound::unbind).collect::<Vec<_>>(),
-            list.get_load(),
-        )
+        data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
     }
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
         self.get_list().get().__getitem__(py, index)
@@ -546,17 +518,16 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
                     .iter()
                     .collect_bound::<PySet>(py)?;
                 self.get_set().bind(py).difference_update((values,))?;
-                self.get_list().get().pipe(|list| {
-                    list.get_data()
-                        .delitem_from_slice(py, slice, list.get_load())
-                })?;
+                self.get_list()
+                    .get()
+                    .pipe(|list| list.get_data().delitem_from_slice(py, slice))?;
             }
             Either::Left(int) => {
                 let value = self.get_list().get().get_data().getitem_from_int(py, int)?;
                 self.get_set().bind(py).remove(&value)?;
                 self.get_list()
                     .get()
-                    .pipe(|list| list.get_data().delitem_from_int(py, int, list.get_load()))?;
+                    .pipe(|list| list.get_data().delitem_from_int(py, int))?;
             }
         }
         Ok(())
@@ -739,11 +710,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             let list = slf_ref.get_list().get();
             let mut data = list.get_data();
             data.clear();
-            data.update(
-                py,
-                set.iter().map(Bound::unbind).collect::<Vec<_>>(),
-                list.get_load(),
-            )?;
+            data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values {
                 slf_ref.discard(value)?;
@@ -785,12 +752,10 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let py = other.py();
         let slf_clone = slf.get();
         let set = slf_clone.get_set().bind(other.py());
-        let list = slf_clone.get_list().get();
-        let load = list.get_load();
-        let mut data = list.get_data();
+        let mut data = slf_clone.get_list().get().get_data();
         set.symmetric_difference_update(other)?;
         data.clear();
-        data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>(), load)?;
+        data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         // NOTE: the clone here is cheap (just an incref) and necessary to return `Self`
         Ok(slf.clone())
     }
@@ -1078,7 +1043,6 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let list = self.get_list().get();
-        let load = list.get_load();
         let inner = self.get_inner().bind(py);
         if self.len(py) == 0 {
             if let Some(it) = m {
@@ -1098,7 +1062,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
                 .iter()
                 .map(|(k, _)| k.unbind())
                 .collect::<Vec<_>>()
-                .pipe(|v| list.get_data().update(py, v, load))?;
+                .pipe(|v| list.get_data().update(py, v))?;
             Ok(())
         } else {
             let pairs = try_cast_into! {match (m, kwargs) {
@@ -1134,7 +1098,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
                     .iter()
                     .map(|(k, _)| k.unbind())
                     .collect::<Vec<_>>()
-                    .pipe(|v| list.get_data().update(py, v, load))?;
+                    .pipe(|v| list.get_data().update(py, v))?;
                 Ok(())
             } else {
                 for key in pairs.keys_view().iter_py() {

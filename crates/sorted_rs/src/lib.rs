@@ -1,10 +1,12 @@
 pub mod bisect;
 mod bounds;
 mod cmp;
-mod data;
 mod errors;
+mod keylist;
+mod list;
 mod ops;
 mod traits;
 pub use bounds::{Bounds, Pos};
-pub use data::{KeysListsData, ListsData};
+pub use keylist::KeysListsData;
+pub use list::ListsData;
 pub use traits::{ListDataGetters, ListsDataMethods};

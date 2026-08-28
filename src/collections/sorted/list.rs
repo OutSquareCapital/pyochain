@@ -2,10 +2,7 @@ use crate::{
     abc,
     collections::sorted::{
         iter,
-        traits::{
-            BaseSortedList, BaseSortedListSet, DEFAULT_LOAD_FACTOR, Reduced, SortedCollection,
-            SortedListGetters,
-        },
+        traits::{BaseSortedList, BaseSortedListSet, Reduced, SortedCollection, SortedListGetters},
     },
     core::{PyoVec, iterators},
     traits::IntoInit,
@@ -13,27 +10,19 @@ use crate::{
 use pyo3::{PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
 use sorted_rs::{Bounds, ListsData, ListsDataMethods};
-use std::sync::{Mutex, atomic::AtomicUsize};
+use std::sync::Mutex;
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
-pub struct SortedList {
-    pub(super) data: Mutex<ListsData>,
-    pub(super) load: AtomicUsize,
-}
+pub struct SortedList(pub(super) Mutex<ListsData>);
 impl SortedList {
     #[inline]
     pub(super) fn new() -> Self {
-        Self {
-            data: Mutex::new(ListsData::default()),
-            load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
-        }
+        Self(Mutex::new(ListsData::default()))
     }
     #[inline]
     pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
         let new_inst = Self::new();
-        new_inst
-            .get_data()
-            .update(py, values, new_inst.get_load())?;
+        new_inst.get_data().update(py, values)?;
         Ok(new_inst)
     }
 }
@@ -68,11 +57,11 @@ impl SortedCollection for SortedList {
     }
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_left(None, value)
+        self.get_data().bisect_left(value)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_right(None, value)
+        self.get_data().bisect_right(value)
     }
 
     fn index(
@@ -84,7 +73,7 @@ impl SortedCollection for SortedList {
         self.get_data().index(&value, start, stop)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.reset_list(py, load)
+        self.get_data().reset(py, load)
     }
     fn irange<'py>(
         slf: Bound<'py, Self>,
@@ -116,15 +105,15 @@ impl SortedCollection for SortedList {
 }
 impl BaseSortedListSet for SortedList {
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        self.get_data().add(py, value, self.get_load())
+        self.get_data().add(py, value)
     }
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_data().discard(value, self.get_load())
+        self.get_data().discard(value)
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_data().remove(value, self.get_load())
+        self.get_data().remove(value)
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {

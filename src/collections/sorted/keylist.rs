@@ -3,8 +3,8 @@ use crate::{
     collections::sorted::{
         iter,
         traits::{
-            BaseSortedList, BaseSortedListSet, DEFAULT_LOAD_FACTOR, PyIdentity, Reduced,
-            SortedCollection, SortedListGetters,
+            BaseSortedList, BaseSortedListSet, PyIdentity, Reduced, SortedCollection,
+            SortedListGetters,
         },
     },
     core::{PyoVec, iterators},
@@ -13,27 +13,13 @@ use crate::{
 use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
 use sorted_rs::{Bounds, KeysListsData, ListsDataMethods};
-use std::sync::{Mutex, atomic::AtomicUsize};
+use std::sync::Mutex;
 use tap::Pipe;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
-pub struct SortedKeyList {
-    pub(super) data: Mutex<KeysListsData>,
-    pub(super) load: AtomicUsize,
-}
+pub struct SortedKeyList(pub(super) Mutex<KeysListsData>);
 impl SortedKeyList {
     pub(super) fn new(key: Py<PyAny>) -> Self {
-        Self {
-            data: Mutex::new(KeysListsData {
-                lists: Vec::new(),
-                keys: Vec::new(),
-                maxes: Vec::new(),
-                idx: Vec::new(),
-                len: 0,
-                offset: 0,
-                key,
-            }),
-            load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
-        }
+        Self(Mutex::new(KeysListsData::new(key)))
     }
     pub(super) fn from_vec(
         py: Python<'_>,
@@ -41,7 +27,8 @@ impl SortedKeyList {
         key: &Py<PyAny>,
     ) -> PyResult<Self> {
         let new_inst = Self::new(key.clone_ref(py));
-        new_inst.update(py, values).map(|()| new_inst)
+        new_inst.get_data().update(py, values)?;
+        Ok(new_inst)
     }
 }
 #[pymethods]
@@ -55,12 +42,11 @@ impl SortedKeyList {
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         let py = slf.py();
-        let slf_ref = slf.get();
-        let data = slf_ref.get_data();
+        let data = slf.get().get_data();
         let specs = Bounds::get_irange_specs(&data.keys, &data.maxes, min_key, max_key, inclusive);
         match specs? {
             None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => Self::islice_iter(slf, bounds, reverse),
+            Some(bounds) => Self::islice_iter(slf.clone(), bounds, reverse),
         }
     }
     #[new]
@@ -79,10 +65,10 @@ impl SortedKeyList {
     }
 
     pub(super) fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_left(Some(&self.get_keys()), key)
+        self.get_data().bisect_left(key)
     }
     pub(super) fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_right(Some(&self.get_keys()), key)
+        self.get_data().bisect_right(key)
     }
 }
 impl SortedCollection for SortedKeyList {
@@ -99,17 +85,15 @@ impl SortedCollection for SortedKeyList {
     }
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.key
-            .bind(value.py())
-            .call1((value,))
-            .and_then(|x| self.bisect_key_left(&x))
+        let mut data = self.get_data();
+        let key = data.key.bind(value.py()).call1((value,))?;
+        data.bisect_left(&key)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.key
-            .bind(value.py())
-            .call1((value,))
-            .and_then(|x| self.bisect_key_right(&x))
+        let mut data = self.get_data();
+        let key = data.key.bind(value.py()).call1((value,))?;
+        data.bisect_right(&key)
     }
     fn clear(&self, _py: Python<'_>) {
         self.get_data().clear();
@@ -129,10 +113,11 @@ impl SortedCollection for SortedKeyList {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let key_fn = |x| slf.get().key.bind(slf.py()).call1((x,));
+        let data = slf.get().get_data();
+        let key_fn = |x| data.key.bind(slf.py()).call1((x,));
         let min_key = minimum.map(key_fn).transpose()?;
         let max_key = maximum.map(key_fn).transpose()?;
-        Self::irange_key(slf, min_key, max_key, inclusive, reverse)
+        Self::irange_key(slf.clone(), min_key, max_key, inclusive, reverse)
     }
     fn islice(
         slf: Bound<'_, Self>,
@@ -143,24 +128,25 @@ impl SortedCollection for SortedKeyList {
         Self::islice_list(slf, start, stop, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.reset_list(py, load)
+        self.get_data().reset(py, load)
     }
 }
 impl BaseSortedListSet for SortedKeyList {
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        self.get_data().add(py, value, self.get_load())
+        self.get_data().add(py, value)
     }
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_data().discard(value, self.get_load())
+        self.get_data().discard(value)
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_data().remove(value, self.get_load())
+        self.get_data().remove(value)
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.get_data().collapse(py), &self.key)?.into_bound(py)
+        let data = self.get_data();
+        Self::from_vec(py, data.collapse(py), &data.key)?.into_bound(py)
     }
 }
 impl BaseSortedList for SortedKeyList {
@@ -169,17 +155,18 @@ impl BaseSortedList for SortedKeyList {
         other: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
-        let slf_ref = slf.get();
+        let data = slf.get().get_data();
         let out = if other.is(&slf) {
-            slf_ref.get_data().repeat(py, 2)
+            data.repeat(py, 2)
         } else {
-            slf_ref.get_data().concat(py, other)?
+            data.concat(py, other)?
         };
-        Self::from_vec(py, out, &slf_ref.key)?.into_bound(py)
+        Self::from_vec(py, out, &data.key)?.into_bound(py)
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.get_data().repeat(py, num), &self.key)?.into_bound(py)
+        let data = self.get_data();
+        Self::from_vec(py, data.repeat(py, num), &data.key)?.into_bound(py)
     }
 
     //recursive_repr()

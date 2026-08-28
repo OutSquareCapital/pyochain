@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::{Bounds, Pos, bisect, errors};
+use crate::{Bounds, Pos, errors};
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
@@ -8,6 +8,7 @@ use pyo3::{
 };
 use tap::Pipe;
 
+pub(super) const DEFAULT_LOAD_FACTOR: usize = 1000;
 pub trait ListDataGetters: Sized {
     fn lists(&self) -> &Vec<Vec<Py<PyAny>>>;
     fn lists_mut(&mut self) -> &mut Vec<Vec<Py<PyAny>>>;
@@ -19,14 +20,18 @@ pub trait ListDataGetters: Sized {
     fn set_len(&mut self, len: usize);
     fn offset(&self) -> usize;
     fn set_offset(&mut self, offset: usize);
+    fn load(&self) -> usize;
+    fn set_load(&mut self, load: usize);
 }
 pub trait ListsDataMethods: ListDataGetters {
-    fn add(&mut self, py: Python<'_>, value: Py<PyAny>, load: usize) -> PyResult<()>;
+    fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
+    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
+    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
-    fn expand(&mut self, py: Python<'_>, pos: usize, load: usize);
-    fn delete(&mut self, py: Python<'_>, bounds: &mut Pos, load: usize) -> PyResult<()>;
-    fn discard(&mut self, value: Bound<'_, PyAny>, load: usize) -> PyResult<()>;
-    fn update(&mut self, py: Python<'_>, values: Vec<Py<PyAny>>, load: usize) -> PyResult<()>;
+    fn expand(&mut self, py: Python<'_>, pos: usize);
+    fn delete(&mut self, py: Python<'_>, bounds: &mut Pos) -> PyResult<()>;
+    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn update(&mut self, py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<()>;
     fn clear(&mut self);
     fn index(
         &mut self,
@@ -35,7 +40,7 @@ pub trait ListsDataMethods: ListDataGetters {
         stop: Option<isize>,
     ) -> PyResult<isize>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn remove(&mut self, value: &Bound<'_, PyAny>, load: usize) -> PyResult<()>;
+    fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()>;
     #[inline]
     #[must_use]
     fn get_value(&self, pos: &Pos) -> &Py<PyAny> {
@@ -65,44 +70,6 @@ pub trait ListsDataMethods: ListDataGetters {
             .flat_map(|_| values.iter())
             .map(|x| x.clone_ref(py))
             .collect::<Vec<_>>()
-    }
-
-    fn bisect_left(
-        &mut self,
-        lists: Option<&Vec<Vec<Py<PyAny>>>>,
-        value: &Bound<'_, PyAny>,
-    ) -> PyResult<isize> {
-        if self.maxes().is_empty() {
-            return Ok(0);
-        }
-        let mut bound = Pos::new(0, 0);
-
-        bound.pos = bisect::left(self.maxes(), value)?;
-
-        if bound.pos == self.maxes().len() {
-            Ok(self.length().cast_signed())
-        } else {
-            bound.idx = bisect::left(&lists.unwrap_or(self.lists())[bound.pos], value)?;
-            bound.loc(self)
-        }
-    }
-    fn bisect_right(
-        &mut self,
-        lists: Option<&Vec<Vec<Py<PyAny>>>>,
-        value: &Bound<'_, PyAny>,
-    ) -> PyResult<isize> {
-        if self.maxes().is_empty() {
-            return Ok(0);
-        }
-        let mut bound = Pos::new(0, 0);
-
-        bound.pos = bisect::right(self.maxes(), value)?;
-
-        if bound.pos == self.maxes().len() {
-            return Ok(self.length().cast_signed());
-        }
-        bound.idx = bisect::right(&lists.unwrap_or(self.lists())[bound.pos], value)?;
-        bound.loc(self)
     }
 
     fn getitem_from_int<'py>(
@@ -299,12 +266,7 @@ pub trait ListsDataMethods: ListDataGetters {
         self.idx_mut().clear();
     }
 
-    fn delitem_from_slice(
-        &mut self,
-        py: Python<'_>,
-        slice: Bound<'_, PySlice>,
-        load: usize,
-    ) -> PyResult<()> {
+    fn delitem_from_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
         let length = self.length().cast_signed();
         let mut bounds = Pos::default();
         let PySliceIndices {
@@ -323,7 +285,7 @@ pub trait ListsDataMethods: ListDataGetters {
                     values.extend(new_slice);
                 }
                 self.clear();
-                self.update(py, values, load)?;
+                self.update(py, values)?;
                 Ok(())
             }
             _ if step > 0 => (start..stop)
@@ -331,7 +293,7 @@ pub trait ListsDataMethods: ListDataGetters {
                 .rev()
                 .try_for_each(|idx| {
                     self.set_pos(idx, &mut bounds)?;
-                    self.delete(py, &mut bounds, load)
+                    self.delete(py, &mut bounds)
                 }),
             // Negative step with nothing to delete (mirrors Python's
             // `range`, which is empty when `start <= stop`).
@@ -341,15 +303,15 @@ pub trait ListsDataMethods: ListDataGetters {
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .try_for_each(|idx| {
                         self.set_pos(idx, &mut bounds)?;
-                        self.delete(py, &mut bounds, load)
+                        self.delete(py, &mut bounds)
                     })
             }
         }
     }
-    fn delitem_from_int(&mut self, py: Python<'_>, index: isize, load: usize) -> PyResult<()> {
+    fn delitem_from_int(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
         let mut bounds = Pos::default();
         self.set_pos(index, &mut bounds)?;
-        self.delete(py, &mut bounds, load)
+        self.delete(py, &mut bounds)
     }
 
     fn delete_on_idx(&mut self, bounds: &Pos, max_at_pos: Py<PyAny>) {
@@ -449,12 +411,7 @@ pub trait ListsDataMethods: ListDataGetters {
             }
         }
     }
-    fn pop<'py>(
-        &mut self,
-        py: Python<'py>,
-        index: isize,
-        load: usize,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut bounds = Pos::default();
         if self.length() == 0 {
             let msg = "pop index out of range";
@@ -478,8 +435,15 @@ pub trait ListsDataMethods: ListDataGetters {
             }
         }
         let val = self.get_value(&bounds).clone_ref(py);
-        self.delete(py, &mut bounds, load)?;
+        self.delete(py, &mut bounds)?;
         Ok(val.into_bound(py))
+    }
+
+    fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
+        let values = self.collapse(py);
+        self.clear();
+        self.set_load(load);
+        self.update(py, values)
     }
 }
 
@@ -495,4 +459,47 @@ fn get_slice<'a, T: ListsDataMethods>(
                 .flatten(),
         )
         .chain(data.lists()[bounds.max.pos][0..bounds.max.idx].iter())
+}
+#[macro_export]
+macro_rules! impl_list_data_getters {
+    ($name:ident) => {
+        impl ListDataGetters for $name {
+            fn lists(&self) -> &Vec<Vec<Py<PyAny>>> {
+                &self.lists
+            }
+            fn lists_mut(&mut self) -> &mut Vec<Vec<Py<PyAny>>> {
+                &mut self.lists
+            }
+            fn maxes(&self) -> &Vec<Py<PyAny>> {
+                &self.maxes
+            }
+            fn maxes_mut(&mut self) -> &mut Vec<Py<PyAny>> {
+                &mut self.maxes
+            }
+            fn idx(&self) -> &Vec<usize> {
+                &self.idx
+            }
+            fn idx_mut(&mut self) -> &mut Vec<usize> {
+                &mut self.idx
+            }
+            fn length(&self) -> usize {
+                self.len
+            }
+            fn set_len(&mut self, len: usize) {
+                self.len = len;
+            }
+            fn offset(&self) -> usize {
+                self.offset
+            }
+            fn set_offset(&mut self, offset: usize) {
+                self.offset = offset;
+            }
+            fn load(&self) -> usize {
+                self.load
+            }
+            fn set_load(&mut self, load: usize) {
+                self.load = load;
+            }
+        }
+    };
 }

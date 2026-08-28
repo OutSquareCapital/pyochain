@@ -42,7 +42,7 @@ where
                 Case::PySlice(slice) => {
                     let mut data = list.get_data();
                     let keys = data.getitem_from_slice(py, &slice)?;
-                    data.delitem_from_slice(py, slice, list.get_load())?;
+                    data.delitem_from_slice(py, slice)?;
                     for key in keys {
                         dict.del_item(key)?;
                     }

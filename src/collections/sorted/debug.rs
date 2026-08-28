@@ -27,9 +27,9 @@ pub fn check_sorted_dict(
     data: Either<Py<SortedDict>, Py<SortedKeyDict>>,
 ) -> PyResult<()> {
     fn check_dict(x: &impl BaseSortedDict, py: Python<'_>) -> PyResult<()> {
-        x.get_list().get().pipe(|list| {
-            run_checks(py, list).inspect_err(move |e| show_list(py, e, &list, list.get_load()))
-        })?;
+        x.get_list()
+            .get()
+            .pipe(|list| run_checks(py, list).inspect_err(move |e| show_list(py, e, &list)))?;
         let data = x.get_list().get().get_data();
         pyassert!(x.len(py) == data.length());
         pyassert!(data.iter().all(|item| {
@@ -49,7 +49,7 @@ pub fn check_sorted_set(
     data: Either<Py<SortedSet>, Py<SortedKeySet>>,
 ) -> PyResult<()> {
     fn check_list(x: &impl SortedListGetters, py: Python<'_>) -> PyResult<()> {
-        run_checks(py, x).inspect_err(move |e| show_list(py, e, x, x.get_load()))
+        run_checks(py, x).inspect_err(move |e| show_list(py, e, x))
     }
     fn check_len(x: &impl BaseSortedSet, py: Python<'_>) -> PyResult<()> {
         check_list(x.get_list().get(), py)?;
@@ -85,7 +85,7 @@ pub fn check_sorted_list(
     data: Either<Py<SortedList>, Py<SortedKeyList>>,
 ) -> PyResult<()> {
     fn check_list(x: &impl SortedListGetters, py: Python<'_>) -> PyResult<()> {
-        run_checks(py, x).inspect_err(move |e| show_list(py, e, x, x.get_load()))
+        run_checks(py, x).inspect_err(move |e| show_list(py, e, x))
     }
     data.map_either(|x| check_list(x.get(), py), |x| check_list(x.get(), py))
         .into_inner()
@@ -95,23 +95,23 @@ pub fn check_sorted_key_list(py: Python<'_>, data: Py<SortedKeyList>) -> PyResul
     run_key_checks(py, data.get()).inspect_err(move |e| show_key_list(py, e, data.get()))
 }
 
-fn run_checks(py: Python<'_>, data: &impl SortedListGetters) -> PyResult<()> {
-    let lst_data = data.get_data();
+fn run_checks(py: Python<'_>, list: &impl SortedListGetters) -> PyResult<()> {
+    let data = list.get_data();
     let err = |x| PyAssertionError::new_err(x);
 
-    (data.get_load() >= 4)
+    (data.load() >= 4)
         .then_some(())
         .ok_or(err("Load factor must be at least 4"))?;
-    (lst_data.maxes().len() == lst_data.lists().len())
+    (data.maxes().len() == data.lists().len())
         .then_some(())
         .ok_or(err("Maxes and lists must have the same length"))?;
-    (lst_data.length() == lst_data.lists().iter().map(Vec::len).sum::<usize>())
+    (data.length() == data.lists().iter().map(Vec::len).sum::<usize>())
         .then_some(())
         .ok_or(err("Data length mismatch"))?;
 
     // Check all sublists are sorted.
 
-    for sublist in lst_data.lists() {
+    for sublist in data.lists() {
         for pos in 1..sublist.len() {
             (sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?)
                 .then_some(())
@@ -121,78 +121,75 @@ fn run_checks(py: Python<'_>, data: &impl SortedListGetters) -> PyResult<()> {
 
     // Check beginning/end of sublists are sorted.
 
-    for pos in 1..lst_data.lists().len() {
-        (lst_data.lists()[pos - 1]
+    for pos in 1..data.lists().len() {
+        (data.lists()[pos - 1]
             .last()
             .unwrap()
             .bind(py)
-            .le(lst_data.lists()[pos][0].bind(py))?)
+            .le(data.lists()[pos][0].bind(py))?)
         .then_some(())
         .ok_or(err("Sublists must be sorted at boundaries"))?;
     }
 
     // Check _maxes index is the last value of each sublist.
 
-    for pos in 0..lst_data.maxes().len() {
-        (lst_data.maxes()[pos]
+    for pos in 0..data.maxes().len() {
+        (data.maxes()[pos]
             .bind(py)
-            .eq(lst_data.lists()[pos].last().unwrap().bind(py))?)
+            .eq(data.lists()[pos].last().unwrap().bind(py))?)
         .then_some(())
         .ok_or(err("Maxes must match last element of sublists"))?;
     }
 
     // Check sublist lengths are less than double load-factor.
 
-    let double = data.get_load() << 1;
-    (lst_data
-        .lists()
-        .iter()
-        .all(|sublist| sublist.len() <= double))
-    .then_some(())
-    .ok_or(err("Sublists must not exceed double load factor"))?;
+    let double = data.load() << 1;
+    (data.lists().iter().all(|sublist| sublist.len() <= double))
+        .then_some(())
+        .ok_or(err("Sublists must not exceed double load factor"))?;
 
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
 
-    let half = data.get_load() >> 1;
-    for pos in 0..lst_data.lists().len().saturating_sub(1) {
-        (lst_data.lists()[pos].len() >= half)
+    let half = data.load() >> 1;
+    for pos in 0..data.lists().len().saturating_sub(1) {
+        (data.lists()[pos].len() >= half)
             .then_some(())
             .ok_or(err("Sublists must be at least half load factor"))?;
     }
 
-    if !lst_data.idx().is_empty() {
-        (&lst_data.length() == lst_data.idx().index(0))
+    if !data.idx().is_empty() {
+        (&data.length() == data.idx().index(0))
             .then_some(())
             .ok_or(err("Index root must equal total length"))?;
-        (lst_data.idx().len() == lst_data.offset() + lst_data.lists().len())
+        (data.idx().len() == data.offset() + data.lists().len())
             .then_some(())
             .ok_or(err("Index length mismatch"))?;
 
         // Check index leaf nodes equal length of sublists.
 
-        for pos in 0..lst_data.lists().len() {
-            let leaf = lst_data.idx().index(lst_data.offset() + pos);
-            (leaf.eq(&lst_data.lists()[pos].len()))
+        for pos in 0..data.lists().len() {
+            let leaf = data.idx().index(data.offset() + pos);
+            (leaf.eq(&data.lists()[pos].len()))
                 .then_some(())
                 .ok_or(err("Index leaf node length mismatch"))?;
         }
 
         // Check index branch nodes are the sum of their children.
 
-        for pos in 0..lst_data.offset() {
+        for pos in 0..data.offset() {
             let child = (pos << 1) + 1;
-            if child >= lst_data.idx().len() {
-                (lst_data.idx().index(pos).eq(&0))
+            if child >= data.idx().len() {
+                (data.idx().index(pos).eq(&0))
                     .then_some(())
                     .ok_or(err("Index branch node length mismatch"))?;
-            } else if child + 1 == lst_data.idx().len() {
-                (lst_data.idx().index(pos).eq(lst_data.idx().index(child)))
+            } else if child + 1 == data.idx().len() {
+                (data.idx().index(pos).eq(data.idx().index(child)))
                     .then_some(())
                     .ok_or(err("Index branch node length mismatch"))?;
             } else {
-                let child_sum = lst_data.idx().index(child) + lst_data.idx().index(child + 1);
-                pyassert!(child_sum.eq(lst_data.idx().index(pos)));
+                let child_sum = data.idx().index(child) + data.idx().index(child + 1);
+                pyassert!(child_sum.eq(data.idx().index(pos)));
             }
         }
     }
@@ -292,17 +289,17 @@ fn run_key_checks(py: Python<'_>, list: &SortedKeyList) -> PyResult<()> {
 
 fn show_key_list(py: Python<'_>, err: &PyErr, list: &SortedKeyList) {
     let data = list.get_data();
-    show_list(py, err, &data, list.get_load());
+    show_list(py, err, &data);
     let infos = [
         format!("len_keys: {}", data.keys.len()),
         format!("keys: {:?}", data.keys),
     ];
     err.add_note(py, infos.join("\n")).unwrap();
 }
-fn show_list(py: Python<'_>, err: &PyErr, data: &KeysListsData, load: usize) {
+fn show_list(py: Python<'_>, err: &PyErr, data: &KeysListsData) {
     let infos = [
         format!("len: {}", data.length()),
-        format!("load: {}", load),
+        format!("load: {}", data.load),
         format!("offset: {}", data.offset()),
         format!("len_index: {}", data.idx().len()),
         format!("index: {:?}", data.idx()),
