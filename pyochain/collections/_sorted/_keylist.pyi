@@ -74,10 +74,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
     def __mul__(self, num: int) -> Self: ...
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[Vec[T], KeyFunc[T, OT]]]: ...
-    @property
-    def key(self) -> KeyFunc[T, OT]:
-        """Function used to extract comparison key from values."""
-
     def irange_key(
         self,
         min_key: OT | None = None,

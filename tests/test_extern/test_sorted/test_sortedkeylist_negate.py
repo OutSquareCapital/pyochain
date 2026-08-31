@@ -669,6 +669,5 @@ def test_pickle() -> None:
     alpha.reset(500)
     beta: SortedKeyList[int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta
-    assert alpha.key == beta.key
     assert alpha.load == 500
     assert beta.load == 1000

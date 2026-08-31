@@ -199,9 +199,8 @@ fn run_checks(py: Python<'_>, list: &impl SortedListGetters) -> PyResult<()> {
 
 fn run_key_checks(py: Python<'_>, list: &SortedKeyList) -> PyResult<()> {
     let data = list.get_data();
-    let load = list.get_load();
     let key_fn = data.key.bind(py);
-    pyassert!(load >= 4);
+    pyassert!(data.load >= 4);
     pyassert!(data.maxes.len() == data.lists.len() && data.lists.len() == data.keys.len());
     pyassert!(data.len == data.lists.iter().map(Vec::len).sum::<usize>());
 
@@ -248,13 +247,13 @@ fn run_key_checks(py: Python<'_>, list: &SortedKeyList) -> PyResult<()> {
 
     // Check sublist lengths are less than double load-factor.
 
-    let double = load << 1;
+    let double = data.load << 1;
     pyassert!(data.lists.iter().all(|sublist| sublist.len() <= double));
 
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
 
-    let half = load >> 1;
+    let half = data.load >> 1;
     for pos in 0..data.lists.len().saturating_sub(1) {
         pyassert!(data.lists[pos].len() >= half);
     }

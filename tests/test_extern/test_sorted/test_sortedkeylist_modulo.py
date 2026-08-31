@@ -30,7 +30,6 @@ def modulo(val: float) -> float:
 
 def test_init() -> None:
     slt = SortedKeyList(key=modulo)
-    assert slt.key == modulo
     check_sorted_key_list(slt)
 
     slt = SortedKeyList(key=modulo)

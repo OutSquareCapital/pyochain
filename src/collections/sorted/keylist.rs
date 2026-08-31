@@ -113,8 +113,9 @@ impl SortedCollection for SortedKeyList {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let data = slf.get().get_data();
-        let key_fn = |x| data.key.bind(slf.py()).call1((x,));
+        let py = slf.py();
+        let key = slf.get().get_data().key.clone_ref(py).into_bound(py);
+        let key_fn = |x| key.call1((x,));
         let min_key = minimum.map(key_fn).transpose()?;
         let max_key = maximum.map(key_fn).transpose()?;
         Self::irange_key(&slf, min_key, max_key, inclusive, reverse)
