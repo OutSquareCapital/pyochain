@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-08-31
+
 ### 🏆 Highlights
 
 - Thanks to [@tecnolgd](https://github.com/tecnolgd) contribution in [#92](https://github.com/OutSquareCapital/pyochain/pull/92), `Range` is now aligned with its python counterpart constructor: `Range(10)` creates a range from 0 to 9, while `Range(1, 10)` creates a range from 1 to 9. The `step` argument is optional and defaults to 1.
