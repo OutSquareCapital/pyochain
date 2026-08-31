@@ -433,7 +433,7 @@ wheels = [
 [[package]]
 name = "pytest-docflex"
 version = "0.10.1"
-source = { git = "https://github.com/OutSquareCapital/pytest-docflex.git#a425cda97dea248862d052f20d5c76330725223a" }
+source = { git = "https://github.com/OutSquareCapital/pytest-docflex.git#2010c0cf2c752fb5e081bf9f7d1aa64233b7e46c" }
 dependencies = [
     { name = "pyochain" },
     { name = "pytest" },
