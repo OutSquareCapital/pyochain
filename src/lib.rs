@@ -69,7 +69,13 @@ fn populate_core(m: &Bound<'_, PyModule>, py: Python<'_>) -> PyResult<()> {
     m.add_class::<core::Dict>()?;
     m.add_class::<core::iterators::Iter>()?;
     m.add_class::<core::iterators::Peekable>()?;
-    m.add_class::<core::SliceView>()
+    m.add_class::<core::SliceView>()?;
+    m.add_class::<core::protocols::KwargsWrapper>()?;
+    m.add_class::<core::protocols::ArgsWrapper>()?;
+    m.add_class::<core::protocols::Wrapper>()?;
+    m.add_class::<core::protocols::FromKwargs>()?;
+    m.add_class::<core::protocols::FromArgs>()?;
+    Ok(())
 }
 fn populate_abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<abc::Checkable>()?;

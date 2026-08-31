@@ -37,8 +37,8 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K], KwargsWrapper[K, V])
             Self: A new `Dict` instance containing the provided key-value pairs.
 
         See Also:
-            - [`Dict::wrap`][wrap]: Create a `Dict` from an existing dictionary, no-copy.
-            - [`Dict::of`][of]: Create a `Dict` from keyword arguments.
+            - [`wrap`][core.protocols.Wrapper.wrap]: Create a `Dict` from an existing dictionary, no-copy.
+            - [`of`][core.protocols.FromKwargs.of]: Create a `Dict` from keyword arguments.
             - [`Dict::from_object`][from_object]: Create a `Dict` from an object's `__dict__` attribute, no-copy.
 
         Example:
@@ -266,7 +266,7 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K], KwargsWrapper[K, V])
 
         See Also:
             - [`Dict::union`][union]: Merge another mapping with `Self` in a new `Dict`.
-            - [`Dict::update`][update] to accept any compatible `Iterable`.
+            - [`Dict::update`][abc._mappings.PyoMutableMapping.update] to accept any compatible `Iterable`.
 
         Example:
             ```python

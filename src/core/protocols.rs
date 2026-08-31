@@ -12,6 +12,16 @@ use crate::{
     core::{Dict, PyoVec, Seq, Set, SetMut, iterators},
     traits::{IntoInit, PyWrapper},
 };
+#[pyclass(module = "pyochain.core.protocols", frozen, generic)]
+pub struct ArgsWrapper;
+#[pyclass(module = "pyochain.core.protocols", frozen, generic)]
+pub struct KwargsWrapper;
+#[pyclass(module = "pyochain.core.protocols", frozen, generic)]
+pub struct Wrapper;
+#[pyclass(module = "pyochain.core.protocols", frozen, generic)]
+pub struct FromKwargs;
+#[pyclass(module = "pyochain.core.protocols", frozen, generic)]
+pub struct FromArgs;
 
 #[py_abc(
     Seq,

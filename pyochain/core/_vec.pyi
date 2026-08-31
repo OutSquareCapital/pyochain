@@ -310,8 +310,8 @@ class Vec[T](PyoMutableSequence[T], ArgsWrapper[T]):
             Self: The modified `Vec` after concatenation (self).
 
         See Also:
-            - [`Vec::concat`][concat] which returns a new `Vec` (copy).
-            - [`PyoMutableSequence::extend`][PyoMutableSequence.extend] which can take any `Iterable`.
+            - [`concat`][concat] which returns a new `Vec` (copy).
+            - [`extend`][abc._sequences.PyoMutableSequence.extend] which can take any `Iterable`.
 
         Example:
             ```python

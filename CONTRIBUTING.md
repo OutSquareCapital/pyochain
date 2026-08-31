@@ -169,7 +169,8 @@ uv run pytest
 
 ### Building docs
 
-To build and serve the documentation locally:
+To build and serve the documentation locally, run the command below.
+Note that the `-c` flag is necessary, has `zensical` still has various issues with caching and will give inconsistent results with it.
 
 ```shell
 uv run zensical build -c
