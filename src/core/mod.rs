@@ -1,7 +1,6 @@
 mod dict;
 pub mod iterators;
 mod option;
-pub mod protocols;
 mod range;
 mod result;
 mod seq;

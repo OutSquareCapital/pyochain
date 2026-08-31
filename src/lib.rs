@@ -70,11 +70,6 @@ fn populate_core(m: &Bound<'_, PyModule>, py: Python<'_>) -> PyResult<()> {
     m.add_class::<core::iterators::Iter>()?;
     m.add_class::<core::iterators::Peekable>()?;
     m.add_class::<core::SliceView>()?;
-    m.add_class::<core::protocols::KwargsWrapper>()?;
-    m.add_class::<core::protocols::ArgsWrapper>()?;
-    m.add_class::<core::protocols::Wrapper>()?;
-    m.add_class::<core::protocols::FromKwargs>()?;
-    m.add_class::<core::protocols::FromArgs>()?;
     Ok(())
 }
 fn populate_abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -97,7 +92,13 @@ fn populate_abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<abc::PyoKeysView>()?;
     m.add_class::<abc::PyoValuesView>()?;
     m.add_class::<abc::PyoItemsView>()?;
-    m.add_class::<abc::PyoMutableMapping>()
+    m.add_class::<abc::PyoMutableMapping>()?;
+    m.add_class::<abc::constructors::KwargsWrapper>()?;
+    m.add_class::<abc::constructors::ArgsWrapper>()?;
+    m.add_class::<abc::constructors::Wrapper>()?;
+    m.add_class::<abc::constructors::FromKwargs>()?;
+    m.add_class::<abc::constructors::FromArgs>()?;
+    Ok(())
 }
 fn populate_collections(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<collections::StableSet>()?;
