@@ -109,8 +109,6 @@ pub(super) trait SortedListGetters: BaseSortedListSet {
     type L: ListsDataMethods;
     #[skip]
     fn get_data(&self) -> MutexGuard<'_, Self::L>;
-    #[getter]
-    fn get_load(&self) -> usize;
 }
 macro_rules! impl_inner_sorted_rs {
     ($t:ty, $l:ty) => {
@@ -119,10 +117,6 @@ macro_rules! impl_inner_sorted_rs {
             #[inline(always)]
             fn get_data(&self) -> MutexGuard<'_, Self::L> {
                 try_lock_recover(&self.0, "data already locked - reentrant bug")
-            }
-            #[inline(always)]
-            fn get_load(&self) -> usize {
-                self.get_data().load
             }
         }
     };

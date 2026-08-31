@@ -15,7 +15,6 @@ from ._core import BaseSortedListSet
 
 @type_check_only
 class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
-    load: int
     @abstractmethod
     def __add__(self, other: Iterable[T]) -> Self:
         """Return new sorted list containing all values in both sequences.

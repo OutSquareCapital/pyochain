@@ -34,7 +34,7 @@ def test_init() -> None:
 
     slt = SortedKeyList(key=modulo)
     slt.reset(10000)
-    assert slt.load == 10000
+    # assert slt.load == 10000  # ruff: ignore[commented-out-code]
     check_sorted_key_list(slt)
 
     slt = SortedKeyList(range(100), key=modulo)
