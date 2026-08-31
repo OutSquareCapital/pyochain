@@ -599,6 +599,12 @@ pub trait ListsDataMethods: ListDataGetters {
             Either::Left(index) => self.delitem_from_int(py, index),
         }
     }
+
+    fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
+        let values = self.repeat(py, num);
+        self.clear();
+        self.update(py, values)
+    }
 }
 
 fn get_slice<'a, T: ListsDataMethods>(

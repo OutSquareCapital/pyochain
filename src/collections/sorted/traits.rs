@@ -259,10 +259,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
     }
 
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let mut data = self.get_data();
-        let values = data.repeat(py, num);
-        data.clear();
-        data.update(py, values)
+        self.get_data().imul(py, num)
     }
 
     #[allow(unused_variables)]
