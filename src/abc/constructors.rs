@@ -12,15 +12,17 @@ use crate::{
     core::{Dict, PyoVec, Seq, Set, SetMut, iterators},
     traits::{IntoInit, PyWrapper},
 };
-#[pyclass(module = "pyochain.abc.constructors", frozen, generic)]
+#[pyclass(frozen, generic)]
+pub struct FromIter;
+#[pyclass(frozen, generic)]
 pub struct ArgsWrapper;
-#[pyclass(module = "pyochain.abc.constructors", frozen, generic)]
+#[pyclass(frozen, generic)]
 pub struct KwargsWrapper;
-#[pyclass(module = "pyochain.abc.constructors", frozen, generic)]
+#[pyclass(frozen, generic)]
 pub struct Wrapper;
-#[pyclass(module = "pyochain.abc.constructors", frozen, generic)]
+#[pyclass(frozen, generic)]
 pub struct FromKwargs;
-#[pyclass(module = "pyochain.abc.constructors", frozen, generic)]
+#[pyclass(frozen, generic)]
 pub struct FromArgs;
 
 #[py_abc(

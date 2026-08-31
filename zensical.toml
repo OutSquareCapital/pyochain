@@ -11,6 +11,12 @@ site_dir = "site"
 nav = [
     { "API reference" = [
         { "ABC" = [
+            { "Constructors" = [
+                { "FromIter" = "reference/fromiter.md" },
+                { "Wrapper" = "reference/wrapper.md" },
+                { "FromArgs" = "reference/fromargs.md" },
+                { "FromKwargs" = "reference/fromkwargs.md" },
+            ] },
             { "Mixins" = [
                 { "Checkable" = "reference/checkable.md" },
                 { "Fluent" = "reference/fluent.md" },

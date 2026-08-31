@@ -6,7 +6,17 @@
 
 - Thanks to [@tecnolgd](https://github.com/tecnolgd) contribution in [#92](https://github.com/OutSquareCapital/pyochain/pull/92), `Range` is now aligned with its python counterpart constructor: `Range(10)` creates a range from 0 to 9, while `Range(1, 10)` creates a range from 1 to 9. The `step` argument is optional and defaults to 1.
 
-- `core::{Dict, Iter,Range, Vec, Seq, Set, SetMut}`, and `collections::{StableSet, Deque}` now have flexible constructors: instantiate with no arguments, variable number of positional elements, or a single iterable. For example, `Vec(1, 2, 3)` or `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()` or `Vec([])` will create an empty `Vec`.
+#### Flexible constructors
+
+`core::{Dict, Iter,Range, Vec, Seq, Set, SetMut}`, and `collections::{StableSet, Deque}` now have flexible constructors: instantiate with no arguments, a variable number of positional elements, or a single iterable.
+
+For example, `Vec(1, 2, 3)` or `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()` or `Vec([])` will create an empty `Vec`.
+
+Specialized constructors are available: `from_iter` for a single `Iterable`, `of` for a variadic number of args (or kwargs for `Dict`), or `wrap`, which replaces `from_ref` for concerned classes (e.g `Vec.wrap(list())`).
+
+Use them if you want to keep performance identical to the previous version, or if you prefer explicitness.
+
+Note that the overhead of the new constructors is very small, and the performance difference is negligible for most use cases. For example, the overhead of the attribute retrieval of `Vec.from_iter` is almost equal to the overhead of the `Vec` constructor itself. Only in situations like `.iter().map(Seq.from_iter)` can the overhead be noticeable, if you create a lot (+1k) of small (~10 elements) `Seq` instances. As always, benchmark your code before making any changes.
 
 ### 💥 Breaking changes
 

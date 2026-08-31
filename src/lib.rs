@@ -98,6 +98,7 @@ fn populate_abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<abc::constructors::Wrapper>()?;
     m.add_class::<abc::constructors::FromKwargs>()?;
     m.add_class::<abc::constructors::FromArgs>()?;
+    m.add_class::<abc::constructors::FromIter>()?;
     Ok(())
 }
 fn populate_collections(m: &Bound<'_, PyModule>) -> PyResult<()> {
