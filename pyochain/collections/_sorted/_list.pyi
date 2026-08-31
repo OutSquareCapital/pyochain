@@ -83,8 +83,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
 
         ``sl.__iter__()`` <==> ``iter(sl)``
 
-        Iterating the sorted list while adding or deleting values may raise a
-        :exc:`RuntimeError` or fail to iterate over all values.
+        Iterating the `BaseSortedList` while adding or deleting values may raise a `RuntimeError` or fail to iterate over all values.
 
         """
 
@@ -118,7 +117,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
 
     @override
     def __eq__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is equal to `other`.
+        """Return `True` if and only if sorted list is equal to `other`.
 
         ``sl.__eq__(other)`` <==> ``sl == other``
 
@@ -136,7 +135,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
 
     @override
     def __ne__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is not equal to `other`.
+        """Return `True` if and only if sorted list is not equal to `other`.
 
         ``sl.__ne__(other)`` <==> ``sl != other``
 
@@ -148,12 +147,12 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            NotImplementedType | bool: true if sorted list is not equal to `other`
+            NotImplementedType | bool: `True` if sorted list is not equal to `other`
 
         """
 
     def __lt__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is less than `other`.
+        """Return `True` if and only if sorted list is less than `other`.
 
         ``sl.__lt__(other)`` <==> ``sl < other``
 
@@ -164,12 +163,12 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         Args:
             other (object): `other` sequence
         Returns:
-            NotImplementedType | bool: true if sorted list is less than `other`
+            NotImplementedType | bool: `True` if sorted list is less than `other`
 
         """
 
     def __gt__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is greater than `other`.
+        """Return `True` if and only if sorted list is greater than `other`.
 
         ``sl.__gt__(other)`` <==> ``sl > other``
 
@@ -181,12 +180,12 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            NotImplementedType | bool: true if sorted list is greater than `other`
+            NotImplementedType | bool: `True` if sorted list is greater than `other`
 
         """
 
     def __le__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is less than or equal to `other`.
+        """Return `True` if and only if sorted list is less than or equal to `other`.
 
         ``sl.__le__(other)`` <==> ``sl <= other``
 
@@ -198,12 +197,12 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            NotImplementedType | bool: true if sorted list is less than or equal to `other`
+            NotImplementedType | bool: `True` if sorted list is less than or equal to `other`
 
         """
 
     def __ge__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is greater than or equal to `other`.
+        """Return `True` if and only if sorted list is greater than or equal to `other`.
 
         ``sl.__ge__(other)`` <==> ``sl >= other``
 
@@ -215,7 +214,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            NotImplementedType | bool: true if sorted list is greater than or equal to `other`
+            NotImplementedType | bool: `True` if sorted list is greater than or equal to `other`
 
         """
 
@@ -533,62 +532,17 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         """
 
 class SortedList[T: SupportsRichComparison](BaseSortedList[T]):
-    """Sorted list is a sorted mutable sequence.
+    """Sorted list is a sorted `MutableSequence`.
 
-    Sorted list values are maintained in sorted order.
+    Sorted list values are maintained in sorted order and must be comparable.
 
-    Sorted list values must be comparable. The total ordering of values must
-    not change while they are stored in the sorted list.
+    The total ordering of values must not change while they are stored in the `SortedList`.
 
-    Methods for adding values:
+    Sorted lists use lexicographical ordering semantics when compared to other sequences.
 
-    * :func:`SortedList.add`
-    * :func:`SortedList.update`
-    * :func:`SortedList.__add__`
-    * :func:`SortedList.__iadd__`
-    * :func:`SortedList.__mul__`
-    * :func:`SortedList.__imul__`
+    Some methods of `MutableSequence` are not supported and will raise not-implemented error.
 
-    Methods for removing values:
-
-    * :func:`SortedList.clear`
-    * :func:`SortedList.discard`
-    * :func:`SortedList.remove`
-    * :func:`SortedList.pop`
-    * :func:`SortedList.__delitem__`
-
-    Methods for looking up values:
-
-    * :func:`SortedList.bisect_left`
-    * :func:`SortedList.bisect_right`
-    * :func:`SortedList.count`
-    * :func:`SortedList.index`
-    * :func:`SortedList.__contains__`
-    * :func:`SortedList.__getitem__`
-
-    Methods for iterating values:
-
-    * :func:`SortedList.irange`
-    * :func:`SortedList.islice`
-    * :func:`SortedList.__iter__`
-    * :func:`SortedList.__reversed__`
-
-    Methods for miscellany:
-
-    * :func:`SortedList.copy`
-    * :func:`SortedList.__len__`
-    * :func:`SortedList.__repr__`
-    * :func:`SortedList._check`
-    * :func:`SortedList.reset`
-
-    Sorted lists use lexicographical ordering semantics when compared to other
-    sequences.
-
-    Some methods of mutable sequences are not supported and will raise
-    not-implemented error.
-
-    Optional `iterable` argument provides an initial iterable of values to
-    initialize the sorted list.
+    Optional `iterable` argument provides an initial iterable of values to initialize the sorted list.
 
     Runtime complexity: `O(n*log(n))`
 

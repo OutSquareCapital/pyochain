@@ -23,8 +23,7 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
 
         Optional `iterable` argument provides an initial iterable of values to initialize the sorted key set.
 
-        The `key` argument defines a `Callable` that, like the `key` argument to Python's `sorted` function,
-        extracts a comparison key from each value.
+        The `key` argument defines a `Callable` that, like the `key` argument to Python's `sorted` function, extracts a comparison key from each value.
 
         The default, `None`, compares values directly.
 

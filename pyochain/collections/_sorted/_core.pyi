@@ -53,7 +53,7 @@ class SortedCollection[T](ABC):
     def bisect_right(self, value: T) -> int:
         """Return an index to insert `value` in the `SortedCollection`.
 
-        Similar to `bisect_left`, but if `value` is already present, the
+        Similar to [`bisect_left`][] but if *value* is already present, the
         insertion point will be after (to the right of) any existing values.
 
         Similar to the `bisect` module in the standard library.
@@ -83,11 +83,12 @@ class SortedCollection[T](ABC):
     def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:
         """Return first index of value in sorted list.
 
-        Raise ValueError if `value` is not present.
+        Raise ValueError if *value* is not present.
 
-        Index must be between `start` and `stop` for the `value` to be
-        considered present. The default value, None, for `start` and `stop`
-        indicate the beginning and end of the sorted list.
+        Index must be between *start* and *stop* for the *value* to be
+        considered present.
+
+        The default value, `None`, for *start* and *stop* indicate the beginning and end of the `SortedCollection`.
 
         Negative indices are supported.
 
@@ -133,23 +134,13 @@ class SortedCollection[T](ABC):
     ) -> PyoIterator[T]:
         """Create an iterator of values between `minimum` and `maximum`.
 
-        Both `minimum` and `maximum` default to `None` which is automatically
-        inclusive of the beginning and end of the `SortedCollection`.
-
-        The argument `inclusive` is a pair of booleans that indicates whether
-        the minimum and maximum ought to be included in the range,
-        respectively. The default is ``(True, True)`` such that the range is
-        inclusive of both minimum and maximum.
-
-        When `reverse` is `True` the values are yielded from the iterator in
-        reverse order; `reverse` defaults to `False`.
-
+        Both `minimum` and `maximum` default to `None` which is automatically inclusive of the beginning and end of the `SortedCollection`.
 
         Args:
             minimum (T | None): minimum value to start iterating
             maximum (T | None): maximum value to stop iterating
-            inclusive (tuple[bool, bool]): pair of booleans
-            reverse (bool): yield values in reverse order
+            inclusive (tuple[bool, bool]): Whether the minimum and maximum ought to be included in the range, respectively. The default is `(True, True)` such that the range is inclusive of both minimum and maximum.
+            reverse (bool): When `True`, the values are yielded in reverse order. Defaults to `False`.
 
         Returns:
             PyoIterator[T]: an iterator of values between `minimum` and `maximum`

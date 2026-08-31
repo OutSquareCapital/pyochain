@@ -13,27 +13,15 @@ from ._core import KeyFunc
 from ._list import BaseSortedList
 
 class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
-    """Sorted-key list is a subtype of sorted list.
+    """a `MutableSequence` that maintains its values in sorted order based on a key function.
 
-    The sorted-key list maintains values in comparison order based on the
-    result of a key function applied to every value.
+    The sorted-key list maintains values in comparison order based on the result of a key function applied to every value.
 
-    All the same methods that are available in :class:`SortedList` are also
-    available in :class:`SortedKeyList`.
+    Optional `iterable` argument provides an initial iterable of values to initialize the sorted-key list.
 
-    Additional methods provided:
+    `key` argument defines a callable that, like the `key` argument to Python's `sorted` function, extracts a comparison key from each value.
 
-    * :attr:`SortedKeyList.key`
-    * :func:`SortedKeyList.bisect_key_left`
-    * :func:`SortedKeyList.bisect_key_right`
-    * :func:`SortedKeyList.irange_key`
-
-    Optional `iterable` argument provides an initial iterable of values to
-    initialize the sorted-key list.
-
-    `key` argument defines a callable that, like the `key`
-    argument to Python's `sorted` function, extracts a comparison key from
-    each value. The default is the identity function.
+    The default is the identity function.
 
     Runtime complexity: `O(n*log(n))`
 
@@ -84,22 +72,13 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
     ) -> PyoIterator[T]:
         """Create an iterator of values between `min_key` and `max_key`.
 
-        Both `min_key` and `max_key` default to `None` which is automatically
-        inclusive of the beginning and end of the sorted-key list.
-
-        The argument `inclusive` is a pair of booleans that indicates whether
-        the minimum and maximum ought to be included in the range,
-        respectively. The default is ``(True, True)`` such that the range is
-        inclusive of both minimum and maximum.
-
-        When `reverse` is `True` the values are yielded from the iterator in
-        reverse order; `reverse` defaults to `False`.
+        Both `min_key` and `max_key` default to `None` which is automatically inclusive of the beginning and end of the sorted-key list.
 
         Args:
             min_key (OT | None): minimum key to start iterating
             max_key (OT | None): maximum key to stop iterating
-            inclusive (tuple[bool, bool]): pair of booleans
-            reverse (bool): yield values in reverse order
+            inclusive (tuple[bool, bool]): Whether the minimum and maximum ought to be included in the range, respectively. The default is ``(True, True)`` such that the range is inclusive of both minimum and maximum.
+            reverse (bool): When `True` the values are yielded in reverse order. Defaults to `False`.
 
         Returns:
             PyoIterator[T]: iterator of values between `min_key` and `max_key`
@@ -117,10 +96,9 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
         """
 
     def bisect_key_left(self, key: OT) -> int:
-        """Return an index to insert `key` in the sorted-key list.
+        """Return an index to insert `key` in the `SortedKeyList`.
 
-        If the `key` is already present, the insertion point will be before (to
-        the left of) any existing keys.
+        If the `key` is already present, the insertion point will be before (to the left of) any existing keys.
 
         Similar to the `bisect` module in the standard library.
 
@@ -144,10 +122,9 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
         """
 
     def bisect_key_right(self, key: OT) -> int:
-        """Return an index to insert `key` in the sorted-key list.
+        """Return an index to insert `key` in the `SortedKeyList`.
 
-        Similar to `bisect_key_left`, but if `key` is already present, the
-        insertion point will be after (to the right of) any existing keys.
+        Similar to `bisect_key_left`, but if `key` is already present, the insertion point will be after (to the right of) any existing keys.
 
         Similar to the `bisect` module in the standard library.
 

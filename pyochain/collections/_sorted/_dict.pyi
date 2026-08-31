@@ -410,98 +410,32 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
 @final
 class SortedDict[K: SupportsHashableAndRichComparison, V](BaseSortedDict[K, V]):
-    """Sorted dict is a sorted mutable mapping.
+    """Sorted dict is a `MutableMapping` whose keys are maintained in sorted order.
 
-    Sorted dict keys are maintained in sorted order. The design of sorted dict
-    is simple: sorted dict inherits from dict to store items and maintains a
-    sorted list of keys.
+    The design of sorted dict is simple: a `SortedDict` uses an internal `dict` to store items and maintains a sorted list of keys.
 
-    Sorted dict keys must be hashable and comparable. The hash and total
-    ordering of keys must not change while they are stored in the sorted dict.
+    Sorted dict keys must be hashable and comparable.
 
-    Mutable mapping methods:
-
-    * :func:`SortedDict.__getitem__` (inherited from dict)
-    * :func:`SortedDict.__setitem__`
-    * :func:`SortedDict.__delitem__`
-    * :func:`SortedDict.__iter__`
-    * :func:`SortedDict.__len__` (inherited from dict)
-
-    Methods for adding items:
-
-    * :func:`SortedDict.setdefault`
-    * :func:`SortedDict.update`
-
-    Methods for removing items:
-
-    * :func:`SortedDict.clear`
-    * :func:`SortedDict.pop`
-    * :func:`SortedDict.popitem`
-
-    Methods for looking up items:
-
-    * :func:`SortedDict.__contains__` (inherited from dict)
-    * :func:`SortedDict.get` (inherited from dict)
-    * :func:`SortedDict.peekitem`
-
-    Methods for views:
-
-    * :func:`SortedDict.keys`
-    * :func:`SortedDict.items`
-    * :func:`SortedDict.values`
-
-    Methods for miscellany:
-
-    * :func:`SortedDict.copy`
-    * :func:`SortedDict.from_keys`
-    * :func:`SortedDict.__reversed__`
-    * :func:`SortedDict.__eq__` (inherited from dict)
-    * :func:`SortedDict.__ne__` (inherited from dict)
-    * :func:`SortedDict.__repr__`
-    * :func:`SortedDict._check`
-
-    Sorted list methods available (applies to keys):
-
-    * :func:`SortedList.bisect_left`
-    * :func:`SortedList.bisect_right`
-    * :func:`SortedList.index`
-    * :func:`SortedList.irange`
-    * :func:`SortedList.islice`
-    * :func:`SortedList.reset`
-
-    Additional sorted list methods available, if key-function used:
-
-    * :func:`SortedKeyList.bisect_key_left`
-    * :func:`SortedKeyList.bisect_key_right`
-    * :func:`SortedKeyList.irange_key`
+    The hash and total ordering of keys must not change while they are stored in the sorted dict.
 
     Sorted dicts may only be compared for equality and inequality.
 
+    Optional iterable argument provides an initial sequence of pairs to initialize the sorted dict.
 
-    Optional key-function argument defines a callable that, like the `key`
-    argument to the built-in `sorted` function, extracts a comparison key
-    from each dictionary key. If no function is specified, the default
-    compares the dictionary keys directly. The key-function argument must
-    be provided as a positional argument and must come before all other
-    arguments.
+    Each pair in the sequence defines the key and corresponding value.
 
-    Optional iterable argument provides an initial sequence of pairs to
-    initialize the sorted dict. Each pair in the sequence defines the key
-    and corresponding value. If a key is seen more than once, the last
-    value associated with it is stored in the new sorted dict.
+    If a key is seen more than once, the last value associated with it is stored in the new sorted dict.
 
-    Optional mapping argument provides an initial mapping of items to
-    initialize the sorted dict.
+    Optional mapping argument provides an initial mapping of items to initialize the sorted dict.
 
-    If keyword arguments are given, the keywords themselves, with their
-    associated values, are added as items to the dictionary. If a key is
-    specified both in the positional argument and as a keyword argument,
-    the value associated with the keyword is stored in the
-    sorted dict.
+    If keyword arguments are given, the keywords themselves, with their associated values, are added as items to the dictionary.
 
-    Sorted dict keys must be hashable, per the requirement for Python's
-    dictionaries. Keys (or the result of the key-function) must also be
-    comparable, per the requirement for sorted lists.
+    If a key is specified both in the positional argument and as a keyword argument,
+    the value associated with the keyword is stored in the `SortedDict`.
+
+    Sorted dict keys must be hashable, per the requirement for Python's `dict`.
+
+    Keys must also be comparable, per the requirement for sorted lists.
 
     ```python
     from pyochain.collections import SortedDict
@@ -537,28 +471,31 @@ class SortedKeyDict[
 
     Optional key-function argument defines a callable that, like the `key`
     argument to the built-in `sorted` function, extracts a comparison key
-    from each dictionary key. If no function is specified, the default
-    compares the dictionary keys directly. The key-function argument must
-    be provided as a positional argument and must come before all other
-    arguments.
+    from each dictionary key.
 
-    Optional iterable argument provides an initial sequence of pairs to
-    initialize the sorted dict. Each pair in the sequence defines the key
-    and corresponding value. If a key is seen more than once, the last
-    value associated with it is stored in the new sorted dict.
+    If no function is specified, the default compares the dictionary keys directly.
 
-    Optional mapping argument provides an initial mapping of items to
-    initialize the sorted dict.
+    The key-function argument must be provided as a positional argument and must come before all other arguments.
+
+    Optional iterable argument provides an initial sequence of pairs to initialize the sorted dict.
+
+    Each pair in the sequence defines the key and corresponding value.
+
+    If a key is seen more than once, the last value associated with it is stored in the new sorted dict.
+
+    Optional mapping argument provides an initial mapping of items to initialize the sorted dict.
 
     If keyword arguments are given, the keywords themselves, with their
-    associated values, are added as items to the dictionary. If a key is
-    specified both in the positional argument and as a keyword argument,
+    associated values, are added as items to the dictionary.
+
+    If a key is specified both in the positional argument and as a keyword argument,
     the value associated with the keyword is stored in the
     sorted dict.
 
     Sorted dict keys must be hashable, per the requirement for Python's
-    dictionaries. Keys (or the result of the key-function) must also be
-    comparable, per the requirement for sorted lists.
+    dictionaries.
+
+    The result of the key-function must also be comparable, per the requirement for sorted lists.
 
     ```python
     from pyochain.collections import SortedDict

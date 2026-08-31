@@ -566,68 +566,13 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
 @final
 class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
-    """Sorted set is a sorted mutable set.
-
-    Sorted set values are maintained in sorted order.
+    """Sorted set is a `MutableSet` whose values are maintained in sorted order.
 
     The design of sorted set is simple: sorted set uses a set for set-operations and maintains a sorted list of values.
 
     Sorted set values must be hashable and comparable.
 
     The hash and total ordering of values must not change while they are stored in the sorted set.
-
-    Mutable set methods:
-
-    * :func:`SortedSet.__contains__`
-    * :func:`SortedSet.__iter__`
-    * :func:`SortedSet.__len__`
-    * :func:`SortedSet.add`
-    * :func:`SortedSet.discard`
-
-    Sequence methods:
-
-    * :func:`SortedSet.__getitem__`
-    * :func:`SortedSet.__delitem__`
-    * :func:`SortedSet.__reversed__`
-
-    Methods for removing values:
-
-    * :func:`SortedSet.clear`
-    * :func:`SortedSet.pop`
-    * :func:`SortedSet.remove`
-
-    Set-operation methods:
-
-    * :func:`SortedSet.difference`
-    * :func:`SortedSet.difference_update`
-    * :func:`SortedSet.intersection`
-    * :func:`SortedSet.intersection_update`
-    * :func:`SortedSet.symmetric_difference`
-    * :func:`SortedSet.symmetric_difference_update`
-    * :func:`SortedSet.union`
-    * :func:`SortedSet.update`
-
-    Methods for miscellany:
-
-    * :func:`SortedSet.copy`
-    * :func:`SortedSet.count`
-    * :func:`SortedSet.__repr__`
-    * :func:`SortedSet._check`
-
-    Sorted list methods available:
-
-    * :func:`SortedList.bisect_left`
-    * :func:`SortedList.bisect_right`
-    * :func:`SortedList.index`
-    * :func:`SortedList.irange`
-    * :func:`SortedList.islice`
-    * :func:`SortedList.reset`
-
-    Additional sorted list methods available, if key-function used:
-
-    * :func:`SortedKeyList.bisect_key_left`
-    * :func:`SortedKeyList.bisect_key_right`
-    * :func:`SortedKeyList.irange_key`
 
     Sorted set comparisons use subset and superset relations.
 
