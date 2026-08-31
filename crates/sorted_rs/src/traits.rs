@@ -1,14 +1,20 @@
 use std::cmp::Ordering;
 
 use crate::{Bounds, Pos, bisect, errors};
+use either::Either;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PySlice, PySliceIndices},
+    types::{PyNotImplemented, PySequence, PySlice, PySliceIndices},
+};
+use pyo3_ext::{
+    prelude::*,
+    types::{FromCmp, PyCmpOut},
 };
 use tap::Pipe;
-
 pub(super) const DEFAULT_LOAD_FACTOR: usize = 1000;
+pub type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
+pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
 pub trait ListDataGetters: Sized {
     fn lists(&self) -> &Vec<Vec<Py<PyAny>>>;
     fn lists_mut(&mut self) -> &mut Vec<Vec<Py<PyAny>>>;
@@ -455,6 +461,134 @@ pub trait ListsDataMethods: ListDataGetters {
         self.clear();
         self.set_load(load);
         self.update(py, values)
+    }
+
+    fn eq<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
+        match other {
+            Either::Left(seq) => {
+                if self.length().ne(&seq.len()?) {
+                    Either::Left(false).pipe(Ok)
+                } else {
+                    let py = seq.py();
+                    self.iter()
+                        .zip(seq.iter_py())
+                        .map(|(a, b)| a.bind(py).eq(b?))
+                        .find_map(|x| match x {
+                            Ok(true) => None,
+                            Ok(false) => Some(Ok(false)),
+                            Err(e) => Some(Err(e)),
+                        })
+                        .unwrap_or(Ok(true))
+                        .map(Either::Left)
+                }
+            }
+
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
+        }
+    }
+
+    fn ne<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
+        match other {
+            Either::Left(seq) => {
+                if self.length().ne(&seq.len()?) {
+                    Either::Left(true).pipe(Ok)
+                } else {
+                    let py = seq.py();
+                    self.iter()
+                        .zip(seq.iter_py())
+                        .map(|(a, b)| a.bind(py).eq(b?))
+                        .find_map(|x| match x {
+                            Ok(true) => None,
+                            Ok(false) => Some(Ok(true)),
+                            Err(e) => Some(Err(e)),
+                        })
+                        .unwrap_or(Ok(false))
+                        .map(Either::Left)
+                }
+            }
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
+        }
+    }
+
+    fn lt<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
+        match other {
+            Either::Left(seq) => {
+                let py = seq.py();
+                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
+                    let a = alpha.bind(py);
+                    let b = beta?;
+                    if a.ne(&b)? {
+                        return a.lt(&b).map(Either::Left);
+                    }
+                }
+
+                self.length().lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
+            }
+
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
+        }
+    }
+
+    fn gt<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
+        match other {
+            Either::Left(seq) => {
+                let py = seq.py();
+                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
+                    let b = beta?;
+                    let a = alpha.bind(py);
+                    if a.ne(&b)? {
+                        return Either::Left(a.gt(&b)?).pipe(Ok);
+                    }
+                }
+                self.length().gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
+            }
+
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
+        }
+    }
+
+    fn le<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
+        match other {
+            Either::Left(seq) => {
+                let py = seq.py();
+                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
+                    let b = beta?;
+                    let a = alpha.bind(py);
+                    if a.ne(&b)? {
+                        return a.le(b).map(Either::Left);
+                    }
+                }
+
+                self.length().le(&seq.len()?).pipe(Either::Left).pipe(Ok)
+            }
+
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
+        }
+    }
+
+    fn ge<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
+        match other {
+            Either::Left(seq) => {
+                let py = seq.py();
+                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
+                    let b = beta?;
+                    let a = alpha.bind(py);
+                    if a.ne(&b)? {
+                        return a.ge(b).map(Either::Left);
+                    }
+                }
+
+                self.length().ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
+            }
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
+        }
+    }
+
+    fn delitem(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+        match index {
+            Either::Right(slice) => self.delitem_from_slice(py, slice),
+            Either::Left(index) => self.delitem_from_int(py, index),
+        }
     }
 }
 

@@ -19,23 +19,20 @@ use pyo3::{
     call::PyCallArgs,
     exceptions::{PyKeyError, PyNotImplementedError},
     prelude::*,
-    types::{
-        PyBool, PyDict, PyList, PyMapping, PyNotImplemented, PySequence, PySet, PySlice, PyTuple,
-        PyType,
-    },
+    types::{PyBool, PyDict, PyList, PyMapping, PyNotImplemented, PySet, PyTuple, PyType},
 };
 use pyo3_ext::{
     prelude::*,
     types::{FromCmp, PyCmpOut},
 };
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
-use sorted_rs::{Bounds, KeysListsData, ListDataGetters, ListsData, ListsDataMethods};
+use sorted_rs::{
+    Bounds, IntOrSlice, KeysListsData, ListDataGetters, ListsData, ListsDataMethods, SeqOrAny,
+};
 use std::sync::{Mutex, MutexGuard, TryLockError};
 use tap::prelude::*;
 
-pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
-pub(crate) type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>>;
 pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGuard<'a, T> {
     match mutex.try_lock() {
@@ -197,142 +194,31 @@ pub(super) trait BaseSortedList: SortedListGetters {
         self.copy(py)
     }
     fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        let data = self.get_data();
-        match other {
-            Either::Left(seq) => {
-                if data.length().ne(&seq.len()?) {
-                    Either::Left(false).pipe(Ok)
-                } else {
-                    let py = seq.py();
-                    data.iter()
-                        .zip(seq.iter_py())
-                        .map(|(a, b)| a.bind(py).eq(b?))
-                        .find_map(|x| match x {
-                            Ok(true) => None,
-                            Ok(false) => Some(Ok(false)),
-                            Err(e) => Some(Err(e)),
-                        })
-                        .unwrap_or(Ok(true))
-                        .map(Either::Left)
-                }
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        self.get_data().eq(other)
     }
 
     fn __ne__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        let data = self.get_data();
-        match other {
-            Either::Left(seq) => {
-                if data.length().ne(&seq.len()?) {
-                    Either::Left(true).pipe(Ok)
-                } else {
-                    let py = seq.py();
-                    data.iter()
-                        .zip(seq.iter_py())
-                        .map(|(a, b)| a.bind(py).eq(b?))
-                        .find_map(|x| match x {
-                            Ok(true) => None,
-                            Ok(false) => Some(Ok(true)),
-                            Err(e) => Some(Err(e)),
-                        })
-                        .unwrap_or(Ok(false))
-                        .map(Either::Left)
-                }
-            }
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        self.get_data().ne(other)
     }
 
     fn __lt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                let data = self.get_data();
-                for (alpha, beta) in data.iter().zip(seq.iter_py()) {
-                    let a = alpha.bind(py);
-                    let b = beta?;
-                    if a.ne(&b)? {
-                        return a.lt(&b).map(Either::Left);
-                    }
-                }
-
-                data.length().lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        self.get_data().lt(other)
     }
 
     fn __gt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                let data = self.get_data();
-                for (alpha, beta) in data.iter().zip(seq.iter_py()) {
-                    let b = beta?;
-                    let a = alpha.bind(py);
-                    if a.ne(&b)? {
-                        return Either::Left(a.gt(&b)?).pipe(Ok);
-                    }
-                }
-                data.length().gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        self.get_data().gt(other)
     }
 
     fn __le__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                let data = self.get_data();
-                for (alpha, beta) in data.iter().zip(seq.iter_py()) {
-                    let b = beta?;
-                    let a = alpha.bind(py);
-                    if a.ne(&b)? {
-                        return a.le(b).map(Either::Left);
-                    }
-                }
-
-                data.length().le(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        self.get_data().le(other)
     }
 
     fn __ge__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                let data = self.get_data();
-                for (alpha, beta) in data.iter().zip(seq.iter_py()) {
-                    let b = beta?;
-                    let a = alpha.bind(py);
-                    if a.ne(&b)? {
-                        return a.ge(b).map(Either::Left);
-                    }
-                }
-
-                data.length().ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        self.get_data().ge(other)
     }
 
-    fn __delitem__(
-        &self,
-        py: Python<'_>,
-        index: Either<isize, Bound<'_, PySlice>>,
-    ) -> PyResult<()> {
-        let mut data = self.get_data();
-        match index {
-            Either::Right(slice) => data.delitem_from_slice(py, slice),
-            Either::Left(index) => data.delitem_from_int(py, index),
-        }
+    fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+        self.get_data().delitem(py, index)
     }
 
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {

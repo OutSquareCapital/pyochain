@@ -9,4 +9,4 @@ mod traits;
 pub use bounds::{Bounds, Pos};
 pub use keylist::KeysListsData;
 pub use list::ListsData;
-pub use traits::{ListDataGetters, ListsDataMethods};
+pub use traits::{IntOrSlice, ListDataGetters, ListsDataMethods, SeqOrAny};

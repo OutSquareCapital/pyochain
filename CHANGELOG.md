@@ -11,6 +11,7 @@
 ### 💥 Breaking changes
 
 - `core::Peekable` can only be constructed from `PyoIterator::peekable`.
+- `{SortedList, SortedKeyList}::load` is now fully private
 
 ### 🚀 Performance improvements
 
