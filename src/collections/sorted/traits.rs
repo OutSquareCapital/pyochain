@@ -34,14 +34,6 @@ use tap::prelude::*;
 
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>>;
-pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGuard<'a, T> {
-    match mutex.try_lock() {
-        Ok(guard) => guard,
-        //Recover if the guard was poisoned by an earlier panic instead of cascading.
-        Err(TryLockError::Poisoned(poisoned)) => poisoned.into_inner(),
-        Err(TryLockError::WouldBlock) => panic!("{msg}"),
-    }
-}
 
 #[pyclass(frozen, generic)]
 pub(super) struct PyIdentity;
@@ -103,7 +95,7 @@ pub(super) trait BaseSortedListSet: SortedCollection {
 
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedListGetters: BaseSortedListSet {
-    type L: ListsDataMethods;
+    type L: ListDataGetters + ListsDataMethods;
     #[skip]
     fn get_data(&self) -> MutexGuard<'_, Self::L>;
 }
@@ -117,6 +109,15 @@ macro_rules! impl_inner_sorted_rs {
             }
         }
     };
+}
+
+fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGuard<'a, T> {
+    match mutex.try_lock() {
+        Ok(guard) => guard,
+        //Recover if the guard was poisoned by an earlier panic instead of cascading.
+        Err(TryLockError::Poisoned(poisoned)) => poisoned.into_inner(),
+        Err(TryLockError::WouldBlock) => panic!("{msg}"),
+    }
 }
 impl_inner_sorted_rs!(SortedList, ListsData);
 impl_inner_sorted_rs!(SortedKeyList, KeysListsData);

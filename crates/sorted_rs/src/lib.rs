@@ -1,6 +1,7 @@
 pub mod bisect;
 mod bounds;
 mod cmp;
+pub mod debug;
 mod errors;
 mod keylist;
 mod list;

@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::{Bounds, Pos, bisect, errors};
+use crate::{Bounds, Pos, bisect, debug::check_list, errors, pyassert};
 use either::Either;
 use pyo3::{
     exceptions::PyIndexError,
@@ -34,6 +34,9 @@ pub trait ListsDataMethods: ListDataGetters {
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
     fn clear(&mut self);
+    fn check(&self, py: Python<'_>) -> PyResult<()> {
+        check_list(self, py)
+    }
     fn delete(&mut self, py: Python<'_>, bounds: &mut Pos) -> PyResult<()>;
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()>;
@@ -71,13 +74,19 @@ pub trait ListsDataMethods: ListDataGetters {
     fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.bisect(value, bisect::right)
     }
-
     #[inline]
     fn concat(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {
         self.iter()
             .map(|x| x.clone_ref(py).pipe(Ok))
             .chain(other.try_iter()?.map(|x| x?.unbind().pipe(Ok)))
             .collect::<PyResult<Vec<_>>>()
+    }
+
+    fn check_empty(&self) -> PyResult<()> {
+        pyassert!(self.length() == 0);
+        pyassert!(self.maxes().is_empty());
+        pyassert!(self.lists().is_empty());
+        Ok(())
     }
     #[inline]
     #[must_use]
