@@ -1,5 +1,5 @@
 use crate::{KeysListsData, ListDataGetters};
-use pyo3::{exceptions::PyAssertionError, prelude::*};
+use pyo3::prelude::*;
 #[macro_export]
 macro_rules! pyassert {
     ($cond:expr) => {
@@ -10,82 +10,62 @@ macro_rules! pyassert {
 }
 
 pub(super) fn check_list(slf: &impl ListDataGetters, py: Python<'_>) -> PyResult<()> {
-    let err = |x| PyAssertionError::new_err(x);
-
-    (slf.load() >= 4)
-        .then_some(())
-        .ok_or(err("Load factor must be at least 4"))?;
-    (slf.maxes().len() == slf.lists().len())
-        .then_some(())
-        .ok_or(err("Maxes and lists must have the same length"))?;
-    (slf.length() == slf.lists().iter().map(Vec::len).sum::<usize>())
-        .then_some(())
-        .ok_or(err("Data length mismatch"))?;
+    pyassert!(slf.load() >= 4);
+    pyassert!(slf.maxes().len() == slf.lists().len());
+    pyassert!(slf.length() == slf.lists().iter().map(Vec::len).sum::<usize>());
 
     // Check all sublists are sorted.
 
     for sublist in slf.lists() {
         for pos in 1..sublist.len() {
-            (sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?)
-                .then_some(())
-                .ok_or(err("Sublists must be sorted"))?;
+            pyassert!(sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?);
         }
     }
 
     // Check beginning/end of sublists are sorted.
 
     for pos in 1..slf.lists().len() {
-        (slf.lists()[pos - 1]
-            .last()
-            .unwrap()
-            .bind(py)
-            .le(slf.lists()[pos][0].bind(py))?)
-        .then_some(())
-        .ok_or(err("Sublists must be sorted at boundaries"))?;
+        pyassert!(
+            slf.lists()[pos - 1]
+                .last()
+                .unwrap()
+                .bind(py)
+                .le(slf.lists()[pos][0].bind(py))?
+        );
     }
 
     // Check _maxes index is the last value of each sublist.
 
     for pos in 0..slf.maxes().len() {
-        (slf.maxes()[pos]
-            .bind(py)
-            .eq(slf.lists()[pos].last().unwrap().bind(py))?)
-        .then_some(())
-        .ok_or(err("Maxes must match last element of sublists"))?;
+        pyassert!(
+            slf.maxes()[pos]
+                .bind(py)
+                .eq(slf.lists()[pos].last().unwrap().bind(py))?
+        );
     }
 
     // Check sublist lengths are less than double load-factor.
 
     let double = slf.load() << 1;
-    (slf.lists().iter().all(|sublist| sublist.len() <= double))
-        .then_some(())
-        .ok_or(err("Sublists must not exceed double load factor"))?;
+    pyassert!(slf.lists().iter().all(|sublist| sublist.len() <= double));
 
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
 
     let half = slf.load() >> 1;
     for pos in 0..slf.lists().len().saturating_sub(1) {
-        (slf.lists()[pos].len() >= half)
-            .then_some(())
-            .ok_or(err("Sublists must be at least half load factor"))?;
+        pyassert!(slf.lists()[pos].len() >= half);
     }
 
     if !slf.idx().is_empty() {
-        (slf.length() == slf.idx()[0])
-            .then_some(())
-            .ok_or(err("Index root must equal total length"))?;
-        (slf.idx().len() == slf.offset() + slf.lists().len())
-            .then_some(())
-            .ok_or(err("Index length mismatch"))?;
+        pyassert!(slf.length() == slf.idx()[0]);
+        pyassert!(slf.idx().len() == slf.offset() + slf.lists().len());
 
         // Check index leaf nodes equal length of sublists.
 
         for pos in 0..slf.lists().len() {
             let leaf = slf.idx()[slf.offset() + pos];
-            (leaf.eq(&slf.lists()[pos].len()))
-                .then_some(())
-                .ok_or(err("Index leaf node length mismatch"))?;
+            pyassert!(leaf.eq(&slf.lists()[pos].len()));
         }
 
         // Check index branch nodes are the sum of their children.
@@ -93,13 +73,9 @@ pub(super) fn check_list(slf: &impl ListDataGetters, py: Python<'_>) -> PyResult
         for pos in 0..slf.offset() {
             let child = (pos << 1) + 1;
             if child >= slf.idx().len() {
-                (slf.idx()[pos].eq(&0))
-                    .then_some(())
-                    .ok_or(err("Index branch node length mismatch"))?;
+                pyassert!(slf.idx()[pos].eq(&0));
             } else if child + 1 == slf.idx().len() {
-                (slf.idx()[pos].eq(&slf.idx()[child]))
-                    .then_some(())
-                    .ok_or(err("Index branch node length mismatch"))?;
+                pyassert!(slf.idx()[pos].eq(&slf.idx()[child]));
             } else {
                 let child_sum = slf.idx()[child] + slf.idx()[child + 1];
                 pyassert!(child_sum.eq(&slf.idx()[pos]));
