@@ -17,13 +17,11 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize("size", SIZES)
 def test_2(benchmark: BenchFixture, size: int) -> None:
     data = Range(size).iter().enumerate().collect(Seq)
-    assert benchmark(_2, data, size)[0] % 2 == 0
+    assert benchmark(_2, data)[0] % 2 == 0
 
 
-def _2(data: Seq[tuple[int, int]], size: int) -> tuple[int, int]:
+def _2(data: Seq[tuple[int, int]]) -> tuple[int, int]:
     f: Callable[[int, int], bool] = lambda x, _a: x % 2 == 0
-    for _ in SIZES[size]:
-        _ = data.iter().filter_star(f).last()
     return data.iter().filter_star(f).last()
 
 

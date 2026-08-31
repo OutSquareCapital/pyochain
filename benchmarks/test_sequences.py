@@ -84,22 +84,14 @@ def test_init(benchmark: BenchFixture, obj: SeqFn[int], size: int) -> None:
 @pytest.mark.parametrize("size", SIZES)
 def test_init_range(benchmark: BenchFixture, size: int) -> None:
     data = Range(size)
-    assert benchmark(_init_range, size).first() == data.first()
-
-
-def _init_range(size: int) -> Range:
-    for _ in SIZES[size]:
-        _ = Range(size)
-    return Range(size)
+    assert benchmark(Range, size).first() == data.first()
 
 
 @pytest.mark.parametrize("size", SIZES)
 def test_concat(benchmark: BenchFixture, size: int) -> None:
     data = Range(size).pipe(Seq)
-    assert benchmark(_concat, data, size).last() == data.last()
+    assert benchmark(_concat, data).last() == data.last()
 
 
-def _concat(data: Seq[int], size: int) -> Seq[int]:
-    for _ in SIZES[size]:
-        _ = data.concat(data)
+def _concat(data: Seq[int]) -> Seq[int]:
     return data.concat(data)

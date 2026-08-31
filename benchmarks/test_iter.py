@@ -58,27 +58,23 @@ def test_filter_map(benchmark: BenchFixture, size: int) -> None:
         .map(lambda i: then_if_true(i, predicate=lambda i: i % 2 == 0))
         .collect(Seq)
     )
-    assert benchmark(_filter_map, data, size) == size - 2
+    assert benchmark(_filter_map, data) == size - 2
 
 
-def _filter_map(data: Seq[Option[int]], size: int) -> int:
-    for _ in SIZES[size]:
-        _ = data.iter().filter_map(lambda x: x).last()
+def _filter_map(data: Seq[Option[int]]) -> int:
     return data.iter().filter_map(lambda x: x).last()
 
 
 @pytest.mark.parametrize("size", SIZES)
 def test_filter_map_star(benchmark: BenchFixture, size: int) -> None:
     data = Range(size).iter().enumerate().collect(Seq)
-    assert benchmark(_filter_map_star, data, size) == size - 2
+    assert benchmark(_filter_map_star, data) == size - 2
 
 
-def _filter_map_star(data: Seq[tuple[int, int]], size: int) -> int:
+def _filter_map_star(data: Seq[tuple[int, int]]) -> int:
     def f(x: int, _: int) -> Option[int]:
         return Some(x) if x % 2 == 0 else Null()
 
-    for _ in SIZES[size]:
-        _ = data.iter().filter_map_star(f).last()
     return data.iter().filter_map_star(f).last()
 
 
@@ -206,9 +202,6 @@ def test_map_juxt(benchmark: BenchFixture, size: int, nb_funcs: int) -> None:
     def _map_juxt(
         data: Range, funcs: Iterable[Callable[[int], int]]
     ) -> tuple[int, ...]:
-        for _ in SIZES[size]:
-            _ = data.iter().map_juxt(*funcs).last()
-
         return data.iter().map_juxt(*funcs).last()
 
     data = Range(size)
@@ -242,8 +235,6 @@ def _map_while(data: Range, size: int) -> int:
     def f(x: int) -> Option[int]:
         return Some(x) if x < limit else Null()
 
-    for _ in SIZES[size]:
-        _ = data.iter().map_while(f).last()
     return data.iter().map_while(f).last()
 
 
@@ -453,14 +444,10 @@ def _unpack_into(data: Range) -> int:
 def test_zip_longest(benchmark: BenchFixture, size: int) -> None:
     data1 = Range(size)
     data2 = Range(size // 2)
-    assert benchmark(_zip_longest, data1, data2, size) == (Some(size - 1), NONE)
+    assert benchmark(_zip_longest, data1, data2) == (Some(size - 1), NONE)
 
 
-def _zip_longest(
-    data1: Range, data2: Range, size: int
-) -> tuple[Option[int], Option[int]]:
-    for _ in SIZES[size]:
-        _ = data1.iter().zip_longest(data2).last()
+def _zip_longest(data1: Range, data2: Range) -> tuple[Option[int], Option[int]]:
     return data1.iter().zip_longest(data2).last()
 
 

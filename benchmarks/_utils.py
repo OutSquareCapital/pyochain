@@ -2,7 +2,7 @@ from collections.abc import Callable
 from enum import IntEnum, StrEnum, auto
 from typing import Final, Protocol
 
-from pyochain import Dict
+from pyochain import Seq
 
 type BenchFn = Callable[[int], object]
 
@@ -35,12 +35,7 @@ class Sizes(IntEnum):
     SIZE_4096 = 4096
 
 
-SIZES: Final[Dict[int, range]] = Dict({
-    10: range(10_000),
-    100: range(1000),
-    1_000: range(100),
-    10_000: range(10),
-})
+SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000)
 
 
 class VariantGroups(StrEnum):
