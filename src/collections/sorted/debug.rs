@@ -8,7 +8,7 @@ use crate::collections::{
 };
 use either::Either;
 use pyo3::{exceptions::PyAssertionError, prelude::*};
-use sorted_rs::{KeysListsData, ListDataGetters, ListsDataMethods};
+use sorted_rs::{ListDataGetters, ListsDataMethods};
 use std::ops::Index;
 use tap::prelude::*;
 type InnerSorted = Either<Py<SortedList>, Py<SortedKeyList>>;
@@ -29,7 +29,7 @@ pub fn check_sorted_dict(
     fn check_dict(x: &impl BaseSortedDict, py: Python<'_>) -> PyResult<()> {
         x.get_list()
             .get()
-            .pipe(|list| run_checks(py, list).inspect_err(move |e| show_list(py, e, &list)))?;
+            .pipe(|list| run_checks(py, list).inspect_err(move |e| show_list(py, e, list)))?;
         let data = x.get_list().get().get_data();
         pyassert!(x.len(py) == data.length());
         pyassert!(data.iter().all(|item| {
@@ -207,7 +207,7 @@ fn run_key_checks(py: Python<'_>, list: &SortedKeyList) -> PyResult<()> {
 
     // Check all sublists are sorted.
 
-    for sublist in data.keys.iter() {
+    for sublist in &data.keys {
         for pos in 1..sublist.len() {
             pyassert!(sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?);
         }
@@ -289,17 +289,18 @@ fn run_key_checks(py: Python<'_>, list: &SortedKeyList) -> PyResult<()> {
 
 fn show_key_list(py: Python<'_>, err: &PyErr, list: &SortedKeyList) {
     let data = list.get_data();
-    show_list(py, err, &data);
+    show_list(py, err, list);
     let infos = [
         format!("len_keys: {}", data.keys.len()),
         format!("keys: {:?}", data.keys),
     ];
     err.add_note(py, infos.join("\n")).unwrap();
 }
-fn show_list(py: Python<'_>, err: &PyErr, data: &KeysListsData) {
+fn show_list(py: Python<'_>, err: &PyErr, list: &impl SortedListGetters) {
+    let data = list.get_data();
     let infos = [
         format!("len: {}", data.length()),
-        format!("load: {}", data.load),
+        format!("load: {}", data.load()),
         format!("offset: {}", data.offset()),
         format!("len_index: {}", data.idx().len()),
         format!("index: {:?}", data.idx()),
