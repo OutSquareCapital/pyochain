@@ -13,12 +13,17 @@ classifiers = ["License :: OSI Approved :: MIT License"]
 dev = [
     "basedpyright>=1.39.10",
     "maturin>=1.15.0",
+    "plotly-stubs>=0.1.4",
+    "plotly[express]>=7.0.0",
+    "polars>=1.44.1",
     "pydoclint>=0.9.1",
     "pytest-benchmark>=5.2.3",
     "pytest-docflex",
     "pytest>=9.1.1",
     "ruff>=0.16.5",
     "sdsort",
+    "sortedcontainers-stubs>=2.4.3",
+    "sortedcontainers>=2.4.0",
 ]
 doc = ["mkdocstrings-python>=2.0.7", "zensical>=0.0.57"]
 [tool.pydoclint]
