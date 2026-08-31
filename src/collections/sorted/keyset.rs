@@ -67,7 +67,7 @@ impl SortedKeySet {
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         slf.get()
             .get_list_bound(slf.py())
-            .pipe(|list| SortedKeyList::irange_key(list, min_key, max_key, inclusive, reverse))
+            .pipe_ref(|list| SortedKeyList::irange_key(list, min_key, max_key, inclusive, reverse))
     }
 
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {

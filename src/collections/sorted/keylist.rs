@@ -35,7 +35,7 @@ impl SortedKeyList {
 impl SortedKeyList {
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     pub(super) fn irange_key<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         min_key: Option<Bound<'py, PyAny>>,
         max_key: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
@@ -117,7 +117,7 @@ impl SortedCollection for SortedKeyList {
         let key_fn = |x| data.key.bind(slf.py()).call1((x,));
         let min_key = minimum.map(key_fn).transpose()?;
         let max_key = maximum.map(key_fn).transpose()?;
-        Self::irange_key(slf.clone(), min_key, max_key, inclusive, reverse)
+        Self::irange_key(&slf, min_key, max_key, inclusive, reverse)
     }
     fn islice(
         slf: Bound<'_, Self>,

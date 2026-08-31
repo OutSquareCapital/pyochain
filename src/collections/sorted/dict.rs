@@ -170,13 +170,9 @@ impl SortedKeyDict {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        SortedKeyList::irange_key(
-            slf.get().get_list_bound(slf.py()),
-            min_key,
-            max_key,
-            inclusive,
-            reverse,
-        )
+        slf.get()
+            .get_list_bound(slf.py())
+            .pipe_ref(|list| SortedKeyList::irange_key(list, min_key, max_key, inclusive, reverse))
     }
 
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
