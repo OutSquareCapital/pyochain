@@ -30,26 +30,6 @@ impl Default for ListsData {
         }
     }
 }
-impl ListsData {
-    fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) {
-        let values_len = values.len();
-        let new_lists = (0..values_len).step_by(self.load).map(|pos| {
-            values[pos..(pos + self.load).min(values_len)]
-                .iter()
-                .map(|x| x.clone_ref(py))
-                .collect::<Vec<_>>()
-        });
-        self.lists.extend(new_lists);
-        let mut new_maxes = self
-            .lists
-            .iter()
-            .map(|x| x.last().unwrap().clone_ref(py))
-            .collect::<Vec<_>>();
-        self.maxes.append(new_maxes.as_mut());
-        self.len = values_len;
-        self.idx.clear();
-    }
-}
 
 impl_list_data_getters!(ListsData);
 impl ListsDataMethods for ListsData {
@@ -264,6 +244,25 @@ impl ListsDataMethods for ListsData {
         }
     }
 
+    fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
+        let values_len = values.len();
+        let new_lists = (0..values_len).step_by(self.load).map(|pos| {
+            values[pos..(pos + self.load).min(values_len)]
+                .iter()
+                .map(|x| x.clone_ref(py))
+                .collect::<Vec<_>>()
+        });
+        self.lists.extend(new_lists);
+        let mut new_maxes = self
+            .lists
+            .iter()
+            .map(|x| x.last().unwrap().clone_ref(py))
+            .collect::<Vec<_>>();
+        self.maxes.append(new_maxes.as_mut());
+        self.len = values_len;
+        self.idx.clear();
+        Ok(())
+    }
     fn update(&mut self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
         values.sort_by(|a, b| py_cmp(py, a, b));
         match ops::Update::new(self.maxes(), self.len, &values) {
@@ -273,14 +272,14 @@ impl ListsDataMethods for ListsData {
                 values = self.collapse(py);
                 values.sort_by(|a, b| py_cmp(py, a, b));
                 self.clear();
-                self.finalize_update(py, &values);
+                self.finalize_update(py, &values)
             }
             ops::Update::OtherLTSelf => {
                 for val in values {
                     self.add(py, val)?;
                 }
+                Ok(())
             }
         }
-        Ok(())
     }
 }

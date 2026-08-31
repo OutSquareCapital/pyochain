@@ -27,10 +27,11 @@ pub trait ListsDataMethods: ListDataGetters {
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
+    fn clear(&mut self);
     fn delete(&mut self, py: Python<'_>, bounds: &mut Pos) -> PyResult<()>;
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()>;
     fn update(&mut self, py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<()>;
-    fn clear(&mut self);
     fn index(
         &mut self,
         value: &Bound<'_, PyAny>,

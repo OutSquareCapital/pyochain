@@ -30,33 +30,6 @@ impl KeysListsData {
             load: DEFAULT_LOAD_FACTOR,
         }
     }
-    pub fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
-        let key_fn = &self.key.bind(py);
-        let values_len = values.len();
-        let new_lists = (0..values_len).step_by(self.load).map(|pos| {
-            values[pos..(pos + self.load).min(values_len)]
-                .iter()
-                .map(|x| x.clone_ref(py))
-                .collect::<Vec<_>>()
-        });
-        self.lists.extend(new_lists);
-        let new_keys = self
-            .lists
-            .iter()
-            .map(|list| {
-                list.iter()
-                    .map(|x| key_fn.call1((x,)).map(Bound::unbind))
-                    .collect::<PyResult<Vec<_>>>()
-            })
-            .collect::<PyResult<Vec<_>>>()?;
-
-        self.keys.extend(new_keys);
-        let new_maxes = self.keys.iter().map(|x| x.last().unwrap().clone_ref(py));
-        self.maxes.extend(new_maxes);
-        self.len = values_len;
-        self.idx.clear();
-        Ok(())
-    }
 }
 
 impl_list_data_getters!(KeysListsData);
@@ -334,6 +307,33 @@ impl ListsDataMethods for KeysListsData {
         }
     }
 
+    fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
+        let key_fn = &self.key.bind(py);
+        let values_len = values.len();
+        let new_lists = (0..values_len).step_by(self.load).map(|pos| {
+            values[pos..(pos + self.load).min(values_len)]
+                .iter()
+                .map(|x| x.clone_ref(py))
+                .collect::<Vec<_>>()
+        });
+        self.lists.extend(new_lists);
+        let new_keys = self
+            .lists
+            .iter()
+            .map(|list| {
+                list.iter()
+                    .map(|x| key_fn.call1((x,)).map(Bound::unbind))
+                    .collect::<PyResult<Vec<_>>>()
+            })
+            .collect::<PyResult<Vec<_>>>()?;
+
+        self.keys.extend(new_keys);
+        let new_maxes = self.keys.iter().map(|x| x.last().unwrap().clone_ref(py));
+        self.maxes.extend(new_maxes);
+        self.len = values_len;
+        self.idx.clear();
+        Ok(())
+    }
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let mut bound = Pos::default();
