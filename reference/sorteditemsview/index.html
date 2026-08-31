@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.56">
+      <meta name="generator" content="zensical-0.0.57">
     
     
       
@@ -36,12 +36,12 @@
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.20815dad.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
       
         
           
         
-        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.dfe2e883.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.812a03bb.min.css">
       
       
 
@@ -328,7 +328,7 @@
   <span class="md-ellipsis">
     
   
-  Mixins
+  Constructors
 
     
   </span>
@@ -340,6 +340,167 @@
         
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_1_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_1_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Constructors
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fromiter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  FromIter
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../wrapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Wrapper
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fromargs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  FromArgs
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fromkwargs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  FromKwargs
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_1_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_1_2" id="__nav_1_1_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Mixins
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_1_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1098,7 +1259,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.collections._sorted.SortedItemsView" class="md-nav__link">
+  <a href="#pyochain.collections._sorted._views.SortedItemsView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         SortedItemsView
@@ -1109,7 +1270,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.collections._sorted.SortedItemsView.__getitem__" class="md-nav__link">
+  <a href="#pyochain.collections._sorted._views.SortedItemsView.__getitem__" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         __getitem__
@@ -2338,7 +2499,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.collections._sorted.SortedItemsView" class="md-nav__link">
+  <a href="#pyochain.collections._sorted._views.SortedItemsView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         SortedItemsView
@@ -2349,7 +2510,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.collections._sorted.SortedItemsView.__getitem__" class="md-nav__link">
+  <a href="#pyochain.collections._sorted._views.SortedItemsView.__getitem__" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         __getitem__
@@ -2381,31 +2542,31 @@
 
 
 
-<a id="pyochain.collections._sorted.SortedItemsView"></a>
+<a id="pyochain.collections._sorted._views.SortedItemsView"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="pyochain.collections._sorted._views.BaseSortedView">BaseSortedView</span>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc.PyoItemsView" href="../pyoitemsview/#pyochain.abc.PyoItemsView">PyoItemsView</a>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc.PyoSequence" href="../pyosequence/#pyochain.abc.PyoSequence">PyoSequence</a>[<span title="tuple">tuple</span>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>]]</code>, <code><span title="typing.Generic">Generic</span>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>]</code></p>
+              Bases: <code><span title="pyochain.collections._sorted._views.BaseSortedView">BaseSortedView</span>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc.PyoItemsView" href="../pyoitemsview/#pyochain.abc._views.PyoItemsView">PyoItemsView</a>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc.PyoSequence" href="../pyosequence/#pyochain.abc._sequences.PyoSequence">PyoSequence</a>[<span title="tuple">tuple</span>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>]]</code>, <code><span title="typing.Generic">Generic</span>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>]</code></p>
 
             <div style="display: none">
-              <a class="autorefs autorefs-internal" title="pyochain.collections._sorted.SortedItemsView" href="./#pyochain.collections._sorted.SortedItemsView" id="mermaid-link-pyochain.collections._sorted.SortedItemsView"></a>
+              <a class="autorefs autorefs-internal" title="pyochain.collections._sorted._views.SortedItemsView" href="./#pyochain.collections._sorted._views.SortedItemsView" id="mermaid-link-pyochain.collections._sorted._views.SortedItemsView"></a>
                   <span title="pyochain.collections._sorted._views.BaseSortedView"></span>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._views.PyoItemsView" href="../pyoitemsview/#pyochain.abc.PyoItemsView" id="mermaid-link-pyochain.abc._views.PyoItemsView"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._views.PyoMappingView" href="../pyomappingview/#pyochain.abc.PyoMappingView" id="mermaid-link-pyochain.abc._views.PyoMappingView"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._set.PyoSet" href="../pyoset/#pyochain.abc.PyoSet" id="mermaid-link-pyochain.abc._set.PyoSet"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._sequences.PyoSequence" href="../pyosequence/#pyochain.abc.PyoSequence" id="mermaid-link-pyochain.abc._sequences.PyoSequence"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._sequences.PyoReversible" href="../pyoreversible/#pyochain.abc.PyoReversible" id="mermaid-link-pyochain.abc._sequences.PyoReversible"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoCollection" href="../pyocollection/#pyochain.abc.PyoCollection" id="mermaid-link-pyochain.abc._collection.PyoCollection"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoIterable" href="../pyoiterable/#pyochain.abc.PyoIterable" id="mermaid-link-pyochain.abc._iterable.PyoIterable"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoContainer" href="../pyocontainer/#pyochain.abc.PyoContainer" id="mermaid-link-pyochain.abc._collection.PyoContainer"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoSized" href="../pyosized/#pyochain.abc.PyoSized" id="mermaid-link-pyochain.abc._collection.PyoSized"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Checkable" href="../checkable/#pyochain.abc.Checkable" id="mermaid-link-pyochain.abc._mixins.Checkable"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Fluent" href="../fluent/#pyochain.abc.Fluent" id="mermaid-link-pyochain.abc._mixins.Fluent"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Pipe" href="../pipe/#pyochain.abc.Pipe" id="mermaid-link-pyochain.abc._mixins.Pipe"></a>
-                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Tap" href="../tap/#pyochain.abc.Tap" id="mermaid-link-pyochain.abc._mixins.Tap"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._views.PyoItemsView" href="../pyoitemsview/#pyochain.abc._views.PyoItemsView" id="mermaid-link-pyochain.abc._views.PyoItemsView"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._views.PyoMappingView" href="../pyomappingview/#pyochain.abc._views.PyoMappingView" id="mermaid-link-pyochain.abc._views.PyoMappingView"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._set.PyoSet" href="../pyoset/#pyochain.abc._set.PyoSet" id="mermaid-link-pyochain.abc._set.PyoSet"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._sequences.PyoSequence" href="../pyosequence/#pyochain.abc._sequences.PyoSequence" id="mermaid-link-pyochain.abc._sequences.PyoSequence"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._sequences.PyoReversible" href="../pyoreversible/#pyochain.abc._sequences.PyoReversible" id="mermaid-link-pyochain.abc._sequences.PyoReversible"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoCollection" href="../pyocollection/#pyochain.abc._collection.PyoCollection" id="mermaid-link-pyochain.abc._collection.PyoCollection"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoIterable" href="../pyoiterable/#pyochain.abc._iterable.PyoIterable" id="mermaid-link-pyochain.abc._iterable.PyoIterable"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoContainer" href="../pyocontainer/#pyochain.abc._collection.PyoContainer" id="mermaid-link-pyochain.abc._collection.PyoContainer"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoSized" href="../pyosized/#pyochain.abc._collection.PyoSized" id="mermaid-link-pyochain.abc._collection.PyoSized"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Checkable" href="../checkable/#pyochain.abc._mixins.Checkable" id="mermaid-link-pyochain.abc._mixins.Checkable"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Fluent" href="../fluent/#pyochain.abc._mixins.Fluent" id="mermaid-link-pyochain.abc._mixins.Fluent"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Pipe" href="../pipe/#pyochain.abc._mixins.Pipe" id="mermaid-link-pyochain.abc._mixins.Pipe"></a>
+                  <a class="autorefs autorefs-internal" title="pyochain.abc._mixins.Tap" href="../tap/#pyochain.abc._mixins.Tap" id="mermaid-link-pyochain.abc._mixins.Tap"></a>
             </div>
-            <pre class="mermaid"><code id="mermaid-diagram-pyochain.collections._sorted.SortedItemsView">
+            <pre class="mermaid"><code id="mermaid-diagram-pyochain.collections._sorted._views.SortedItemsView">
               flowchart TD
-              pyochain.collections._sorted.SortedItemsView[SortedItemsView]
+              pyochain.collections._sorted._views.SortedItemsView[SortedItemsView]
               pyochain.collections._sorted._views.BaseSortedView[BaseSortedView]
               pyochain.abc._views.PyoItemsView[PyoItemsView]
               pyochain.abc._views.PyoMappingView[PyoMappingView]
@@ -2421,9 +2582,9 @@
               pyochain.abc._mixins.Pipe[Pipe]
               pyochain.abc._mixins.Tap[Tap]
 
-                              pyochain.collections._sorted._views.BaseSortedView --> pyochain.collections._sorted.SortedItemsView
+                              pyochain.collections._sorted._views.BaseSortedView --> pyochain.collections._sorted._views.SortedItemsView
                 
-                pyochain.abc._views.PyoItemsView --> pyochain.collections._sorted.SortedItemsView
+                pyochain.abc._views.PyoItemsView --> pyochain.collections._sorted._views.SortedItemsView
                                 pyochain.abc._views.PyoMappingView --> pyochain.abc._views.PyoItemsView
                                 pyochain.abc._collection.PyoSized --> pyochain.abc._views.PyoMappingView
                                 pyochain.abc._mixins.Checkable --> pyochain.abc._collection.PyoSized
@@ -2453,7 +2614,7 @@
 
 
 
-                pyochain.abc._sequences.PyoSequence --> pyochain.collections._sorted.SortedItemsView
+                pyochain.abc._sequences.PyoSequence --> pyochain.collections._sorted._views.SortedItemsView
                                 pyochain.abc._sequences.PyoReversible --> pyochain.abc._sequences.PyoSequence
                                 pyochain.abc._iterable.PyoIterable --> pyochain.abc._sequences.PyoReversible
                                 pyochain.abc._mixins.Checkable --> pyochain.abc._iterable.PyoIterable
@@ -2489,7 +2650,7 @@
 
 
 
-              click pyochain.collections._sorted.SortedItemsView href "" "pyochain.collections._sorted.SortedItemsView"
+              click pyochain.collections._sorted._views.SortedItemsView href "" "pyochain.collections._sorted._views.SortedItemsView"
               click pyochain.collections._sorted._views.BaseSortedView href "" "pyochain.collections._sorted._views.BaseSortedView"
               click pyochain.abc._views.PyoItemsView href "" "pyochain.abc._views.PyoItemsView"
               click pyochain.abc._views.PyoMappingView href "" "pyochain.abc._views.PyoMappingView"
@@ -2506,7 +2667,7 @@
               click pyochain.abc._mixins.Tap href "" "pyochain.abc._mixins.Tap"
             </code></pre>
             <script>
-              var diagram = document.getElementById('mermaid-diagram-pyochain.collections._sorted.SortedItemsView');
+              var diagram = document.getElementById('mermaid-diagram-pyochain.collections._sorted._views.SortedItemsView');
               diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
                 try {
                   const link = document.getElementById("mermaid-link-" + nodeID).href;
@@ -2523,6 +2684,18 @@
 <p>The items view implements the set and sequence abstract base classes.</p>
 
 
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">SortedDict</span>
+
+<span class="n">siv</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">siv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">siv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"c"</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">siv</span><span class="p">[:]</span> <span class="o">==</span> <span class="n">Vec</span><span class="p">((</span><span class="s2">"a"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s2">"b"</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="s2">"c"</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</code></pre></div>
+</details>
+
 
 
 
@@ -2531,27 +2704,7 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>pyochain/collections/_sorted/_views.pyi</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">105</span>
-<span class="normal">106</span>
-<span class="normal">107</span>
-<span class="normal">108</span>
-<span class="normal">109</span>
-<span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span>
-<span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">125</span>
 <span class="normal">126</span>
 <span class="normal">127</span>
 <span class="normal">128</span>
@@ -2589,7 +2742,38 @@
 <span class="normal">160</span>
 <span class="normal">161</span>
 <span class="normal">162</span>
-<span class="normal">163</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SortedItemsView</span><span class="p">(</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SortedItemsView</span><span class="p">(</span>
     <span class="n">BaseSortedView</span><span class="p">[</span><span class="n">_K_co</span><span class="p">,</span> <span class="n">_V_co</span><span class="p">],</span>
     <span class="n">PyoItemsView</span><span class="p">[</span><span class="n">_K_co</span><span class="p">,</span> <span class="n">_V_co</span><span class="p">],</span>
     <span class="n">PyoSequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">_K_co</span><span class="p">,</span> <span class="n">_V_co</span><span class="p">]],</span>
@@ -2600,6 +2784,17 @@
 <span class="sd">    When the sorted dict's items change, the view reflects those changes.</span>
 
 <span class="sd">    The items view implements the set and sequence abstract base classes.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from pyochain import Vec</span>
+<span class="sd">        from pyochain.collections import SortedDict</span>
+
+<span class="sd">        siv = SortedDict(a=1, b=2, c=3).items()</span>
+<span class="sd">        assert siv[0] == ("a", 1)</span>
+<span class="sd">        assert siv[-1] == ("c", 3)</span>
+<span class="sd">        assert siv[:] == Vec(("a", 1), ("b", 2), ("c", 3))</span>
+<span class="sd">        ```</span>
 
 <span class="sd">    """</span>
 
@@ -2631,11 +2826,11 @@
 <span class="sd">            from pyochain.collections import SortedDict</span>
 <span class="sd">            import pytest</span>
 
-<span class="sd">            sd = SortedDict({"a": 1, "b": 2, "c": 3})</span>
+<span class="sd">            sd = SortedDict(a=1, b=2, c=3)</span>
 <span class="sd">            siv = sd.items()</span>
 <span class="sd">            assert siv[0] == ("a", 1)</span>
 <span class="sd">            assert siv[-1] == ("c", 3)</span>
-<span class="sd">            assert siv[:] == Vec([("a", 1), ("b", 2), ("c", 3)])</span>
+<span class="sd">            assert siv[:] == Vec(("a", 1), ("b", 2), ("c", 3))</span>
 <span class="sd">            with pytest.raises(IndexError):</span>
 <span class="sd">                siv[100]</span>
 <span class="sd">            ```</span>
@@ -2667,7 +2862,7 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.collections._sorted.SortedItemsView.__getitem__" class="doc doc-heading">
+<h2 id="pyochain.collections._sorted._views.SortedItemsView.__getitem__" class="doc doc-heading">
             <code class="highlight language-python"><span class="fm">__getitem__</span><span class="p">(</span><span class="n">index</span><span class="p">)</span></code>
 
 </h2>
@@ -2727,7 +2922,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="tuple">tuple</span>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>] | <a class="autorefs autorefs-internal" title="pyochain.Vec" href="../vec/#pyochain.core.Vec">Vec</a>[<span title="tuple">tuple</span>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>]]</code>
+                  <code><span title="tuple">tuple</span>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>] | <a class="autorefs autorefs-internal" title="pyochain.Vec" href="../vec/#pyochain.core._vec.Vec">Vec</a>[<span title="tuple">tuple</span>[<span title="pyochain.collections._sorted._views._K_co">_K_co</span>, <span title="pyochain.collections._sorted._views._V_co">_V_co</span>]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2744,11 +2939,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">SortedDict</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
 
-<span class="n">sd</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">({</span><span class="s2">"a"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">:</span> <span class="mi">3</span><span class="p">})</span>
+<span class="n">sd</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">siv</span> <span class="o">=</span> <span class="n">sd</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
 <span class="k">assert</span> <span class="n">siv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">siv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"c"</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="k">assert</span> <span class="n">siv</span><span class="p">[:]</span> <span class="o">==</span> <span class="n">Vec</span><span class="p">([(</span><span class="s2">"a"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s2">"b"</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="s2">"c"</span><span class="p">,</span> <span class="mi">3</span><span class="p">)])</span>
+<span class="k">assert</span> <span class="n">siv</span><span class="p">[:]</span> <span class="o">==</span> <span class="n">Vec</span><span class="p">((</span><span class="s2">"a"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s2">"b"</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="s2">"c"</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">IndexError</span><span class="p">):</span>
     <span class="n">siv</span><span class="p">[</span><span class="mi">100</span><span class="p">]</span>
 </code></pre></div>
@@ -2756,40 +2951,40 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>pyochain/collections/_sorted/_views.pyi</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
 <span class="normal">155</span>
-<span class="normal">156</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
 <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">_K_co</span><span class="p">,</span> <span class="n">_V_co</span><span class="p">]</span> <span class="o">|</span> <span class="n">Vec</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">_K_co</span><span class="p">,</span> <span class="n">_V_co</span><span class="p">]]:</span>
@@ -2813,11 +3008,11 @@
 <span class="sd">        from pyochain.collections import SortedDict</span>
 <span class="sd">        import pytest</span>
 
-<span class="sd">        sd = SortedDict({"a": 1, "b": 2, "c": 3})</span>
+<span class="sd">        sd = SortedDict(a=1, b=2, c=3)</span>
 <span class="sd">        siv = sd.items()</span>
 <span class="sd">        assert siv[0] == ("a", 1)</span>
 <span class="sd">        assert siv[-1] == ("c", 3)</span>
-<span class="sd">        assert siv[:] == Vec([("a", 1), ("b", 2), ("c", 3)])</span>
+<span class="sd">        assert siv[:] == Vec(("a", 1), ("b", 2), ("c", 3))</span>
 <span class="sd">        with pytest.raises(IndexError):</span>
 <span class="sd">            siv[100]</span>
 <span class="sd">        ```</span>
@@ -2890,7 +3085,7 @@
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e886cdf1.min.js"></script>
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
       
         <script src="../../javascripts/mermaid.mjs" type="module"></script>
       
