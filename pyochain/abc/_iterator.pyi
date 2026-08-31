@@ -39,7 +39,7 @@ type ZippedLongest[T] = (
 """Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
 
 type FilterFn[T, R] = Callable[[T], object | TypeIs[R] | TypeGuard[R]] | None
-"""Optional closure that can be passed to `PyoIterator::filter` to determine if an element should be yielded."""
+"""Optional closure that can be passed to [`PyoIterator.filter`][] to determine if an element should be yielded."""
 
 @runtime_checkable
 class PyoIterator[T](PyoIterable[T], Protocol):
@@ -113,7 +113,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         Warning:
             The `Iterator` returned is **infinite**, meaning it will never stop yielding elements.
 
-            Be sure to use `PyoIterator::take` or `PyoIterator::slice` to limit the number of items taken.
+            Be sure to use [`take`][] or [`slice`][] to limit the number of items taken.
 
             Otherwise you could quickly run out of memory, if you try to collect it into a collection.
 
@@ -234,9 +234,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
 
-        This can be considered the lazy counterpart of [`PyoIterator::once`][PyoIterator.once].
-
-        Unlike `PyoIterator::once`, this function will lazily generate the value on request.
+        This can be considered the lazy counterpart of [`once`][].
 
         Args:
             func (Callable[P, R]): The single value to yield.
@@ -262,7 +260,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         If **n** is `None`, this will create an infinite `Iterator`.
 
-        Be sure to use [`PyoIterator::take`][PyoIterator.take] or [`PyoIterator::slice`][PyoIterator.slice] to limit the number of items taken.
+        Be sure to use [`take`][] or [`slice`][] to limit the number of items taken.
 
         Warning:
             Each repetition is a reference to the same object, not a copy.
@@ -277,7 +275,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             PyoIterator[O]: An `Iterator` of repeated **obj**.
 
         See Also:
-            [`PyoIterator::cycle`][cycle] to repeat the **elements** of the `Iterator`.
+            [`cycle`][] to repeat the **elements** of the `Iterator`.
 
         Example:
             ```python
@@ -357,11 +355,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> PyoIterator[S]:
         """Return an `Iterator` of accumulated binary **function** results.
 
-        In principle, `PyoIterator::accumulate` is similar to `PyoIterator::fold` if you provide it with the same binary function.
+        In principle, `accumulate` is similar to [`fold`][] if you provide it with the same binary function.
 
         However, instead of returning the final accumulated result, it returns an `Iterator` that yields the current value `T` of the accumulator for each iteration.
 
-        In other words, the last element yielded by `PyoIterator::accumulate` is what would have been returned by `PyoIterator::fold` if it had been used instead.
+        In other words, the last element yielded by `accumulate` is what would have been returned by [`fold`][] if it had been used instead.
 
         **function** should accept two arguments, an accumulated total and a value from the `Iterator`.
 
@@ -415,9 +413,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def all(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if every element of the `Iterator` is truthy.
 
-        `PyoIterator::.all` can optionally take a closure that returns true or false.
+        `all` can optionally take a closure that returns true or false.
 
-        It applies this closure to each element of the `Iterator`, and if they all return true, then so does `PyoIterator::.all`.
+        It applies this closure to each element of the `Iterator`, and if they all return true, then so does `all`.
 
         If any of them return false, it returns false.
 
@@ -530,9 +528,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if any element of the `Iterator` is truthy.
 
-        `PyoIterator::.any` can optionally take a closure that returns true or false.
+        `any` can optionally take a closure that returns true or false.
 
-        It applies this closure to each element of the `Iterator`, and if any of them return true, then so does `PyoIterator::.any`.
+        It applies this closure to each element of the `Iterator`, and if any of them return true, then so does `any`.
 
         If they all return false, it returns false.
 
@@ -1092,10 +1090,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Note that in case the original iterator is empty, the resulting iterator will also be empty.
 
-        You can use [`PyoIterator::take`][take] or [`PyoIterator::slice`][slice] to limit the number of items taken.
+        You can use [`take`][] or [`slice`][] to limit the number of items taken.
 
         See Also:
-            [`PyoIterator::repeat`][repeat] to create an `Iterator` from a single element repeatedly.
+            [`repeat`][] to create an `Iterator` from a single element repeatedly.
 
         Returns:
             PyoIterator[T]: A new `Iterator` that cycles through the elements indefinitely.
@@ -1115,7 +1113,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         Each value in the `Iterator` is paired with its index, starting from 0.
 
         Tip:
-            `PyoIterator::map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
+            `map_star`[] can then be used for subsequent operations on the index and value.
+
             This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Args:
@@ -1199,7 +1198,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         This won't have any runtime effect, but allows for better type inference.
 
         Note:
-            `Iter.filter(f).next()` is equivalent to `Iter.find(f)`.
+            `.filter(f).next()` is equivalent to [`.find(f)`][find].
+
+        See Also:
+            [`filter_false`][] for the complementary function that returns elements of the `Iterator` for which *func* is `False`.
 
         Args:
             func (FilterFn[T, R]): Function to evaluate each item.
@@ -1283,7 +1285,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             PyoIterator[R]: An iterable of the results where func returned `Some`.
 
         See Also:
-            [`PyoIterator::filter`][filter] with no closure provided if you want to filter out Python native `None` values.
+            [`filter`][] with no closure provided if you want to filter out Python native `None` values.
 
         Example:
             ```python
@@ -1757,7 +1759,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             B: The final accumulated value.
 
         Note:
-            This is similar to `PyoIterator::reduce` but with an initial value.
+            This is similar to [`reduce`][] but with an initial value.
 
         Example:
             ```python
@@ -2143,7 +2145,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         Credits to **more-itertools** for the implementation.
 
         See Also:
-            [`PyoIterator::is_sorted_by`][is_sorted_by] if your elements do not support comparison operations directly, or you want to sort based on a specific attribute or transformation.
+            [`is_sorted_by`][] if your elements do not support comparison operations directly, or you want to sort based on a specific attribute or transformation.
 
         Args:
             reverse (bool): Whether to check for descending order.
@@ -2309,17 +2311,17 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def map[R](self, func: Callable[[T], R]) -> PyoIterator[R]:
         """Apply a function **func** to each element of the `Iterator`.
 
-        If you are good at thinking in types, you can think of `PyoIterator::map` like this:
+        If you are good at thinking in types, you can think of `map` like this:
 
         - You have an `Iterator` that gives you elements of some type `A`
         - You want an `Iterator` of some other type `B`
         - Thenyou can use `.map()`, passing a closure **func** that takes an `A` and returns a `B`.
 
-        `PyoIterator::map` is conceptually similar to a for loop.
+        `map` is conceptually similar to a for loop.
 
-        However, as `PyoIterator::map` is lazy, it is best used when you are already working with other `PyoIterator` instances.
+        However, as `map` is lazy, it is best used when you are already working with other `PyoIterator` instances.
 
-        If you are doing some sort of looping for a side effect, it is considered more idiomatic to use `PyoIterator.for_each` than `PyoIterator.map().collect(Seq)`.
+        If you are doing some sort of looping for a side effect, it is considered more idiomatic to use [`for_each`][] than `map().collect(Seq)`.
 
         Args:
             func (Callable[[T], R]): Function to apply to each element.
@@ -2451,7 +2453,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         This can be very handy to compute multiple transformations or properties of the same item in a single pass, without needing to iterate multiple times.
 
-        As such, this can be considered as an alternative to various patterns, such as `PyoIterator::{for_each, fold}` with mutable collections, or `PyoIterator::map` followed by `PyoIterator::zip` to combine the results.
+        As such, this can be considered as an alternative to various patterns, such as [`for_each`][] and [`fold`][] with mutable collections, or [`map`][] followed by [`zip`][] to combine the results.
 
         Args:
             *funcs (Callable[[T], Any]): Functions to apply to each item.
@@ -2743,7 +2745,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             PyoIterator[R]: An iterator over the outputs of func.
 
         See Also:
-            [`PyoIterator::map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.
+            [`map_windows_star`][] for a version that unpacks the window into separate arguments.
 
         Example:
             ```python
@@ -2824,7 +2826,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             PyoIterator[R]: An iterator over the outputs of func.
 
         See Also:
-            [`PyoIterator::map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.
+            [`map_windows`][] for a version that passes the entire window as a single tuple argument.
 
         Example:
             ```python
@@ -2915,7 +2917,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             PyoIterator[R]: An `Iterator` of results from applying the function to the elements of the iterables.
 
         See Also:
-            [`PyoIterator::map_juxt`][map_juxt] to apply multiple functions to the same elements of the `Iterator`.
+            [`map_juxt`][] to apply multiple functions to the same elements of the `Iterator`.
 
         Example:
             ```python
@@ -2947,7 +2949,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         The elements of the `Iterator` must support comparison operations.
 
-        For comparing elements using a custom **key** function, use [`max_by`][max_by] instead.
+        For comparing elements using a custom **key** function, use [`max_by`][] instead.
 
         If multiple elements are tied for the maximum value, the first one encountered is returned.
 
@@ -3091,7 +3093,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         The actual `__next__()` method must be conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `PyoIterator` instance.
 
-        `PyoIterator::next` is a convenience method that wraps the result in an `Option` to handle exhaustion gracefully, for custom use cases.
+        `next` is a convenience method that wraps the result in an `Option` to handle exhaustion gracefully, for custom use cases.
 
         Returns:
             Option[T]: The next element in the iterator. `Some[T]`, or `NONE` if the iterator is exhausted.
@@ -3570,7 +3572,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Works like sequence slicing but does not support negative values for *start*, *stop*, or *step*.
 
-        Elements are returned consecutively unless step is set higher than one which results in items being skipped.
+        Elements are returned consecutively unless *step* is set higher than one which results in items being skipped.
 
         Args:
             start (int | None): Starting index. If zero or `None`, iteration starts at zero. Otherwise, elements from the `Iterator` are skipped until start is reached
@@ -4103,7 +4105,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> tuple[PyoIterator[U], PyoIterator[V]]:
         """Converts an `Iterator` of pairs into a pair of `Iterator`s.
 
-        This function is, in some sense, the opposite of `PyoIterator::zip`.
+        This function is, in some sense, the opposite of [`zip`][].
 
         Both `Iterator`s share the same underlying source.
 
@@ -4199,7 +4201,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         This continues until the shortest argument is exhausted.
 
         Note:
-            `Iter::map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
+            [`map_star`][] can then be used for subsequent operations on the index and value, in a destructuring manner.
             This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Args:
@@ -4259,7 +4261,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         If one of the iterables is potentially infinite, then the resulting `Iterator` should be followed with a method that limits the number of calls.
 
-        For example, `PyoIterator::islice` or `PyoIterator::take_while`.
+        For example, [`slice`][] or [`take_while`][].
 
         Args:
             *others (Iterable[Any]): Other iterables to zip with.
