@@ -6,7 +6,7 @@
 
 - Thanks to [@tecnolgd](https://github.com/tecnolgd) contribution in [#92](https://github.com/OutSquareCapital/pyochain/pull/92), `Range` is now aligned with its python counterpart constructor: `Range(10)` creates a range from 0 to 9, while `Range(1, 10)` creates a range from 1 to 9. The `step` argument is optional and defaults to 1.
 
-- `core::{Dict, Iter,Range, Vec, Seq, Set, SetMut}`, and `collections::Deque` now have flexible constructors: instantiate with no arguments, variable number of positional elements, or a single iterable. For example, `Vec(1, 2, 3)` or `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()` or `Vec([])` will create an empty `Vec`.
+- `core::{Dict, Iter,Range, Vec, Seq, Set, SetMut}`, and `collections::{StableSet, Deque}` now have flexible constructors: instantiate with no arguments, variable number of positional elements, or a single iterable. For example, `Vec(1, 2, 3)` or `Vec([1, 2, 3])` will create the equivalent of `[1, 2 ,3]`, while `Vec()` or `Vec([])` will create an empty `Vec`.
 
 ### 💥 Breaking changes
 
