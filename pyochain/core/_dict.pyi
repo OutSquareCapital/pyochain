@@ -4,7 +4,7 @@ from typing import Self, overload, override
 from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
 from pyochain.abc import PyoMutableMapping, PyoReversible
-from pyochain.core.protocols import KwargsWrapper
+from pyochain.abc.constructors import KwargsWrapper
 
 type DictConvertible[K, V] = (
     Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
@@ -37,8 +37,8 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K], KwargsWrapper[K, V])
             Self: A new `Dict` instance containing the provided key-value pairs.
 
         See Also:
-            - [`wrap`][core.protocols.Wrapper.wrap]: Create a `Dict` from an existing dictionary, no-copy.
-            - [`of`][core.protocols.FromKwargs.of]: Create a `Dict` from keyword arguments.
+            - [`wrap`][abc.constructors.Wrapper.wrap]: Create a `Dict` from an existing dictionary, no-copy.
+            - [`of`][abc.constructors.FromKwargs.of]: Create a `Dict` from keyword arguments.
             - [`Dict::from_object`][from_object]: Create a `Dict` from an object's `__dict__` attribute, no-copy.
 
         Example:

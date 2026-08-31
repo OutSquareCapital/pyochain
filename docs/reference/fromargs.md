@@ -1,3 +1,3 @@
 # FromArgs
 
-::: pyochain.core.protocols.FromArgs
+::: pyochain.abc.constructors.FromArgs

@@ -3,7 +3,7 @@ from typing import Any, Self, override
 
 from pyochain import SetMut
 from pyochain.abc import PyoMutableSet
-from pyochain.core.protocols import ArgsWrapper
+from pyochain.abc.constructors import ArgsWrapper
 
 class StableSet[T](PyoMutableSet[T], ArgsWrapper[T]):
     """A mutable collection of unique elements which remember their insertion order.

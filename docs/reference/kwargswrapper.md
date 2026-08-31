@@ -1,3 +1,3 @@
 # KwargsWrapper
 
-::: pyochain.core.protocols.KwargsWrapper
+::: pyochain.abc.constructors.KwargsWrapper

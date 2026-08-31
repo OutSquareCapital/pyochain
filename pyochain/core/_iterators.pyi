@@ -3,8 +3,7 @@ from typing import Self, final, override
 
 from pyochain import Option, Result
 from pyochain.abc import PyoIterator
-
-from .protocols import ArgsWrapper
+from pyochain.abc.constructors import ArgsWrapper
 
 @final
 class Iter[T](PyoIterator[T], ArgsWrapper[T]):

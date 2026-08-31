@@ -4,8 +4,7 @@ from typing import Self, SupportsIndex, final, overload, override
 from _typeshed import SupportsRichComparison
 
 from pyochain.abc import PyoMutableSequence
-
-from .protocols import ArgsWrapper
+from pyochain.abc.constructors import ArgsWrapper
 
 type IntoVec[T] = Vec[T] | list[T]
 
@@ -15,11 +14,11 @@ class Vec[T](PyoMutableSequence[T], ArgsWrapper[T]):
 
     Implement `collections::abc::MutableSequence`, and pyochain's `PyoMutableSequence` ABC.
 
-    Unlike [`Seq`][Seq] which is immutable, `Vec` allows in-place modification of elements.
+    Unlike [`Seq`][core._seq.Seq] which is immutable, `Vec` allows in-place modification of elements.
 
     As such, `Vec` is more suitable when you need to build up a collection incrementally, or when you need to perform many modifications on the collection.
 
-    On the other hand, [`Seq`][Seq] is more memory efficient when you have a fixed collection that doesn't require modification.
+    On the other hand, [`Seq`][core._seq.Seq] is more memory efficient when you have a fixed collection that doesn't require modification.
 
     This is due to the fact that CPython don't have to allocate extra space to account for potential future modifications.
 

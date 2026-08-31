@@ -3,8 +3,7 @@ from collections.abc import Set as AbstractSet
 from typing import Self, overload, override
 
 from pyochain.abc import PyoMutableSet, PyoSet
-
-from .protocols import ArgsWrapper
+from pyochain.abc.constructors import ArgsWrapper
 
 # TODO: address the following note from official python docs regarding Set performance, with benchmarks:
 # To override the comparisons (presumably for speed, as the semantics are fixed),

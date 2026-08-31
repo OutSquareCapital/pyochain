@@ -1,3 +1,3 @@
 # ArgsWrapper
 
-::: pyochain.core.protocols.ArgsWrapper
+::: pyochain.abc.constructors.ArgsWrapper

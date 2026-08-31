@@ -1,3 +1,3 @@
 # FromKwargs
 
-::: pyochain.core.protocols.FromKwargs
+::: pyochain.abc.constructors.FromKwargs

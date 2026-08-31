@@ -3,7 +3,7 @@ from collections.abc import Iterable, Iterator
 from typing import Final, Self, SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoMutableSequence
-from pyochain.core.protocols import ArgsWrapper
+from pyochain.abc.constructors import ArgsWrapper
 
 type IntoDeque[T] = deque[T] | Deque[T]
 

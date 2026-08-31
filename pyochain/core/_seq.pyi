@@ -2,8 +2,7 @@ from collections.abc import Iterable, Iterator
 from typing import Any, Self, SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoSequence
-
-from .protocols import ArgsWrapper
+from pyochain.abc.constructors import ArgsWrapper
 
 type IntoSeq[T] = Seq[T] | tuple[T, ...]
 
