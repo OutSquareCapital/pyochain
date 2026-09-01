@@ -151,7 +151,8 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         Runtime complexity: `O(n*log(n))`
 
-        :return: new sorted dict
+        Returns:
+            SortedDict[OT, S | Any | None]: new sorted dict
 
         """
 
@@ -163,7 +164,8 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         Runtime complexity: `O(n)`
 
-        :return: new sorted dict
+        Returns:
+            Self: new sorted dict
 
         """
 
@@ -208,7 +210,8 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         See :class:`SortedKeysView` for details.
 
-        :return: new sorted keys view
+        Returns:
+            SortedKeysView[K]: new sorted keys view
 
         """
 
@@ -218,7 +221,8 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         See :class:`SortedItemsView` for details.
 
-        :return: new sorted items view
+        Returns:
+            SortedItemsView[K, V]: new sorted items view
 
         """
 
@@ -230,7 +234,8 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         See :class:`SortedValuesView` for details.
 
-        :return: new sorted values view
+        Returns:
+            SortedValuesView[V]: new sorted values view
 
         """
 
