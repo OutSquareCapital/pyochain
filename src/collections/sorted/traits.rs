@@ -93,10 +93,8 @@ pub(super) trait BaseSortedListSet: SortedCollection {
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
 }
 
-#[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedListGetters: BaseSortedListSet {
     type L: ListDataGetters + ListsDataMethods;
-    #[skip]
     fn get_data(&self) -> MutexGuard<'_, Self::L>;
 }
 macro_rules! impl_inner_sorted_rs {
