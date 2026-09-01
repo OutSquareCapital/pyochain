@@ -20,7 +20,9 @@ class Lib(StrEnum):
 def main() -> None:
     """Read benchmark data, compute ratios, and generate plots."""
     df = _get_df()
+    df.show(-1)
     ratios = _get_ratios(df)
+    ratios.show(-1)
     px.bar(  # pyright: ignore[reportUnknownMemberType]
         df,
         title="Benchmark results for pyochain vs sortedcontainers",
@@ -80,11 +82,12 @@ def _get_df() -> pl.DataFrame:
 def _get_ratios(df: pl.DataFrame) -> pl.DataFrame:
     return (
         df
-        .select("method", "median", "lib", "size", "test")
-        .pivot("lib", index=("size", "method", "test"))
-        .with_columns(
-            pl.col("sortedcontainers").truediv("pyochain").sub(1).alias("speedup"),
-            pl.col("size").cast(pl.String()),
+        .select("method", "median", "lib", "test")
+        .pivot("lib", index=("method", "test"))
+        .select(
+            "test",
+            "method",
+            pl.col(Lib.SORTEDCONTAINERS).truediv(Lib.PYOCHAIN).sub(1).alias("speedup"),
         )
     )
 
