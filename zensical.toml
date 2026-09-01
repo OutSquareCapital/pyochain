@@ -112,6 +112,9 @@ show_overloads = true
 show_source = true
 signature_crossrefs = true
 
+[project.plugins.mkdocstrings.handlers.python.options.docstring_options]
+returns_named_value = false
+
 
 [project.markdown_extensions.pymdownx.superfences]
 custom_fences = [
