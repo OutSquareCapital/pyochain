@@ -87,7 +87,12 @@ def _get_ratios(df: pl.DataFrame) -> pl.DataFrame:
         .select(
             "test",
             "method",
-            pl.col(Lib.SORTEDCONTAINERS).truediv(Lib.PYOCHAIN).sub(1).alias("speedup"),
+            pl
+            .col(Lib.SORTEDCONTAINERS)
+            .truediv(Lib.PYOCHAIN)
+            .sub(1)
+            .round(3)
+            .alias("speedup"),
         )
     )
 
