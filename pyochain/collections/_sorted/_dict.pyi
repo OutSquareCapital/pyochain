@@ -13,7 +13,6 @@ from pyochain.abc import PyoIterator, PyoMutableMapping, PyoReversible
 from pyochain.collections import (
     SortedItemsView,
     SortedKeysView,
-    SortedList,
     SortedValuesView,
 )
 
@@ -25,13 +24,6 @@ type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K],
 class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     PyoMutableMapping[K, V], SortedCollection[K], PyoReversible[K], ABC
 ):
-    _list: SortedList[K]
-    _inner: Dict[K, V]
-
-    @abstractmethod
-    def __init__(
-        self, iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (), **kwargs: V
-    ) -> None: ...
     @abstractmethod
     def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]: ...
     @abstractmethod
@@ -144,12 +136,15 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     def from_keys[OT: SupportsHashableAndRichComparison, S](
         cls, iterable: Iterable[OT], value: S | None = None, /
     ) -> SortedDict[OT, S | Any | None]:
-        """Return a new sorted dict initialized from `iterable` and `value`.
+        """Return a new `BaseSortedDict` initialized from *iterable* and *value*.
 
-        Items in the sorted dict have keys from `iterable` and values equal to
-        `value`.
+        Items in the sorted dict have keys from *iterable* and values equal to *value*.
 
         Runtime complexity: `O(n*log(n))`
+
+        Args:
+            iterable (Iterable[OT]): keys for items
+            value (S | None): value for items (default None)
 
         Returns:
             SortedDict[OT, S | Any | None]: new sorted dict
@@ -474,31 +469,25 @@ class SortedKeyDict[
 ](BaseSortedDict[K, V]):
     """Sorted dict with key-function for sorting keys.
 
-    Optional key-function argument defines a callable that, like the `key`
-    argument to the built-in `sorted` function, extracts a comparison key
-    from each dictionary key.
-
-    If no function is specified, the default compares the dictionary keys directly.
+    *key* argument defines a `Callable` that, like the `key`
+    argument to the built-in `sorted` function, extracts a comparison key from each dictionary key.
 
     The key-function argument must be provided as a positional argument and must come before all other arguments.
 
-    Optional iterable argument provides an initial sequence of pairs to initialize the sorted dict.
+    Optional *iterable* argument provides an initial `Iterable` of pairs to initialize the sorted dict.
 
-    Each pair in the sequence defines the key and corresponding value.
+    Each pair in the `Iterable` defines the key and corresponding value.
 
     If a key is seen more than once, the last value associated with it is stored in the new sorted dict.
 
     Optional mapping argument provides an initial mapping of items to initialize the sorted dict.
 
-    If keyword arguments are given, the keywords themselves, with their
-    associated values, are added as items to the dictionary.
+    If keyword arguments are given, the keywords themselves, with their associated values, are added as items to the dictionary.
 
     If a key is specified both in the positional argument and as a keyword argument,
-    the value associated with the keyword is stored in the
-    sorted dict.
+    the value associated with the keyword is stored in the sorted dict.
 
-    Sorted dict keys must be hashable, per the requirement for Python's
-    dictionaries.
+    Sorted dict keys must be hashable, per the requirement for Python's dictionaries.
 
     The result of the key-function must also be comparable, per the requirement for sorted lists.
 
@@ -512,13 +501,13 @@ class SortedKeyDict[
     ```
     """
 
-    def __init__(
-        self,
-        iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (),
-        *,
+    def __new__(
+        cls,
         key: KeyFunc[K, OT],
+        iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (),
+        /,
         **kwargs: V,
-    ) -> None: ...
+    ) -> Self: ...
     @override
     # pyrefly: ignore [bad-override]
     def __ror__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -536,8 +525,7 @@ class SortedKeyDict[
     def key(self) -> KeyFunc[K, OT]:
         """Function used to extract comparison key from keys.
 
-        Sorted dict compares keys directly when the key function is none.
-
+        Sorted dict compares keys directly when the key function is `None`.
         """
 
     @override

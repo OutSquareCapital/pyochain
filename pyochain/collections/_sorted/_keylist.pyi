@@ -2,7 +2,7 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 
 from collections.abc import Iterable
-from typing import Self, overload, override
+from typing import Self, override
 
 from _typeshed import SupportsRichComparison
 
@@ -19,9 +19,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
 
     Optional `iterable` argument provides an initial iterable of values to initialize the sorted-key list.
 
-    `key` argument defines a callable that, like the `key` argument to Python's `sorted` function, extracts a comparison key from each value.
-
-    The default is the identity function.
+    `key` argument defines a `Callable` that, like the `key` argument to Python's `sorted` function, extracts a comparison key from each value.
 
     Runtime complexity: `O(n*log(n))`
 
@@ -29,28 +27,20 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
     from pyochain.collections import SortedKeyList
     from operator import neg
 
-    skl = SortedKeyList(key=neg)
+    skl = SortedKeyList(neg)
     assert repr(skl) == "SortedKeyList([], key=<built-in function neg>)"
-    skl = SortedKeyList([3, 1, 2], key=neg)
+    skl = SortedKeyList(neg, [3, 1, 2])
     assert repr(skl) == "SortedKeyList([3, 2, 1], key=<built-in function neg>)"
     ```
     """
-    @overload
     def __new__(
-        cls, iterable: Iterable[OT], key: None = None
-    ) -> SortedKeyList[OT, OT]: ...
-    @overload
-    def __new__(
-        cls, iterable: Iterable[T] | None = None, key: KeyFunc[T, OT] = ...
-    ) -> Self: ...
-    def __new__(
-        cls, iterable: Iterable[T] | None = None, key: KeyFunc[T, OT] | None = None
+        cls, key: KeyFunc[T, OT], iterable: Iterable[T] | None = None, /
     ) -> Self:
         """Create a new sorted-key list.
 
         Args:
+            key (KeyFunc[T, OT]): function used to extract comparison key.
             iterable (Iterable[T] | None): initial values (optional)
-            key (KeyFunc[T, OT] | None): function used to extract comparison key (optional)
 
         Returns:
             Self: new sorted-key list
@@ -88,7 +78,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
         from pyochain.collections import SortedKeyList
         from operator import neg
 
-        skl = SortedKeyList([11, 12, 13, 14, 15], key=neg)
+        skl = SortedKeyList(neg, [11, 12, 13, 14, 15])
         it = skl.irange_key(-14, -12)
         assert list(it) == [14, 13, 12]
         ```
@@ -116,7 +106,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
         from pyochain.collections import SortedKeyList
         from operator import neg
 
-        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        skl = SortedKeyList(neg, [5, 4, 3, 2, 1])
         assert skl.bisect_key_left(-1) == 4
         ```
         """
@@ -142,7 +132,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
         from pyochain.collections import SortedKeyList
         from operator import neg
 
-        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        skl = SortedKeyList(neg, [5, 4, 3, 2, 1])
         assert skl.bisect_key_right(-1) == 5
         ```
         """

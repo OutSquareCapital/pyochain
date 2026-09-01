@@ -17,21 +17,19 @@ type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 # pyrefly: ignore [bad-specialization]
 class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
     def __new__(
-        cls, iterable: Iterable[T] | None = None, key: SetKeyFunc[T, OT] | None = None
+        cls, key: SetKeyFunc[T, OT], iterable: Iterable[T] | None = None, /
     ) -> Self:
         """Initialize sorted set instance based on a key function.
 
-        Optional `iterable` argument provides an initial iterable of values to initialize the sorted key set.
+        Optional *iterable* argument provides an initial iterable of values to initialize the sorted key set.
 
         The `key` argument defines a `Callable` that, like the `key` argument to Python's `sorted` function, extracts a comparison key from each value.
-
-        The default, `None`, compares values directly.
 
         Runtime complexity: `O(n*log(n))`
 
         Args:
+            key (SetKeyFunc[T, OT]): function used to extract comparison key
             iterable (Iterable[T] | None): initial values (optional)
-            key (SetKeyFunc[T, OT] | None): function used to extract comparison key
 
         Returns:
             Self: new sorted-key set
@@ -41,7 +39,7 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
             from pyochain.collections import SortedKeySet
             from operator import neg
 
-            ss = SortedKeySet([3, 1, 2, 5, 4], neg)
+            ss = SortedKeySet(neg, [3, 1, 2, 5, 4])
             assert (
                 repr(ss) == "SortedKeySet([5, 4, 3, 2, 1], key=<built-in function neg>)"
             )

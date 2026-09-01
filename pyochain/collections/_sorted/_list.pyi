@@ -41,8 +41,8 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         added = sl1 + sl2
         assert added == SortedList(["a", "a", "b", "c", "t", "t"])
 
-        skl1 = SortedKeyList([5, 4, 3], key=neg)
-        skl2 = SortedKeyList([2, 1, 0], key=neg)
+        skl1 = SortedKeyList(neg, [5, 4, 3])
+        skl2 = SortedKeyList(neg, [2, 1, 0])
         new = skl1 + skl2
         assert new == [5, 4, 3, 2, 1, 0]
         ```
@@ -71,7 +71,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         new = sl * 3
         assert new == SortedList(["a", "a", "a", "b", "b", "b", "c", "c", "c"])
 
-        skl = SortedKeyList([3, 2, 1], key=neg)
+        skl = SortedKeyList(neg, [3, 2, 1])
         new = skl * 2
         assert new == [3, 3, 2, 2, 1, 1]
         ```
@@ -109,7 +109,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         sl = SortedList([1, 2, 3, 4, 5])
         assert 3 in sl
 
-        skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
+        skl = SortedKeyList(neg, [1, 2, 3, 4, 5])
         assert 3 in skl
         ```
 
@@ -425,7 +425,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         sl = SortedList([1, 2, 2, 3, 3, 3, 4, 4, 4, 4])
         assert sl.count(3) == 3
 
-        skl = SortedKeyList([4, 4, 4, 4, 3, 3, 3, 2, 2, 1], key=neg)
+        skl = SortedKeyList(neg, [4, 4, 4, 4, 3, 3, 3, 2, 2, 1])
         assert skl.count(2) == 2
         ```
         """
@@ -512,7 +512,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
 
             from operator import neg
 
-            skl = SortedKeyList(key=neg)
+            skl = SortedKeyList(neg)
             skl.update([3, 1, 2])
             assert skl == [3, 2, 1]
             ```

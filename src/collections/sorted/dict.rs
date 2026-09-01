@@ -116,11 +116,11 @@ impl SortedKeyDict {
 #[pymethods]
 impl SortedKeyDict {
     #[new]
-    #[pyo3(signature = (iterable=None,*, key,  **kwargs))]
+    #[pyo3(signature = (key, iterable=None, / , **kwargs))]
     fn py_new(
         py: Python<'_>,
-        iterable: Option<Bound<'_, PyAny>>,
         key: Py<PyAny>,
+        iterable: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>> {
         let list = KeysListsData::new(key.clone_ref(py))

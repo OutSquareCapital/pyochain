@@ -39,7 +39,7 @@ def test_init() -> None:
 
 
 def test_init_key() -> None:
-    temp = SortedKeyDict[int, int, int](key=operator.neg)
+    temp = SortedKeyDict[int, int, int](operator.neg)
     assert temp.key == operator.neg
     check_sorted_dict(temp)
 
@@ -114,7 +114,7 @@ def test_iter() -> None:
 
 
 def test_iter_key() -> None:
-    temp = SortedKeyDict(((val, val) for val in range(100)), key=operator.neg)
+    temp = SortedKeyDict(operator.neg, ((val, val) for val in range(100)))
     temp.reset(7)
     assert all(lhs == rhs for lhs, rhs in zip(temp, reversed(range(100)), strict=False))
 
@@ -131,7 +131,7 @@ def test_reversed() -> None:
 
 
 def test_reversed_key() -> None:
-    temp = SortedKeyDict(((val, val) for val in range(100)), key=modulo)
+    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
     temp.reset(7)
     values = sorted(range(100), key=modulo)
     assert all(
@@ -162,7 +162,7 @@ def test_irange() -> None:
 
 
 def test_irange_key() -> None:
-    temp = SortedKeyDict(((val, val) for val in range(100)), key=modulo)
+    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
     temp.reset(7)
     values = sorted(range(100), key=modulo)
 
@@ -337,7 +337,7 @@ class Identity:
 
 @pytest.mark.skip(reason="We don't handle recursive repr as of now. Need to fix.")
 def test_repr_recursion() -> None:
-    temp = SortedKeyDict({"alice": 3, "bob": 1, "carol": 2, "dave": 4}, key=Identity())
+    temp = SortedKeyDict(Identity(), {"alice": 3, "bob": 1, "carol": 2, "dave": 4})
     # pyrefly: ignore [unsupported-operation]
     temp["bob"] = temp  # pyright: ignore[reportArgumentType]
     assert (
@@ -365,7 +365,7 @@ def test_index() -> None:
 
 
 def test_index_key() -> None:
-    temp = SortedKeyDict(((val, val) for val in range(100)), key=operator.neg)
+    temp = SortedKeyDict(operator.neg, ((val, val) for val in range(100)))
     temp.reset(7)
     assert all(temp.index(val) == (99 - val) for val in range(100))
 
@@ -378,14 +378,14 @@ def test_bisect() -> None:
 
 
 def test_bisect_key() -> None:
-    temp = SortedKeyDict(((val, val) for val in range(100)), key=modulo)
+    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
     temp.reset(7)
     assert all(temp.bisect_right(val) == ((val % 10) + 1) * 10 for val in range(100))
     assert all(temp.bisect_left(val) == (val % 10) * 10 for val in range(100))
 
 
 def test_bisect_key2() -> None:
-    temp = SortedKeyDict(((val, val) for val in range(100)), key=modulo)
+    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
     temp.reset(7)
     assert all(temp.bisect_key_right(val) == ((val % 10) + 1) * 10 for val in range(10))
     assert all(temp.bisect_key_left(val) == (val % 10) * 10 for val in range(10))
@@ -525,7 +525,7 @@ def test_items_view_index() -> None:
 def test_pickle() -> None:
     import pickle
 
-    alpha = SortedKeyDict(zip(range(100), range(100), strict=False), key=operator.neg)
+    alpha = SortedKeyDict(operator.neg, zip(range(100), range(100), strict=False))
     alpha.reset(500)
     beta: SortedKeyDict[int, int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta

@@ -35,15 +35,6 @@ use tap::prelude::*;
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>>;
 
-#[pyclass(frozen, generic)]
-pub(super) struct PyIdentity;
-#[pymethods]
-impl PyIdentity {
-    #[staticmethod]
-    fn __call__(value: Bound<'_, PyAny>) -> Bound<'_, PyAny> {
-        value
-    }
-}
 #[py_abc(
     SortedList,
     SortedKeyList,

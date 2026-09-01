@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### 💥 Breaking changes
+
+#### No more identity function as default key for "key containers"
+
+"keys" sorted containers (i.e `SortedKeyList`, `SortedKeySet`, etc...) now require an explicit key argument, instead of providing by default an identity function.
+
+Moreover, *key* is now the **first** argument, followed by the *iterable* argument, and they are both positional-only.
+
+This allows performance improvements, simplify internal implementations, but most importantly, aligns more with the API choice of pyochain, which, unlike the original `sortedcontainers` library, provides those "key containers" as explicit classes, instead of dynamically creating them depending on the signature.
+
+Because, frankly, why would you create a `SortedKeyList` with an identity function as key, when you can just use a `SortedList` instead?
+
 ### 🛠️ Other improvements
 
 - **Website**: The return sections of the functions/methods docstrings is now correctly rendered thanks to @tecnolgd contribution in [#95](https://github.com/OutSquareCapital/pyochain/pull/95)

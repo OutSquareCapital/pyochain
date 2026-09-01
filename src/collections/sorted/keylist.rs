@@ -1,12 +1,12 @@
 use crate::{
     abc,
     collections::sorted::traits::{
-        BaseSortedList, BaseSortedListSet, ListGetter, PyIdentity, Reduced, SortedCollection,
+        BaseSortedList, BaseSortedListSet, ListGetter, Reduced, SortedCollection,
     },
     core::PyoVec,
     traits::IntoInit,
 };
-use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyList};
+use pyo3::{PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
 use sorted_rs::{KeysListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
@@ -26,14 +26,12 @@ impl SortedKeyList {
 #[pymethods]
 impl SortedKeyList {
     #[new]
-    #[pyo3(signature = (iterable = None, *, key = None))]
+    #[pyo3(signature = (key, iterable = None, /))]
     fn py_new(
-        py: Python<'_>,
+        key: Bound<'_, PyAny>,
         iterable: Option<Bound<'_, PyAny>>,
-        key: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let slf = Self::new(key.map_or_else(|| PyIdentity.into_py_any(py).unwrap(), Bound::unbind));
-
+        let slf = Self::new(key.unbind());
         if let Some(iterable) = iterable {
             slf.py_update(&iterable)?;
         }

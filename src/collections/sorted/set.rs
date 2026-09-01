@@ -1,5 +1,5 @@
 use pyo3::{
-    IntoPyObjectExt, PyTypeInfo,
+    PyTypeInfo,
     prelude::*,
     types::{PyList, PySet},
 };
@@ -11,7 +11,7 @@ use tap::Pipe;
 
 use crate::{
     abc,
-    collections::sorted::traits::{BaseSortedSet, IntoUpdate, ListGetter, PyIdentity},
+    collections::sorted::traits::{BaseSortedSet, IntoUpdate, ListGetter},
     traits::IntoInit,
 };
 
@@ -73,13 +73,13 @@ impl SortedKeySet {
 #[pymethods]
 impl SortedKeySet {
     #[new]
-    #[pyo3(signature = (iterable = None, key = None))]
+    #[pyo3(signature = (key, iterable = None, /))]
     fn py_new(
-        py: Python<'_>,
+        key: Bound<'_, PyAny>,
         iterable: Option<Bound<'_, PyAny>>,
-        key: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let key_fn = key.map_or_else(|| PyIdentity.into_py_any(py).unwrap(), Bound::unbind);
+        let py = key.py();
+        let key_fn = key.unbind();
         let list = KeysListsData::new(key_fn.clone_ref(py));
         let slf = Self::new(PySet::empty(py).unwrap(), list, key_fn);
 
