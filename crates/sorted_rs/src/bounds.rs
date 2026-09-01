@@ -81,7 +81,7 @@ impl Bounds {
             max: Pos::new(max_pos, max_idx),
         }
     }
-    pub fn get_irange_specs(
+    pub fn from_sorted(
         lists: &[Vec<Py<PyAny>>],
         maxes: &[Py<PyAny>],
         minimum: Option<Bound<'_, PyAny>>,

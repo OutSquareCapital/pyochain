@@ -2,32 +2,27 @@ use std::sync::Mutex;
 
 use crate::abc;
 use pyo3::prelude::*;
-use sorted_rs::{KeysListsData, ListDataIter, ListsData};
+use sorted_rs::{KeysListsData, ListDataIter, ListDataIterRev, ListDataIteratorMethods, ListsData};
 
-#[pyclass(module = "pyochain._iterators", frozen, generic, extends=abc::PyoIterator)]
-pub struct SortedIter(Mutex<ListDataIter<ListsData>>);
-impl SortedIter {
-    pub(super) fn new(inner: ListDataIter<ListsData>) -> Self {
-        Self(Mutex::new(inner))
-    }
-}
-#[pymethods]
-impl SortedIter {
-    fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
-        self.0.lock().expect("poisoned").next(py)
-    }
+macro_rules! impl_sorted_iter {
+    ($name:ident, $iter:ty) => {
+        #[pyclass(module = "pyochain._iterators", frozen, generic, extends=abc::PyoIterator)]
+        pub struct $name(Mutex<$iter>);
+        impl $name {
+            pub(super) fn new(inner: $iter) -> Self {
+                Self(Mutex::new(inner))
+            }
+        }
+        #[pymethods]
+        impl $name {
+            fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
+                self.0.lock().expect("poisoned").next(py)
+            }
+        }
+    };
 }
 
-#[pyclass(module = "pyochain._iterators", frozen, generic, extends=abc::PyoIterator)]
-pub struct SortedIterKey(Mutex<ListDataIter<KeysListsData>>);
-impl SortedIterKey {
-    pub(super) fn new(inner: ListDataIter<KeysListsData>) -> Self {
-        Self(Mutex::new(inner))
-    }
-}
-#[pymethods]
-impl SortedIterKey {
-    fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
-        self.0.lock().expect("poisoned").next(py)
-    }
-}
+impl_sorted_iter!(SortedIter, ListDataIter<ListsData>);
+impl_sorted_iter!(SortedIterReverse, ListDataIterRev<ListsData>);
+impl_sorted_iter!(SortedIterKey, ListDataIter<KeysListsData>);
+impl_sorted_iter!(SortedIterKeyReverse, ListDataIterRev<KeysListsData>);

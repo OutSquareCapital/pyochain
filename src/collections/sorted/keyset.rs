@@ -4,15 +4,13 @@ use pyo3::{
     types::{PyList, PySet},
 };
 use pyo3_ext::prelude::CollectBoundIterator;
-use sorted_rs::{Bounds, KeysListsData, ListsDataMethods};
+use sorted_rs::{KeysListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::Pipe;
 
 use crate::{
     abc,
-    collections::sorted::traits::{
-        BaseSortedSet, IntoUpdate, ListGetter, PyIdentity, SortedCollection,
-    },
+    collections::sorted::traits::{BaseSortedSet, IntoUpdate, ListGetter, PyIdentity},
     traits::IntoInit,
 };
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
@@ -45,22 +43,6 @@ impl SortedKeySet {
     fn get_key<'py>(&self, py: Python<'py>) -> &Bound<'py, PyAny> {
         self.2.bind(py)
     }
-    #[allow(unused_variables)]
-    #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
-    fn irange_key<'py>(
-        &self,
-        py: Python<'py>,
-        min_key: Option<Bound<'py, PyAny>>,
-        max_key: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-        reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let data = self.get_data();
-        let bounds =
-            Bounds::get_irange_specs(&data.keys, &data.maxes, min_key, max_key, inclusive)?;
-        self.bounded_iter(py, bounds, reverse)
-    }
-
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_data().bisect_left(key)
     }

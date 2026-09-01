@@ -46,7 +46,7 @@ impl ListsDataMethods for ListsData {
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
     ) -> PyResult<Option<Bounds>> {
-        Bounds::get_irange_specs(self.lists(), self.maxes(), minimum, maximum, inclusive)
+        Bounds::from_sorted(self.lists(), self.maxes(), minimum, maximum, inclusive)
     }
 
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {

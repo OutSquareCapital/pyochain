@@ -50,7 +50,7 @@ impl ListsDataMethods for KeysListsData {
         let key = self.key.bind(py);
         let minimum = minimum.map(|value| key.call1((value,))).transpose()?;
         let maximum = maximum.map(|value| key.call1((value,))).transpose()?;
-        Bounds::get_irange_specs(&self.keys, self.maxes(), minimum, maximum, inclusive)
+        Bounds::from_sorted(&self.keys, self.maxes(), minimum, maximum, inclusive)
     }
 
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {

@@ -3,12 +3,12 @@ use crate::{
     collections::sorted::traits::{
         BaseSortedList, BaseSortedListSet, ListGetter, PyIdentity, Reduced, SortedCollection,
     },
-    core::{PyoVec, iterators},
+    core::PyoVec,
     traits::IntoInit,
 };
 use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
-use sorted_rs::{Bounds, KeysListsData, ListsDataMethods};
+use sorted_rs::{KeysListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -29,22 +29,6 @@ impl SortedKeyList {
 }
 #[pymethods]
 impl SortedKeyList {
-    #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
-    pub(super) fn irange_key<'py>(
-        &self,
-        py: Python<'py>,
-        min_key: Option<Bound<'py, PyAny>>,
-        max_key: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-        reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let data = self.get_data();
-        let specs = Bounds::get_irange_specs(&data.keys, &data.maxes, min_key, max_key, inclusive);
-        match specs? {
-            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => self.bounded_iter(py, Some(bounds), reverse),
-        }
-    }
     #[new]
     #[pyo3(signature = (iterable = None, *, key = None))]
     fn py_new(
