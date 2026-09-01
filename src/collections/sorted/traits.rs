@@ -5,8 +5,7 @@ use crate::{
         sorted::{
             dict::{SortedDict, SortedKeyDict},
             iter::{SortedIter, SortedIterKey, SortedIterKeyReverse, SortedIterReverse},
-            keyset::SortedKeySet,
-            set::SortedSet,
+            set::{SortedKeySet, SortedSet},
             views::BaseSortedView,
         },
     },

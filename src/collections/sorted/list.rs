@@ -19,7 +19,7 @@ impl SortedList {
         Self(Arc::new(Mutex::new(ListsData::default())))
     }
     #[inline]
-    pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
+    fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
         let new_inst = Self::new();
         new_inst.get_data().update(py, values)?;
         Ok(new_inst)

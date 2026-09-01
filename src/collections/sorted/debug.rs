@@ -1,8 +1,7 @@
 use crate::collections::{
     SortedDict, SortedKeyDict, SortedKeyList, SortedList,
     sorted::{
-        keyset::SortedKeySet,
-        set::SortedSet,
+        set::{SortedKeySet, SortedSet},
         traits::{BaseSortedDict, BaseSortedSet, ListGetter},
     },
 };

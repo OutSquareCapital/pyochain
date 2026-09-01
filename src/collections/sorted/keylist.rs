@@ -17,11 +17,7 @@ impl SortedKeyList {
     pub(super) fn new(key: Py<PyAny>) -> Self {
         Self(Arc::new(Mutex::new(KeysListsData::new(key))))
     }
-    pub(super) fn from_vec(
-        py: Python<'_>,
-        values: Vec<Py<PyAny>>,
-        key: &Py<PyAny>,
-    ) -> PyResult<Self> {
+    fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>, key: &Py<PyAny>) -> PyResult<Self> {
         let new_inst = Self::new(key.clone_ref(py));
         new_inst.get_data().update(py, values)?;
         Ok(new_inst)
