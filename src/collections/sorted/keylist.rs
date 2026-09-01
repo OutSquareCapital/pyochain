@@ -2,7 +2,6 @@ use crate::{
     abc,
     collections::sorted::traits::{
         BaseSortedList, BaseSortedListSet, ListGetter, PyIdentity, Reduced, SortedCollection,
-        bounded_iter,
     },
     core::{PyoVec, iterators},
     traits::IntoInit,
@@ -32,18 +31,18 @@ impl SortedKeyList {
 impl SortedKeyList {
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     pub(super) fn irange_key<'py>(
-        slf: &Bound<'py, Self>,
+        &self,
+        py: Python<'py>,
         min_key: Option<Bound<'py, PyAny>>,
         max_key: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let py = slf.py();
-        let data = slf.get().get_data();
+        let data = self.get_data();
         let specs = Bounds::get_irange_specs(&data.keys, &data.maxes, min_key, max_key, inclusive);
         match specs? {
             None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => bounded_iter(slf, Some(bounds), reverse),
+            Some(bounds) => self.bounded_iter(py, Some(bounds), reverse),
         }
     }
     #[new]

@@ -1,3 +1,4 @@
+use crate::Bounds;
 use crate::{
     bisect,
     bounds::{Indexes, Pos},
@@ -5,7 +6,6 @@ use crate::{
     errors, impl_list_data_getters, ops,
     traits::{DEFAULT_LOAD_FACTOR, ListDataGetters, ListsDataMethods},
 };
-use crate::Bounds;
 use pyo3::prelude::*;
 pub struct KeysListsData {
     pub lists: Vec<Vec<Py<PyAny>>>,

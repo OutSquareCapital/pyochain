@@ -2,9 +2,7 @@ use crate::{
     abc,
     collections::sorted::{
         SortedItemsView, SortedKeysView, SortedValuesView,
-        traits::{
-            BaseSortedDict, ListGetter, Reduced, SortedCollection, bounded_iter,
-        },
+        traits::{BaseSortedDict, ListGetter, Reduced, SortedCollection},
         views::{SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView},
     },
     traits::IntoInit,
@@ -140,16 +138,17 @@ impl SortedKeyDict {
 
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(
-        slf: &Bound<'py, Self>,
+        &self,
+        py: Python<'py>,
         min_key: Option<Bound<'py, PyAny>>,
         max_key: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let data = slf.get().get_data();
+        let data = self.get_data();
         let bounds =
             Bounds::get_irange_specs(&data.keys, &data.maxes, min_key, max_key, inclusive)?;
-        bounded_iter(slf, bounds, reverse)
+        self.bounded_iter(py, bounds, reverse)
     }
 
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
