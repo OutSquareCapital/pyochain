@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 🛠️ Other improvements
+
+- **Website**: The return sections of the functions/methods docstrings is now correctly rendered thanks to @tecnolgd contribution in [#95](https://github.com/OutSquareCapital/pyochain/pull/95)
+
 ## [0.28.0] - 2026-08-31
 
 ### 🏆 Highlights
