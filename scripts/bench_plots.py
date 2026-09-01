@@ -41,7 +41,7 @@ def main() -> None:
         barmode="relative",
         color="method",
         template="plotly_dark",
-    ).show()
+    ).add_hline(y=1).show()
 
 
 def _get_df() -> pl.DataFrame:
@@ -90,7 +90,6 @@ def _get_ratios(df: pl.DataFrame) -> pl.DataFrame:
             pl
             .col(Lib.SORTEDCONTAINERS)
             .truediv(Lib.PYOCHAIN)
-            .sub(1)
             .round(3)
             .alias("speedup"),
         )
