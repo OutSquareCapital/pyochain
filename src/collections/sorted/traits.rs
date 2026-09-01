@@ -4,7 +4,7 @@ use crate::{
         SortedKeyList, SortedList,
         sorted::{
             dict::{SortedDict, SortedKeyDict},
-            iter,
+            iter::{SortedIter, SortedIterKey},
             keyset::SortedKeySet,
             set::SortedSet,
             views::BaseSortedView,
@@ -27,9 +27,10 @@ use pyo3_ext::{
 };
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
 use sorted_rs::{
-    Bounds, IntOrSlice, KeysListsData, ListDataGetters, ListsData, ListsDataMethods, SeqOrAny,
+    Bounds, Dir, IntOrSlice, KeysListsData, ListDataGetters, ListDataIter, ListsData,
+    ListsDataMethods, SeqOrAny,
 };
-use std::sync::{Mutex, MutexGuard, TryLockError};
+use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
 use tap::prelude::*;
 
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
@@ -53,7 +54,7 @@ impl PyIdentity {
     SortedKeyDict
 )]
 pub(super) trait SortedCollection:
-    Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
+    Sized + ListGetter + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py>;
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
@@ -66,14 +67,26 @@ pub(super) trait SortedCollection:
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
         reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        let bounds = slf
+            .get()
+            .get_data()
+            .irange_specs(slf.py(), minimum, maximum, inclusive)?;
+        bounded_iter(&slf, bounds, reverse)
+    }
     #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
     fn islice(
         slf: Bound<'_, Self>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
-    ) -> PyResult<Bound<'_, abc::PyoIterator>>;
+    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        let bounds = slf
+            .get()
+            .get_data()
+            .get_islice_specs(slf.py(), start, stop)?;
+        bounded_iter(&slf, bounds, reverse)
+    }
     #[pyo3(signature = (value, start = None, stop = None))]
     fn index(
         &self,
@@ -92,56 +105,54 @@ pub(super) trait BaseSortedListSet: SortedCollection {
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()>;
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
 }
-
-pub(super) trait SortedListGetters: BaseSortedListSet {
-    type L: ListDataGetters + ListsDataMethods;
-    fn get_data(&self) -> MutexGuard<'_, Self::L>;
+pub(super) trait ListGetter:
+    Sized + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
+{
+    type T: ListDataGetters + ListsDataMethods;
+    fn get_list(&self) -> &Arc<Mutex<Self::T>>;
+    #[inline(always)]
+    fn get_data(&self) -> MutexGuard<'_, Self::T> {
+        match self.get_list().try_lock() {
+            Ok(guard) => guard,
+            //Recover if the guard was poisoned by an earlier panic instead of cascading.
+            Err(TryLockError::Poisoned(poisoned)) => poisoned.into_inner(),
+            Err(TryLockError::WouldBlock) => panic!("data already locked - reentrant bug"),
+        }
+    }
+    fn wrap_iter<'py>(
+        &self,
+        py: Python<'py>,
+        inner: ListDataIter<Self::T>,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
 }
-macro_rules! impl_inner_sorted_rs {
-    ($t:ty, $l:ty) => {
-        impl SortedListGetters for $t {
-            type L = $l;
+macro_rules! impl_list_getter {
+    ($t:ty, $l:ty, $iter:ty) => {
+        impl ListGetter for $t {
+            type T = $l;
             #[inline(always)]
-            fn get_data(&self) -> MutexGuard<'_, Self::L> {
-                try_lock_recover(&self.0, "data already locked - reentrant bug")
+            fn get_list(&self) -> &Arc<Mutex<Self::T>> {
+                &self.0
+            }
+            fn wrap_iter<'py>(
+                &self,
+                py: Python<'py>,
+                inner: ListDataIter<Self::T>,
+            ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+                <$iter>::new(inner).into_bound(py).map(Bound::into_super)
             }
         }
     };
 }
+impl_list_getter!(SortedList, ListsData, SortedIter);
+impl_list_getter!(SortedKeyList, KeysListsData, SortedIterKey);
+impl_list_getter!(SortedSet, ListsData, SortedIter);
+impl_list_getter!(SortedKeySet, KeysListsData, SortedIterKey);
+impl_list_getter!(SortedDict, ListsData, SortedIter);
+impl_list_getter!(SortedKeyDict, KeysListsData, SortedIterKey);
 
-fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGuard<'a, T> {
-    match mutex.try_lock() {
-        Ok(guard) => guard,
-        //Recover if the guard was poisoned by an earlier panic instead of cascading.
-        Err(TryLockError::Poisoned(poisoned)) => poisoned.into_inner(),
-        Err(TryLockError::WouldBlock) => panic!("{msg}"),
-    }
-}
-impl_inner_sorted_rs!(SortedList, ListsData);
-impl_inner_sorted_rs!(SortedKeyList, KeysListsData);
 #[py_abc(SortedList, SortedKeyList)]
-pub(super) trait BaseSortedList: SortedListGetters {
-    #[skip]
-    fn wrap_iter(
-        py: Python<'_>,
-        inner: iter::BoundedIter<Self>,
-    ) -> PyResult<Bound<'_, abc::PyoIterator>>;
+pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
-    #[skip]
-    #[inline(always)]
-    fn islice_list<T: BaseSortedList>(
-        slf: Bound<'_, T>,
-        start: Option<isize>,
-        stop: Option<isize>,
-        reverse: bool,
-    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        let py = slf.py();
-        let specs = slf.get().get_data().get_islice_specs(py, start, stop)?;
-        match specs {
-            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => T::islice_iter(slf, bounds, reverse),
-        }
-    }
 
     #[pyo3(name = "update")]
     fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
@@ -156,33 +167,16 @@ pub(super) trait BaseSortedList: SortedListGetters {
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         self.get_data().pop(py, index)
     }
-    /// Return an iterator that slices sorted list using two index pairs.\
-    /// The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the first inclusive and the latter exclusive.\
-    /// See `_pos` for details on how an index is converted to an index pair.\
-    /// When `reverse` is `True`, values are yielded from the iterator in reverse order.
-    #[skip]
-    fn islice_iter(
-        slf: Bound<'_, Self>,
-        bounds: Bounds,
-        reverse: bool,
-    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        let py = slf.py();
-        let dir = if reverse {
-            iter::Dir::Bwd
-        } else {
-            iter::Dir::Fwd
-        };
-        Self::wrap_iter(py, iter::BoundedIter::new(slf.unbind(), bounds, dir))
-    }
-
     fn __reversed__(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
         let py = slf.py();
-        Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Bwd))
+        let data = slf.get().get_list().clone();
+        slf.get().wrap_iter(py, ListDataIter::full(data, Dir::Bwd))
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
         let py = slf.py();
-        Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Fwd))
+        let data = slf.get().get_list().clone();
+        slf.get().wrap_iter(py, ListDataIter::full(data, Dir::Fwd))
     }
 
     fn __add__<'py>(slf: Bound<'py, Self>, other: &Bound<'py, PyAny>)
@@ -281,12 +275,21 @@ pub(super) trait BaseSortedList: SortedListGetters {
         Err(PyNotImplementedError::new_err(msg))
     }
 }
-pub(super) trait ListGetter {
-    type T: BaseSortedList;
-    fn get_list(&self) -> &Py<Self::T>;
-    #[inline(always)]
-    fn get_list_bound<'py>(&self, py: Python<'py>) -> Bound<'py, Self::T> {
-        self.get_list().clone_ref(py).into_bound(py)
+pub(super) fn bounded_iter<'py, T: ListGetter>(
+    slf: &Bound<'py, T>,
+    bounds: Option<Bounds>,
+    reverse: bool,
+) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    let py = slf.py();
+    match bounds {
+        None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
+        Some(bounds) => {
+            let direction = if reverse { Dir::Bwd } else { Dir::Fwd };
+            slf.get().wrap_iter(
+                py,
+                ListDataIter::new(slf.get().get_list().clone(), bounds, direction),
+            )
+        }
     }
 }
 
@@ -306,8 +309,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let values = other.into_set(py)?;
         if (4 * values.len()) > set.len() {
             set.update((values,))?;
-            let list = self.get_list().get();
-            let mut data = list.get_data();
+            let mut data = self.get_data();
             data.clear();
             data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
@@ -356,8 +358,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let values = iterables.into_set(py)?;
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
-            let list = self.get_list().get();
-            let mut data = list.get_data();
+            let mut data = self.get_data();
             data.clear();
             data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
@@ -375,35 +376,37 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     ) -> PyResult<()> {
         let set = self.get_set().bind(py);
         set.intersection_update(iterables)?;
-        let list = self.get_list().get();
-        let mut data = list.get_data();
+        let mut data = self.get_data();
         data.clear();
         data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
     }
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
-        self.get_list().get().__getitem__(py, index)
+        let mut data = self.get_data();
+        match index {
+            Either::Right(slice) => data
+                .getitem_from_slice(py, &slice)?
+                .iter()
+                .collect_bound::<PyList>(py)?
+                .try_into_py()
+                .map(Either::Right),
+            Either::Left(index) => data.getitem_from_int(py, index).map(Either::Left),
+        }
     }
     fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
             Either::Right(slice) => {
                 let values = self
-                    .get_list()
-                    .get()
                     .get_data()
                     .getitem_from_slice(py, &slice)?
                     .iter()
                     .collect_bound::<PySet>(py)?;
                 self.get_set().bind(py).difference_update((values,))?;
-                self.get_list()
-                    .get()
-                    .pipe(|list| list.get_data().delitem_from_slice(py, slice))?;
+                self.get_data().delitem_from_slice(py, slice)?;
             }
             Either::Left(int) => {
-                let value = self.get_list().get().get_data().getitem_from_int(py, int)?;
+                let value = self.get_data().getitem_from_int(py, int)?;
                 self.get_set().bind(py).remove(&value)?;
-                self.get_list()
-                    .get()
-                    .pipe(|list| list.get_data().delitem_from_int(py, int))?;
+                self.get_data().delitem_from_int(py, int)?;
             }
         }
         Ok(())
@@ -498,11 +501,11 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.get_list_bound(py).pipe(Self::T::__iter__)
+        self.wrap_iter(py, ListDataIter::full(self.get_list().clone(), Dir::Fwd))
     }
 
     fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.get_list_bound(py).pipe(Self::T::__reversed__)
+        self.wrap_iter(py, ListDataIter::full(self.get_list().clone(), Dir::Bwd))
     }
 
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -560,7 +563,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
 
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let value = self.get_list().get().pop(py, index)?;
+        let value = self.get_data().pop(py, index)?;
         self.get_set().bind(py).remove(&value)?;
         Ok(value)
     }
@@ -583,8 +586,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             .try_collect_bound::<PySet>(py)?;
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
-            let list = slf_ref.get_list().get();
-            let mut data = list.get_data();
+            let mut data = slf_ref.get_data();
             data.clear();
             data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
@@ -628,7 +630,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let py = other.py();
         let slf_clone = slf.get();
         let set = slf_clone.get_set().bind(other.py());
-        let mut data = slf_clone.get_list().get().get_data();
+        let mut data = slf_clone.get_data();
         set.symmetric_difference_update(other)?;
         data.clear();
         data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
@@ -689,11 +691,11 @@ macro_rules! impl_sorted_collection_for_set {
             }
 
             fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-                self.get_list().get().bisect_left(value)
+                self.get_data().bisect_left(value)
             }
 
             fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-                self.get_list().get().bisect_right(value)
+                self.get_data().bisect_right(value)
             }
 
             fn index(
@@ -702,38 +704,14 @@ macro_rules! impl_sorted_collection_for_set {
                 start: Option<isize>,
                 stop: Option<isize>,
             ) -> PyResult<isize> {
-                self.get_list().get().index(value, start, stop)
+                self.get_data().index(&value, start, stop)
             }
-            #[allow(unused_variables)]
-            fn islice(
-                slf: Bound<'_, Self>,
-                start: Option<isize>,
-                stop: Option<isize>,
-                reverse: bool,
-            ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-                slf.get()
-                    .get_list_bound(slf.py())
-                    .pipe(|list| <$list>::islice(list, start, stop, reverse))
-            }
-            #[allow(unused_variables)]
-            fn irange<'py>(
-                slf: Bound<'py, Self>,
-                minimum: Option<Bound<'py, PyAny>>,
-                maximum: Option<Bound<'py, PyAny>>,
-                inclusive: (bool, bool),
-                reverse: bool,
-            ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-                slf.get()
-                    .get_list_bound(slf.py())
-                    .pipe(|list| <$list>::irange(list, minimum, maximum, inclusive, reverse))
-            }
-
             fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-                self.get_list().get().reset(py, load)
+                self.get_data().reset(py, load)
             }
             fn clear(&self, py: Python<'_>) -> () {
                 self.get_set().bind(py).clear();
-                self.get_list().get().clear(py)
+                self.get_data().clear()
             }
         }
         impl BaseSortedListSet for $set {
@@ -741,7 +719,7 @@ macro_rules! impl_sorted_collection_for_set {
                 let set = self.get_set().bind(py);
                 if !set.contains(&value)? {
                     set.add(&value)?;
-                    self.get_list().get().add(py, value)?;
+                    self.get_data().add(py, value)?;
                 }
                 Ok(())
             }
@@ -749,14 +727,14 @@ macro_rules! impl_sorted_collection_for_set {
                 let set = self.get_set().bind(value.py());
                 if set.contains(&value)? {
                     set.remove(&value)?;
-                    self.get_list().get().remove(&value)?;
+                    self.get_data().remove(&value)?;
                 }
                 Ok(())
             }
 
             fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
                 self.get_set().bind(value.py()).remove(&value)?;
-                self.get_list().get().remove(value)
+                self.get_data().remove(value)
             }
             fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
                 PySet::new(py, self.get_set().bind(py).iter()).and_then(|x| self.wrap(x))
@@ -811,21 +789,21 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
 
     fn __delitem__(&self, key: Bound<'_, PyAny>) -> PyResult<()> {
         self.get_inner().bind(key.py()).as_any().del_item(&key)?;
-        self.get_list().get().remove(&key)
+        self.get_data().remove(&key)
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.get_list_bound(py).pipe(Self::T::__iter__)
+        self.wrap_iter(py, ListDataIter::full(self.get_list().clone(), Dir::Fwd))
     }
 
     fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.get_list_bound(py).pipe(Self::T::__reversed__)
+        self.wrap_iter(py, ListDataIter::full(self.get_list().clone(), Dir::Bwd))
     }
 
     fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = key.py();
         if !self.__contains__(&key)? {
-            self.get_list().get().add(py, key.clone().unbind())?;
+            self.get_data().add(py, key.clone().unbind())?;
         }
         self.get_inner().bind(py).set_item(key, value)
     }
@@ -861,7 +839,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = key.py();
         if self.__contains__(&key)? {
-            self.get_list().get().remove(&key)?;
+            self.get_data().remove(&key)?;
             self.get_inner().bind(py).pop_or_err(&key).into_pyresult()
         } else {
             default.ok_or_else(|| PyKeyError::new_err(key.to_string()))
@@ -878,7 +856,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
             let msg = "popitem(): dictionary is empty";
             Err(PyKeyError::new_err(msg))
         } else {
-            let key = self.get_list().get().pop(py, index)?;
+            let key = self.get_data().pop(py, index)?;
             let value = self.get_inner().bind(py).pop_or_err(&key).into_pyresult()?;
             Ok((key, value))
         }
@@ -889,11 +867,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        let key = self
-            .get_list()
-            .get()
-            .get_data()
-            .getitem_from_int(py, index)?;
+        let key = self.get_data().getitem_from_int(py, index)?;
         self.__getitem__(&key).map(|value| (key, value))
     }
     #[pyo3(signature = (key, default = None, /))]
@@ -907,7 +881,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
             self.__getitem__(&key).map(Some)
         } else {
             self.get_inner().bind(py).set_item(&key, &default)?;
-            self.get_list().get().add(py, key.unbind())?;
+            self.get_data().add(py, key.unbind())?;
             Ok(default)
         }
     }
@@ -918,7 +892,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         m: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let list = self.get_list().get();
+        let mut list = self.get_data();
         let inner = self.get_inner().bind(py);
         if self.len(py) == 0 {
             if let Some(it) = m {
@@ -938,7 +912,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
                 .iter()
                 .map(|(k, _)| k.unbind())
                 .collect::<Vec<_>>()
-                .pipe(|v| list.get_data().update(py, v))?;
+                .pipe(|v| list.update(py, v))?;
             Ok(())
         } else {
             let pairs = try_cast_into! {match (m, kwargs) {
@@ -969,12 +943,12 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
             }};
             if (10 * pairs.len()) > self.len(py) {
                 inner.update(pairs.as_mapping())?;
-                list.clear(py);
+                list.clear();
                 inner
                     .iter()
                     .map(|(k, _)| k.unbind())
                     .collect::<Vec<_>>()
-                    .pipe(|v| list.get_data().update(py, v))?;
+                    .pipe(|v| list.update(py, v))?;
                 Ok(())
             } else {
                 for key in pairs.keys_view().iter_py() {
@@ -991,13 +965,13 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
 pub(super) struct SortedDictIter<'a, 'py, D: BaseSortedDict> {
     py: Python<'py>,
     mapping: Bound<'py, PyAny>,
-    mapping_list: MutexGuard<'a, <<D as ListGetter>::T as SortedListGetters>::L>,
+    mapping_list: MutexGuard<'a, D::T>,
     range: std::ops::Range<isize>,
 }
 impl<'a, 'py, D: BaseSortedDict> SortedDictIter<'a, 'py, D> {
     fn new(owner: &'a D, py: Python<'py>) -> Self {
         let mapping = owner.get_inner().clone_ref(py).into_bound(py).into_any();
-        let mapping_list = owner.get_list().get().get_data();
+        let mapping_list = owner.get_data();
         let range = 0..mapping_list.length().cast_signed();
         Self {
             py,

@@ -30,6 +30,13 @@ pub trait ListDataGetters: Sized {
     fn set_load(&mut self, load: usize);
 }
 pub trait ListsDataMethods: ListDataGetters {
+    fn irange_specs<'py>(
+        &self,
+        py: Python<'py>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+    ) -> PyResult<Option<Bounds>>;
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
     fn expand(&mut self, py: Python<'_>, pos: usize);

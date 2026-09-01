@@ -1,23 +1,22 @@
 use crate::{
     abc,
-    collections::sorted::{
-        iter,
-        traits::{BaseSortedList, BaseSortedListSet, Reduced, SortedCollection, SortedListGetters},
+    collections::sorted::traits::{
+        BaseSortedList, BaseSortedListSet, ListGetter, Reduced, SortedCollection,
     },
-    core::{PyoVec, iterators},
+    core::PyoVec,
     traits::IntoInit,
 };
 use pyo3::{PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
-use sorted_rs::{Bounds, ListsData, ListsDataMethods};
-use std::sync::Mutex;
+use sorted_rs::{ListsData, ListsDataMethods};
+use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
-pub struct SortedList(pub(super) Mutex<ListsData>);
+pub struct SortedList(pub(super) Arc<Mutex<ListsData>>);
 impl SortedList {
     #[inline]
     pub(super) fn new() -> Self {
-        Self(Mutex::new(ListsData::default()))
+        Self(Arc::new(Mutex::new(ListsData::default())))
     }
     #[inline]
     pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
@@ -75,33 +74,6 @@ impl SortedCollection for SortedList {
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.get_data().reset(py, load)
     }
-    fn irange<'py>(
-        slf: Bound<'py, Self>,
-        minimum: Option<Bound<'py, PyAny>>,
-        maximum: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-        reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let py = slf.py();
-        let specs = slf
-            .get()
-            .get_data()
-            .pipe(|d| Bounds::get_irange_specs(&d.lists, &d.maxes, minimum, maximum, inclusive));
-
-        match specs? {
-            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => Self::islice_iter(slf, bounds, reverse),
-        }
-    }
-
-    fn islice(
-        slf: Bound<'_, Self>,
-        start: Option<isize>,
-        stop: Option<isize>,
-        reverse: bool,
-    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        Self::islice_list(slf, start, stop, reverse)
-    }
 }
 impl BaseSortedListSet for SortedList {
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
@@ -149,14 +121,6 @@ impl BaseSortedList for SortedList {
             .map(|repr| format!("{cls_name}({repr})"))
     }
 
-    fn wrap_iter(
-        py: Python<'_>,
-        inner: iter::BoundedIter<Self>,
-    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        iter::SortedIter::new(inner)
-            .into_bound(py)
-            .map(Bound::into_super)
-    }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         self.get_data().count(&value)
     }

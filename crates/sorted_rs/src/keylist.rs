@@ -5,6 +5,7 @@ use crate::{
     errors, impl_list_data_getters, ops,
     traits::{DEFAULT_LOAD_FACTOR, ListDataGetters, ListsDataMethods},
 };
+use crate::Bounds;
 use pyo3::prelude::*;
 pub struct KeysListsData {
     pub lists: Vec<Vec<Py<PyAny>>>,
@@ -30,10 +31,28 @@ impl KeysListsData {
             load: DEFAULT_LOAD_FACTOR,
         }
     }
+    pub fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>, key: &Py<PyAny>) -> PyResult<Self> {
+        let mut new_inst = Self::new(key.clone_ref(py));
+        new_inst.update(py, values)?;
+        Ok(new_inst)
+    }
 }
 
 impl_list_data_getters!(KeysListsData);
 impl ListsDataMethods for KeysListsData {
+    fn irange_specs<'py>(
+        &self,
+        py: Python<'py>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+    ) -> PyResult<Option<Bounds>> {
+        let key = self.key.bind(py);
+        let minimum = minimum.map(|value| key.call1((value,))).transpose()?;
+        let maximum = maximum.map(|value| key.call1((value,))).transpose()?;
+        Bounds::get_irange_specs(&self.keys, self.maxes(), minimum, maximum, inclusive)
+    }
+
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
         let mut bound = Pos::default();
         let key = self.key.bind(py).call1((&value,))?;

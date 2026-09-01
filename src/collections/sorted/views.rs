@@ -12,7 +12,7 @@ use crate::{
     abc,
     collections::{
         SortedDict, SortedKeyDict, SortedSet,
-        sorted::traits::{BaseSortedDict, BaseSortedList, ListGetter, ObjOrVec, SortedListGetters},
+        sorted::traits::{BaseSortedDict, ListGetter, ObjOrVec},
     },
     traits::IntoInit,
 };
@@ -36,11 +36,10 @@ where
         let py = index.py();
         let mapping = self.mapping().get();
         let dict = mapping.get_inner().bind(py);
-        let list = mapping.get_list().get();
         try_cast_into! {
             match index {
                 Case::PySlice(slice) => {
-                    let mut data = list.get_data();
+                    let mut data = mapping.get_data();
                     let keys = data.getitem_from_slice(py, &slice)?;
                     data.delitem_from_slice(py, slice)?;
                     for key in keys {
@@ -49,7 +48,7 @@ where
                     Ok(())
                 },
                 int => {
-                    let key = list.pop(py, int.extract::<isize>()?)?;
+                    let key = mapping.get_data().pop(py, int.extract::<isize>()?)?;
                     dict.del_item(key)?;
                     Ok(())
                 }
@@ -173,7 +172,7 @@ fn get_item_for_items_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     let py = index.py();
     let mapping = slf.mapping().get();
     let dict = mapping.get_inner().bind(index.py()).as_any();
-    let mut mapping_list = mapping.get_list().get().get_data();
+    let mut mapping_list = mapping.get_data();
 
     try_cast_into! {
         match index {
@@ -200,7 +199,7 @@ fn get_item_for_values_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     let py = index.py();
     let mapping = slf.mapping().get();
     let dict = mapping.get_inner().bind(py).as_any();
-    let mut mapping_list = mapping.get_list().get().get_data();
+    let mut mapping_list = mapping.get_data();
 
     try_cast_into! {
         match index {
@@ -223,7 +222,7 @@ fn get_item_for_key_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     index: Bound<'py, PyAny>,
 ) -> ObjOrVec<'py> {
     let py = index.py();
-    let mut mapping_list = slf.mapping().get().get_list().get().get_data();
+    let mut mapping_list = slf.mapping().get().get_data();
 
     try_cast_into! {
         match index {

@@ -2,7 +2,7 @@ use pyo3::prelude::*;
 
 use crate::{
     bisect,
-    bounds::{Indexes, Pos},
+    bounds::{Bounds, Indexes, Pos},
     cmp::py_cmp,
     errors, impl_list_data_getters, ops,
     traits::{DEFAULT_LOAD_FACTOR, ListDataGetters, ListsDataMethods},
@@ -30,9 +30,25 @@ impl Default for ListsData {
         }
     }
 }
-
+impl ListsData {
+    pub fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
+        let mut new_inst = Self::default();
+        new_inst.update(py, values)?;
+        Ok(new_inst)
+    }
+}
 impl_list_data_getters!(ListsData);
 impl ListsDataMethods for ListsData {
+    fn irange_specs<'py>(
+        &self,
+        _py: Python<'py>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+    ) -> PyResult<Option<Bounds>> {
+        Bounds::get_irange_specs(self.lists(), self.maxes(), minimum, maximum, inclusive)
+    }
+
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
         let mut bound = Pos::default();
         match ops::Maxes::new(&self.maxes, &mut bound, value.bind(py), bisect::right)? {

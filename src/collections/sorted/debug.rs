@@ -3,7 +3,7 @@ use crate::collections::{
     sorted::{
         keyset::SortedKeySet,
         set::SortedSet,
-        traits::{BaseSortedDict, BaseSortedSet, SortedListGetters},
+        traits::{BaseSortedDict, BaseSortedSet, ListGetter},
     },
 };
 use either::Either;
@@ -20,7 +20,7 @@ pub fn check_sorted_dict(
 }
 
 fn check_dict(x: &impl BaseSortedDict, py: Python<'_>) -> PyResult<()> {
-    let data = x.get_list().get().get_data();
+    let data = x.get_data();
     data.check(py)?;
 
     pyassert!(x.len(py) == data.length());
@@ -44,7 +44,7 @@ pub fn check_sorted_set(
 
 fn check_set_len<T: BaseSortedSet>(checked: &T, py: Python<'_>) -> PyResult<()> {
     let set = checked.get_set().clone_ref(py).into_bound(py);
-    let data = checked.get_list().get().get_data();
+    let data = checked.get_data();
     pyassert!(set.len() == data.length());
     data.check(py)?;
     pyassert!(
