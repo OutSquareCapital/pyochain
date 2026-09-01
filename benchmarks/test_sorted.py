@@ -91,3 +91,33 @@ def test_index(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
     r = Range(size)
     sl = cls(r)
     assert benchmark(lambda: r.iter().map(lambda i: sl.index(i) == i).last())
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_islice(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
+    r = Range(size)
+    sl = cls(r)
+    assert benchmark(lambda: tuple(sl.islice(start=0, stop=size, reverse=False)))
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_irange(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
+    r = Range(size)
+    sl = cls(r)
+    assert benchmark(
+        lambda: tuple(
+            sl.irange(
+                minimum=0, maximum=size - 1, inclusive=(True, True), reverse=False
+            )
+        )
+    )
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_add_pop(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
+    r = Range(size)
+    sl = cls()
+    assert benchmark(lambda: r.iter().map(sl.add).map(lambda _: sl.pop(-1)).last())
