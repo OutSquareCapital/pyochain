@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from collections.abc import Callable, Collection, Iterable, Iterator, MutableSequence
+from collections.abc import Callable, Iterable, Iterator, MutableSequence
 from typing import (
     Any,
     Concatenate,
@@ -812,29 +812,22 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def collect[R: Collection[Any]](self, collector: Callable[[Iterator[T]], R]) -> R:
-        """Transforms the `Iterator` into a collection.
+    def collect[R](self, collector: Callable[[Iterator[T]], R]) -> R:
+        """Consume the `Iterator` into the *collector* type or function.
 
         The most basic pattern in which `collect()` is used is to turn one collection into another.
 
-        You take a collection, call `iter()` on it, do a bunch of transformations, and then `collect()` at the end.
+        You take a collection, call [`iter()`][PyoIterator.iter] on it, do a bunch of transformations, and then `collect()` at the end.
 
-        You specify the target `Collection` type by providing a **collector** function or type.
+        The *collector* can be any `Callable` that takes an `Iterator[T]` as an input.
 
-        This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
-
-        This is equivalent to `Pipe::pipe` at runtime, but with a few differences:
-
-            - A narrower constraint (`Collection[Any]`) to specify the intent
-            - Better performance (no args/kwargs unpacking).
-
-        If you need to pass additional arguments, you can use [`Pipe::pipe`][Pipe.pipe] instead.
+        This is equivalent to [`Pipe::pipe`][Pipe.pipe] at runtime, but with a more idiomatic name, and better performance (no args/kwargs unpacking).
 
         Args:
-            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection.
+            collector (Callable[[Iterator[T]], R]): Function|type that can take an `Iterator` as input.
 
         Returns:
-            R: A materialized `Collection` containing the collected elements.
+            R: The result of the *collector* output.
 
         Example:
             ```python
@@ -864,7 +857,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
                 .collect(Seq[Result[int, int]])
             )
-            assert data.pipe(repr) == "Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))"
+            assert data == Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
             ```
             Strictly speaking, this is equivalent to annotating the variable at the beginning, but some may prefer this style to keep the type information close to the actual collection operation.
 
