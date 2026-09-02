@@ -744,6 +744,7 @@ version = "0.1.0"
 dependencies = [
  "either",
  "pyo3",
+ "smallvec",
  "tap",
 ]
 
