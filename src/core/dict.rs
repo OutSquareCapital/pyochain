@@ -142,9 +142,7 @@ impl Dict {
     }
 
     fn popitem<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyTuple>> {
-        self.inner_bind(py)
-            .call_method0(intern!(py, "popitem"))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
+        self.inner_bind(py).popitem()
     }
 
     fn clear(&self, py: Python<'_>) {

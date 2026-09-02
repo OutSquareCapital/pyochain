@@ -1,7 +1,7 @@
 use crate::{abc, display::get_repr, traits::PyWrapper};
 use either::Either;
 use pyo3::{
-    PyTypeInfo, intern,
+    PyTypeInfo,
     prelude::*,
     types::{DerefToPyAny, PyBool, PyFrozenSet, PyIterator, PyNotImplemented, PySet, PyTuple},
 };
@@ -367,10 +367,7 @@ impl SetMut {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.inner_bind(py)
-            .call_method0(intern!(py, "copy"))
-            .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
-            .and_then(Bound::try_into_py)
+        self.inner_bind(py).copy().and_then(Bound::try_into_py)
     }
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {

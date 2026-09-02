@@ -111,6 +111,7 @@ impl<'py> PyRangeExtMethods<'py> for Bound<'py, PyRange> {
     }
 }
 pub trait PySetExtMethods<'py>: Sized {
+    fn copy(&self) -> PyResult<Self>;
     fn difference<O: PyCallArgs<'py>>(&self, others: O) -> PyResult<Self>;
     fn isdisjoint(&self, s: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>>;
     fn issubset(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>>;
@@ -152,6 +153,10 @@ macro_rules! impl_sequence_ext_methods {
     ($($t:ty),*) => {
         $(
             impl<'py> PySetExtMethods<'py> for Bound<'py, $t> {
+                fn copy(&self) -> PyResult<Self> {
+                    self.call_method0(intern!(self.py(), "copy"))
+                        .map(|x| unsafe { x.cast_into_unchecked::<$t>() })
+                }
                 fn isdisjoint(&self, s: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
                     self.call_method1(intern!(self.py(), "isdisjoint"), (s,))
                         .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
@@ -191,14 +196,19 @@ macro_rules! impl_sequence_ext_methods {
 
 impl_sequence_ext_methods!(PySet, PyFrozenSet);
 #[allow(unused)]
-pub trait PyListExtMethods<'py> {
+pub trait PyListExtMethods<'py>: Sized {
     fn clear(&self) -> ();
+    fn copy(&self) -> PyResult<Self>;
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
     fn last(&self) -> PyResult<Bound<'py, PyAny>>;
     fn pop(&self, index: usize) -> PyResult<Bound<'py, PyAny>>;
     fn sort_by(&self, key: &Bound<'_, PyAny>, reverse: bool) -> PyResult<()>;
 }
 impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
+    fn copy(&self) -> PyResult<Self> {
+        self.call_method0(intern!(self.py(), "copy"))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+    }
     fn pop(&self, index: usize) -> PyResult<Bound<'py, PyAny>> {
         let v = self.get_item(index)?;
         self.del_item(index)?;
@@ -265,6 +275,7 @@ pub trait PyDictExtMethods<'py>: Sized {
     fn values_view(&self) -> Bound<'py, PyDictValues>;
     fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>>;
     fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> types::PopResult<'py>;
+    fn popitem(&self) -> PyResult<Bound<'py, PyTuple>>;
     fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<()>;
 }
 impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
@@ -313,6 +324,11 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
             _ => types::PopResult::Err(PyErr::fetch(self.py())),
         }
     }
+    fn popitem(&self) -> PyResult<Bound<'py, PyTuple>> {
+        self.call_method0(intern!(self.py(), "popitem"))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
+    }
+
     fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<()> {
         match unsafe { ffi::PyDict_MergeFromSeq2(self.as_ptr(), seq.as_ptr(), 1) } {
             0 => Ok(()),
