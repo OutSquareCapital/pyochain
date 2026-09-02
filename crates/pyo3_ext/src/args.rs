@@ -79,10 +79,7 @@ impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
         let args_len = args.len();
         match args_len {
             0 => self.call((value,), kwargs),
-            _ => self.call(
-                unsafe { concat_val_with_args(value, args, args_len) },
-                kwargs,
-            ),
+            _ => self.call(concat_val_with_args(value, args, args_len), kwargs),
         }
     }
     #[inline]
@@ -91,7 +88,7 @@ impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
         value: &Bound<'py, PyAny>,
         args: &Args<'py>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        self.call1(unsafe { concat_val_with_args(value, args, args.len()) })
+        self.call1(concat_val_with_args(value, args, args.len()))
     }
     #[inline]
     fn call_concat_star(
@@ -103,15 +100,12 @@ impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
         let args_len = args.len();
         match args_len {
             0 => self.call(value, kwargs),
-            _ => self.call(
-                unsafe { concat_tup_with_args(value, args, args_len) },
-                kwargs,
-            ),
+            _ => self.call(concat_tup_with_args(value, args, args_len), kwargs),
         }
     }
     #[inline]
     fn call_concat_star1(self, value: &Args<'py>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.call1(unsafe { concat_tup_with_args(value, args, args.len()) })
+        self.call1(concat_tup_with_args(value, args, args.len()))
     }
     #[inline]
     fn call_fold_concat_star(
@@ -122,7 +116,7 @@ impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
         kwargs: Option<&Kwargs<'py>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         self.call(
-            unsafe { concat_acc_tup_with_args(acc, item, args, args.len()) },
+            concat_acc_tup_with_args(acc, item, args, args.len()),
             kwargs,
         )
     }
@@ -134,7 +128,7 @@ impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
         item: &Args<'py>,
         args: &Args<'py>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        self.call1(unsafe { concat_acc_tup_with_args(acc, item, args, args.len()) })
+        self.call1(concat_acc_tup_with_args(acc, item, args, args.len()))
     }
 }
 pub trait CallWith<'py> {
@@ -158,104 +152,86 @@ impl<'py> CallWith<'py> for Bound<'py, PyAny> {
         b: &Bound<'py, PyAny>,
         args: &Args<'py>,
     ) -> Bound<'py, PyTuple> {
-        unsafe {
-            let args_len = args.len();
-            let new_args_ptr = ffi::PyTuple_New((args_len + 2) as ffi::Py_ssize_t);
-            let a_ptr = self.as_ptr();
-            ffi::Py_INCREF(a_ptr);
-            ffi::PyTuple_SetItem(new_args_ptr, 0, a_ptr);
-            let b_ptr = b.as_ptr();
-            ffi::Py_INCREF(b_ptr);
-            ffi::PyTuple_SetItem(new_args_ptr, 1, b_ptr);
-            let args_ptr = args.as_ptr();
-            for i in 0..args_len {
-                let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-                ffi::Py_INCREF(item);
-                ffi::PyTuple_SetItem(new_args_ptr, (i + 2) as ffi::Py_ssize_t, item);
-            }
-            Bound::from_owned_ptr(self.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
-        }
+        let mut builder = PyTupleBuilder::new(self.py(), args.len() + 2);
+        builder.push(&self);
+        builder.push(b);
+        builder.extend(args);
+        builder.finish()
     }
 }
-#[allow(clippy::cast_possible_wrap)]
+
 #[inline]
-unsafe fn concat_val_with_args<'py>(
+fn concat_val_with_args<'py>(
     value: &Bound<'py, PyAny>,
     args: &Args<'py>,
     args_len: usize,
 ) -> Bound<'py, PyTuple> {
-    unsafe {
-        let ptr = value.as_ptr();
-        let new_argc = args_len + 1;
-        let new_args_ptr = ffi::PyTuple_New(new_argc as ffi::Py_ssize_t);
-        ffi::Py_INCREF(ptr);
-        ffi::PyTuple_SetItem(new_args_ptr, 0, ptr);
-
-        let args_ptr = args.as_ptr();
-        for i in 0..args_len {
-            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (i + 1) as ffi::Py_ssize_t, item);
-        }
-        Bound::from_owned_ptr(value.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
-    }
+    let mut builder = PyTupleBuilder::new(value.py(), args_len + 1);
+    builder.push(value);
+    builder.extend(args);
+    builder.finish()
 }
-#[allow(clippy::cast_possible_wrap)]
+
 #[inline]
-unsafe fn concat_tup_with_args<'py>(
+fn concat_tup_with_args<'py>(
     value: &Args<'py>,
     args: &Args<'py>,
     args_len: usize,
 ) -> Bound<'py, PyTuple> {
-    unsafe {
-        let tuple_len = value.len();
-        let total_len = tuple_len + args_len;
-        let new_args_ptr = ffi::PyTuple_New(total_len as ffi::Py_ssize_t);
-        let tuple_ptr = value.as_ptr();
-        for i in 0..tuple_len {
-            let item = ffi::PyTuple_GET_ITEM(tuple_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, i as ffi::Py_ssize_t, item);
-        }
-        let args_ptr = args.as_ptr();
-        for i in 0..args_len {
-            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (tuple_len + i) as ffi::Py_ssize_t, item);
-        }
-
-        Bound::from_owned_ptr(value.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
-    }
+    let mut builder = PyTupleBuilder::new(value.py(), value.len() + args_len);
+    builder.extend(value);
+    builder.extend(args);
+    builder.finish()
 }
-#[allow(clippy::cast_possible_wrap)]
+
 #[inline]
-unsafe fn concat_acc_tup_with_args<'py>(
+fn concat_acc_tup_with_args<'py>(
     acc: &Bound<'py, PyAny>,
     value: &Args<'py>,
     args: &Args<'py>,
     args_len: usize,
 ) -> Bound<'py, PyTuple> {
-    unsafe {
-        let tuple_len = value.len();
-        let total_len = 1 + tuple_len + args_len;
-        let new_args_ptr = ffi::PyTuple_New(total_len as ffi::Py_ssize_t);
+    let mut builder = PyTupleBuilder::new(acc.py(), 1 + value.len() + args_len);
+    builder.push(acc);
+    builder.extend(value);
+    builder.extend(args);
+    builder.finish()
+}
 
-        ffi::Py_INCREF(acc.as_ptr());
-        ffi::PyTuple_SetItem(new_args_ptr, 0, acc.as_ptr());
+struct PyTupleBuilder<'py> {
+    py: Python<'py>,
+    ptr: *mut ffi::PyObject,
+    next_index: ffi::Py_ssize_t,
+}
 
-        let tuple_ptr = value.as_ptr();
-        for i in 0..tuple_len {
-            let item = ffi::PyTuple_GET_ITEM(tuple_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (1 + i) as ffi::Py_ssize_t, item);
+impl<'py> PyTupleBuilder<'py> {
+    #[allow(clippy::cast_possible_wrap)]
+    #[inline]
+    fn new(py: Python<'py>, len: usize) -> Self {
+        Self {
+            py,
+            ptr: unsafe { ffi::PyTuple_New(len as ffi::Py_ssize_t) },
+            next_index: 0,
         }
-        let args_ptr = args.as_ptr();
-        for i in 0..args_len {
-            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (1 + tuple_len + i) as ffi::Py_ssize_t, item);
-        }
+    }
 
-        Bound::from_owned_ptr(acc.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
+    #[inline]
+    fn push(&mut self, value: &Bound<'py, PyAny>) {
+        unsafe {
+            let ptr = value.as_ptr();
+            ffi::Py_INCREF(ptr);
+            ffi::PyTuple_SetItem(self.ptr, self.next_index, ptr);
+        }
+        self.next_index += 1;
+    }
+
+    #[inline]
+    fn extend<T: IntoIterator<Item = Bound<'py, PyAny>>>(&mut self, values: T) {
+        values.into_iter().for_each(|value| self.push(&value));
+    }
+
+    #[inline]
+    fn finish(self) -> Bound<'py, PyTuple> {
+        unsafe { Bound::from_owned_ptr(self.py, self.ptr).cast_into_unchecked::<PyTuple>() }
     }
 }
