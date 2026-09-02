@@ -1,5 +1,6 @@
 use crate::abc::PyoIterator;
 use crate::core::{PyoErr, PyoOk, iterators};
+use pyo3::types::PyDict;
 use pyo3::{
     IntoPyObjectExt,
     exceptions::{PyTypeError, PyValueError},
@@ -118,11 +119,11 @@ impl PySome {
     fn is_some_and(
         &self,
         predicate: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
         predicate
-            .call_concat(self.value.bind(predicate.py()), args, kwargs)?
+            .call_concat((self.value.bind(predicate.py()), args), kwargs)?
             .is_truthy()
     }
 
@@ -130,10 +131,10 @@ impl PySome {
     fn is_none_or(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        func.call_concat(self.value.bind(func.py()), args, kwargs)?
+        func.call_concat((self.value.bind(func.py()), args), kwargs)?
             .is_truthy()
     }
 
@@ -151,11 +152,11 @@ impl PySome {
     fn map(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = func.py();
-        func.call_concat(self.value.bind(py), args, kwargs)?
+        func.call_concat((self.value.bind(py), args), kwargs)?
             .unbind()
             .pipe(Self::new)
             .into_py_any(py)
@@ -173,10 +174,10 @@ impl PySome {
     fn and_then(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        func.call_concat(self.value.bind(func.py()), args, kwargs)?
+        func.call_concat((self.value.bind(func.py()), args), kwargs)?
             .unbind()
             .pipe(Ok)
     }
@@ -199,10 +200,10 @@ impl PySome {
         &self,
         default: &Bound<'_, PyAny>,
         f: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        f.call_concat(self.value.bind(default.py()), args, kwargs)?
+        f.call_concat((self.value.bind(default.py()), args), kwargs)?
             .unbind()
             .pipe(Ok)
     }
@@ -216,12 +217,12 @@ impl PySome {
     fn filter(
         &self,
         predicate: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = predicate.py();
         if predicate
-            .call_concat(self.value.bind(py), args, kwargs)?
+            .call_concat((self.value.bind(py), args), kwargs)?
             .is_truthy()?
         {
             self.value.clone_ref(py).pipe(Self::new).into_py_any(py)
@@ -238,11 +239,11 @@ impl PySome {
     fn inspect(
         &self,
         f: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = f.py();
-        f.call_concat(self.value.bind(py), args, kwargs)?;
+        f.call_concat((self.value.bind(py), args), kwargs)?;
         self.value.clone_ref(py).pipe(Self::new).into_py_any(py)
     }
 
@@ -386,8 +387,8 @@ impl PyNull {
     fn is_some_and(
         &self,
         predicate: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> bool {
         false
     }
@@ -396,8 +397,8 @@ impl PyNull {
     fn is_none_or(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> bool {
         true
     }
@@ -422,8 +423,8 @@ impl PyNull {
     fn map(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Py<Self> {
         Self::get(func.py())
     }
@@ -440,8 +441,8 @@ impl PyNull {
     fn and_then(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Py<Self> {
         Self::get(func.py())
     }
@@ -463,8 +464,8 @@ impl PyNull {
         &self,
         default: Py<PyAny>,
         f: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Py<PyAny> {
         default
     }
@@ -478,8 +479,8 @@ impl PyNull {
     fn filter(
         &self,
         predicate: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Py<Self> {
         Self::get(predicate.py())
     }
@@ -492,8 +493,8 @@ impl PyNull {
     fn inspect(
         &self,
         f: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Py<Self> {
         Self::get(f.py())
     }

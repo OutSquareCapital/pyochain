@@ -1,5 +1,9 @@
 use crate::core::{PyNull, PySome, PyoErr, PyoOk};
-use pyo3::{IntoPyObjectExt, prelude::*};
+use pyo3::{
+    IntoPyObjectExt,
+    prelude::*,
+    types::{PyDict, PyTuple},
+};
 use pyo3_ext::prelude::*;
 use tap::prelude::*;
 
@@ -10,7 +14,7 @@ pub struct PyoPipe;
 impl PyoPipe {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
+    fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
         PyoPipe {}
     }
 }
@@ -21,7 +25,7 @@ pub struct PyoTap;
 impl PyoTap {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
+    fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
         PyoTap {}
     }
 }
@@ -32,7 +36,7 @@ pub struct Fluent;
 impl Fluent {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
+    fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
         Fluent {}
     }
 }
@@ -42,20 +46,20 @@ pub struct Checkable;
 impl Checkable {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
+    fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
         Checkable {}
     }
     #[pyo3(signature = (func, *args, **kwargs))]
     fn then(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
 
         if slf.is_truthy()? {
-            func.call_concat(slf, args, kwargs)?
+            func.call_concat((slf.as_any(), args), kwargs)?
                 .unbind()
                 .pipe(PySome::new)
                 .into_py_any(py)
@@ -105,8 +109,8 @@ impl Checkable {
     fn ok_or_else(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
@@ -116,7 +120,7 @@ impl Checkable {
                 .pipe(PyoOk::new)
                 .into_py_any(py)
         } else {
-            func.call_concat(slf, args, kwargs)?
+            func.call_concat((slf.as_any(), args), kwargs)?
                 .unbind()
                 .pipe(PyoErr::new)
                 .into_py_any(py)
@@ -126,8 +130,8 @@ impl Checkable {
     fn err_or_else(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
@@ -137,7 +141,7 @@ impl Checkable {
                 .pipe(PyoErr::new)
                 .into_py_any(py)
         } else {
-            func.call_concat(slf, args, kwargs)?
+            func.call_concat((slf.as_any(), args), kwargs)?
                 .unbind()
                 .pipe(PyoOk::new)
                 .into_py_any(py)

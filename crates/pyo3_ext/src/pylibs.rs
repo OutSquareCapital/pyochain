@@ -11,7 +11,7 @@ use pyo3::{
 };
 use tap::prelude::*;
 
-use crate::args::{Args, CallConcat};
+use crate::args::CallConcat;
 use crate::tuple;
 
 /// Python `builtins` functions and objects
@@ -140,7 +140,7 @@ pub mod builtins {
     }
     /// first arg is a function, the rest is a variable number of iterables.
     #[inline(always)]
-    pub fn map_with<'py>(args: &Args<'py>) -> PyResult<Bound<'py, PyIterator>> {
+    pub fn map_with<'py>(args: &Bound<'py, PyTuple>) -> PyResult<Bound<'py, PyIterator>> {
         let py = args.py();
         MAP.import(py, BUILTINS, "map")?
             .call1(args)
@@ -191,14 +191,14 @@ pub mod builtins {
     #[inline(always)]
     pub fn zip<'py>(
         iterator: &Bound<'py, PyIterator>,
-        others: &Args<'py>,
+        others: &Bound<'py, PyTuple>,
         strict: bool,
     ) -> PyResult<Bound<'py, PyIterator>> {
         let py = iterator.py();
         let kwargs = PyDict::new(py);
         kwargs.set_item(intern!(py, "strict"), strict)?;
         ZIP.import(py, BUILTINS, "zip")?
-            .call_concat(iterator, others, Some(&kwargs))
+            .call_concat((iterator.as_any(), others), Some(&kwargs))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
 }
@@ -247,7 +247,7 @@ pub mod itertools {
         static CHAIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
         #[inline(always)]
-        pub fn new<'py>(iterables: &Args<'py>) -> PyResult<Bound<'py, PyIterator>> {
+        pub fn new<'py>(iterables: &Bound<'py, PyTuple>) -> PyResult<Bound<'py, PyIterator>> {
             let py = iterables.py();
             CHAIN
                 .import(py, ITERTOOLS, "chain")?
@@ -336,7 +336,7 @@ pub mod itertools {
     #[inline(always)]
     pub fn compress<'py>(
         iterator: &Bound<'py, PyIterator>,
-        selectors: &Args<'py>,
+        selectors: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, PyIterator>> {
         COMPRESS
             .import(iterator.py(), ITERTOOLS, "compress")?
@@ -408,7 +408,10 @@ pub mod itertools {
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
-    pub fn product<'py>(iterables: &Args<'py>, repeat: usize) -> PyResult<Bound<'py, PyIterator>> {
+    pub fn product<'py>(
+        iterables: &Bound<'py, PyTuple>,
+        repeat: usize,
+    ) -> PyResult<Bound<'py, PyIterator>> {
         let kwargs = PyDict::new(iterables.py());
         kwargs.set_item(intern!(iterables.py(), "repeat"), repeat)?;
         PRODUCT
@@ -467,12 +470,12 @@ pub mod itertools {
     #[inline(always)]
     pub fn zip_longest<'py>(
         iterator: &Bound<'py, PyIterator>,
-        others: &Args<'py>,
+        others: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, PyIterator>> {
         let py = iterator.py();
         ZIP_LONGEST
             .import(py, ITERTOOLS, "zip_longest")?
-            .call_concat1(iterator, others)
+            .call_concat1((iterator.as_any(), others))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]

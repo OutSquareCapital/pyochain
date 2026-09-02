@@ -10,7 +10,7 @@ use pyo3::{
     IntoPyObjectExt,
     exceptions::{PyBaseException, PyValueError},
     prelude::*,
-    types::{PyString, PyTuple},
+    types::{PyDict, PyString, PyTuple},
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
@@ -117,10 +117,10 @@ impl PyoOk {
     fn map(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        func.call_concat(self.value.bind(func.py()), args, kwargs)?
+        func.call_concat((self.value.bind(func.py()), args), kwargs)?
             .unbind()
             .pipe(Self::new)
             .pipe(Ok)
@@ -138,10 +138,10 @@ impl PyoOk {
     fn and_then(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        func.call_concat(self.value.bind(func.py()), args, kwargs)?
+        func.call_concat((self.value.bind(func.py()), args), kwargs)?
             .unbind()
             .pipe(Ok)
     }
@@ -186,10 +186,10 @@ impl PyoOk {
     fn is_ok_and(
         &self,
         pred: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        pred.call_concat(self.value.bind(pred.py()), args, kwargs)?
+        pred.call_concat((self.value.bind(pred.py()), args), kwargs)?
             .is_truthy()
     }
     #[allow(unused_variables, clippy::unused_self)]
@@ -197,8 +197,8 @@ impl PyoOk {
     fn is_err_and(
         &self,
         pred: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> bool {
         false
     }
@@ -207,8 +207,8 @@ impl PyoOk {
     fn map_err(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
         Self::new(self.value.clone_ref(func.py()))
     }
@@ -217,8 +217,8 @@ impl PyoOk {
     fn inspect_err(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
         Self::new(self.value.clone_ref(func.py()))
     }
@@ -242,10 +242,10 @@ impl PyoOk {
         &self,
         default: &Bound<'_, PyAny>,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        func.call_concat(self.value.bind(default.py()), args, kwargs)?
+        func.call_concat((self.value.bind(default.py()), args), kwargs)?
             .unbind()
             .pipe(Ok)
     }
@@ -261,11 +261,11 @@ impl PyoOk {
     fn inspect(
         &self,
         f: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         let py = f.py();
-        f.call_concat(self.value.bind(py), args, kwargs)?;
+        f.call_concat((self.value.bind(py), args), kwargs)?;
         self.value.clone_ref(py).pipe(Self::new).pipe(Ok)
     }
 }
@@ -332,7 +332,12 @@ impl PyoErr {
     }
     #[allow(unused_variables)]
     #[pyo3(signature = (func, *args, **kwargs))]
-    fn map(&self, func: &Bound<'_, PyAny>, args: &Args<'_>, kwargs: Option<&Kwargs<'_>>) -> Self {
+    fn map(
+        &self,
+        func: &Bound<'_, PyAny>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Self {
         self.error.clone_ref(func.py()).pipe(Self::new)
     }
 
@@ -348,8 +353,8 @@ impl PyoErr {
     fn and_then(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
         self.error.clone_ref(func.py()).pipe(Self::new)
     }
@@ -374,8 +379,8 @@ impl PyoErr {
     fn is_ok_and(
         &self,
         pred: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> bool {
         false
     }
@@ -384,10 +389,10 @@ impl PyoErr {
     fn is_err_and(
         &self,
         pred: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        pred.call_concat(self.error.bind(pred.py()), args, kwargs)?
+        pred.call_concat((self.error.bind(pred.py()), args), kwargs)?
             .is_truthy()
     }
 
@@ -395,10 +400,10 @@ impl PyoErr {
     fn map_err(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        func.call_concat(self.error.bind(func.py()), args, kwargs)?
+        func.call_concat((self.error.bind(func.py()), args), kwargs)?
             .unbind()
             .pipe(PyoErr::new)
             .pipe(Ok)
@@ -408,11 +413,11 @@ impl PyoErr {
     fn inspect_err(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         let py = func.py();
-        func.call_concat(self.error.bind(py), args, kwargs)?;
+        func.call_concat((self.error.bind(py), args), kwargs)?;
         self.error.clone_ref(py).pipe(Self::new).pipe(Ok)
     }
 
@@ -430,8 +435,8 @@ impl PyoErr {
         &self,
         default: &Bound<'_, PyAny>,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Py<PyAny> {
         default.to_owned().unbind()
     }
@@ -444,14 +449,19 @@ impl PyoErr {
     fn filter(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
         self.error.clone_ref(func.py()).pipe(Self::new)
     }
     #[allow(unused_variables)]
     #[pyo3(signature = (f, *args, **kwargs))]
-    fn inspect(&self, f: &Bound<'_, PyAny>, args: &Args<'_>, kwargs: Option<&Kwargs<'_>>) -> Self {
+    fn inspect(
+        &self,
+        f: &Bound<'_, PyAny>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Self {
         self.error.clone_ref(f.py()).pipe(Self::new)
     }
     fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {

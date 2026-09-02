@@ -5,8 +5,12 @@ use crate::{
         Dict, PyNull, PySome, PyoErr, PyoOk, SliceViewIterator, SliceViewReverseIterator, iterators,
     },
 };
-use pyo3::{PyClass, PyTypeInfo, prelude::*, types::DerefToPyAny};
-use pyo3_ext;
+use pyo3::{
+    PyClass, PyTypeInfo,
+    prelude::*,
+    types::{DerefToPyAny, PyDict, PyTuple},
+};
+use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
 use tap::prelude::*;
 #[py_abc(Dict, collections::PyoCounter)]
@@ -85,47 +89,55 @@ impl ImplPyoIterator for sorted::iter::SortedIterReverse {}
 impl ImplPyoIterator for sorted::iter::SortedIterKey {}
 impl ImplPyoIterator for sorted::iter::SortedIterKeyReverse {}
 impl ImplPyoIterator for abc::PyoIterator {}
-macro_rules! impl_py_pipe {
-    ($type:ty) => {
-        #[pymethods]
-        impl $type {
-            #[pyo3(name = "pipe", signature = (func, *args, **kwargs))]
-            fn py_pipe(
-                slf: &Bound<'_, Self>,
-                func: &Bound<'_, PyAny>,
-                args: &pyo3_ext::args::Args<'_>,
-                kwargs: Option<&pyo3_ext::args::Kwargs<'_>>,
-            ) -> PyResult<Py<PyAny>> {
-                (
-                    pyo3_ext::args::CallConcat::call_concat(func, &slf, args, kwargs)?.unbind().pipe(Ok)
-                )
-            }
-        }
-    };
-    ($first:ty, $($rest:ty),+ $(,)?) => {
-        impl_py_pipe!($first);
-        impl_py_pipe!($($rest),+);
-    };
-}
-macro_rules! impl_tap {
-    ($type:ty) => {
-    #[pymethods]
-            impl $type {
-    #[pyo3(signature = (f, *args, **kwargs))]
-    fn tap(
-        slf: &Bound<'_, Self>,
-        f: &Bound<'_, PyAny>,
-        args: &pyo3_ext::args::Args<'_>,
-        kwargs: Option<&pyo3_ext::args::Kwargs<'_>>,
+
+#[py_abc(
+    PySome,
+    PyNull,
+    PyoOk,
+    PyoErr,
+    abc::Fluent,
+    abc::PyoPipe,
+    abc::PyoIterable,
+    abc::PyoIterator
+)]
+trait PipeMethod: PyTypeInfo {
+    #[pyo3(name = "pipe", signature = (func, *args, **kwargs))]
+    fn py_pipe(
+        slf: Bound<'_, Self>,
+        func: &Bound<'_, PyAny>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        pyo3_ext::args::CallConcat::call_concat(f, &slf, args, kwargs)?;
-        slf.to_owned().into_any().unbind().pipe(Ok)
-    }}};
-    ($first:ty, $($rest:ty),+ $(,)?) => {
-        impl_tap!($first);
-        impl_tap!($($rest),+);
-    };
+        func.call_concat((slf.as_any(), args), kwargs)?
+            .unbind()
+            .pipe(Ok)
+    }
 }
+impl TapMethod for abc::Fluent {}
+impl TapMethod for abc::PyoTap {}
+impl TapMethod for abc::PyoIterable {}
+#[py_abc(abc::Fluent, abc::PyoTap, abc::PyoIterable)]
+trait TapMethod: PyTypeInfo {
+    #[pyo3(signature = (f, *args, **kwargs))]
+    fn tap<'py>(
+        slf: Bound<'py, Self>,
+        f: &Bound<'py, PyAny>,
+        args: Bound<'py, PyTuple>,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<Bound<'py, Self>> {
+        f.call_concat((slf.as_any(), args), kwargs)?;
+        Ok(slf)
+    }
+}
+impl PipeMethod for PySome {}
+impl PipeMethod for PyNull {}
+impl PipeMethod for PyoOk {}
+impl PipeMethod for PyoErr {}
+impl PipeMethod for abc::Fluent {}
+impl PipeMethod for abc::PyoPipe {}
+impl PipeMethod for abc::PyoIterable {}
+impl PipeMethod for abc::PyoIterator {}
+
 #[py_abc(
     abc::PyoMappingView,
     abc::PyoKeysView,
@@ -158,17 +170,6 @@ pub trait MappingView:
     }
     fn __len__(&self, py: Python<'_>) -> usize;
 }
-impl_tap!(abc::Fluent, abc::PyoTap, abc::PyoIterable);
-impl_py_pipe!(
-    PySome,
-    PyNull,
-    PyoOk,
-    PyoErr,
-    abc::Fluent,
-    abc::PyoPipe,
-    abc::PyoIterable,
-    abc::PyoIterator
-);
 
 macro_rules! impl_mapping_view {
     ($($t:ty),* $(,)?) => {
