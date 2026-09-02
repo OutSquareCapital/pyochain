@@ -1885,7 +1885,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         This is often used after methods like `zip()` or `enumerate()` that yield tuples.
 
         Args:
-            func (Callable[..., R]): Function to apply to each unpacked element.
+            func (Callable[Concatenate[*U, P], R]): Function to apply to each unpacked element.
             *args (P.args): Positional arguments for the function.
             **kwargs (P.kwargs): Keyword arguments for the function.
 
@@ -2735,7 +2735,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Args:
             length (int): The length of each window.
-            func (Callable[[tuple[Any, ...]], R]): Function to apply to each window.
+            func (Callable[[tuple[T, ...]], R]): Function to apply to each window.
 
         Returns:
             PyoIterator[R]: An iterator over the outputs of func.
@@ -2802,11 +2802,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         self, length: Literal[10], func: Callable[[T, T, T, T, T, T, T, T, T, T], R]
     ) -> PyoIterator[R]: ...
     @overload
-    def map_windows_star[I, R](
-        self: Iterator[I], length: int, func: Callable[[*tuple[I, ...]], R]
+    def map_windows_star[R](
+        self, length: int, func: Callable[[*tuple[T, ...]], R]
     ) -> PyoIterator[R]: ...
-    def map_windows_star[I, R](
-        self: Iterator[I], length: int, func: Callable[[*tuple[I, ...]], R]
+    def map_windows_star[R](
+        self, length: int, func: Callable[[*tuple[T, ...]], R]
     ) -> PyoIterator[R]:
         """Calls the given *func* for each contiguous window of size *length* over **self**.
 
@@ -2816,7 +2816,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Args:
             length (int): The length of each window.
-            func (Callable[..., R]): Function to apply to each window.
+            func (Callable[[*tuple[T, ...]], R]): Function to apply to each window.
 
         Returns:
             PyoIterator[R]: An iterator over the outputs of func.
