@@ -1,13 +1,20 @@
 """Benchmark plotting script."""
 
+import platform
+import sys
 from enum import StrEnum, auto
 from pathlib import Path
+from typing import Final
 
 import plotly.express as px
 import polars as pl
 
-BENCHS = Path(".benchmarks/Windows-CPython-3.13-64bit")
-PATH = BENCHS.joinpath("0071_sortedlist.json")
+from pyochain import Iter
+
+PLATFORM_DIR: Final[str] = (
+    f"{platform.system()}-CPython-{sys.version_info.major}.{sys.version_info.minor}-{platform.architecture()[0]}"
+)
+PATH: Final[Path] = Path(".benchmarks", "sortedlist", PLATFORM_DIR)
 
 
 class Lib(StrEnum):
@@ -45,14 +52,29 @@ def main() -> None:
 
 
 def _get_df() -> pl.DataFrame:
-    stat = pl.col("stats").struct.field
+    benchmark = pl.col("benchmarks").list.explode()
+    stat = benchmark.struct.field("stats").struct.field
     param = pl.col("param").str.split("-").list
+    selected_cols = (
+        benchmark.struct.field("fullname"),
+        benchmark.struct.field("name"),
+        benchmark.struct.field("param"),
+        stat("min"),
+        stat("max"),
+        stat("median"),
+        stat("stddev"),
+        stat("total"),
+    )
     return (
-        pl
-        .read_json(PATH)
-        .lazy()
-        .select(pl.col("benchmarks").list.explode().struct.unnest())
-        .select(
+        Iter(PATH.glob("*.json"))
+        .sort_by(lambda path: path.stat().st_mtime)
+        .iter()
+        .map(pl.read_json)
+        .map(pl.DataFrame.lazy)
+        .map(lambda df: df.select(selected_cols))
+        .collect(pl.concat)
+        .unique("fullname", keep="last")
+        .with_columns(
             pl
             .col("name")
             .str.split("[")
@@ -61,11 +83,6 @@ def _get_df() -> pl.DataFrame:
             .alias("method"),
             param.first().cast(pl.UInt32()).alias("size"),
             param.last().cast(Lib).alias("lib"),
-            stat("min"),
-            stat("max"),
-            stat("median"),
-            stat("stddev"),
-            stat("total"),
         )
         .with_columns(
             pl

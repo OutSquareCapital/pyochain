@@ -51,6 +51,14 @@ def test_getitem(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
+def test_getitem_slice(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
+    r = Range(size)
+    sl = cls(r)
+    assert benchmark(lambda: r.iter().map(lambda i: sl[i : i + 1]).last())
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
 def test_bisect_left(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
     r = Range(size)
     sl = cls(r)
