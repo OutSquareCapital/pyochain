@@ -350,7 +350,7 @@ enum FromFnStrategy {
     HasBoth(Py<PyTuple>, Py<PyDict>),
 }
 impl FromFnStrategy {
-    fn new(args: Args<'_>, kwargs: Option<Kwargs<'_>>) -> Self {
+    fn new(args: Bound<'_, PyTuple>, kwargs: Option<Bound<'_, PyDict>>) -> Self {
         match (args.is_empty(), kwargs) {
             (true, None) => Self::NoArgs,
             (false, None) => Self::HasArgs(args.unbind()),
@@ -379,7 +379,11 @@ pub struct FromFn {
 impl FromFn {
     #[pyo3(signature = (func, *args, **kwargs))]
     #[new]
-    pub fn new(func: Py<PyAny>, args: Args<'_>, kwargs: Option<Kwargs<'_>>) -> Self {
+    pub fn new(
+        func: Py<PyAny>,
+        args: Bound<'_, PyTuple>,
+        kwargs: Option<Bound<'_, PyDict>>,
+    ) -> Self {
         Self {
             func,
             strategy: FromFnStrategy::new(args, kwargs),
@@ -747,7 +751,11 @@ pub struct OnceWith {
 impl OnceWith {
     #[new]
     #[pyo3(signature = (func, *args, **kwargs))]
-    pub fn new(func: Bound<'_, PyAny>, args: Args<'_>, kwargs: Option<Kwargs<'_>>) -> Self {
+    pub fn new(
+        func: Bound<'_, PyAny>,
+        args: Bound<'_, PyTuple>,
+        kwargs: Option<Bound<'_, PyDict>>,
+    ) -> Self {
         Self {
             func: func.unbind(),
             args: args.unbind(),

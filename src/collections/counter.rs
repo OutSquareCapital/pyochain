@@ -33,7 +33,7 @@ impl PyoCounter {
     fn new(
         py: Python<'_>,
         iterable: Option<IntoUpdate<'_>>,
-        kwargs: Option<Kwargs<'_>>,
+        kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>> {
         let inner = PyDict::new(py);
 
@@ -134,7 +134,7 @@ impl PyoCounter {
         &self,
         py: Python<'_>,
         iterable: Option<IntoUpdate<'_>>,
-        kwargs: Option<Kwargs<'_>>,
+        kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let inner = self.inner_bind(py);
         update_counter(inner, iterable, kwargs)
@@ -144,7 +144,7 @@ impl PyoCounter {
         &self,
         py: Python<'_>,
         iterable: Option<IntoUpdate<'_>>,
-        kwargs: Option<Kwargs<'_>>,
+        kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let inner = self.inner_bind(py);
         subtract_counter(inner, iterable, kwargs)
@@ -459,7 +459,7 @@ fn extract_tup_from_item(
 fn update_counter(
     inner: &Bound<'_, PyDict>,
     iterable: Option<IntoUpdate<'_>>,
-    kwargs: Option<Kwargs<'_>>,
+    kwargs: Option<Bound<'_, PyDict>>,
 ) -> PyResult<()> {
     let py = inner.py();
     let zero = PyInt::new(py, 0).into_any();
@@ -519,7 +519,7 @@ fn update_dict(
 fn subtract_counter(
     inner: &Bound<'_, PyDict>,
     iterable: Option<IntoUpdate<'_>>,
-    kwargs: Option<Kwargs<'_>>,
+    kwargs: Option<Bound<'_, PyDict>>,
 ) -> PyResult<()> {
     let py = inner.py();
     let zero = PyInt::new(py, 0).into_any();

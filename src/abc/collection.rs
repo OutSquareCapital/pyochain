@@ -1,6 +1,8 @@
 use crate::abc::{Checkable, PyoIterable};
-use pyo3::prelude::*;
-use pyo3_ext::args::{Args, Kwargs};
+use pyo3::{
+    prelude::*,
+    types::{PyDict, PyTuple},
+};
 
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=Checkable)]
 pub struct PyoContainer;
@@ -9,7 +11,10 @@ pub struct PyoContainer;
 impl PyoContainer {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
+    fn new(
+        _args: &Bound<'_, PyTuple>,
+        _kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Checkable).add_subclass(Self)
     }
     #[pyo3(name = "contains")]
