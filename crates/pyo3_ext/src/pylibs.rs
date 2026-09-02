@@ -11,7 +11,7 @@ use pyo3::{
 };
 use tap::prelude::*;
 
-use crate::args::{Args, Concatenate};
+use crate::args::{Args, CallConcat};
 use crate::tuple;
 
 /// Python `builtins` functions and objects
@@ -198,7 +198,7 @@ pub mod builtins {
         let kwargs = PyDict::new(py);
         kwargs.set_item(intern!(py, "strict"), strict)?;
         ZIP.import(py, BUILTINS, "zip")?
-            .concat(iterator, others, Some(&kwargs))
+            .call_concat(iterator, others, Some(&kwargs))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
 }
@@ -472,7 +472,7 @@ pub mod itertools {
         let py = iterator.py();
         ZIP_LONGEST
             .import(py, ITERTOOLS, "zip_longest")?
-            .concat1(iterator, others)
+            .call_concat1(iterator, others)
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]

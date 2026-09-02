@@ -492,7 +492,7 @@ impl PyoIterator {
     #[pyo3(signature = (*others))]
     fn chain<'py>(slf: Bound<'py, Self>, others: &Args<'py>) -> PyResult<Bound<'py, Self>> {
         slf.into_any()
-            .concat_with(others)
+            .call_with(others)
             .and_then(|x| pylibs::itertools::chain::new(&x))?
             .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
@@ -522,11 +522,11 @@ impl PyoIterator {
                 Ok(())
             }),
             (false, Some(_)) => slf.try_for_each(|item| {
-                func.concat(&item?, args, kwargs)?;
+                func.call_concat(&item?, args, kwargs)?;
                 Ok(())
             }),
             (false, None) => slf.try_for_each(|item| {
-                func.concat1(&item?, args)?;
+                func.call_concat1(&item?, args)?;
                 Ok(())
             }),
         }
@@ -549,11 +549,11 @@ impl PyoIterator {
                 Ok(())
             }),
             (false, None) => slf.try_for_each(|item| {
-                func.concat_star1(item?.cast_exact::<PyTuple>()?, args)?;
+                func.call_concat_star1(item?.cast_exact::<PyTuple>()?, args)?;
                 Ok(())
             }),
             (false, Some(_)) => slf.try_for_each(|item| {
-                func.concat_star(item?.cast_exact::<PyTuple>()?, args, kwargs)?;
+                func.call_concat_star(item?.cast_exact::<PyTuple>()?, args, kwargs)?;
                 Ok(())
             }),
         }
@@ -715,19 +715,19 @@ impl PyoIterator {
         let mut slf = slf.try_iter()?;
         match (args.is_empty(), kwargs) {
             (true, None) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, args)
+                func.call_fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, args)
             }),
 
             (false, None) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, args)
+                func.call_fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, args)
             }),
 
             (true, Some(_)) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, args, kwargs)
+                func.call_fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, args, kwargs)
             }),
 
             (false, Some(_)) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, args, kwargs)
+                func.call_fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, args, kwargs)
             }),
         }
     }
@@ -1004,7 +1004,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
         iterables: &Args<'py>,
     ) -> PyResult<Bound<'py, Self>> {
-        func.concat_with_2(slf.try_iter()?.as_any(), iterables)
+        func.call_with_2(slf.try_iter()?.as_any(), iterables)
             .pipe_ref(pylibs::builtins::map_with)?
             .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
@@ -1073,7 +1073,7 @@ impl PyoIterator {
         repeat: usize,
     ) -> PyResult<Bound<'py, Self>> {
         slf.into_any()
-            .concat_with(others)
+            .call_with(others)
             .and_then(|x| pylibs::itertools::product(&x, repeat))?
             .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
@@ -1171,7 +1171,7 @@ impl PyoIterator {
             Bound::from_owned_ptr(py, ffi::PySequence_Tuple(slf.as_ptr()))
                 .cast_into_unchecked::<PyTuple>()
         };
-        func.concat_star(&unpacked, args, kwargs)
+        func.call_concat_star(&unpacked, args, kwargs)
     }
     fn unique<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()

@@ -97,7 +97,7 @@ macro_rules! impl_py_pipe {
                 kwargs: Option<&pyo3_ext::args::Kwargs<'_>>,
             ) -> PyResult<Py<PyAny>> {
                 (
-                    pyo3_ext::args::Concatenate::concat(func, &slf, args, kwargs)?.unbind().pipe(Ok)
+                    pyo3_ext::args::CallConcat::call_concat(func, &slf, args, kwargs)?.unbind().pipe(Ok)
                 )
             }
         }
@@ -118,7 +118,7 @@ macro_rules! impl_tap {
         args: &pyo3_ext::args::Args<'_>,
         kwargs: Option<&pyo3_ext::args::Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
-        pyo3_ext::args::Concatenate::concat(f, &slf, args, kwargs)?;
+        pyo3_ext::args::CallConcat::call_concat(f, &slf, args, kwargs)?;
         slf.to_owned().into_any().unbind().pipe(Ok)
     }}};
     ($first:ty, $($rest:ty),+ $(,)?) => {

@@ -55,7 +55,7 @@ impl Checkable {
         let py = slf.py();
 
         if slf.is_truthy()? {
-            func.concat(slf, args, kwargs)?
+            func.call_concat(slf, args, kwargs)?
                 .unbind()
                 .pipe(PySome::new)
                 .into_py_any(py)
@@ -116,7 +116,7 @@ impl Checkable {
                 .pipe(PyoOk::new)
                 .into_py_any(py)
         } else {
-            func.concat(slf, args, kwargs)?
+            func.call_concat(slf, args, kwargs)?
                 .unbind()
                 .pipe(PyoErr::new)
                 .into_py_any(py)
@@ -137,7 +137,7 @@ impl Checkable {
                 .pipe(PyoErr::new)
                 .into_py_any(py)
         } else {
-            func.concat(slf, args, kwargs)?
+            func.call_concat(slf, args, kwargs)?
                 .unbind()
                 .pipe(PyoOk::new)
                 .into_py_any(py)
