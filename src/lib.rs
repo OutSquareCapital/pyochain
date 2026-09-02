@@ -5,13 +5,17 @@ mod display;
 mod traits;
 use crate::collections::sorted::debug;
 use pyo3::{
-    PyTypeInfo, intern,
+    intern,
     prelude::*,
-    types::{PyDict, PyIterator, PyMapping, PySequence, PyType},
+    types::{PyDict, PyIterator, PyMapping, PySequence},
 };
 use pyo3_ext::{
     prelude::*,
-    types::{PyAbstractSet, PyIterable, PyMappingView, PyMutableSequence, PyMutableSet},
+    types::{
+        PyAbstractSet, PyCollection, PyContainer, PyItemsView, PyIterable, PyKeysView,
+        PyMappingView, PyMutableMapping, PyMutableSequence, PyMutableSet, PyReversible, PySized,
+        PyValuesView,
+    },
 };
 #[pymodule]
 fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -126,35 +130,25 @@ fn populate_sorted(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(debug::check_sorted_dict, m)?)
 }
 fn register_all(py: Python<'_>) -> PyResult<()> {
-    let abc_mod = py.import("collections.abc")?;
     PyIterable::register::<abc::PyoIterable>(py)?;
     PyIterator::register::<abc::PyoIterator>(py)?;
-    register(&abc_mod, "Container", &abc::PyoContainer::type_object(py))?;
-    register(&abc_mod, "Sized", &abc::PyoSized::type_object(py))?;
-    register(&abc_mod, "Container", &abc::PyoCollection::type_object(py))?;
-    register(&abc_mod, "Sized", &abc::PyoCollection::type_object(py))?;
-    register(&abc_mod, "Collection", &abc::PyoCollection::type_object(py))?;
-    register(&abc_mod, "Reversible", &abc::PyoReversible::type_object(py))?;
-    register(&abc_mod, "Reversible", &abc::PyoSequence::type_object(py))?;
+    PyContainer::register::<abc::PyoContainer>(py)?;
+    PySized::register::<abc::PyoSized>(py)?;
+    PyContainer::register::<abc::PyoCollection>(py)?;
+    PySized::register::<abc::PyoCollection>(py)?;
+    PyCollection::register::<abc::PyoCollection>(py)?;
+    PyReversible::register::<abc::PyoReversible>(py)?;
+    PyReversible::register::<abc::PyoSequence>(py)?;
     PyMappingView::register::<abc::PyoMappingView>(py)?;
     PyMutableSequence::register::<abc::PyoMutableSequence>(py)?;
     PyAbstractSet::register::<abc::PyoSet>(py)?;
     PyMutableSet::register::<abc::PyoMutableSet>(py)?;
     PySequence::register::<abc::PyoSequence>(py)?;
-    register(&abc_mod, "KeysView", &abc::PyoKeysView::type_object(py))?;
-    register(&abc_mod, "ValuesView", &abc::PyoValuesView::type_object(py))?;
-    register(&abc_mod, "ItemsView", &abc::PyoItemsView::type_object(py))?;
+    PyKeysView::register::<abc::PyoKeysView>(py)?;
+    PyValuesView::register::<abc::PyoValuesView>(py)?;
+    PyItemsView::register::<abc::PyoItemsView>(py)?;
     PyMapping::register::<abc::PyoMapping>(py)?;
-    register(
-        &abc_mod,
-        "MutableMapping",
-        &abc::PyoMutableMapping::type_object(py),
-    )
-}
-fn register(abc: &Bound<'_, PyModule>, name: &str, cls: &Bound<'_, PyType>) -> PyResult<()> {
-    abc.getattr(name)?
-        .call_method1(intern!(abc.py(), "register"), (cls,))?;
-    Ok(())
+    PyMutableMapping::register::<abc::PyoMutableMapping>(py)
 }
 #[cfg(debug_assertions)]
 fn debug_backtrace() {

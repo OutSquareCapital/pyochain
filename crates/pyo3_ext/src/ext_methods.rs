@@ -10,9 +10,7 @@ use pyo3::{
     },
 };
 
-use crate::types::{
-    PopResult, PyAbstractSet, PyDeque, PyIterable, PyMappingView, PyMutableSequence, PyMutableSet,
-};
+use crate::types;
 
 /// Create a new Python list from the given arguments.\
 #[macro_export]
@@ -35,7 +33,7 @@ macro_rules! tuple {
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
 /// This trait factorize the implementation for all ABCs.\
 /// The code is strictly identical from what's already available for `pyo3::types::PySequence` for example.
-pub trait ABCRegister<'py>: PyTypeInfo {
+pub trait ABCMethods<'py>: PyTypeInfo {
     fn register<T: PyTypeInfo>(py: Python<'_>) -> PyResult<()> {
         let ty = T::type_object(py);
         Self::type_object(py).call_method1("register", (ty,))?;
@@ -43,13 +41,20 @@ pub trait ABCRegister<'py>: PyTypeInfo {
     }
 }
 
-impl ABCRegister<'_> for PyMutableSequence {}
-impl ABCRegister<'_> for PyAbstractSet {}
-impl ABCRegister<'_> for PyIterable {}
-impl ABCRegister<'_> for PyMutableSet {}
-impl ABCRegister<'_> for PyIterator {}
-impl ABCRegister<'_> for PyMappingView {}
-
+impl ABCMethods<'_> for types::PyMutableSequence {}
+impl ABCMethods<'_> for types::PyAbstractSet {}
+impl ABCMethods<'_> for types::PyIterable {}
+impl ABCMethods<'_> for types::PyMutableSet {}
+impl ABCMethods<'_> for PyIterator {}
+impl ABCMethods<'_> for types::PyMappingView {}
+impl ABCMethods<'_> for types::PySized {}
+impl ABCMethods<'_> for types::PyContainer {}
+impl ABCMethods<'_> for types::PyCollection {}
+impl ABCMethods<'_> for types::PyReversible {}
+impl ABCMethods<'_> for types::PyMutableMapping {}
+impl ABCMethods<'_> for types::PyKeysView {}
+impl ABCMethods<'_> for types::PyValuesView {}
+impl ABCMethods<'_> for types::PyItemsView {}
 pub trait PySequenceExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
 
@@ -88,7 +93,7 @@ macro_rules! impl_sequence_ext_methods {
     };
 }
 
-impl_sequence_ext_methods!(PyList, PyTuple, PyDeque);
+impl_sequence_ext_methods!(PyList, PyTuple, types::PyDeque);
 /// The `index` method is different on `range`, so we need to implement it separately.
 pub trait PyRangeExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
@@ -259,7 +264,7 @@ pub trait PyDictExtMethods<'py>: Sized {
     /// Return a view of the dictionnary values, just like calling `dict.values()` in Python
     fn values_view(&self) -> Bound<'py, PyDictValues>;
     fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>>;
-    fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PopResult<'py>;
+    fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> types::PopResult<'py>;
     fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<()>;
 }
 impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
@@ -299,13 +304,13 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
     }
     /// Remove *key* from the dictionary, and return the removed value.\
     /// Raise `KeyError` if the *key* is missing, just like python's `dict.pop(key)` method.\
-    fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PopResult<'py> {
+    fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> types::PopResult<'py> {
         let mut result = core::ptr::null_mut();
         match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &raw mut result) } {
-            1 => PopResult::Ok(unsafe { Bound::from_owned_ptr(self.py(), result) }),
-            0 => PopResult::KeyMissing,
+            1 => types::PopResult::Ok(unsafe { Bound::from_owned_ptr(self.py(), result) }),
+            0 => types::PopResult::KeyMissing,
             // Return code is -1 here, hence error
-            _ => PopResult::Err(PyErr::fetch(self.py())),
+            _ => types::PopResult::Err(PyErr::fetch(self.py())),
         }
     }
     fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<()> {
