@@ -163,12 +163,13 @@ def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
 @pytest.mark.parametrize("size", SIZES)
 @pytest.mark.parametrize("tup_len", (2, 4, 8))
 def test_for_each_star_args(benchmark: BenchFixture, size: int, tup_len: int) -> None:
-    data = Range(size).iter().map(lambda _: Range(tup_len).pipe(tuple)).collect(Seq)
-    assert benchmark(_for_each_star_args, data) is None
+    args = Range(tup_len).pipe(tuple)
+    data = Range(size).iter().map(lambda _: args).collect(Seq)
+    assert benchmark(_for_each_star_args, data, args) is None
 
 
-def _for_each_star_args(data: Seq[tuple[int, ...]]) -> None:
-    data.iter().for_each_star(_with_args, 1, 2, 3)
+def _for_each_star_args(data: Seq[tuple[int, ...]], args: tuple[int, ...]) -> None:
+    data.iter().for_each_star(_with_args, *args)
 
 
 @pytest.mark.benchmark(group="for_each_star_kwargs")
