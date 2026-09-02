@@ -516,6 +516,17 @@ def _map_windows(data: Range, size: int) -> tuple[int, ...]:
 
 
 @pytest.mark.parametrize("size", SIZES)
+@pytest.mark.parametrize("tup_len", (2, 4, 8))
+def test_map_windows_star(benchmark: BenchFixture, size: int, tup_len: int) -> None:
+    data = Range(size)
+    assert benchmark(_map_windows_star, data, tup_len) is not None
+
+
+def _map_windows_star(data: PyoIterable[int], tup_len: int) -> tuple[int, ...]:
+    return data.iter().map_windows_star(tup_len, lambda *x: x).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
 def test_map(benchmark: BenchFixture, size: int) -> None:
     data = Range(size)
     assert benchmark(_map, data) == size - 1

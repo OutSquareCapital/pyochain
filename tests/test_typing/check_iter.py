@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, Never, assert_never, assert_type
+from typing import TYPE_CHECKING, Any, Never, assert_never, assert_type
 
 from pyochain import Iter, Range, Seq
 from pyochain.abc import PyoIterator
@@ -77,3 +77,24 @@ def check_map_star() -> Never:
     _ = assert_type(out, Seq[tuple[int, str, bool]])
     # Expected to fail
     _ = assert_never(Range(3).iter().map_star(str))
+
+
+type TupItem = tuple[int, str, bool]
+
+
+def check_map_windows() -> None:
+    def foo(x: int, _y: int) -> int:
+        return x
+
+    def bar(*x: int) -> int:
+        return sum(x)
+
+    def baz(x: tuple[int, ...]) -> int:
+        return sum(x)
+
+    data = Range(3)
+    _ = assert_type(data.iter().map_windows_star(1, foo), Any)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]
+    _ = assert_type(data.iter().map_windows_star(2, foo), PyoIterator[int])
+    _ = assert_type(data.iter().map_windows(3, baz), PyoIterator[int])
+    _ = assert_type(data.iter().map_windows_star(2, bar), PyoIterator[int])
+    _ = assert_type(data.iter().map_windows_star(3, bar), PyoIterator[int])

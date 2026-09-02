@@ -18,6 +18,10 @@ Because, frankly, why would you create a `SortedKeyList` with an identity functi
 
 - **typing**: Relaxed the *collector* input type of `PyoIterator::collect`. The constraint on the return type `R: Collection[Any]` was artificial, and was preventing to use `collect` on functions or types who indeed consume the `Iterator`, but weren't strictly speaking a `Collection` (e.g polars DataFrames). In python, the `FromIterator` equivalent is simply `Callable[[Iterator[T]], Any]`, and this is now reflected in the typing of `collect`.
 
+### 🐞 Bug fixes
+
+- **typing**: `PyoIterator::{map_windows, map_windows_star}` now correctly handle functions with varargs.
+
 ### 🛠️ Other improvements
 
 - **Website**: The return sections of the functions/methods docstrings is now correctly rendered thanks to @tecnolgd contribution in [#95](https://github.com/OutSquareCapital/pyochain/pull/95)

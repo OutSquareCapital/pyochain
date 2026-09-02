@@ -2672,7 +2672,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             The -3 is no longer there, because it was consumed in order to see if the iteration should stop, but wasn't placed back into the `Iterator`.
         """
-
+    # TODO: add doc from rust iterator for more examples
     @overload
     def map_windows[R](
         self, length: Literal[1], func: Callable[[tuple[T]], R]
@@ -2720,9 +2720,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         self, length: int, func: Callable[[tuple[T, ...]], R]
     ) -> PyoIterator[R]: ...
     def map_windows[R](
-        self,
-        length: int,
-        func: Callable[[tuple[Any, ...]], R],
+        self, length: int, func: Callable[[tuple[T, ...]], R]
     ) -> PyoIterator[R]:
         """Calls the given *func* for each contiguous window of size *length* over **self**.
 
@@ -2738,16 +2736,15 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             PyoIterator[R]: An iterator over the outputs of func.
 
         See Also:
-            [`map_windows_star`][] for a version that unpacks the window into separate arguments.
+            [`map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.
 
         Example:
             ```python
             from pyochain import Seq, Range
-            import statistics
 
             data = Seq(1, 2, 3, 4)
-            means = data.iter().map_windows(2, statistics.mean).collect(Seq)
-            assert means == Seq(1.5, 2.5, 3.5)
+            summed = data.iter().map_windows(2, sum).collect(Seq)
+            assert summed == Seq(3, 5, 7)
 
             joined = (
                 Seq("abcd")
@@ -2756,9 +2753,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .collect(Seq)
             )
             assert joined == Seq("ABC", "BCD")
-
-            sum_windows = Range(5).iter().map_windows(4, sum).collect(Seq)
-            assert sum_windows == Seq(6, 10)
             ```
         """
 
@@ -2802,8 +2796,12 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def map_windows_star[R](
         self, length: Literal[10], func: Callable[[T, T, T, T, T, T, T, T, T, T], R]
     ) -> PyoIterator[R]: ...
-    def map_windows_star[R](
-        self, length: int, func: Callable[..., R]
+    @overload
+    def map_windows_star[I, R](
+        self: Iterator[I], length: int, func: Callable[[*tuple[I, ...]], R]
+    ) -> PyoIterator[R]: ...
+    def map_windows_star[I, R](
+        self: Iterator[I], length: int, func: Callable[[*tuple[I, ...]], R]
     ) -> PyoIterator[R]:
         """Calls the given *func* for each contiguous window of size *length* over **self**.
 
@@ -2819,7 +2817,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             PyoIterator[R]: An iterator over the outputs of func.
 
         See Also:
-            [`map_windows`][] for a version that passes the entire window as a single tuple argument.
+            [`map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.
 
         Example:
             ```python
