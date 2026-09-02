@@ -98,3 +98,28 @@ def check_map_windows() -> None:
     _ = assert_type(data.iter().map_windows(3, baz), PyoIterator[int])
     _ = assert_type(data.iter().map_windows_star(2, bar), PyoIterator[int])
     _ = assert_type(data.iter().map_windows_star(3, bar), PyoIterator[int])
+
+
+def check_for_each_star() -> None:
+    def foo(*_: int) -> None:
+        pass
+
+    def bar(_a: int, _b: int, _c: int) -> None:
+        pass
+
+    def bar2(_a: int, _b: int, _c: int, _d: int) -> None:
+        pass
+
+    def baz(_x: int, _y: int, _z: int, /, _a: int, _b: int) -> None:
+        pass
+
+    data_tup = Range(3).iter().map(lambda _: Range(10)).map(tuple)
+    data_2 = Range(3).iter().map(lambda x: (x, x + 1))
+
+    _ = assert_type(data_tup.for_each_star(foo, 1, 2, 3), None)
+    _ = assert_type(data_2.for_each_star(bar, 1), None)
+    _ = assert_type(Range(3).iter().for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
+    _ = assert_type(data_2.for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+    _ = assert_type(data_2.for_each_star(bar2, 1, 2), None)
+    _ = assert_type(data_2.for_each_star(bar2, 1), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+    _ = assert_type(data_2.for_each_star(baz, 1, _a=1, _b=2), None)

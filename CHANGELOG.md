@@ -21,6 +21,7 @@ Because, frankly, why would you create a `SortedKeyList` with an identity functi
 ### 🐞 Bug fixes
 
 - **typing**: `PyoIterator::{map_windows, map_windows_star}` now correctly handle functions with varargs.
+- **typing**: `PyoIterator::for_each_star` now correctly handle functions with varargs and ParamSpec.
 
 ### 🛠️ Other improvements
 
