@@ -5,12 +5,12 @@ mod display;
 mod traits;
 use crate::collections::sorted::debug;
 use pyo3::{
-    intern,
     prelude::*,
-    types::{PyDict, PyIterator, PyMapping, PySequence},
+    types::{PyIterator, PyMapping, PySequence},
 };
 use pyo3_ext::{
     prelude::*,
+    pylibs,
     types::{
         PyAbstractSet, PyCollection, PyContainer, PyItemsView, PyIterable, PyKeysView,
         PyMappingView, PyMutableMapping, PyMutableSequence, PyMutableSet, PyReversible, PySized,
@@ -26,7 +26,6 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     let abc_mod = PyModule::new(py, "abc")?;
     let collections_mod = PyModule::new(py, "collections")?;
     let sorted_mod = PyModule::new(py, "_sorted")?;
-    let modules = sys_modules(py)?;
     m.add_submodule(&core_mod)?;
     m.add_submodule(&abc_mod)?;
     m.add_submodule(&collections_mod)?;
@@ -37,17 +36,13 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     populate_abc(&abc_mod)?;
     populate_collections(&collections_mod)?;
     populate_sorted(&sorted_mod)?;
+    let modules = pylibs::sys::modules(py)?;
     modules.set_item("pyochain", m)?;
     modules.set_item("pyochain.core", core_mod)?;
     modules.set_item("pyochain.abc", abc_mod)?;
     modules.set_item("pyochain.collections", collections_mod)?;
     modules.set_item("pyochain.collections._sorted", sorted_mod)?;
     register_all(py)
-}
-fn sys_modules(py: Python<'_>) -> PyResult<Bound<'_, PyDict>> {
-    py.import(intern!(py, "sys"))?
-        .getattr(intern!(py, "modules"))
-        .map(|x| unsafe { x.cast_into_unchecked::<PyDict>() })
 }
 
 fn populate_core(m: &Bound<'_, PyModule>, py: Python<'_>) -> PyResult<()> {
