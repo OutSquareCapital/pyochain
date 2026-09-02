@@ -1,4 +1,4 @@
-pub use super::args::{CallConcat, CallWith};
+pub use super::args::CallConcat;
 pub use super::conversions::{IntoPyIterator, TryFromPy, TryIntoPy};
 pub use super::ext_methods::{
     ABCMethods, PyDictExtConstructors, PyDictExtMethods, PyListExtMethods, PyRangeExtMethods,

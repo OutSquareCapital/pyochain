@@ -495,9 +495,7 @@ impl PyoIterator {
         slf: Bound<'py, Self>,
         others: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.into_any()
-            .call_with(others)
-            .pipe(|x| pylibs::itertools::chain::new(&x))?
+        pylibs::itertools::chain::new(slf.py(), (slf.into_any(), others))?
             .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
@@ -1008,8 +1006,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
         iterables: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        func.call_with_2(slf.try_iter()?.as_any(), iterables)
-            .pipe_ref(pylibs::builtins::map_with)?
+        pylibs::builtins::map_with(slf.py(), (func, slf.try_iter()?.as_any(), iterables))?
             .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
@@ -1076,9 +1073,7 @@ impl PyoIterator {
         others: &Bound<'py, PyTuple>,
         repeat: usize,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.into_any()
-            .call_with(others)
-            .pipe(|x| pylibs::itertools::product(&x, repeat))?
+        pylibs::itertools::product(slf.py(), (slf.into_any(), others), repeat)?
             .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }

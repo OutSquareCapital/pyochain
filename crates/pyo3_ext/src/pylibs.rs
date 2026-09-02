@@ -11,7 +11,7 @@ use pyo3::{
 };
 use tap::prelude::*;
 
-use crate::args::CallConcat;
+use crate::args::{ArgsConcat, CallConcat};
 use crate::tuple;
 
 /// Python `builtins` functions and objects
@@ -140,10 +140,12 @@ pub mod builtins {
     }
     /// first arg is a function, the rest is a variable number of iterables.
     #[inline(always)]
-    pub fn map_with<'py>(args: &Bound<'py, PyTuple>) -> PyResult<Bound<'py, PyIterator>> {
-        let py = args.py();
+    pub fn map_with<'py, A: ArgsConcat<'py>>(
+        py: Python<'py>,
+        args: A,
+    ) -> PyResult<Bound<'py, PyIterator>> {
         MAP.import(py, BUILTINS, "map")?
-            .call1(args)
+            .call_concat1(args)
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
@@ -247,11 +249,13 @@ pub mod itertools {
         static CHAIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
         #[inline(always)]
-        pub fn new<'py>(iterables: &Bound<'py, PyTuple>) -> PyResult<Bound<'py, PyIterator>> {
-            let py = iterables.py();
+        pub fn new<'py, A: ArgsConcat<'py>>(
+            py: Python<'py>,
+            iterables: A,
+        ) -> PyResult<Bound<'py, PyIterator>> {
             CHAIN
                 .import(py, ITERTOOLS, "chain")?
-                .call1(iterables)
+                .call_concat1(iterables)
                 .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
         }
 
@@ -408,15 +412,16 @@ pub mod itertools {
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
-    pub fn product<'py>(
-        iterables: &Bound<'py, PyTuple>,
+    pub fn product<'py, A: ArgsConcat<'py>>(
+        py: Python<'py>,
+        iterables: A,
         repeat: usize,
     ) -> PyResult<Bound<'py, PyIterator>> {
-        let kwargs = PyDict::new(iterables.py());
-        kwargs.set_item(intern!(iterables.py(), "repeat"), repeat)?;
+        let kwargs = PyDict::new(py);
+        kwargs.set_item(intern!(py, "repeat"), repeat)?;
         PRODUCT
-            .import(iterables.py(), ITERTOOLS, "product")?
-            .call(iterables, Some(&kwargs))
+            .import(py, ITERTOOLS, "product")?
+            .call_concat(iterables, Some(&kwargs))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
