@@ -4,6 +4,7 @@ use pyo3::{
     types::{PyDict, PyTuple},
 };
 use smallvec::SmallVec;
+use tap::Pipe;
 
 type VecOfPtr = SmallVec<[*mut ffi::PyObject; 8]>;
 pub trait CallConcat<'py> {
@@ -73,9 +74,9 @@ impl<'py> ArgsConcat<'py> for Bound<'py, PyTuple> {
     #[inline(always)]
     fn extend_buf(&self, buf: &mut VecOfPtr) {
         let ptr = self.as_ptr();
-        for i in 0..self.len() {
-            buf.push(unsafe { ffi::PyTuple_GET_ITEM(ptr, i as ffi::Py_ssize_t) });
-        }
+        (0..self.len())
+            .map(|i| unsafe { ffi::PyTuple_GET_ITEM(ptr, i as ffi::Py_ssize_t) })
+            .pipe(|iter| buf.extend(iter));
     }
 }
 impl<'py, T: ArgsConcat<'py> + ?Sized> ArgsConcat<'py> for &T {
