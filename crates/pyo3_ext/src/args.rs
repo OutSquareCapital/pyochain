@@ -191,8 +191,10 @@ fn vectorcall1<'py>(
     ptr: *const *mut ffi::PyObject,
     n: usize,
 ) -> PyResult<Bound<'py, PyAny>> {
-    let result = unsafe { ffi::PyObject_Vectorcall(func.as_ptr(), ptr, n, std::ptr::null_mut()) };
-    unsafe { Bound::from_owned_ptr_or_err(func.py(), result) }
+    unsafe {
+        let result = ffi::PyObject_Vectorcall(func.as_ptr(), ptr, n, std::ptr::null_mut());
+        Bound::from_owned_ptr_or_err(func.py(), result)
+    }
 }
 
 #[inline(always)]
@@ -202,13 +204,9 @@ fn vectorcall<'py>(
     n: usize,
     kwargs: Option<&Bound<'py, PyDict>>,
 ) -> PyResult<Bound<'py, PyAny>> {
-    let result = unsafe {
-        ffi::PyObject_VectorcallDict(
-            func.as_ptr(),
-            ptr,
-            n,
-            kwargs.map_or(std::ptr::null_mut(), pyo3::Bound::as_ptr),
-        )
-    };
-    unsafe { Bound::from_owned_ptr_or_err(func.py(), result) }
+    let kw = kwargs.map_or(std::ptr::null_mut(), pyo3::Bound::as_ptr);
+    unsafe {
+        let result = ffi::PyObject_VectorcallDict(func.as_ptr(), ptr, n, kw);
+        Bound::from_owned_ptr_or_err(func.py(), result)
+    }
 }
