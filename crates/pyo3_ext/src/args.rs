@@ -43,19 +43,19 @@ impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
     }
 }
 fn get_buffer<'py, A: ArgsConcat<'py>>(args: A) -> VecOfPtr {
-    let mut buf = VecOfPtr::with_capacity(args.len_as_args());
+    let mut buf = VecOfPtr::with_capacity(args.len_unpacked());
     args.extend_buf(&mut buf);
     buf
 }
 
 pub trait ArgsConcat<'py> {
-    fn len_as_args(&self) -> usize;
+    fn len_unpacked(&self) -> usize;
     fn extend_buf(&self, buf: &mut VecOfPtr);
 }
 
 impl<'py> ArgsConcat<'py> for Bound<'py, PyAny> {
     #[inline(always)]
-    fn len_as_args(&self) -> usize {
+    fn len_unpacked(&self) -> usize {
         1
     }
     #[inline(always)]
@@ -66,7 +66,7 @@ impl<'py> ArgsConcat<'py> for Bound<'py, PyAny> {
 
 impl<'py> ArgsConcat<'py> for Bound<'py, PyTuple> {
     #[inline(always)]
-    fn len_as_args(&self) -> usize {
+    fn len_unpacked(&self) -> usize {
         self.len()
     }
     #[allow(clippy::cast_possible_wrap)]
@@ -80,8 +80,8 @@ impl<'py> ArgsConcat<'py> for Bound<'py, PyTuple> {
 }
 impl<'py, T: ArgsConcat<'py> + ?Sized> ArgsConcat<'py> for &T {
     #[inline(always)]
-    fn len_as_args(&self) -> usize {
-        (**self).len_as_args()
+    fn len_unpacked(&self) -> usize {
+        (**self).len_unpacked()
     }
     #[inline(always)]
     fn extend_buf(&self, buf: &mut VecOfPtr) {
@@ -89,12 +89,12 @@ impl<'py, T: ArgsConcat<'py> + ?Sized> ArgsConcat<'py> for &T {
     }
 }
 
-macro_rules! impl_arg_source_tuple {
+macro_rules! impl_arg_concat_tuple {
     ($($T:ident : $idx:tt),+) => {
         impl<'py, $($T: ArgsConcat<'py>),+> ArgsConcat<'py> for ($($T,)+) {
             #[inline(always)]
-            fn len_as_args(&self) -> usize {
-                0 $(+ self.$idx.len_as_args())+
+            fn len_unpacked(&self) -> usize {
+                0 $(+ self.$idx.len_unpacked())+
             }
             #[inline(always)]
             fn extend_buf(&self, buf: &mut VecOfPtr) {
@@ -103,6 +103,6 @@ macro_rules! impl_arg_source_tuple {
         }
     };
 }
-impl_arg_source_tuple!(A:0, B:1);
-impl_arg_source_tuple!(A:0, B:1, C:2);
-impl_arg_source_tuple!(A:0, B:1, C:2, D:3);
+impl_arg_concat_tuple!(A:0, B:1);
+impl_arg_concat_tuple!(A:0, B:1, C:2);
+impl_arg_concat_tuple!(A:0, B:1, C:2, D:3);
