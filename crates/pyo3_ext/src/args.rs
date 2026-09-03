@@ -5,7 +5,7 @@ use pyo3::{
 };
 use smallvec::SmallVec;
 use std::mem::MaybeUninit;
-type VecOfPtr = SmallVec<[*mut ffi::PyObject; 8]>;
+type VecOfPtr = SmallVec<[*mut ffi::PyObject; 16]>;
 pub trait CallConcat<'py> {
     fn call_concat<A: ArgsConcat<'py>>(
         self,
@@ -16,42 +16,46 @@ pub trait CallConcat<'py> {
 }
 
 macro_rules! dispatch {
-    ($n:expr, $func:expr, $args:expr, $kwargs:expr, [$($i:literal),+]) => {
-        match $n {
-            $($i => {
-                let mut buf = FixedBuf::<$i>::new();
-                $args.extend_buf(&mut buf);
-                vectorcall($func, buf.as_ptr(), $i, $kwargs)
-            })+
-            n => {
-                let mut buf = VecOfPtr::with_capacity(n);
-                $args.extend_buf(&mut buf);
-                vectorcall($func, buf.as_ptr(), n, $kwargs)
+    ($func:expr, $args:expr, $kwargs:expr) => {
+        seq_macro::seq!(i in 1..=8 {
+            match $args.len_unpacked() {
+                #(i => {
+                    let mut buf = FixedBuf::<i>::new();
+                    $args.extend_buf(&mut buf);
+                    vectorcall($func, buf.as_ptr(), i, $kwargs)
+                })*
+                n => {
+                    let mut buf = VecOfPtr::with_capacity(n);
+                    $args.extend_buf(&mut buf);
+                    vectorcall($func, buf.as_ptr(), n, $kwargs)
+                }
             }
-        }
+        })
     };
 }
 
 macro_rules! dispatch1 {
-    ($n:expr, $func:expr, $args:expr, [$($i:literal),+]) => {
-        match $n {
-            $($i => {
-                let mut buf = FixedBuf::<$i>::new();
-                $args.extend_buf(&mut buf);
-                vectorcall1($func, buf.as_ptr(), $i)
-            })+
-            n => {
-                let mut buf = VecOfPtr::with_capacity(n);
-                $args.extend_buf(&mut buf);
-                vectorcall1($func, buf.as_ptr(), n)
+    ( $func:expr, $args:expr) => {
+        seq_macro::seq!(i in 1..=8 {
+            match $args.len_unpacked() {
+                #(i => {
+                    let mut buf = FixedBuf::<i>::new();
+                    $args.extend_buf(&mut buf);
+                    vectorcall1($func, buf.as_ptr(), i)
+                })*
+                n => {
+                    let mut buf = VecOfPtr::with_capacity(n);
+                    $args.extend_buf(&mut buf);
+                    vectorcall1($func, buf.as_ptr(), n)
+                }
             }
-        }
+        })
     };
 }
 impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
     #[inline(always)]
     fn call_concat1<A: ArgsConcat<'py>>(self, args: A) -> PyResult<Bound<'py, PyAny>> {
-        dispatch1!(args.len_unpacked(), self, args, [1, 2, 3, 4])
+        dispatch1!(self, args)
     }
 
     #[inline(always)]
@@ -60,7 +64,7 @@ impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
         args: A,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        dispatch!(args.len_unpacked(), self, args, kwargs, [1, 2, 3, 4])
+        dispatch!(self, args, kwargs)
     }
 }
 
