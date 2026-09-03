@@ -18,8 +18,16 @@ pub trait CallConcat<'py> {
 macro_rules! dispatch {
     ($n:expr, $func:expr, $args:expr, $kwargs:expr, [$($i:literal),+]) => {
         match $n {
-            $($i => call_fixed::<$i, _>($func, $args, $kwargs),)+
-            n => call_dyn($func, $args, $kwargs, n)
+            $($i => {
+                let mut buf = FixedBuf::<$i>::new();
+                $args.extend_buf(&mut buf);
+                vectorcall($func, buf.as_ptr(), $i, $kwargs)
+            })+
+            n => {
+                let mut buf = VecOfPtr::with_capacity(n);
+                $args.extend_buf(&mut buf);
+                vectorcall($func, buf.as_ptr(), n, $kwargs)
+            }
         }
     };
 }
@@ -27,8 +35,16 @@ macro_rules! dispatch {
 macro_rules! dispatch1 {
     ($n:expr, $func:expr, $args:expr, [$($i:literal),+]) => {
         match $n {
-            $($i => call_fixed1::<$i, _>($func, $args),)+
-            n => call_dyn1($func, $args, n)
+            $($i => {
+                let mut buf = FixedBuf::<$i>::new();
+                $args.extend_buf(&mut buf);
+                vectorcall1($func, buf.as_ptr(), $i)
+            })+
+            n => {
+                let mut buf = VecOfPtr::with_capacity(n);
+                $args.extend_buf(&mut buf);
+                vectorcall1($func, buf.as_ptr(), n)
+            }
         }
     };
 }
@@ -45,17 +61,6 @@ impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         dispatch!(args.len_unpacked(), self, args, kwargs, [1, 2, 3, 4])
-    }
-}
-
-pub trait ArgBuffer {
-    fn push_ptr(&mut self, ptr: *mut ffi::PyObject);
-}
-
-impl ArgBuffer for VecOfPtr {
-    #[inline(always)]
-    fn push_ptr(&mut self, ptr: *mut ffi::PyObject) {
-        self.push(ptr);
     }
 }
 
@@ -118,6 +123,16 @@ impl_arg_concat_tuple!(A:0, B:1);
 impl_arg_concat_tuple!(A:0, B:1, C:2);
 impl_arg_concat_tuple!(A:0, B:1, C:2, D:3);
 
+pub trait ArgBuffer {
+    fn push_ptr(&mut self, ptr: *mut ffi::PyObject);
+}
+
+impl ArgBuffer for VecOfPtr {
+    #[inline(always)]
+    fn push_ptr(&mut self, ptr: *mut ffi::PyObject) {
+        self.push(ptr);
+    }
+}
 struct FixedBuf<const N: usize> {
     buf: [MaybeUninit<*mut ffi::PyObject>; N],
     len: usize,
@@ -147,44 +162,6 @@ impl<const N: usize> ArgBuffer for FixedBuf<N> {
     }
 }
 
-fn call_dyn1<'py, A: ArgsConcat<'py>>(
-    func: &Bound<'py, PyAny>,
-    args: A,
-    n: usize,
-) -> PyResult<Bound<'py, PyAny>> {
-    let mut buf = VecOfPtr::with_capacity(n);
-    args.extend_buf(&mut buf);
-    vectorcall1(func, buf.as_ptr(), n)
-}
-fn call_dyn<'py, A: ArgsConcat<'py>>(
-    func: &Bound<'py, PyAny>,
-    args: A,
-    kwargs: Option<&Bound<'py, PyDict>>,
-    n: usize,
-) -> PyResult<Bound<'py, PyAny>> {
-    let mut buf = VecOfPtr::with_capacity(n);
-    args.extend_buf(&mut buf);
-    vectorcall(func, buf.as_ptr(), n, kwargs)
-}
-#[inline(always)]
-fn call_fixed<'py, const N: usize, A: ArgsConcat<'py>>(
-    func: &Bound<'py, PyAny>,
-    args: A,
-    kwargs: Option<&Bound<'py, PyDict>>,
-) -> PyResult<Bound<'py, PyAny>> {
-    let mut buf = FixedBuf::<N>::new();
-    args.extend_buf(&mut buf);
-    vectorcall(func, buf.as_ptr(), N, kwargs)
-}
-#[inline(always)]
-fn call_fixed1<'py, const N: usize, A: ArgsConcat<'py>>(
-    func: &Bound<'py, PyAny>,
-    args: A,
-) -> PyResult<Bound<'py, PyAny>> {
-    let mut buf = FixedBuf::<N>::new();
-    args.extend_buf(&mut buf);
-    vectorcall1(func, buf.as_ptr(), N)
-}
 #[inline(always)]
 fn vectorcall1<'py>(
     func: &Bound<'py, PyAny>,
@@ -196,7 +173,6 @@ fn vectorcall1<'py>(
         Bound::from_owned_ptr_or_err(func.py(), result)
     }
 }
-
 #[inline(always)]
 fn vectorcall<'py>(
     func: &Bound<'py, PyAny>,
