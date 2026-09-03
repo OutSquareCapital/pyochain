@@ -14,6 +14,28 @@ This allows performance improvements, simplify internal implementations, but mos
 
 Because, frankly, why would you create a `SortedKeyList` with an identity function as key, when you can just use a `SortedList` instead?
 
+### 🚀 Performance improvements
+
+#### args concatenation
+
+When you do`my_iter.for_each_star(f, *args)`, each element `T` of `my_iter` need to be passed first to `f` as the first argument, followed by the unpacked `args`.
+
+This entails reconstructing a new data structure to hold said arguments.
+
+The related logic has been optimized and fully refactored, with significant performance improvments, especially when the number of `args` is small (1 to 8), which is the most common use case.
+
+See below for the benchmark results, with the number of `args` in the left column, the number of items in the `Iterator` in the header row, and the relative performance improvement in the cells.
+
+**2.00x** means that the new implementation is twice as fast as the previous one.
+
+| - | 10 | 100 | 1_000 | 10_000 | 100_000 |
+| -------- | ---- | ---- | ---- | ---- | ---- |
+| **2** | 1.25x | 1.37x | 1.40x | 1.43x | 1.43x |
+| **4** | 1.28x | 1.37x | 1.37x | 1.37x | 1.39x |
+| **8** | 1.31x | 1.45x | 1.47x | 1.47x | 1.47x |
+| **16** | 1.21x | 1.26x | 1.26x | 1.25x | 1.22x |
+| **32** | 1.00x | 1.17x | 1.19x | 1.20x | 1.19x |
+
 ### ✨ Enhancements
 
 - **typing**: Relaxed the *collector* input type of `PyoIterator::collect`. The constraint on the return type `R: Collection[Any]` was artificial, and was preventing to use `collect` on functions or types who indeed consume the `Iterator`, but weren't strictly speaking a `Collection` (e.g polars DataFrames). In python, the `FromIterator` equivalent is simply `Callable[[Iterator[T]], Any]`, and this is now reflected in the typing of `collect`.
