@@ -59,7 +59,7 @@ WINDOW_CASES: Final = pytest.mark.parametrize(
     ("size", "tup_len"),
     SIZES
     .iter()
-    .product(SIZES.iter().map(lambda x: x // 10))
+    .product((2, 4, 8, 16, 32, 64, 128))
     .filter_star(lambda size, tup_len: tup_len < size)
     .collect(tuple),
 )
