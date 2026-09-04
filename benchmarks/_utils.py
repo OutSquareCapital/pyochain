@@ -2,6 +2,8 @@ from collections.abc import Callable
 from enum import IntEnum, StrEnum, auto
 from typing import Final, Protocol
 
+import pytest
+
 from pyochain import Seq
 
 type BenchFn = Callable[[int], object]
@@ -43,3 +45,21 @@ class VariantGroups(StrEnum):
     MAP = auto()
     AND_THEN = auto()
     MATCH = auto()
+
+
+def identity[T](x: T) -> T:
+    return x
+
+
+def identity_vargs[T](*args: T) -> tuple[T, ...]:
+    return args
+
+
+WINDOW_CASES: Final = pytest.mark.parametrize(
+    ("size", "tup_len"),
+    SIZES
+    .iter()
+    .product(SIZES.iter().map(lambda x: x // 10))
+    .filter_star(lambda size, tup_len: tup_len < size)
+    .collect(tuple),
+)

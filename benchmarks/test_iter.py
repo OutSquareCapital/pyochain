@@ -18,7 +18,7 @@ from pyochain import (
     then_if_true,
 )
 
-from ._utils import SIZES, Sizes
+from ._utils import SIZES, WINDOW_CASES, Sizes, identity, identity_vargs
 
 if TYPE_CHECKING:
     from pyochain.abc import PyoIterable, PyoIterator, PyoSequence
@@ -506,26 +506,16 @@ def _group_by(data: Range) -> tuple[int, PyoIterator[int]]:
     return data.iter().group_by(lambda x: x % 2).last()
 
 
-@pytest.mark.parametrize("size", SIZES)
-@pytest.mark.parametrize("tup_len", (2, 4, 8))
+@WINDOW_CASES
 def test_map_windows(benchmark: BenchFixture, size: int, tup_len: int) -> None:
     data = Range(size)
-    assert benchmark(_map_windows, data, tup_len) is not None
+    _ = benchmark(lambda: data.iter().map_windows(tup_len, identity).last())
 
 
-def _map_windows(data: Range, tup_len: int) -> tuple[int, ...]:
-    return data.iter().map_windows(tup_len, lambda x: x).last()
-
-
-@pytest.mark.parametrize("size", SIZES)
-@pytest.mark.parametrize("tup_len", (2, 4, 8))
+@WINDOW_CASES
 def test_map_windows_star(benchmark: BenchFixture, size: int, tup_len: int) -> None:
     data = Range(size)
-    assert benchmark(_map_windows_star, data, tup_len) is not None
-
-
-def _map_windows_star(data: PyoIterable[int], tup_len: int) -> tuple[int, ...]:
-    return data.iter().map_windows_star(tup_len, lambda *x: x).last()
+    _ = benchmark(lambda: data.iter().map_windows_star(tup_len, identity_vargs).last())
 
 
 @pytest.mark.parametrize("size", SIZES)
