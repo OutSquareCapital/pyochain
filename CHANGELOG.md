@@ -36,6 +36,8 @@ See below for the benchmark results, with the number of `args` in the left colum
 | **16** | 1.21x | 1.26x | 1.26x | 1.25x | 1.22x |
 | **32** | 1.00x | 1.17x | 1.19x | 1.20x | 1.19x |
 
+- ``PyoIterator::map_windows_star` is **1.05x** to **1.26x** faster across all sizes tested, (small and big iterators, small and big window sizes). A single regression has been noted at 100k items with a window size of 32, which is planned to be fixed in a future release.
+
 ### ✨ Enhancements
 
 - **typing**: Relaxed the *collector* input type of `PyoIterator::collect`. The constraint on the return type `R: Collection[Any]` was artificial, and was preventing to use `collect` on functions or types who indeed consume the `Iterator`, but weren't strictly speaking a `Collection` (e.g polars DataFrames). In python, the `FromIterator` equivalent is simply `Callable[[Iterator[T]], Any]`, and this is now reflected in the typing of `collect`.
