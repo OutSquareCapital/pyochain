@@ -177,6 +177,7 @@ impl Intersperse {
         }
     }
 }
+type WindowVec = SmallVec<[Py<PyAny>; 16]>;
 ///TODO: It's actually slower than cytoolz implementation when `n` is small, we should optimize for that case.\
 /// Observed speeds:\
 /// **0.81x** -> `n=2`\
@@ -186,35 +187,76 @@ impl Intersperse {
 #[pyclass(module = "pyochain._iterators")]
 pub struct MapWindow {
     iter: Py<PyIterator>,
-    prev: SmallVec<[Py<PyAny>; 16]>,
+    prev: WindowVec,
 }
 
 #[pymethods]
 impl MapWindow {
     #[new]
-    pub fn new(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Self> {
-        let py = data.py();
-        std::iter::once(Ok(py.None().into_any()))
-            .chain(data.by_ref().map(|item| item.map(Bound::unbind)))
-            .take(n)
-            .collect::<PyResult<SmallVec<[Py<PyAny>; 16]>>>()
-            .map(|prev| Self {
-                iter: data.unbind(),
-                prev,
-            })
+    pub fn new(data: Bound<'_, PyIterator>, n: usize) -> PyResult<Self> {
+        fill_first_window(data, n).map(|(iter, prev)| Self { iter, prev })
     }
 
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyTuple>>> {
         let py = slf.py();
-        let item = match slf.iter.clone_ref(py).into_bound(py).next() {
-            None => return Ok(None),
-            Some(result) => result?.unbind(),
-        };
-        slf.prev.rotate_left(1);
-        let last = slf.prev.len() - 1;
-        slf.prev[last] = item;
-        Ok(Some(slf.prev.iter().collect_bound(py)?))
+        match slf.iter.clone_ref(py).into_bound(py).next() {
+            None => Ok(None),
+            Some(Err(e)) => Err(e),
+            Some(Ok(item)) => {
+                slf.prev.rotate_left(1);
+                let last = slf.prev.len() - 1;
+                slf.prev[last] = item.unbind();
+                slf.prev.iter().collect_bound(py).map(Some)
+            }
+        }
     }
+}
+#[pyclass(module = "pyochain._iterators")]
+pub struct MapWindowStar {
+    iter: Py<PyIterator>,
+    prev: WindowVec,
+    func: Py<PyAny>,
+}
+
+#[pymethods]
+impl MapWindowStar {
+    #[new]
+    pub fn new(data: Bound<'_, PyIterator>, n: usize, func: Py<PyAny>) -> PyResult<Self> {
+        fill_first_window(data, n).map(|(iter, prev)| Self { iter, prev, func })
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
+        let py = slf.py();
+        match slf.iter.clone_ref(py).into_bound(py).next() {
+            None => Ok(None),
+            Some(Err(e)) => Err(e),
+            Some(Ok(item)) => {
+                slf.prev.rotate_left(1);
+                let last = slf.prev.len() - 1;
+                slf.prev[last] = item.unbind();
+                slf.prev
+                    .iter()
+                    .collect_bound(py)
+                    .and_then(|args| slf.func.bind(py).call1(args))
+                    .map(Some)
+            }
+        }
+    }
+}
+fn fill_first_window(
+    mut data: Bound<'_, PyIterator>,
+    n: usize,
+) -> PyResult<(Py<PyIterator>, WindowVec)> {
+    let vec = data
+        .py()
+        .None()
+        .into_any()
+        .pipe(Ok)
+        .pipe(std::iter::once)
+        .chain(data.by_ref().map(|item| item.map(Bound::unbind)))
+        .take(n)
+        .collect::<PyResult<WindowVec>>()?;
+    Ok((data.unbind(), vec))
 }
 #[pyclass(frozen, module = "pyochain._iterators")]
 pub struct FilterMap {

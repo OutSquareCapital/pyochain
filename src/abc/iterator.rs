@@ -994,10 +994,9 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
         slf.try_iter()
-            .and_then(|x| iterators::MapWindow::new(x, length))
+            .and_then(|x| iterators::MapWindowStar::new(x, length, func.unbind()))
             .and_then(|x| x.into_bound_py_any(py))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
-            .and_then(|x| pylibs::itertools::map_star(func, x))
             .and_then(pyiterator_into_iter)
     }
     #[pyo3(signature = (func, *iterables))]

@@ -35,6 +35,7 @@ pub trait ImplPyoReversible {
     iterators::UniqueKey,
     iterators::Intersperse,
     iterators::MapWindow,
+    iterators::MapWindowStar,
     iterators::FilterMap,
     iterators::FilterMapStar,
     iterators::Scan,
@@ -71,6 +72,7 @@ impl ImplPyoIterator for iterators::UniqueIdentity {}
 impl ImplPyoIterator for iterators::UniqueKey {}
 impl ImplPyoIterator for iterators::Intersperse {}
 impl ImplPyoIterator for iterators::MapWindow {}
+impl ImplPyoIterator for iterators::MapWindowStar {}
 impl ImplPyoIterator for iterators::FilterMap {}
 impl ImplPyoIterator for iterators::FilterMapStar {}
 impl ImplPyoIterator for iterators::Scan {}
