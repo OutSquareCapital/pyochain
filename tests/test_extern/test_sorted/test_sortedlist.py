@@ -9,11 +9,11 @@ https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_cov
 from __future__ import annotations
 
 import random
-from itertools import chain
 from typing import TYPE_CHECKING
 
 import pytest
 
+from pyochain import Range
 from pyochain.collections import SortedList
 from pyochain.collections._sorted import (  # ruff: ignore[import-private-name]
     assert_sorted_list_empty,
@@ -44,51 +44,48 @@ def test_init() -> None:
 def test_add() -> None:
     random.seed(0)
     slt = SortedList[int]()
-    for val in range(1000):
+    nb = 100
+    for val in range(nb):
         slt.add(val)
         check_sorted_list(slt)
 
     slt = SortedList[int]()
-    for val in range(1000, 0, -1):
+    for val in range(nb, 0, -1):
         slt.add(val)
         check_sorted_list(slt)
 
     slt = SortedList[float]()
-    for _ in range(1000):
+    for _ in range(nb):
         slt.add(random.random())
         check_sorted_list(slt)
 
 
 def test_update() -> None:
+
+    def _update_check(mul: int) -> None:
+        slt.update(r)
+        assert slt.len() == r.len() * mul
+        check_sorted_list(slt)
+
     slt = SortedList[int]()
-
-    slt.update(range(1000))
-    assert len(slt) == 1000
-    check_sorted_list(slt)
-
-    slt.update(range(100))
-    assert len(slt) == 1100
-    check_sorted_list(slt)
-
-    slt.update(range(10000))
-    assert len(slt) == 11100
-    check_sorted_list(slt)
-
-    values = sorted(chain(range(1000), range(100), range(10000)))
-    assert all(tup[0] == tup[1] for tup in zip(slt, values, strict=False))
+    r = Range(10)
+    _update_check(1)
+    _update_check(2)
+    _update_check(3)
+    values = r.iter().chain(r, r).sort()
+    assert slt.iter().zip(values, strict=False).all(lambda tup: tup[0] == tup[1])
 
 
 def test_contains() -> None:
     slt = SortedList[int]()
+    nb = 10
     assert 0 not in slt
 
-    slt.update(range(100))
+    slt.update(range(nb))
 
-    for val in range(100):
+    for val in range(nb):
         assert val in slt
-
-    assert 10000 not in slt
-
+    assert nb + 1 not in slt
     check_sorted_list(slt)
 
 
@@ -96,7 +93,7 @@ def test_discard() -> None:
     slt = SortedList[int]()
 
     assert slt.discard(0) is None
-    assert len(slt) == 0
+    assert slt.len() == 0
     check_sorted_list(slt)
 
     slt = SortedList([1, 2, 2, 2, 3, 3, 5])

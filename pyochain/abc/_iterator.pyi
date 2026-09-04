@@ -2827,15 +2827,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         Example:
             ```python
             from pyochain import Seq, Iter
+            import operator
 
             a = Iter("abcd").map_windows_star(2, lambda x, y: f"{x}+{y}").collect(Seq)
             assert a == Seq("a+b", "b+c", "c+d")
-            b = (
-                Seq(1, 2, 3, 4)
-                .iter()
-                .map_windows_star(2, lambda x, y: x + y)
-                .collect(Seq)
-            )
+            b = Seq(1, 2, 3, 4).iter().map_windows_star(2, operator.add).collect(Seq)
             assert b == Seq(3, 5, 7)
             ```
         """
