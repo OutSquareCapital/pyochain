@@ -6,7 +6,7 @@ use std::{
 use crate::{
     abc,
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
-    traits::{OptionExt, PyWrapper},
+    traits::{IntoInit, OptionExt, PyWrapper},
 };
 use pyo3::{
     IntoPyObjectExt, PyTypeInfo,
@@ -180,7 +180,7 @@ impl Intersperse {
         }
     }
 }
-type WindowVec = SmallVec<[Py<PyAny>; 16]>;
+type WindowVec = SmallVec<[Py<PyAny>; 64]>;
 ///TODO: It's actually slower than cytoolz implementation when `n` is small, we should optimize for that case.\
 /// Observed speeds:\
 /// **0.81x** -> `n=2`\
@@ -194,15 +194,32 @@ pub struct MapWindow(pub InnerWindow);
 impl MapWindow {
     fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
         self.0.next(py).and_then_transpose(|item| {
-            let mut vec = self.0.get_vec();
-            move_window(&mut vec, item.unbind());
-            vec.iter()
-                .collect_bound::<PyTuple>(py)
+            self.0
+                .as_tuple(py, item.unbind())
                 .and_then(|arg| self.0.func.bind(py).call1((arg,)))
         })
     }
 }
-#[pyclass(module = "pyochain._iterators", frozen)]
+// TODO: One regression on iterators of 100k elements with 32 window size, need to investigate.
+pub fn get_window_star(
+    data: Bound<'_, PyIterator>,
+    length: usize,
+    func: Py<PyAny>,
+) -> PyResult<Bound<'_, abc::PyoIterator>> {
+    let py = data.py();
+    let inner_window = InnerWindow::new(data, length, func);
+    match length {
+        _ if length > 8 && length < 64 => inner_window
+            .map(MapWindowStarMedium)?
+            .into_bound(py)
+            .map(Bound::into_super),
+        _ => inner_window
+            .map(MapWindowStar)?
+            .into_bound(py)
+            .map(Bound::into_super),
+    }
+}
+#[pyclass(module = "pyochain._iterators", frozen, extends=abc::PyoIterator)]
 pub struct MapWindowStar(pub InnerWindow);
 
 #[pymethods]
@@ -212,6 +229,20 @@ impl MapWindowStar {
             let mut vec = self.0.get_vec();
             move_window(&mut vec, item.unbind());
             self.0.func.bind(py).call_concat1(&*vec)
+        })
+    }
+}
+
+#[pyclass(module = "pyochain._iterators", frozen, extends=abc::PyoIterator)]
+pub struct MapWindowStarMedium(pub InnerWindow);
+
+#[pymethods]
+impl MapWindowStarMedium {
+    fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
+        self.0.next(py).and_then_transpose(|item| {
+            self.0
+                .as_tuple(py, item.unbind())
+                .and_then(|arg| self.0.func.bind(py).call1(arg))
         })
     }
 }
@@ -236,6 +267,11 @@ impl InnerWindow {
     }
     fn get_vec(&self) -> MutexGuard<'_, WindowVec> {
         self.prev.lock().unwrap()
+    }
+    fn as_tuple<'py>(&self, py: Python<'py>, item: Py<PyAny>) -> PyResult<Bound<'py, PyTuple>> {
+        let mut vec = self.get_vec();
+        move_window(&mut vec, item);
+        vec.iter().collect_bound::<PyTuple>(py)
     }
     #[inline]
     fn next<'py>(&self, py: Python<'py>) -> Option<PyResult<Bound<'py, PyAny>>> {
