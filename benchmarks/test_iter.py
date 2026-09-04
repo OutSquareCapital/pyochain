@@ -507,14 +507,14 @@ def _group_by(data: Range) -> tuple[int, PyoIterator[int]]:
 
 
 @pytest.mark.parametrize("size", SIZES)
-@pytest.mark.parametrize("size", (2, 8, 32, 128))
-def test_map_windows(benchmark: BenchFixture, size: int) -> None:
-    data = Range(4096)
-    assert benchmark(_map_windows, data, size) is not None
+@pytest.mark.parametrize("tup_len", (2, 4, 8))
+def test_map_windows(benchmark: BenchFixture, size: int, tup_len: int) -> None:
+    data = Range(size)
+    assert benchmark(_map_windows, data, tup_len) is not None
 
 
-def _map_windows(data: Range, size: int) -> tuple[int, ...]:
-    return data.iter().map_windows(size, lambda x: x).last()
+def _map_windows(data: Range, tup_len: int) -> tuple[int, ...]:
+    return data.iter().map_windows(tup_len, lambda x: x).last()
 
 
 @pytest.mark.parametrize("size", SIZES)
