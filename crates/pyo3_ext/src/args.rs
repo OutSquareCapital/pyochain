@@ -3,7 +3,7 @@ use pyo3::{
     prelude::*,
     types::{PyDict, PyTuple},
 };
-use smallvec::SmallVec;
+use smallvec::{Array, SmallVec};
 use std::mem::MaybeUninit;
 type VecOfPtr = SmallVec<[*mut ffi::PyObject; 16]>;
 pub trait CallConcat<'py> {
@@ -96,6 +96,19 @@ impl<'py> ArgsConcat<'py> for Bound<'py, PyTuple> {
         for i in 0..self.len() {
             buf.push_ptr(unsafe { ffi::PyTuple_GET_ITEM(ptr, i as ffi::Py_ssize_t) });
         }
+    }
+}
+impl<A> ArgsConcat<'_> for SmallVec<A>
+where
+    A: Array<Item = Py<PyAny>>,
+{
+    #[inline(always)]
+    fn len_unpacked(&self) -> usize {
+        self.len()
+    }
+    #[inline(always)]
+    fn extend_buf<B: ArgBuffer>(&self, buf: &mut B) {
+        self.iter().for_each(|item| buf.push_ptr(item.as_ptr()));
     }
 }
 impl<'py, T: ArgsConcat<'py> + ?Sized> ArgsConcat<'py> for &T {

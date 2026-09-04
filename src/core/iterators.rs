@@ -234,11 +234,7 @@ impl MapWindowStar {
                 slf.prev.rotate_left(1);
                 let last = slf.prev.len() - 1;
                 slf.prev[last] = item.unbind();
-                slf.prev
-                    .iter()
-                    .collect_bound(py)
-                    .and_then(|args| slf.func.bind(py).call1(args))
-                    .map(Some)
+                slf.func.bind(py).call_concat1(&slf.prev).map(Some)
             }
         }
     }
@@ -247,16 +243,15 @@ fn fill_first_window(
     mut data: Bound<'_, PyIterator>,
     n: usize,
 ) -> PyResult<(Py<PyIterator>, WindowVec)> {
-    let vec = data
-        .py()
+    data.py()
         .None()
         .into_any()
         .pipe(Ok)
         .pipe(std::iter::once)
         .chain(data.by_ref().map(|item| item.map(Bound::unbind)))
         .take(n)
-        .collect::<PyResult<WindowVec>>()?;
-    Ok((data.unbind(), vec))
+        .collect::<PyResult<WindowVec>>()
+        .map(|vec| (data.unbind(), vec))
 }
 #[pyclass(frozen, module = "pyochain._iterators")]
 pub struct FilterMap {
