@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use pyo3::prelude::*;
 
 use crate::{Bounds, ListDataGetters};
-pub struct ListDataIterInner<T: ListDataGetters> {
+struct ListDataIterInner<T: ListDataGetters> {
     data: Arc<Mutex<T>>,
     bounds: Bounds,
 }
@@ -11,20 +11,20 @@ pub struct ListDataIterInner<T: ListDataGetters> {
 pub struct ListDataIter<T: ListDataGetters>(ListDataIterInner<T>);
 pub struct ListDataIterRev<T: ListDataGetters>(ListDataIterInner<T>);
 pub trait ListDataIteratorMethods<T: ListDataGetters>: Sized {
-    fn new(inner: ListDataIterInner<T>) -> Self;
+    fn new(data: Arc<Mutex<T>>, bounds: Bounds) -> Self;
     fn full(data: Arc<Mutex<T>>) -> Self {
         let data_ref = data.lock().expect("poisoned");
         let last = data_ref.lists().len().saturating_sub(1);
         let bounds = Bounds::new(0, 0, last, data_ref.lists().last().map_or(0, Vec::len));
         drop(data_ref);
-        Self::new(ListDataIterInner { data, bounds })
+        Self::new(data, bounds)
     }
     fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>>;
 }
 
 impl<T: ListDataGetters> ListDataIteratorMethods<T> for ListDataIter<T> {
-    fn new(inner: ListDataIterInner<T>) -> Self {
-        Self(inner)
+    fn new(data: Arc<Mutex<T>>, bounds: Bounds) -> Self {
+        Self(ListDataIterInner { data, bounds })
     }
 
     fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
@@ -47,8 +47,8 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for ListDataIter<T> {
 }
 
 impl<T: ListDataGetters> ListDataIteratorMethods<T> for ListDataIterRev<T> {
-    fn new(inner: ListDataIterInner<T>) -> Self {
-        Self(inner)
+    fn new(data: Arc<Mutex<T>>, bounds: Bounds) -> Self {
+        Self(ListDataIterInner { data, bounds })
     }
 
     fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
