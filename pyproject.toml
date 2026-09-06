@@ -19,6 +19,8 @@ dev = [
     "pytest>=9.1.1",
     "ruff>=0.16.5",
     "sdsort",
+    "sortedcontainers-stubs>=2.4.3",
+    "sortedcontainers>=2.4.0",
 ]
 doc = ["mkdocstrings-python>=2.0.7", "zensical>=0.0.57"]
 [tool.pydoclint]
