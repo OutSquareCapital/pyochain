@@ -4,7 +4,7 @@ use crate::{
         SortedKeyList, SortedList,
         sorted::{
             dict::{SortedDict, SortedKeyDict},
-            iter::{SortedIter, SortedIterKey, SortedIterKeyReverse, SortedIterReverse},
+            iter::{self, PySortedIter},
             set::{SortedKeySet, SortedSet},
             views::BaseSortedView,
         },
@@ -26,8 +26,8 @@ use pyo3_ext::{
 };
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
 use sorted_rs::{
-    Bounds, IntOrSlice, KeysListsData, ListDataGetters, ListDataIter, ListDataIterRev,
-    ListDataIteratorMethods, ListsData, ListsDataMethods, SeqOrAny,
+    Bounds, IntOrSlice, KeysListsData, ListDataGetters, ListsData, ListsDataMethods, SeqOrAny,
+    iter as rsiter,
 };
 use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
 use tap::prelude::*;
@@ -76,10 +76,18 @@ pub(super) trait SortedCollection:
         self.iter_bounds(py, bounds, reverse)
     }
     fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.wrap_iter(py, ListDataIter::full(self.get_list().clone()))
+        self.get_list()
+            .clone()
+            .pipe(rsiter::Full::new)
+            .conv::<Self::IFull>()
+            .into_pyiterator(py)
     }
     fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.wrap_iter_reverse(py, ListDataIterRev::full(self.get_list().clone()))
+        self.get_list()
+            .clone()
+            .pipe(rsiter::FullRev::new)
+            .conv::<Self::IFullRev>()
+            .into_pyiterator(py)
     }
     #[pyo3(signature = (value, start = None, stop = None))]
     fn index(
@@ -122,6 +130,10 @@ pub(super) trait ListGetter:
     Sized + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     type T: ListDataGetters + ListsDataMethods;
+    type I: PySortedIter + From<rsiter::Bounded<Self::T>>;
+    type IRev: PySortedIter + From<rsiter::BoundedRev<Self::T>>;
+    type IFull: PySortedIter + From<rsiter::Full<Self::T>>;
+    type IFullRev: PySortedIter + From<rsiter::FullRev<Self::T>>;
     fn get_list(&self) -> &Arc<Mutex<Self::T>>;
     #[inline(always)]
     fn get_data(&self) -> MutexGuard<'_, Self::T> {
@@ -132,84 +144,55 @@ pub(super) trait ListGetter:
             Err(TryLockError::WouldBlock) => panic!("data already locked - reentrant bug"),
         }
     }
-    fn wrap_iter<'py>(
-        &self,
-        py: Python<'py>,
-        inner: ListDataIter<Self::T>,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
-    fn wrap_iter_reverse<'py>(
-        &self,
-        py: Python<'py>,
-        inner: ListDataIterRev<Self::T>,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
     fn iter_bounds<'py>(
         &self,
         py: Python<'py>,
         bounds: Option<Bounds>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        match bounds {
-            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => {
-                if reverse {
-                    self.wrap_iter_reverse(
-                        py,
-                        ListDataIterRev::new(self.get_list().clone(), bounds),
-                    )
-                } else {
-                    self.wrap_iter(py, ListDataIter::new(self.get_list().clone(), bounds))
-                }
-            }
+        match (bounds, reverse) {
+            (None, _) => iterators::Iter::empty(py).map(Bound::into_super),
+            (Some(bounds), true) => rsiter::BoundedRev::new(self.get_list().clone(), bounds)
+                .conv::<Self::IRev>()
+                .into_pyiterator(py),
+            (Some(bounds), false) => rsiter::Bounded::new(self.get_list().clone(), bounds)
+                .conv::<Self::I>()
+                .into_pyiterator(py),
         }
     }
 }
 macro_rules! impl_list_getter {
-    ($t:ty, $l:ty, $iter:ty, $iter_reverse:ty) => {
-        impl ListGetter for $t {
-            type T = $l;
-            #[inline(always)]
-            fn get_list(&self) -> &Arc<Mutex<Self::T>> {
-                &self.0
+    ($l:ty, $iter:ty, $iter_rev:ty, $iter_full:ty, $iter_full_rev:ty, for [$($t:ty),+ $(,)?]) => {
+        $(
+            impl ListGetter for $t {
+                type T = $l;
+                type I = $iter;
+                type IRev = $iter_rev;
+                type IFull = $iter_full;
+                type IFullRev = $iter_full_rev;
+                #[inline(always)]
+                fn get_list(&self) -> &Arc<Mutex<Self::T>> {
+                    &self.0
+                }
             }
-            fn wrap_iter<'py>(
-                &self,
-                py: Python<'py>,
-                inner: ListDataIter<Self::T>,
-            ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-                <$iter>::new(inner).into_bound(py).map(Bound::into_super)
-            }
-            fn wrap_iter_reverse<'py>(
-                &self,
-                py: Python<'py>,
-                inner: ListDataIterRev<Self::T>,
-            ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-                <$iter_reverse>::new(inner)
-                    .into_bound(py)
-                    .map(Bound::into_super)
-            }
-        }
+        )+
     };
 }
-impl_list_getter!(SortedList, ListsData, SortedIter, SortedIterReverse);
 impl_list_getter!(
-    SortedKeyList,
-    KeysListsData,
-    SortedIterKey,
-    SortedIterKeyReverse
+    ListsData,
+    iter::PyBounded,
+    iter::PyBoundedRev,
+    iter::PyFull,
+    iter::PyFullRev,
+    for [SortedList, SortedSet, SortedDict]
 );
-impl_list_getter!(SortedSet, ListsData, SortedIter, SortedIterReverse);
 impl_list_getter!(
-    SortedKeySet,
     KeysListsData,
-    SortedIterKey,
-    SortedIterKeyReverse
-);
-impl_list_getter!(SortedDict, ListsData, SortedIter, SortedIterReverse);
-impl_list_getter!(
-    SortedKeyDict,
-    KeysListsData,
-    SortedIterKey,
-    SortedIterKeyReverse
+    iter::PyBoundedKey,
+    iter::PyBoundedKeyRev,
+    iter::PyFullKey,
+    iter::PyFullKeyRev,
+    for [SortedKeyList, SortedKeySet, SortedKeyDict]
 );
 
 impl KeyedSortedCollection for SortedKeyList {}

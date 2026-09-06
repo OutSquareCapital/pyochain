@@ -49,10 +49,14 @@ pub trait ImplPyoReversible {
     iterators::ZipLongest,
     iterators::Unzip,
     iterators::GroupBy,
-    sorted::iter::SortedIter,
-    sorted::iter::SortedIterReverse,
-    sorted::iter::SortedIterKey,
-    sorted::iter::SortedIterKeyReverse
+    sorted::iter::PyBounded,
+    sorted::iter::PyBoundedRev,
+    sorted::iter::PyBoundedKey,
+    sorted::iter::PyBoundedKeyRev,
+    sorted::iter::PyFull,
+    sorted::iter::PyFullRev,
+    sorted::iter::PyFullKey,
+    sorted::iter::PyFullKeyRev
 )]
 pub trait ImplPyoIterator: Sized {
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
@@ -86,10 +90,6 @@ impl ImplPyoIterator for iterators::WithPosition {}
 impl ImplPyoIterator for iterators::ZipLongest {}
 impl ImplPyoIterator for iterators::Unzip {}
 impl ImplPyoIterator for iterators::GroupBy {}
-impl ImplPyoIterator for sorted::iter::SortedIter {}
-impl ImplPyoIterator for sorted::iter::SortedIterReverse {}
-impl ImplPyoIterator for sorted::iter::SortedIterKey {}
-impl ImplPyoIterator for sorted::iter::SortedIterKeyReverse {}
 impl ImplPyoIterator for abc::PyoIterator {}
 
 #[py_abc(
