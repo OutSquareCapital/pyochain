@@ -4,6 +4,7 @@ use crate::{
     Bounds, Pos, bisect,
     debug::check_list,
     inner::{InnerGetter, ListDataGetters, VecPy},
+    ops,
 };
 use either::Either;
 use pyo3::{
@@ -12,7 +13,6 @@ use pyo3::{
     types::{PySlice, PySliceIndices},
 };
 pub type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
-
 pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     fn irange_specs<'py>(
         &self,
@@ -147,5 +147,29 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         let values = self.inner().repeat(py, num);
         self.clear();
         self.update(py, values)
+    }
+}
+pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) -> Ordering>(
+    list: &mut T,
+    py: Python<'_>,
+    mut values: VecPy,
+    func: F,
+) -> PyResult<()> {
+    values.sort_by(&func);
+    match ops::Update::new(list.maxes(), list.length(), &values) {
+        ops::Update::EmptyMaxes => list.finalize_update(py, &values),
+        ops::Update::OtherGESelf => {
+            list.lists_mut().push(values);
+            values = list.inner().collapse(py);
+            values.sort_by(func);
+            list.clear();
+            list.finalize_update(py, &values)
+        }
+        ops::Update::OtherLTSelf => {
+            for val in values {
+                list.add(py, val)?;
+            }
+            Ok(())
+        }
     }
 }

@@ -5,7 +5,7 @@ use crate::{
     errors, impl_inner_getter,
     inner::{InnerData, InnerGetter, ListDataGetters, VecPy},
     ops,
-    traits::ListsDataMethods,
+    traits::{ListsDataMethods, update_list_by},
 };
 use pyo3::prelude::*;
 use tap::Pipe;
@@ -370,24 +370,8 @@ impl ListsDataMethods for KeysListsData {
         }
     }
 
-    fn update(&mut self, py: Python<'_>, mut values: VecPy) -> PyResult<()> {
+    fn update(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);
-        values.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
-        match ops::Update::new(self.maxes(), self.length(), &values) {
-            ops::Update::EmptyMaxes => self.finalize_update(py, &values),
-            ops::Update::OtherGESelf => {
-                self.lists_mut().push(values);
-                values = self.inner().collapse(py);
-                values.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
-                self.clear();
-                self.finalize_update(py, &values)
-            }
-            ops::Update::OtherLTSelf => {
-                for val in values {
-                    self.add(py, val)?;
-                }
-                Ok(())
-            }
-        }
+        update_list_by(self, py, values, |a, b| py_cmp_by_key(a, b, key_fn))
     }
 }

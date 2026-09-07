@@ -8,7 +8,7 @@ use crate::{
     errors, impl_inner_getter,
     inner::{InnerData, InnerGetter, VecPy},
     ops,
-    traits::ListsDataMethods,
+    traits::{ListsDataMethods, update_list_by},
 };
 
 //TODO: This struct is way too big and do way too many things.
@@ -250,23 +250,7 @@ impl ListsDataMethods for ListsData {
         self.idx_mut().clear();
         Ok(())
     }
-    fn update(&mut self, py: Python<'_>, mut values: VecPy) -> PyResult<()> {
-        values.sort_by(|a, b| py_cmp(py, a, b));
-        match ops::Update::new(self.maxes(), self.length(), &values) {
-            ops::Update::EmptyMaxes => self.finalize_update(py, &values),
-            ops::Update::OtherGESelf => {
-                self.lists_mut().push(values);
-                values = self.inner().collapse(py);
-                values.sort_by(|a, b| py_cmp(py, a, b));
-                self.clear();
-                self.finalize_update(py, &values)
-            }
-            ops::Update::OtherLTSelf => {
-                for val in values {
-                    self.add(py, val)?;
-                }
-                Ok(())
-            }
-        }
+    fn update(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
+        update_list_by(self, py, values, |a, b| py_cmp(py, a, b))
     }
 }
