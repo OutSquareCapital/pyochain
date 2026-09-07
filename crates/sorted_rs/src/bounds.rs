@@ -1,7 +1,6 @@
 use pyo3::prelude::*;
-use tap::Pipe;
 
-use crate::{ListsDataMethods, bisect, inner::VecPy};
+use crate::{bisect, inner::VecPy};
 
 pub struct Indexes {
     pub start: isize,
@@ -34,37 +33,6 @@ impl Pos {
     #[must_use]
     pub fn new(pos: usize, idx: usize) -> Self {
         Self { pos, idx }
-    }
-
-    pub fn loc<T: ListsDataMethods>(&self, data: &mut T) -> PyResult<isize> {
-        if self.pos == 0 {
-            Ok(self.idx.cast_signed())
-        } else {
-            if data.idx().is_empty() {
-                data.build_index();
-            }
-            // Increment pos to point in the index to len(self.lists[pos]).
-            let mut pos = self.pos + data.offset();
-            // Iterate until reaching the root of the index tree at pos = 0.
-            let total = data.idx().pipe_ref_mut(|idx| {
-                let mut total = 0;
-                while pos != 0 {
-                    // Right-child nodes are at even indices. At such indices
-                    // account the total below the left child node.
-
-                    if pos.is_multiple_of(2) {
-                        total += idx[pos - 1].cast_signed();
-                    }
-
-                    // Advance pos to the parent node.
-
-                    pos = (pos - 1) >> 1;
-                }
-                total
-            });
-
-            Ok(total + self.idx.cast_signed())
-        }
     }
 }
 

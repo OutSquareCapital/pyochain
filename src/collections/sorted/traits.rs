@@ -26,8 +26,8 @@ use pyo3_ext::{
 };
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
 use sorted_rs::{
-    Bounds, IntOrSlice, KeysListsData, ListDataGetters, ListsData, ListsDataMethods, SeqOrAny,
-    iter as rsiter,
+    Bounds, InnerGetter, IntOrSlice, KeysListsData, ListDataGetters, ListsData, ListsDataMethods,
+    SeqOrAny, iter as rsiter,
 };
 use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
 use tap::prelude::*;
@@ -72,7 +72,10 @@ pub(super) trait SortedCollection:
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let bounds = self.try_lock().get_islice_specs(py, start, stop)?;
+        let bounds = self
+            .try_lock()
+            .inner_mut()
+            .get_islice_specs(py, start, stop)?;
         self.iter_bounds(py, bounds, reverse)
     }
     fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
@@ -224,27 +227,27 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
         self.copy(py)
     }
     fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().eq(other)
+        self.try_lock().inner().eq(other)
     }
 
     fn __ne__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().ne(other)
+        self.try_lock().inner().ne(other)
     }
 
     fn __lt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().lt(other)
+        self.try_lock().inner().lt(other)
     }
 
     fn __gt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().gt(other)
+        self.try_lock().inner().gt(other)
     }
 
     fn __le__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().le(other)
+        self.try_lock().inner().le(other)
     }
 
     fn __ge__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().ge(other)
+        self.try_lock().inner().ge(other)
     }
 
     fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
@@ -255,12 +258,13 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
         let mut data = self.try_lock();
         match index {
             Either::Right(slice) => data
+                .inner_mut()
                 .get_slice(py, &slice)?
                 .iter()
                 .collect_bound::<PyList>(py)?
                 .try_into_py()
                 .map(Either::Right),
-            Either::Left(index) => data.get_item(py, index).map(Either::Left),
+            Either::Left(index) => data.inner_mut().get_item(py, index).map(Either::Left),
         }
     }
     fn __len__(&self) -> usize {
@@ -403,12 +407,13 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let mut data = self.try_lock();
         match index {
             Either::Right(slice) => data
+                .inner_mut()
                 .get_slice(py, &slice)?
                 .iter()
                 .collect_bound::<PyList>(py)?
                 .try_into_py()
                 .map(Either::Right),
-            Either::Left(index) => data.get_item(py, index).map(Either::Left),
+            Either::Left(index) => data.inner_mut().get_item(py, index).map(Either::Left),
         }
     }
     fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
@@ -416,6 +421,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             Either::Right(slice) => {
                 let values = self
                     .try_lock()
+                    .inner_mut()
                     .get_slice(py, &slice)?
                     .iter()
                     .collect_bound::<PySet>(py)?;
@@ -423,7 +429,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
                 self.try_lock().del_slice(py, slice)?;
             }
             Either::Left(int) => {
-                let value = self.try_lock().get_item(py, int)?;
+                let value = self.try_lock().inner_mut().get_item(py, int)?;
                 self.get_set().bind(py).remove(&value)?;
                 self.try_lock().del_item(py, int)?;
             }
@@ -868,7 +874,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        let key = self.try_lock().get_item(py, index)?;
+        let key = self.try_lock().inner_mut().get_item(py, index)?;
         self.__getitem__(&key).map(|value| (key, value))
     }
     #[pyo3(signature = (key, default = None, /))]
@@ -987,7 +993,7 @@ impl<'py, D: BaseSortedDict> Iterator for SortedDictIter<'_, 'py, D> {
     fn next(&mut self) -> Option<PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>> {
         let index = self.range.next()?;
         // NOTE: I tried to avoid double match here, but the `get_item` error caused reference issues.
-        match self.mapping_list.get_item(self.py, index) {
+        match self.mapping_list.inner_mut().get_item(self.py, index) {
             Ok(key) => {
                 let value = self.mapping.get_item(&key);
                 match value {

@@ -6,7 +6,7 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::{py_abc, try_cast_into};
-use sorted_rs::ListsDataMethods;
+use sorted_rs::{InnerGetter, ListsDataMethods};
 
 use crate::{
     abc,
@@ -40,7 +40,7 @@ where
             match index {
                 Case::PySlice(slice) => {
                     let mut data = mapping.try_lock();
-                    let keys = data.get_slice(py, &slice)?;
+                    let keys = data.inner_mut().get_slice(py, &slice)?;
                     data.del_slice(py, slice)?;
                     for key in keys {
                         dict.del_item(key)?;
@@ -177,6 +177,7 @@ fn get_item_for_items_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     try_cast_into! {
         match index {
             Case::PySlice(slice) => mapping_list
+                .inner_mut()
                 .get_slice(py, &slice)?
                 .iter()
                 .map(|key| tuple!(key.bind(py), &dict.get_item(key)?).map(Bound::into_any))
@@ -184,7 +185,9 @@ fn get_item_for_items_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
                 .try_into_py()
                 .map(Either::Right),
             int => {
-                let key = mapping_list.get_item(py, int.extract::<isize>()?)?;
+                let key = mapping_list
+                    .inner_mut()
+                    .get_item(py, int.extract::<isize>()?)?;
                 let value = dict.get_item(&key)?;
                 tuple!(key, value).map(Bound::into_any).map(Either::Left)
             }
@@ -204,6 +207,7 @@ fn get_item_for_values_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     try_cast_into! {
         match index {
             Case::PySlice(slice) => mapping_list
+                .inner_mut()
                 .get_slice(py, &slice)?
                 .iter()
                 .map(|key| dict.get_item(key))
@@ -211,7 +215,7 @@ fn get_item_for_values_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
                 .try_into_py()
                 .map(Either::Right),
             int => dict
-                .get_item(mapping_list.get_item(py, int.extract::<isize>()?)?)
+                .get_item(mapping_list.inner_mut().get_item(py, int.extract::<isize>()?)?)
                 .map(Either::Left),
         }
     }
@@ -227,12 +231,14 @@ fn get_item_for_key_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     try_cast_into! {
         match index {
             Case::PySlice(slice) => mapping_list
+                .inner_mut()
                 .get_slice(py, &slice)?
                 .iter()
                 .collect_bound::<PyList>(py)?
                 .try_into_py()
                 .map(Either::Right),
             int => mapping_list
+                .inner_mut()
                 .get_item(py, int.extract::<isize>()?)
                 .map(Either::Left),
         }

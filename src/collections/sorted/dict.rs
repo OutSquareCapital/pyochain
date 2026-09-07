@@ -13,7 +13,7 @@ use pyo3::{
     types::{PyDict, PyMapping},
 };
 use pyo3_ext::prelude::*;
-use sorted_rs::{KeysListsData, ListsData, ListsDataMethods};
+use sorted_rs::{InnerGetter, KeysListsData, ListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 /// Key-value pair type from a Python `Mapping`
@@ -163,6 +163,7 @@ impl BaseSortedDict for SortedKeyDict {
         let dict = self.get_dict().bind(py).as_any();
         let items = self
             .try_lock()
+            .inner()
             .iter()
             .map(|key| dict.get_item(key).map(|value| format!("{key}: {value}")))
             .collect::<PyResult<Vec<_>>>()?

@@ -7,7 +7,7 @@ use crate::collections::{
 };
 use either::Either;
 use pyo3::prelude::*;
-use sorted_rs::{ListDataGetters, ListsDataMethods, debug::check_key_list, pyassert};
+use sorted_rs::{InnerGetter, ListDataGetters, ListsDataMethods, debug::check_key_list, pyassert};
 
 #[pyfunction]
 pub fn check_sorted_dict(
@@ -23,7 +23,7 @@ fn check_dict(x: &impl BaseSortedDict, py: Python<'_>) -> PyResult<()> {
     data.check(py)?;
 
     pyassert!(x.len(py) == data.length());
-    pyassert!(data.iter().all(|item| {
+    pyassert!(data.inner().iter().all(|item| {
         x.contains(item.bind(py))
             .expect("Failed to check dict membership")
     }));
@@ -47,7 +47,8 @@ fn check_set_len<T: BaseSortedSet>(checked: &T, py: Python<'_>) -> PyResult<()> 
     pyassert!(set.len() == data.length());
     data.check(py)?;
     pyassert!(
-        data.iter()
+        data.inner()
+            .iter()
             .all(|x| set.contains(x).expect("Failed to check set membership"))
     );
     Ok(())
@@ -55,8 +56,8 @@ fn check_set_len<T: BaseSortedSet>(checked: &T, py: Python<'_>) -> PyResult<()> 
 #[pyfunction]
 pub fn assert_sorted_list_empty(lst: Either<Py<SortedList>, Py<SortedKeyList>>) -> PyResult<()> {
     match lst {
-        Either::Left(x) => x.get().try_lock().check_empty(),
-        Either::Right(x) => x.get().try_lock().check_empty(),
+        Either::Left(x) => x.get().try_lock().inner().check_empty(),
+        Either::Right(x) => x.get().try_lock().inner().check_empty(),
     }
 }
 #[pyfunction]

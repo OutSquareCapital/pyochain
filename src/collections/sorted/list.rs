@@ -8,7 +8,7 @@ use crate::{
 };
 use pyo3::{PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
-use sorted_rs::{ListsData, ListsDataMethods};
+use sorted_rs::{InnerGetter, ListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -45,6 +45,7 @@ impl SortedCollection for SortedList {
 
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         self.try_lock()
+            .inner()
             .iter()
             .collect_bound::<PyList>(py)?
             .try_into_py::<PyoVec>()
@@ -89,7 +90,7 @@ impl BaseSortedListSet for SortedList {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.try_lock().collapse(py))?.into_bound(py)
+        Self::from_vec(py, self.try_lock().inner().collapse(py))?.into_bound(py)
     }
 }
 impl BaseSortedList for SortedList {
@@ -100,21 +101,22 @@ impl BaseSortedList for SortedList {
         let py = slf.py();
         let data = slf.get().try_lock();
         let out = if other.is(&slf) {
-            data.repeat(py, 2)
+            data.inner().repeat(py, 2)
         } else {
-            data.concat(py, other)?
+            data.inner().concat(py, other)?
         };
         Self::from_vec(py, out)?.into_bound(py)
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.try_lock().repeat(py, num))?.into_bound(py)
+        Self::from_vec(py, self.try_lock().inner().repeat(py, num))?.into_bound(py)
     }
 
     // @recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let cls_name = Self::type_object(py).name()?;
         self.try_lock()
+            .inner()
             .iter()
             .collect_bound::<PyList>(py)?
             .repr()

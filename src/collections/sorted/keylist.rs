@@ -8,7 +8,7 @@ use crate::{
 };
 use pyo3::{PyTypeInfo, prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
-use sorted_rs::{KeysListsData, ListsDataMethods};
+use sorted_rs::{InnerGetter, KeysListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -48,7 +48,8 @@ impl SortedKeyList {
 impl SortedCollection for SortedKeyList {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         let data = self.try_lock();
-        data.iter()
+        data.inner()
+            .iter()
             .collect_bound::<PyList>(py)?
             .try_into_py::<PyoVec>()
             .and_then(|x| tuple!(x.as_any(), data.2.bind(py)))
@@ -99,7 +100,7 @@ impl BaseSortedListSet for SortedKeyList {
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         let data = self.try_lock();
-        Self::from_vec(py, data.collapse(py), &data.2)?.into_bound(py)
+        Self::from_vec(py, data.inner().collapse(py), &data.2)?.into_bound(py)
     }
 }
 impl BaseSortedList for SortedKeyList {
@@ -110,16 +111,16 @@ impl BaseSortedList for SortedKeyList {
         let py = slf.py();
         let data = slf.get().try_lock();
         let out = if other.is(&slf) {
-            data.repeat(py, 2)
+            data.inner().repeat(py, 2)
         } else {
-            data.concat(py, other)?
+            data.inner().concat(py, other)?
         };
         Self::from_vec(py, out, &data.2)?.into_bound(py)
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
         let data = self.try_lock();
-        Self::from_vec(py, data.repeat(py, num), &data.2)?.into_bound(py)
+        Self::from_vec(py, data.inner().repeat(py, num), &data.2)?.into_bound(py)
     }
 
     //recursive_repr()
@@ -128,7 +129,8 @@ impl BaseSortedList for SortedKeyList {
         let data = self.try_lock();
         let key_repr = data.2.bind(py).repr()?;
 
-        data.iter()
+        data.inner()
+            .iter()
             .collect_bound::<PyList>(py)?
             .repr()
             .map(|repr| format!("{type_name}({repr}, key={key_repr})"))
