@@ -35,7 +35,7 @@ where
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
         let py = index.py();
         let mapping = self.mapping().get();
-        let dict = mapping.get_inner().bind(py);
+        let dict = mapping.get_dict().bind(py);
         try_cast_into! {
             match index {
                 Case::PySlice(slice) => {
@@ -171,7 +171,7 @@ fn get_item_for_items_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
 ) -> ObjOrVec<'py> {
     let py = index.py();
     let mapping = slf.mapping().get();
-    let dict = mapping.get_inner().bind(index.py()).as_any();
+    let dict = mapping.get_dict().bind(index.py()).as_any();
     let mut mapping_list = mapping.try_lock();
 
     try_cast_into! {
@@ -198,7 +198,7 @@ fn get_item_for_values_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
 ) -> ObjOrVec<'py> {
     let py = index.py();
     let mapping = slf.mapping().get();
-    let dict = mapping.get_inner().bind(py).as_any();
+    let dict = mapping.get_dict().bind(py).as_any();
     let mut mapping_list = mapping.try_lock();
 
     try_cast_into! {

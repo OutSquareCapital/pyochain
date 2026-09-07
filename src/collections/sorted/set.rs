@@ -63,11 +63,11 @@ impl BaseSortedSet for SortedSet {
     }
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedKeySet(pub(super) Arc<Mutex<KeysListsData>>, Py<PySet>, Py<PyAny>);
+pub struct SortedKeySet(pub(super) Arc<Mutex<KeysListsData>>, Py<PySet>);
 impl SortedKeySet {
-    fn new(set: Bound<'_, PySet>, list: KeysListsData, key: Py<PyAny>) -> Self {
+    fn new(set: Bound<'_, PySet>, list: KeysListsData) -> Self {
         let list = list.pipe(Mutex::new).pipe(Arc::new);
-        Self(list, set.unbind(), key)
+        Self(list, set.unbind())
     }
 }
 #[pymethods]
@@ -81,7 +81,7 @@ impl SortedKeySet {
         let py = key.py();
         let key_fn = key.unbind();
         let list = KeysListsData::new(key_fn.clone_ref(py));
-        let slf = Self::new(PySet::empty(py).unwrap(), list, key_fn);
+        let slf = Self::new(PySet::empty(py).unwrap(), list);
 
         if let Some(iterable) = iterable {
             slf.update(py, IntoUpdate::from_any(iterable))?;
@@ -89,8 +89,8 @@ impl SortedKeySet {
         slf.init().pipe(Ok)
     }
     #[getter]
-    fn get_key<'py>(&self, py: Python<'py>) -> &Bound<'py, PyAny> {
-        self.2.bind(py)
+    fn get_key(&self, py: Python<'_>) -> Py<PyAny> {
+        self.try_lock().key.clone_ref(py)
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.try_lock().bisect_left(key)
@@ -107,15 +107,19 @@ impl BaseSortedSet for SortedKeySet {
     }
     fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
         let py = values.py();
-        let list =
-            KeysListsData::from_vec(py, values.iter().map(Bound::unbind).collect(), &self.2)?;
-        Self::new(values, list, self.2.clone_ref(py)).into_bound(py)
+        let list = KeysListsData::from_vec(
+            py,
+            values.iter().map(Bound::unbind).collect(),
+            self.try_lock().key.clone_ref(py),
+        )?;
+        Self::new(values, list).into_bound(py)
     }
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let key = format!(", key={}", self.2.bind(py).repr()?);
+        let inner = self.try_lock();
+        let key = format!(", key={}", inner.key.bind(py).repr()?);
         let type_name = Self::type_object(py).name()?;
-        let list_repr = self.try_lock().iter().collect_bound::<PyList>(py)?.repr()?;
+        let list_repr = inner.iter().collect_bound::<PyList>(py)?.repr()?;
         Ok(format!("{type_name}({list_repr}{key})"))
     }
 }

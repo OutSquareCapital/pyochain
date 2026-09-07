@@ -31,8 +31,8 @@ impl KeysListsData {
             load: DEFAULT_LOAD_FACTOR,
         }
     }
-    pub fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>, key: &Py<PyAny>) -> PyResult<Self> {
-        let mut new_inst = Self::new(key.clone_ref(py));
+    pub fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>, key: Py<PyAny>) -> PyResult<Self> {
+        let mut new_inst = Self::new(key);
         new_inst.update(py, values)?;
         Ok(new_inst)
     }

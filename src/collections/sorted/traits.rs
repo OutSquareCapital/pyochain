@@ -760,7 +760,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
     type VView: BaseSortedView<M = Self>;
     type IView: BaseSortedView<M = Self>;
     #[getter]
-    fn get_inner(&self) -> &Py<PyDict>;
+    fn get_dict(&self) -> &Py<PyDict>;
     fn keys(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::KView>> {
         let py = slf.py();
         Self::KView::new(slf).into_bound(py)
@@ -790,15 +790,15 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         SortedDictIter::new(self, py)
     }
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.get_inner().bind(py).len()
+        self.get_dict().bind(py).len()
     }
 
     fn __getitem__<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        self.get_inner().bind(key.py()).as_any().get_item(key)
+        self.get_dict().bind(key.py()).as_any().get_item(key)
     }
 
     fn __delitem__(&self, key: Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_inner().bind(key.py()).as_any().del_item(&key)?;
+        self.get_dict().bind(key.py()).as_any().del_item(&key)?;
         self.try_lock().remove(&key)
     }
     fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
@@ -806,7 +806,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         if !self.__contains__(&key)? {
             self.try_lock().add(py, key.clone().unbind())?;
         }
-        self.get_inner().bind(py).set_item(key, value)
+        self.get_dict().bind(py).set_item(key, value)
     }
 
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
@@ -841,7 +841,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         let py = key.py();
         if self.__contains__(&key)? {
             self.try_lock().remove(&key)?;
-            self.get_inner().bind(py).pop_or_err(&key).into_pyresult()
+            self.get_dict().bind(py).pop_or_err(&key).into_pyresult()
         } else {
             default.ok_or_else(|| PyKeyError::new_err(key.to_string()))
         }
@@ -858,7 +858,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
             Err(PyKeyError::new_err(msg))
         } else {
             let key = self.try_lock().pop(py, index)?;
-            let value = self.get_inner().bind(py).pop_or_err(&key).into_pyresult()?;
+            let value = self.get_dict().bind(py).pop_or_err(&key).into_pyresult()?;
             Ok((key, value))
         }
     }
@@ -881,7 +881,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         if self.__contains__(&key)? {
             self.__getitem__(&key).map(Some)
         } else {
-            self.get_inner().bind(py).set_item(&key, &default)?;
+            self.get_dict().bind(py).set_item(&key, &default)?;
             self.try_lock().add(py, key.unbind())?;
             Ok(default)
         }
@@ -894,7 +894,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let mut list = self.try_lock();
-        let inner = self.get_inner().bind(py);
+        let inner = self.get_dict().bind(py);
         if self.len(py) == 0 {
             if let Some(it) = m {
                 try_cast! {
@@ -971,7 +971,7 @@ pub(super) struct SortedDictIter<'a, 'py, D: BaseSortedDict> {
 }
 impl<'a, 'py, D: BaseSortedDict> SortedDictIter<'a, 'py, D> {
     fn new(owner: &'a D, py: Python<'py>) -> Self {
-        let mapping = owner.get_inner().clone_ref(py).into_bound(py).into_any();
+        let mapping = owner.get_dict().clone_ref(py).into_bound(py).into_any();
         let mapping_list = owner.try_lock();
         let range = 0..mapping_list.length().cast_signed();
         Self {
