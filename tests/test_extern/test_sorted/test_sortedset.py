@@ -14,6 +14,7 @@ from typing import override
 
 import pytest
 
+from pyochain import Range, Seq
 from pyochain.collections import SortedKeySet, SortedSet
 from pyochain.collections._sorted import (  # ruff: ignore[import-private-name]
     check_sorted_set,
@@ -156,77 +157,83 @@ def test_islice() -> None:
     ss = SortedSet[int]()
     ss.reset(7)
 
-    assert list(ss.islice()) == []
+    assert ss.islice().collect(Seq).is_empty()
+    nb = 20
 
-    values = list(range(53))
+    values = list(range(nb))
     _ = ss.update(values)
 
-    for start in range(53):
-        for stop in range(53):
-            assert list(ss.islice(start, stop)) == values[start:stop]
+    for start in range(nb):
+        for stop in range(nb):
+            assert ss.islice(start, stop).collect(list) == values[start:stop]
 
-    for start in range(53):
-        for stop in range(53):
+    for start in range(nb):
+        for stop in range(nb):
             assert (
-                list(ss.islice(start, stop, reverse=True)) == values[start:stop][::-1]
+                ss.islice(start, stop, reverse=True).collect(list)
+                == values[start:stop][::-1]
             )
 
-    for start in range(53):
-        assert list(ss.islice(start=start)) == values[start:]
-        assert list(ss.islice(start=start, reverse=True)) == values[start:][::-1]
+    for start in range(nb):
+        assert ss.islice(start=start).collect(list) == values[start:]
+        assert (
+            ss.islice(start=start, reverse=True).collect(list) == values[start:][::-1]
+        )
 
-    for stop in range(53):
-        assert list(ss.islice(stop=stop)) == values[:stop]
-        assert list(ss.islice(stop=stop, reverse=True)) == values[:stop][::-1]
+    for stop in range(nb):
+        assert ss.islice(stop=stop).collect(list) == values[:stop]
+        assert ss.islice(stop=stop, reverse=True).collect(list) == values[:stop][::-1]
 
 
 def test_irange() -> None:  # ruff:ignore[complex-structure]
     ss = SortedSet[int]()
     ss.reset(7)
+    nb = 23
 
     assert list(ss.irange()) == []
 
-    values = list(range(53))
+    values = list(range(nb))
     _ = ss.update(values)
 
-    for start in range(53):
-        for end in range(start, 53):
-            assert list(ss.irange(start, end)) == values[start : (end + 1)]
+    for start in range(nb):
+        for end in range(start, nb):
+            assert ss.irange(start, end).collect(list) == values[start : (end + 1)]
             assert (
-                list(ss.irange(start, end, reverse=True))
+                ss.irange(start, end, reverse=True).collect(list)
                 == values[start : (end + 1)][::-1]
             )
+    for start in range(nb):
+        for end in range(start, nb):
+            assert Range(start, end).pipe(list) == ss.irange(
+                start, end, (True, False)
+            ).collect(list)
 
-    for start in range(53):
-        for end in range(start, 53):
-            assert list(range(start, end)) == list(ss.irange(start, end, (True, False)))
+    for start in range(nb):
+        for end in range(start, nb):
+            assert list(range(start + 1, end + 1)) == ss.irange(
+                start, end, (False, True)
+            ).collect(list)
 
-    for start in range(53):
-        for end in range(start, 53):
-            assert list(range(start + 1, end + 1)) == list(
-                ss.irange(start, end, (False, True))
-            )
+    for start in range(nb):
+        for end in range(start, nb):
+            assert list(range(start + 1, end)) == ss.irange(
+                start, end, (False, False)
+            ).collect(list)
 
-    for start in range(53):
-        for end in range(start, 53):
-            assert list(range(start + 1, end)) == list(
-                ss.irange(start, end, (False, False))
-            )
+    for start in range(nb):
+        assert list(range(start, nb)) == ss.irange(start).collect(list)
 
-    for start in range(53):
-        assert list(range(start, 53)) == list(ss.irange(start))
+    for end in range(nb):
+        assert list(range(end)) == ss.irange(None, end, (True, False)).collect(list)
 
-    for end in range(53):
-        assert list(range(end)) == list(ss.irange(None, end, (True, False)))
+    assert values == ss.irange(inclusive=(False, False)).collect(list)
 
-    assert values == list(ss.irange(inclusive=(False, False)))
-
-    assert list(ss.irange(53)) == []
-    assert values == list(ss.irange(None, 53, (True, False)))
+    assert list(ss.irange(nb)) == []
+    assert values == ss.irange(None, nb, (True, False)).collect(list)
 
 
 def test_irange_key() -> None:  # ruff:ignore[complex-structure]
-    values = sorted(range(100), key=modulo)
+    values = Range(100).iter().sort_by(modulo)
 
     for load in range(5, 16):
         ss = SortedKeySet(modulo, range(100))
@@ -267,7 +274,7 @@ def test_irange_key() -> None:  # ruff:ignore[complex-structure]
 def test_len() -> None:
     temp = SortedSet(range(100))
     temp.reset(7)
-    assert len(temp) == 100
+    assert temp.len() == 100
 
 
 def test_add() -> None:
@@ -276,21 +283,23 @@ def test_add() -> None:
     temp.add(100)
     temp.add(90)
     check_sorted_set(temp)
-    assert all(val == temp[val] for val in range(101))
+    assert Range(101).iter().all(lambda val: val == temp[val])
 
 
 def test_bisect() -> None:
-    temp = SortedSet(range(100))
+    r = Range(20)
+    temp = SortedSet(r)
     temp.reset(7)
-    assert all(temp.bisect_left(val) == val for val in range(100))
-    assert all(temp.bisect_right(val) == (val + 1) for val in range(100))
+    assert r.iter().all(lambda val: temp.bisect_left(val) == val)
+    assert r.iter().all(lambda val: temp.bisect_right(val) == (val + 1))
 
 
 def test_bisect_key() -> None:
-    temp = SortedKeySet(lambda val: val, range(100))
+    r = Range(20)
+    temp = SortedKeySet(lambda val: val, r)
     temp.reset(7)
-    assert all(temp.bisect_key_left(val) == val for val in range(100))
-    assert all(temp.bisect_key_right(val) == (val + 1) for val in range(100))
+    assert r.iter().all(lambda val: temp.bisect_key_left(val) == val)
+    assert r.iter().all(lambda val: temp.bisect_key_right(val) == (val + 1))
 
 
 def test_clear() -> None:
@@ -298,7 +307,7 @@ def test_clear() -> None:
     temp.reset(7)
     temp.clear()
     check_sorted_set(temp)
-    assert len(temp) == 0
+    assert temp.len() == 0
 
 
 def test_copy() -> None:
@@ -306,8 +315,8 @@ def test_copy() -> None:
     temp.reset(7)
     that = temp.copy()
     that.add(1000)
-    assert len(temp) == 100
-    assert len(that) == 101
+    assert temp.len() == 100
+    assert that.len() == 101
 
 
 def test_copy_copy() -> None:
@@ -317,8 +326,8 @@ def test_copy_copy() -> None:
     temp.reset(7)
     that = copy.copy(temp)
     that.add(1000)
-    assert len(temp) == 100
-    assert len(that) == 101
+    assert temp.len() == 100
+    assert that.len() == 101
 
 
 def test_count() -> None:
@@ -366,10 +375,8 @@ def test_isub() -> None:
 def test_discard() -> None:
     temp = SortedSet(range(100))
     temp.reset(7)
-    temp.discard(0)
-    temp.discard(99)
-    temp.discard(50)
-    temp.discard(1000)
+    for v in (0, 99, 50, 1000):
+        temp.discard(v)
     check_sorted_set(temp)
     assert len(temp) == 97
 

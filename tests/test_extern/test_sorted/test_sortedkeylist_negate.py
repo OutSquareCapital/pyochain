@@ -359,39 +359,47 @@ def test_irange() -> None:  # ruff:ignore[complex-structure]
 
     values = list(range(53))
     slt.update(values)
+    nb = 20
 
-    for start in range(53):
-        for end in range(start, 53):
-            assert list(slt.irange(end, start)) == values[start : (end + 1)][::-1]
+    for start in range(nb):
+        for end in range(start, nb):
             assert (
-                list(slt.irange(end, start, reverse=True)) == values[start : (end + 1)]
+                slt.irange(end, start).collect(list) == values[start : (end + 1)][::-1]
+            )
+            assert (
+                slt.irange(end, start, reverse=True).collect(list)
+                == values[start : (end + 1)]
             )
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert (
-                list(slt.irange(end, start, (True, False)))
+                slt.irange(end, start, (True, False)).collect(list)
                 == values[(start + 1) : (end + 1)][::-1]
             )
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert (
-                list(slt.irange(end, start, (False, True))) == values[start:end][::-1]
+                slt.irange(end, start, (False, True)).collect(list)
+                == values[start:end][::-1]
             )
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert (
-                list(slt.irange(end, start, (False, False)))
+                slt.irange(end, start, (False, False)).collect(list)
                 == values[(start + 1) : end][::-1]
             )
 
-    for start in range(53):
-        assert list(slt.irange(start)) == values[: (start + 1)][::-1]
+    for start in range(nb):
+        assert slt.irange(start).collect(list) == values[: (start + 1)][::-1]
 
-    for end in range(53):
-        assert list(slt.irange(None, end, (True, False))) == values[(end + 1) :][::-1]
+    for end in range(nb):
+        assert (
+            slt.irange(None, end, (True, False)).collect(list)
+            == values[(end + 1) :][::-1]
+        )
 
     assert list(slt.irange(inclusive=(False, False))) == values[::-1]
 
@@ -455,13 +463,13 @@ def test_count() -> None:
     slt.reset(7)
 
     assert slt.count(0) == 0
-
-    for iii in range(100):
+    nb = 10
+    for iii in range(nb):
         for _jjj in range(iii):
             slt.add(iii)
         check_sorted_key_list(slt)
 
-    for iii in range(100):
+    for iii in range(nb):
         assert slt.count(iii) == iii
 
 

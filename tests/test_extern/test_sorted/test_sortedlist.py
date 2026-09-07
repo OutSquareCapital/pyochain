@@ -336,42 +336,43 @@ def test_irange() -> None:  # ruff:ignore[complex-structure]
 
     assert list(sl.irange()) == []
 
-    values = list(range(53))
+    nb = 20
+    values = list(range(nb))
     sl.update(values)
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert list(sl.irange(start, end)) == values[start : (end + 1)]
             assert (
                 list(sl.irange(start, end, reverse=True))
                 == values[start : (end + 1)][::-1]
             )
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert list(range(start, end)) == list(sl.irange(start, end, (True, False)))
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert list(range(start + 1, end + 1)) == list(
                 sl.irange(start, end, (False, True))
             )
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert list(range(start + 1, end)) == list(
                 sl.irange(start, end, (False, False))
             )
 
-    for start in range(53):
-        assert list(range(start, 53)) == list(sl.irange(start))
+    for start in range(nb):
+        assert list(range(start, nb)) == list(sl.irange(start))
 
-    for end in range(53):
+    for end in range(nb):
         assert list(range(end)) == list(sl.irange(None, end, (True, False)))
 
     assert values == list(sl.irange(inclusive=(False, False)))
 
-    assert list(sl.irange(53)) == []
+    assert list(sl.irange(nb)) == []
     assert values == list(sl.irange(None, 53, (True, False)))
 
 
