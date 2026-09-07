@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 use tap::Pipe;
 
-use crate::{ListsDataMethods, bisect};
+use crate::{ListsDataMethods, bisect, inner::VecPy};
 
 pub struct Indexes {
     pub start: isize,
@@ -82,7 +82,7 @@ impl Bounds {
         }
     }
     pub fn from_sorted(
-        lists: &[Vec<Py<PyAny>>],
+        lists: &[VecPy],
         maxes: &[Py<PyAny>],
         minimum: Option<Bound<'_, PyAny>>,
         maximum: Option<Bound<'_, PyAny>>,

@@ -51,7 +51,7 @@ impl SortedCollection for SortedKeyList {
         data.iter()
             .collect_bound::<PyList>(py)?
             .try_into_py::<PyoVec>()
-            .and_then(|x| tuple!(x.as_any(), data.key.bind(py)))
+            .and_then(|x| tuple!(x.as_any(), data.2.bind(py)))
             .map(|tup| (Self::type_object(py), tup))
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -60,13 +60,13 @@ impl SortedCollection for SortedKeyList {
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         let mut data = self.try_lock();
-        let key = data.key.bind(value.py()).call1((value,))?;
+        let key = data.2.bind(value.py()).call1((value,))?;
         data.bisect_left(&key)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         let mut data = self.try_lock();
-        let key = data.key.bind(value.py()).call1((value,))?;
+        let key = data.2.bind(value.py()).call1((value,))?;
         data.bisect_right(&key)
     }
     fn clear(&self, _py: Python<'_>) {
@@ -99,7 +99,7 @@ impl BaseSortedListSet for SortedKeyList {
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         let data = self.try_lock();
-        Self::from_vec(py, data.collapse(py), &data.key)?.into_bound(py)
+        Self::from_vec(py, data.collapse(py), &data.2)?.into_bound(py)
     }
 }
 impl BaseSortedList for SortedKeyList {
@@ -114,19 +114,19 @@ impl BaseSortedList for SortedKeyList {
         } else {
             data.concat(py, other)?
         };
-        Self::from_vec(py, out, &data.key)?.into_bound(py)
+        Self::from_vec(py, out, &data.2)?.into_bound(py)
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
         let data = self.try_lock();
-        Self::from_vec(py, data.repeat(py, num), &data.key)?.into_bound(py)
+        Self::from_vec(py, data.repeat(py, num), &data.2)?.into_bound(py)
     }
 
     //recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let type_name = Self::type_object(py).name()?;
         let data = self.try_lock();
-        let key_repr = data.key.bind(py).repr()?;
+        let key_repr = data.2.bind(py).repr()?;
 
         data.iter()
             .collect_bound::<PyList>(py)?

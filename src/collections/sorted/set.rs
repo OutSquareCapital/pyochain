@@ -90,7 +90,7 @@ impl SortedKeySet {
     }
     #[getter]
     fn get_key(&self, py: Python<'_>) -> Py<PyAny> {
-        self.try_lock().key.clone_ref(py)
+        self.try_lock().2.clone_ref(py)
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.try_lock().bisect_left(key)
@@ -110,14 +110,14 @@ impl BaseSortedSet for SortedKeySet {
         let list = KeysListsData::from_vec(
             py,
             values.iter().map(Bound::unbind).collect(),
-            self.try_lock().key.clone_ref(py),
+            self.try_lock().2.clone_ref(py),
         )?;
         Self::new(values, list).into_bound(py)
     }
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let inner = self.try_lock();
-        let key = format!(", key={}", inner.key.bind(py).repr()?);
+        let key = format!(", key={}", inner.2.bind(py).repr()?);
         let type_name = Self::type_object(py).name()?;
         let list_repr = inner.iter().collect_bound::<PyList>(py)?.repr()?;
         Ok(format!("{type_name}({list_repr}{key})"))

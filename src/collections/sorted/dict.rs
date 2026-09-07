@@ -131,7 +131,7 @@ impl SortedKeyDict {
 
     #[getter]
     fn get_key(&self, py: Python<'_>) -> Py<PyAny> {
-        self.try_lock().key.clone_ref(py)
+        self.try_lock().2.clone_ref(py)
     }
 
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
@@ -152,14 +152,14 @@ impl BaseSortedDict for SortedKeyDict {
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.iter(py)
-            .pipe(|v| Self::try_from_iter(py, v, self.try_lock().key.clone_ref(py)))?
+            .pipe(|v| Self::try_from_iter(py, v, self.try_lock().2.clone_ref(py)))?
             .into_bound(py)
     }
     // @recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let inner = self.try_lock();
         let type_name = Self::type_object(py).name()?;
-        let key_arg = format!("{}, ", inner.key.bind(py).repr()?);
+        let key_arg = format!("{}, ", inner.2.bind(py).repr()?);
         let dict = self.get_dict().bind(py).as_any();
         let items = self
             .try_lock()
@@ -172,13 +172,13 @@ impl BaseSortedDict for SortedKeyDict {
     fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let items = value.pipe(iter_mapping)?.chain(self.iter(py));
-        Self::try_from_iter(py, items, self.try_lock().key.clone_ref(py))?.into_bound(py)
+        Self::try_from_iter(py, items, self.try_lock().2.clone_ref(py))?.into_bound(py)
     }
 
     fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let items = self.iter(py).chain(value.pipe(iter_mapping)?);
-        Self::try_from_iter(py, items, self.try_lock().key.clone_ref(py))?.into_bound(py)
+        Self::try_from_iter(py, items, self.try_lock().2.clone_ref(py))?.into_bound(py)
     }
 }
 impl SortedCollection for SortedDict {
@@ -222,7 +222,7 @@ impl SortedCollection for SortedKeyDict {
             .get_dict()
             .bind(py)
             .copy()
-            .and_then(|x| tuple!(x.as_any(), self.try_lock().key.bind(py)))?;
+            .and_then(|x| tuple!(x.as_any(), self.try_lock().2.bind(py)))?;
         Ok((Self::type_object(py), items))
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -232,14 +232,14 @@ impl SortedCollection for SortedKeyDict {
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         let py = value.py();
         let mut data = self.try_lock();
-        let key = data.key.bind(py).call1((value,))?;
+        let key = data.2.bind(py).call1((value,))?;
         data.bisect_left(&key)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         let py = value.py();
         let mut data = self.try_lock();
-        let key = data.key.bind(py).call1((value,))?;
+        let key = data.2.bind(py).call1((value,))?;
         data.bisect_right(&key)
     }
     fn index(

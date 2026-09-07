@@ -114,7 +114,7 @@ pub(super) trait KeyedSortedCollection:
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         let data = self.try_lock();
-        let bounds = Bounds::from_sorted(&data.keys, data.maxes(), min_key, max_key, inclusive)?;
+        let bounds = Bounds::from_sorted(&data.1, data.maxes(), min_key, max_key, inclusive)?;
         self.iter_bounds(py, bounds, reverse)
     }
 }

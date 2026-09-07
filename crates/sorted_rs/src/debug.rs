@@ -87,14 +87,14 @@ pub(super) fn check_list(slf: &impl ListDataGetters, py: Python<'_>) -> PyResult
 }
 
 pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
-    let key_fn = data.key.bind(py);
-    pyassert!(data.load >= 4);
-    pyassert!(data.maxes.len() == data.lists.len() && data.lists.len() == data.keys.len());
-    pyassert!(data.len == data.lists.iter().map(Vec::len).sum::<usize>());
+    let key_fn = data.2.bind(py);
+    pyassert!(data.load() >= 4);
+    pyassert!(data.maxes().len() == data.lists().len() && data.lists().len() == data.1.len());
+    pyassert!(data.length() == data.lists().iter().map(Vec::len).sum::<usize>());
 
     // Check all sublists are sorted.
 
-    for sublist in &data.keys {
+    for sublist in &data.1 {
         for pos in 1..sublist.len() {
             pyassert!(sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?);
         }
@@ -102,19 +102,19 @@ pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
 
     // Check beginning/end of sublists are sorted.
 
-    for pos in 1..data.keys.len() {
+    for pos in 1..data.1.len() {
         pyassert!(
-            data.keys[pos - 1]
+            data.1[pos - 1]
                 .last()
                 .unwrap()
                 .bind(py)
-                .le(data.keys[pos][0].bind(py))?
+                .le(data.1[pos][0].bind(py))?
         );
     }
 
     // Check _keys matches _key mapped to _lists.
 
-    for (val_sublist, key_sublist) in data.lists.iter().zip(data.keys.iter()) {
+    for (val_sublist, key_sublist) in data.lists().iter().zip(data.1.iter()) {
         pyassert!(val_sublist.len() == key_sublist.len());
         for (val, key) in val_sublist.iter().zip(key_sublist.iter()) {
             {
@@ -125,49 +125,49 @@ pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
 
     // Check _maxes index is the last value of each sublist.
 
-    for pos in 0..data.maxes.len() {
+    for pos in 0..data.maxes().len() {
         pyassert!(
-            data.maxes[pos]
+            data.maxes()[pos]
                 .bind(py)
-                .eq(data.keys[pos].last().unwrap().bind(py))?
+                .eq(data.1[pos].last().unwrap().bind(py))?
         );
     }
 
     // Check sublist lengths are less than double load-factor.
 
-    let double = data.load << 1;
-    pyassert!(data.lists.iter().all(|sublist| sublist.len() <= double));
+    let double = data.load() << 1;
+    pyassert!(data.lists().iter().all(|sublist| sublist.len() <= double));
 
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
 
-    let half = data.load >> 1;
-    for pos in 0..data.lists.len().saturating_sub(1) {
-        pyassert!(data.lists[pos].len() >= half);
+    let half = data.load() >> 1;
+    for pos in 0..data.lists().len().saturating_sub(1) {
+        pyassert!(data.lists()[pos].len() >= half);
     }
 
-    if !data.idx.is_empty() {
-        pyassert!(data.len == data.idx[0]);
-        pyassert!(data.idx.len() == data.offset + data.lists.len());
+    if !data.idx().is_empty() {
+        pyassert!(data.length() == data.idx()[0]);
+        pyassert!(data.idx().len() == data.offset() + data.lists().len());
 
         // Check index leaf nodes equal length of sublists.
 
-        for pos in 0..data.lists.len() {
-            let leaf = data.idx[data.offset + pos];
-            pyassert!(leaf == data.lists[pos].len());
+        for pos in 0..data.lists().len() {
+            let leaf = data.idx()[data.offset() + pos];
+            pyassert!(leaf == data.lists()[pos].len());
         }
 
         // Check index branch nodes are the sum of their children.
 
-        for pos in 0..data.offset {
+        for pos in 0..data.offset() {
             let child = (pos << 1) + 1;
-            if child >= data.idx.len() {
-                pyassert!(data.idx[pos] == 0);
-            } else if child + 1 == data.idx.len() {
-                pyassert!(data.idx[pos] == data.idx[child]);
+            if child >= data.idx().len() {
+                pyassert!(data.idx()[pos] == 0);
+            } else if child + 1 == data.idx().len() {
+                pyassert!(data.idx()[pos] == data.idx()[child]);
             } else {
-                let child_sum = data.idx[child] + data.idx[child + 1];
-                pyassert!(child_sum == data.idx[pos]);
+                let child_sum = data.idx()[child] + data.idx()[child + 1];
+                pyassert!(child_sum == data.idx()[pos]);
             }
         }
     }
@@ -194,8 +194,8 @@ fn show_list<T: ListDataGetters>(py: Python<'_>, err: &PyErr, data: &T) {
 fn show_key_list(py: Python<'_>, err: &PyErr, data: &KeysListsData) {
     show_list(py, err, data);
     let infos = [
-        format!("len_keys: {}", data.keys.len()),
-        format!("keys: {:?}", data.keys),
+        format!("len_keys: {}", data.1.len()),
+        format!("keys: {:?}", data.1),
     ];
     err.add_note(py, infos.join("\n")).unwrap();
 }

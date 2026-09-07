@@ -1,6 +1,12 @@
 use std::cmp::Ordering;
 
-use crate::{Bounds, Pos, bisect, debug::check_list, errors, pyassert};
+use crate::{
+    Bounds, Pos, bisect,
+    debug::check_list,
+    errors,
+    inner::{ListDataGetters, VecPy},
+    pyassert,
+};
 use either::Either;
 use pyo3::{
     exceptions::PyIndexError,
@@ -12,23 +18,8 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use tap::Pipe;
-pub(super) const DEFAULT_LOAD_FACTOR: usize = 1000;
 pub type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
-pub trait ListDataGetters: Sized {
-    fn lists(&self) -> &Vec<Vec<Py<PyAny>>>;
-    fn lists_mut(&mut self) -> &mut Vec<Vec<Py<PyAny>>>;
-    fn maxes(&self) -> &Vec<Py<PyAny>>;
-    fn maxes_mut(&mut self) -> &mut Vec<Py<PyAny>>;
-    fn idx(&self) -> &Vec<usize>;
-    fn idx_mut(&mut self) -> &mut Vec<usize>;
-    fn length(&self) -> usize;
-    fn set_len(&mut self, len: usize);
-    fn offset(&self) -> usize;
-    fn set_offset(&mut self, offset: usize);
-    fn load(&self) -> usize;
-    fn set_load(&mut self, load: usize);
-}
 pub trait ListsDataMethods: ListDataGetters {
     fn irange_specs<'py>(
         &self,
@@ -47,7 +38,7 @@ pub trait ListsDataMethods: ListDataGetters {
     fn delete(&mut self, py: Python<'_>, bounds: &mut Pos) -> PyResult<()>;
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()>;
-    fn update(&mut self, py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<()>;
+    fn update(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()>;
     fn index(
         &mut self,
         value: &Bound<'_, PyAny>,
@@ -63,7 +54,7 @@ pub trait ListsDataMethods: ListDataGetters {
     }
     #[inline]
     #[must_use]
-    fn collapse(&self, py: Python<'_>) -> Vec<Py<PyAny>> {
+    fn collapse(&self, py: Python<'_>) -> VecPy {
         self.iter().map(|x| x.clone_ref(py)).collect()
     }
     #[inline(always)]
@@ -82,7 +73,7 @@ pub trait ListsDataMethods: ListDataGetters {
         self.bisect(value, bisect::right)
     }
     #[inline]
-    fn concat(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {
+    fn concat(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<VecPy> {
         self.iter()
             .map(|x| x.clone_ref(py).pipe(Ok))
             .chain(other.try_iter()?.map(|x| x?.unbind().pipe(Ok)))
@@ -97,7 +88,7 @@ pub trait ListsDataMethods: ListDataGetters {
     }
     #[inline]
     #[must_use]
-    fn repeat(&self, py: Python<'_>, num: usize) -> Vec<Py<PyAny>> {
+    fn repeat(&self, py: Python<'_>, num: usize) -> VecPy {
         let values = self.collapse(py);
         (0..num)
             .flat_map(|_| values.iter())
@@ -147,11 +138,7 @@ pub trait ListsDataMethods: ListDataGetters {
             }
         }
     }
-    fn get_slice<'py>(
-        &mut self,
-        py: Python<'py>,
-        slice: &Bound<'py, PySlice>,
-    ) -> PyResult<Vec<Py<PyAny>>> {
+    fn get_slice<'py>(&mut self, py: Python<'py>, slice: &Bound<'py, PySlice>) -> PyResult<VecPy> {
         let PySliceIndices {
             start, stop, step, ..
         } = slice.indices(self.length().cast_signed())?;
@@ -284,7 +271,7 @@ pub trait ListsDataMethods: ListDataGetters {
     fn expand_at_pos(
         &mut self,
         pos: usize,
-        half: Vec<Py<PyAny>>,
+        half: VecPy,
         last_max: Py<PyAny>,
         new_max_at_pos: Py<PyAny>,
     ) {
@@ -620,47 +607,4 @@ fn get_slice<'a, T: ListsDataMethods>(
                 .flatten(),
         )
         .chain(data.lists()[bounds.max.pos][0..bounds.max.idx].iter())
-}
-#[macro_export]
-macro_rules! impl_list_data_getters {
-    ($name:ident) => {
-        impl ListDataGetters for $name {
-            fn lists(&self) -> &Vec<Vec<Py<PyAny>>> {
-                &self.lists
-            }
-            fn lists_mut(&mut self) -> &mut Vec<Vec<Py<PyAny>>> {
-                &mut self.lists
-            }
-            fn maxes(&self) -> &Vec<Py<PyAny>> {
-                &self.maxes
-            }
-            fn maxes_mut(&mut self) -> &mut Vec<Py<PyAny>> {
-                &mut self.maxes
-            }
-            fn idx(&self) -> &Vec<usize> {
-                &self.idx
-            }
-            fn idx_mut(&mut self) -> &mut Vec<usize> {
-                &mut self.idx
-            }
-            fn length(&self) -> usize {
-                self.len
-            }
-            fn set_len(&mut self, len: usize) {
-                self.len = len;
-            }
-            fn offset(&self) -> usize {
-                self.offset
-            }
-            fn set_offset(&mut self, offset: usize) {
-                self.offset = offset;
-            }
-            fn load(&self) -> usize {
-                self.load
-            }
-            fn set_load(&mut self, load: usize) {
-                self.load = load;
-            }
-        }
-    };
 }
