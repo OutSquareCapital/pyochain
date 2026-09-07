@@ -255,12 +255,12 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
         let mut data = self.get_data();
         match index {
             Either::Right(slice) => data
-                .getitem_from_slice(py, &slice)?
+                .get_slice(py, &slice)?
                 .iter()
                 .collect_bound::<PyList>(py)?
                 .try_into_py()
                 .map(Either::Right),
-            Either::Left(index) => data.getitem_from_int(py, index).map(Either::Left),
+            Either::Left(index) => data.get_item(py, index).map(Either::Left),
         }
     }
     fn __len__(&self) -> usize {
@@ -403,12 +403,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let mut data = self.get_data();
         match index {
             Either::Right(slice) => data
-                .getitem_from_slice(py, &slice)?
+                .get_slice(py, &slice)?
                 .iter()
                 .collect_bound::<PyList>(py)?
                 .try_into_py()
                 .map(Either::Right),
-            Either::Left(index) => data.getitem_from_int(py, index).map(Either::Left),
+            Either::Left(index) => data.get_item(py, index).map(Either::Left),
         }
     }
     fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
@@ -416,16 +416,16 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             Either::Right(slice) => {
                 let values = self
                     .get_data()
-                    .getitem_from_slice(py, &slice)?
+                    .get_slice(py, &slice)?
                     .iter()
                     .collect_bound::<PySet>(py)?;
                 self.get_set().bind(py).difference_update((values,))?;
-                self.get_data().delitem_from_slice(py, slice)?;
+                self.get_data().del_slice(py, slice)?;
             }
             Either::Left(int) => {
-                let value = self.get_data().getitem_from_int(py, int)?;
+                let value = self.get_data().get_item(py, int)?;
                 self.get_set().bind(py).remove(&value)?;
-                self.get_data().delitem_from_int(py, int)?;
+                self.get_data().del_item(py, int)?;
             }
         }
         Ok(())
@@ -868,7 +868,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        let key = self.get_data().getitem_from_int(py, index)?;
+        let key = self.get_data().get_item(py, index)?;
         self.__getitem__(&key).map(|value| (key, value))
     }
     #[pyo3(signature = (key, default = None, /))]
@@ -987,7 +987,7 @@ impl<'py, D: BaseSortedDict> Iterator for SortedDictIter<'_, 'py, D> {
     fn next(&mut self) -> Option<PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>> {
         let index = self.range.next()?;
         // NOTE: I tried to avoid double match here, but the `get_item` error caused reference issues.
-        match self.mapping_list.getitem_from_int(self.py, index) {
+        match self.mapping_list.get_item(self.py, index) {
             Ok(key) => {
                 let value = self.mapping.get_item(&key);
                 match value {

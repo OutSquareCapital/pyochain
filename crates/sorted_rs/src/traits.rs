@@ -105,11 +105,7 @@ pub trait ListsDataMethods: ListDataGetters {
             .collect::<Vec<_>>()
     }
 
-    fn getitem_from_int<'py>(
-        &mut self,
-        py: Python<'py>,
-        index: isize,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut bounds = Bounds::default();
         let len_last = self
             .lists()
@@ -151,7 +147,7 @@ pub trait ListsDataMethods: ListDataGetters {
             }
         }
     }
-    fn getitem_from_slice<'py>(
+    fn get_slice<'py>(
         &mut self,
         py: Python<'py>,
         slice: &Bound<'py, PySlice>,
@@ -194,8 +190,7 @@ pub trait ListsDataMethods: ListDataGetters {
                 }
             }
             (-1, Ordering::Greater) => {
-                let mut result =
-                    self.getitem_from_slice(py, &PySlice::new(py, stop + 1, start + 1, 1))?;
+                let mut result = self.get_slice(py, &PySlice::new(py, stop + 1, start + 1, 1))?;
                 result.reverse();
                 Ok(result)
             }
@@ -203,7 +198,7 @@ pub trait ListsDataMethods: ListDataGetters {
             // of the items and this could be the desired behavior.
             _ if step > 0 => (start..stop)
                 .step_by(step.cast_unsigned())
-                .map(|i| self.getitem_from_int(py, i).map(Bound::unbind))
+                .map(|i| self.get_item(py, i).map(Bound::unbind))
                 .collect::<PyResult<Vec<_>>>(),
             // Negative step with nothing to iterate (mirrors Python's `range`,
             // which is empty when `start <= stop` for a negative step).
@@ -211,7 +206,7 @@ pub trait ListsDataMethods: ListDataGetters {
             _ => {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
-                    .map(|i| self.getitem_from_int(py, i).map(Bound::unbind))
+                    .map(|i| self.get_item(py, i).map(Bound::unbind))
                     .collect::<PyResult<Vec<_>>>()
             }
         }
@@ -299,7 +294,7 @@ pub trait ListsDataMethods: ListDataGetters {
         self.idx_mut().clear();
     }
 
-    fn delitem_from_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
+    fn del_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
         let length = self.length().cast_signed();
         let mut bounds = Pos::default();
         let PySliceIndices {
@@ -311,10 +306,9 @@ pub trait ListsDataMethods: ListDataGetters {
                 Ok(())
             }
             (1, Ordering::Less) if length <= 8 * (stop - start) => {
-                let mut values = self.getitem_from_slice(py, &PySlice::new(py, 0, start, 1))?;
+                let mut values = self.get_slice(py, &PySlice::new(py, 0, start, 1))?;
                 if stop < length {
-                    let new_slice =
-                        self.getitem_from_slice(py, &PySlice::new(py, stop, length, 1))?;
+                    let new_slice = self.get_slice(py, &PySlice::new(py, stop, length, 1))?;
                     values.extend(new_slice);
                 }
                 self.clear();
@@ -341,7 +335,7 @@ pub trait ListsDataMethods: ListDataGetters {
             }
         }
     }
-    fn delitem_from_int(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
+    fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
         let mut bounds = Pos::default();
         self.set_pos(index, &mut bounds)?;
         self.delete(py, &mut bounds)
@@ -602,8 +596,8 @@ pub trait ListsDataMethods: ListDataGetters {
 
     fn delitem(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
-            Either::Right(slice) => self.delitem_from_slice(py, slice),
-            Either::Left(index) => self.delitem_from_int(py, index),
+            Either::Right(slice) => self.del_slice(py, slice),
+            Either::Left(index) => self.del_item(py, index),
         }
     }
 
