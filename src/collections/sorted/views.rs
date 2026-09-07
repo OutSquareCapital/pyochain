@@ -39,7 +39,7 @@ where
         try_cast_into! {
             match index {
                 Case::PySlice(slice) => {
-                    let mut data = mapping.get_data();
+                    let mut data = mapping.try_lock();
                     let keys = data.get_slice(py, &slice)?;
                     data.del_slice(py, slice)?;
                     for key in keys {
@@ -48,7 +48,7 @@ where
                     Ok(())
                 },
                 int => {
-                    let key = mapping.get_data().pop(py, int.extract::<isize>()?)?;
+                    let key = mapping.try_lock().pop(py, int.extract::<isize>()?)?;
                     dict.del_item(key)?;
                     Ok(())
                 }
@@ -172,7 +172,7 @@ fn get_item_for_items_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     let py = index.py();
     let mapping = slf.mapping().get();
     let dict = mapping.get_inner().bind(index.py()).as_any();
-    let mut mapping_list = mapping.get_data();
+    let mut mapping_list = mapping.try_lock();
 
     try_cast_into! {
         match index {
@@ -199,7 +199,7 @@ fn get_item_for_values_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     let py = index.py();
     let mapping = slf.mapping().get();
     let dict = mapping.get_inner().bind(py).as_any();
-    let mut mapping_list = mapping.get_data();
+    let mut mapping_list = mapping.try_lock();
 
     try_cast_into! {
         match index {
@@ -222,7 +222,7 @@ fn get_item_for_key_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     index: Bound<'py, PyAny>,
 ) -> ObjOrVec<'py> {
     let py = index.py();
-    let mut mapping_list = slf.mapping().get().get_data();
+    let mut mapping_list = slf.mapping().get().try_lock();
 
     try_cast_into! {
         match index {

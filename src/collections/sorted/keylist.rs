@@ -19,7 +19,7 @@ impl SortedKeyList {
     }
     fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>, key: &Py<PyAny>) -> PyResult<Self> {
         let new_inst = Self::new(key.clone_ref(py));
-        new_inst.get_data().update(py, values)?;
+        new_inst.try_lock().update(py, values)?;
         Ok(new_inst)
     }
 }
@@ -39,15 +39,15 @@ impl SortedKeyList {
     }
 
     pub(super) fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_left(key)
+        self.try_lock().bisect_left(key)
     }
     pub(super) fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_right(key)
+        self.try_lock().bisect_right(key)
     }
 }
 impl SortedCollection for SortedKeyList {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        let data = self.get_data();
+        let data = self.try_lock();
         data.iter()
             .collect_bound::<PyList>(py)?
             .try_into_py::<PyoVec>()
@@ -55,22 +55,22 @@ impl SortedCollection for SortedKeyList {
             .map(|tup| (Self::type_object(py), tup))
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.get_data().contains(value)
+        self.try_lock().contains(value)
     }
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        let mut data = self.get_data();
+        let mut data = self.try_lock();
         let key = data.key.bind(value.py()).call1((value,))?;
         data.bisect_left(&key)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        let mut data = self.get_data();
+        let mut data = self.try_lock();
         let key = data.key.bind(value.py()).call1((value,))?;
         data.bisect_right(&key)
     }
     fn clear(&self, _py: Python<'_>) {
-        self.get_data().clear();
+        self.try_lock().clear();
     }
     fn index(
         &self,
@@ -78,27 +78,27 @@ impl SortedCollection for SortedKeyList {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<isize> {
-        self.get_data().index(&value, start, stop)
+        self.try_lock().index(&value, start, stop)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.get_data().reset(py, load)
+        self.try_lock().reset(py, load)
     }
 }
 impl BaseSortedListSet for SortedKeyList {
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        self.get_data().add(py, value)
+        self.try_lock().add(py, value)
     }
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_data().discard(value)
+        self.try_lock().discard(value)
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_data().remove(value)
+        self.try_lock().remove(value)
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        let data = self.get_data();
+        let data = self.try_lock();
         Self::from_vec(py, data.collapse(py), &data.key)?.into_bound(py)
     }
 }
@@ -108,7 +108,7 @@ impl BaseSortedList for SortedKeyList {
         other: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
-        let data = slf.get().get_data();
+        let data = slf.get().try_lock();
         let out = if other.is(&slf) {
             data.repeat(py, 2)
         } else {
@@ -118,14 +118,14 @@ impl BaseSortedList for SortedKeyList {
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        let data = self.get_data();
+        let data = self.try_lock();
         Self::from_vec(py, data.repeat(py, num), &data.key)?.into_bound(py)
     }
 
     //recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let type_name = Self::type_object(py).name()?;
-        let data = self.get_data();
+        let data = self.try_lock();
         let key_repr = data.key.bind(py).repr()?;
 
         data.iter()
@@ -135,6 +135,6 @@ impl BaseSortedList for SortedKeyList {
     }
 
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
-        self.get_data().count(&value)
+        self.try_lock().count(&value)
     }
 }

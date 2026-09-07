@@ -137,11 +137,11 @@ impl SortedKeyDict {
     }
 
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_left(key)
+        self.try_lock().bisect_left(key)
     }
 
     fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_right(key)
+        self.try_lock().bisect_right(key)
     }
 }
 impl BaseSortedDict for SortedKeyDict {
@@ -163,7 +163,7 @@ impl BaseSortedDict for SortedKeyDict {
         let key_arg = format!("{}, ", self.2.bind(py).repr()?);
         let dict = self.get_inner().bind(py).as_any();
         let items = self
-            .get_data()
+            .try_lock()
             .iter()
             .map(|key| dict.get_item(key).map(|value| format!("{key}: {value}")))
             .collect::<PyResult<Vec<_>>>()?
@@ -192,11 +192,11 @@ impl SortedCollection for SortedDict {
     }
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_left(value)
+        self.try_lock().bisect_left(value)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_right(value)
+        self.try_lock().bisect_right(value)
     }
     fn index(
         &self,
@@ -204,16 +204,16 @@ impl SortedCollection for SortedDict {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<isize> {
-        self.get_data().index(&value, start, stop)
+        self.try_lock().index(&value, start, stop)
     }
 
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.get_data().reset(py, load)
+        self.try_lock().reset(py, load)
     }
 
     fn clear(&self, py: Python<'_>) {
         self.get_inner().bind(py).clear();
-        self.get_data().clear();
+        self.try_lock().clear();
     }
 }
 
@@ -232,14 +232,14 @@ impl SortedCollection for SortedKeyDict {
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         let py = value.py();
-        let mut data = self.get_data();
+        let mut data = self.try_lock();
         let key = data.key.bind(py).call1((value,))?;
         data.bisect_left(&key)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         let py = value.py();
-        let mut data = self.get_data();
+        let mut data = self.try_lock();
         let key = data.key.bind(py).call1((value,))?;
         data.bisect_right(&key)
     }
@@ -249,16 +249,16 @@ impl SortedCollection for SortedKeyDict {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<isize> {
-        self.get_data().index(&value, start, stop)
+        self.try_lock().index(&value, start, stop)
     }
 
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.get_data().reset(py, load)
+        self.try_lock().reset(py, load)
     }
 
     fn clear(&self, py: Python<'_>) {
         self.get_inner().bind(py).clear();
-        self.get_data().clear();
+        self.try_lock().clear();
     }
 }
 fn iter_mapping<'py>(

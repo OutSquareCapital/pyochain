@@ -58,7 +58,7 @@ impl BaseSortedSet for SortedSet {
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let type_name = Self::type_object(py).name()?;
-        let self_repr = self.get_data().iter().collect_bound::<PyList>(py)?.repr()?;
+        let self_repr = self.try_lock().iter().collect_bound::<PyList>(py)?.repr()?;
         Ok(format!("{type_name}({self_repr})"))
     }
 }
@@ -93,11 +93,11 @@ impl SortedKeySet {
         self.2.bind(py)
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_left(key)
+        self.try_lock().bisect_left(key)
     }
 
     fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_right(key)
+        self.try_lock().bisect_right(key)
     }
 }
 impl BaseSortedSet for SortedKeySet {
@@ -115,7 +115,7 @@ impl BaseSortedSet for SortedKeySet {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let key = format!(", key={}", self.2.bind(py).repr()?);
         let type_name = Self::type_object(py).name()?;
-        let list_repr = self.get_data().iter().collect_bound::<PyList>(py)?.repr()?;
+        let list_repr = self.try_lock().iter().collect_bound::<PyList>(py)?.repr()?;
         Ok(format!("{type_name}({list_repr}{key})"))
     }
 }

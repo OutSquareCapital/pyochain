@@ -19,7 +19,7 @@ pub fn check_sorted_dict(
 }
 
 fn check_dict(x: &impl BaseSortedDict, py: Python<'_>) -> PyResult<()> {
-    let data = x.get_data();
+    let data = x.try_lock();
     data.check(py)?;
 
     pyassert!(x.len(py) == data.length());
@@ -43,7 +43,7 @@ pub fn check_sorted_set(
 
 fn check_set_len<T: BaseSortedSet>(checked: &T, py: Python<'_>) -> PyResult<()> {
     let set = checked.get_set().clone_ref(py).into_bound(py);
-    let data = checked.get_data();
+    let data = checked.try_lock();
     pyassert!(set.len() == data.length());
     data.check(py)?;
     pyassert!(
@@ -55,15 +55,15 @@ fn check_set_len<T: BaseSortedSet>(checked: &T, py: Python<'_>) -> PyResult<()> 
 #[pyfunction]
 pub fn assert_sorted_list_empty(lst: Either<Py<SortedList>, Py<SortedKeyList>>) -> PyResult<()> {
     match lst {
-        Either::Left(x) => x.get().get_data().check_empty(),
-        Either::Right(x) => x.get().get_data().check_empty(),
+        Either::Left(x) => x.get().try_lock().check_empty(),
+        Either::Right(x) => x.get().try_lock().check_empty(),
     }
 }
 #[pyfunction]
 pub fn check_sorted_list(py: Python<'_>, data: &Bound<'_, SortedList>) -> PyResult<()> {
-    data.get().get_data().check(py)
+    data.get().try_lock().check(py)
 }
 #[pyfunction]
 pub fn check_sorted_key_list(py: Python<'_>, data: &Bound<'_, SortedKeyList>) -> PyResult<()> {
-    check_key_list(py, &data.get().get_data())
+    check_key_list(py, &data.get().try_lock())
 }

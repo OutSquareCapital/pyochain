@@ -21,7 +21,7 @@ impl SortedList {
     #[inline]
     fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
         let new_inst = Self::new();
-        new_inst.get_data().update(py, values)?;
+        new_inst.try_lock().update(py, values)?;
         Ok(new_inst)
     }
 }
@@ -40,11 +40,11 @@ impl SortedList {
 }
 impl SortedCollection for SortedList {
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.get_data().contains(value)
+        self.try_lock().contains(value)
     }
 
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        self.get_data()
+        self.try_lock()
             .iter()
             .collect_bound::<PyList>(py)?
             .try_into_py::<PyoVec>()
@@ -52,15 +52,15 @@ impl SortedCollection for SortedList {
             .map(|tup| (Self::type_object(py), tup))
     }
     fn clear(&self, _py: Python<'_>) {
-        self.get_data().clear();
+        self.try_lock().clear();
     }
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_left(value)
+        self.try_lock().bisect_left(value)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_right(value)
+        self.try_lock().bisect_right(value)
     }
 
     fn index(
@@ -69,27 +69,27 @@ impl SortedCollection for SortedList {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<isize> {
-        self.get_data().index(&value, start, stop)
+        self.try_lock().index(&value, start, stop)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.get_data().reset(py, load)
+        self.try_lock().reset(py, load)
     }
 }
 impl BaseSortedListSet for SortedList {
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        self.get_data().add(py, value)
+        self.try_lock().add(py, value)
     }
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_data().discard(value)
+        self.try_lock().discard(value)
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_data().remove(value)
+        self.try_lock().remove(value)
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.get_data().collapse(py))?.into_bound(py)
+        Self::from_vec(py, self.try_lock().collapse(py))?.into_bound(py)
     }
 }
 impl BaseSortedList for SortedList {
@@ -98,7 +98,7 @@ impl BaseSortedList for SortedList {
         other: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
-        let data = slf.get().get_data();
+        let data = slf.get().try_lock();
         let out = if other.is(&slf) {
             data.repeat(py, 2)
         } else {
@@ -108,13 +108,13 @@ impl BaseSortedList for SortedList {
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.get_data().repeat(py, num))?.into_bound(py)
+        Self::from_vec(py, self.try_lock().repeat(py, num))?.into_bound(py)
     }
 
     // @recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let cls_name = Self::type_object(py).name()?;
-        self.get_data()
+        self.try_lock()
             .iter()
             .collect_bound::<PyList>(py)?
             .repr()
@@ -122,6 +122,6 @@ impl BaseSortedList for SortedList {
     }
 
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
-        self.get_data().count(&value)
+        self.try_lock().count(&value)
     }
 }
