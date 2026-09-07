@@ -20,6 +20,21 @@ impl ListsData {
         new_inst.update(py, values)?;
         Ok(new_inst)
     }
+    #[inline]
+    fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Pos>> {
+        let mut bound = Pos::default();
+        match ops::Maxes::new(self.maxes(), &mut bound, value, bisect::left)? {
+            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(None),
+            ops::Maxes::LenNEPos => {
+                bound.idx = bisect::left(&self.lists()[bound.pos], value)?;
+                if self.get_value(&bound).bind(value.py()).eq(value)? {
+                    Ok(Some(bound))
+                } else {
+                    Ok(None)
+                }
+            }
+        }
+    }
 }
 impl_inner_getter!(ListsData);
 impl ListsDataMethods for ListsData {
@@ -84,15 +99,7 @@ impl ListsDataMethods for ListsData {
         self.set_offset(0);
     }
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        let py = value.py();
-        let mut bound = Pos::default();
-        match ops::Maxes::new(self.maxes(), &mut bound, value, bisect::left)? {
-            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(false),
-            ops::Maxes::LenNEPos => {
-                bound.idx = bisect::left(&self.lists()[bound.pos], value)?;
-                self.get_value(&bound).bind(py).eq(value)
-            }
-        }
+        self.find(value).map(|x| x.is_some())
     }
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let mut left = Pos::default();
@@ -153,19 +160,10 @@ impl ListsDataMethods for ListsData {
     }
 
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let py = value.py();
-        let mut bound = Pos::default();
-        match ops::Maxes::new(self.maxes(), &mut bound, &value, bisect::left)? {
-            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(()),
-            ops::Maxes::LenNEPos => {
-                bound.idx = bisect::left(&self.lists()[bound.pos], &value)?;
-                if self.get_value(&bound).bind(py).eq(&value)? {
-                    self.delete(py, &mut bound)
-                } else {
-                    Ok(())
-                }
-            }
-        }
+        self.find(&value)?
+            .map(|mut bound| self.delete(value.py(), &mut bound))
+            .transpose()
+            .map(|_| ())
     }
 
     fn expand(&mut self, py: Python<'_>, pos: usize) {
@@ -228,20 +226,10 @@ impl ListsDataMethods for ListsData {
             }
         }
     }
-
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        let py = value.py();
-        let mut bound = Pos::default();
-        match ops::Maxes::new(self.maxes(), &mut bound, value, bisect::left)? {
-            ops::Maxes::Empty | ops::Maxes::LenEQPos => errors::not_in_list_err(value),
-            ops::Maxes::LenNEPos => {
-                bound.idx = bisect::left(&self.lists()[bound.pos], value)?;
-                if self.get_value(&bound).bind(py).eq(value)? {
-                    self.delete(py, &mut bound)
-                } else {
-                    errors::not_in_list_err(value)
-                }
-            }
+        match self.find(value)? {
+            Some(mut bound) => self.delete(value.py(), &mut bound),
+            None => errors::not_in_list_err(value),
         }
     }
 
