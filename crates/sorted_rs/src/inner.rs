@@ -101,7 +101,7 @@ impl InnerData {
         (0..num)
             .flat_map(|_| values.iter())
             .map(|x| x.clone_ref(py))
-            .collect::<Vec<_>>()
+            .collect()
     }
 
     pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
