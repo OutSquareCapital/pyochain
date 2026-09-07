@@ -510,6 +510,18 @@ impl InnerData {
             Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
         }
     }
+    pub(super) fn extend_lists(&mut self, py: Python<'_>, values: &[Py<PyAny>]) {
+        let val_len = values.len();
+        (0..val_len)
+            .step_by(self.load)
+            .map(|pos| {
+                values[pos..(pos + self.load).min(val_len)]
+                    .iter()
+                    .map(|x| x.clone_ref(py))
+                    .collect::<Vec<_>>()
+            })
+            .pipe(|it| self.lists.extend(it));
+    }
 }
 impl Default for InnerData {
     fn default() -> Self {

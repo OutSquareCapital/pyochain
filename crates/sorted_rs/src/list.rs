@@ -232,15 +232,7 @@ impl ListsDataMethods for ListsData {
     }
 
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
-        (0..values.len())
-            .step_by(self.load())
-            .map(|pos| {
-                values[pos..(pos + self.0.load).min(values.len())]
-                    .iter()
-                    .map(|x| x.clone_ref(py))
-                    .collect::<Vec<_>>()
-            })
-            .pipe(|it| self.0.lists.extend(it));
+        self.inner_mut().extend_lists(py, values);
         self.0
             .lists
             .iter()
