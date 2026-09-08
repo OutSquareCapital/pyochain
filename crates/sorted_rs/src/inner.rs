@@ -12,7 +12,7 @@ use pyo3_ext::{
 };
 use tap::Pipe;
 
-use crate::{Bounds, Loc, errors, pyassert, traits::NestedVec};
+use crate::{Bounds, Loc, debug::check_list, errors, pyassert, traits::NestedVec};
 
 /// A `Vec` which contains python objects.
 pub type VecPy = Vec<Py<PyAny>>;
@@ -63,7 +63,9 @@ impl InnerData {
             .chain(other.try_iter()?.map(|x| x?.unbind().pipe(Ok)))
             .collect()
     }
-
+    pub fn check(&self, py: Python<'_>) -> PyResult<()> {
+        check_list(self, py)
+    }
     pub fn loc(&mut self, loc: &Loc) -> usize {
         if loc.pos == 0 {
             loc.idx

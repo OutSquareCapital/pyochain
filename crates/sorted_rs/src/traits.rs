@@ -3,7 +3,6 @@ use std::cmp::Ordering;
 use crate::{
     Bounds, Loc,
     bisect::Bisect,
-    debug::check_list,
     errors,
     inner::{InnerGetter, ListDataGetters, VecPy},
     ops,
@@ -54,9 +53,6 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
     fn clear(&mut self);
-    fn check(&self, py: Python<'_>) -> PyResult<()> {
-        check_list(self, py)
-    }
     fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()>;
@@ -81,6 +77,17 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     }
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.find(value).map(|x| x.is_some())
+    }
+    fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
+        let mut bounds = Loc::default();
+        self.inner_mut().set_pos(index, &mut bounds)?;
+        self.delete(py, &mut bounds)
+    }
+    fn delitem(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+        match index {
+            Either::Right(slice) => self.del_slice(py, slice),
+            Either::Left(index) => self.del_item(py, index),
+        }
     }
     fn del_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
         let length = self.length().cast_signed();
@@ -127,14 +134,14 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
             }
         }
     }
-    fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
-        let mut bounds = Loc::default();
-        self.inner_mut().set_pos(index, &mut bounds)?;
-        self.delete(py, &mut bounds)
-    }
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.find(&value)?
             .map_or(Ok(()), |mut loc| self.delete(value.py(), &mut loc))
+    }
+    fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
+        let values = self.inner().repeat(py, num);
+        self.clear();
+        self.update(py, values)
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut bounds = Loc::default();
@@ -173,18 +180,6 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         let values = self.inner().collapse(py);
         self.clear();
         self.set_load(load);
-        self.update(py, values)
-    }
-    fn delitem(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
-        match index {
-            Either::Right(slice) => self.del_slice(py, slice),
-            Either::Left(index) => self.del_item(py, index),
-        }
-    }
-
-    fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let values = self.inner().repeat(py, num);
-        self.clear();
         self.update(py, values)
     }
 }

@@ -7,7 +7,7 @@ use crate::collections::{
 };
 use either::Either;
 use pyo3::prelude::*;
-use sorted_rs::{InnerGetter, ListDataGetters, ListsDataMethods, debug::check_key_list, pyassert};
+use sorted_rs::{InnerGetter, ListDataGetters, debug::check_key_list, pyassert};
 
 #[pyfunction]
 pub fn check_sorted_dict(
@@ -20,7 +20,7 @@ pub fn check_sorted_dict(
 
 fn check_dict(x: &impl BaseSortedDict, py: Python<'_>) -> PyResult<()> {
     let data = x.try_lock();
-    data.check(py)?;
+    data.inner().check(py)?;
 
     pyassert!(x.len(py) == data.length());
     pyassert!(data.inner().iter().all(|item| {
@@ -45,7 +45,7 @@ fn check_set_len<T: BaseSortedSet>(checked: &T, py: Python<'_>) -> PyResult<()> 
     let set = checked.get_set().clone_ref(py).into_bound(py);
     let data = checked.try_lock();
     pyassert!(set.len() == data.length());
-    data.check(py)?;
+    data.inner().check(py)?;
     pyassert!(
         data.inner()
             .iter()
@@ -62,7 +62,7 @@ pub fn assert_sorted_list_empty(lst: Either<Py<SortedList>, Py<SortedKeyList>>) 
 }
 #[pyfunction]
 pub fn check_sorted_list(py: Python<'_>, data: &Bound<'_, SortedList>) -> PyResult<()> {
-    data.get().try_lock().check(py)
+    data.get().try_lock().inner().check(py)
 }
 #[pyfunction]
 pub fn check_sorted_key_list(py: Python<'_>, data: &Bound<'_, SortedKeyList>) -> PyResult<()> {
