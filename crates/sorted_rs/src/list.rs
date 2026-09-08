@@ -9,7 +9,7 @@ use crate::{
     errors, impl_inner_getter,
     inner::{InnerData, InnerGetter, VecPy},
     ops,
-    traits::{ListsDataMethods, update_list_by},
+    traits::{ListsDataMethods, NestedVec, update_list_by},
 };
 
 //TODO: This struct is way too big and do way too many things.
@@ -29,7 +29,7 @@ impl ListsData {
             ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(None),
             ops::Maxes::LenNEPos => {
                 bound.idx = self.lists()[bound.pos].bisect_left(value)?;
-                if self.inner().get_value(&bound).bind(value.py()).eq(value)? {
+                if self.lists().iloc(&bound).bind(value.py()).eq(value)? {
                     Ok(Some(bound))
                 } else {
                     Ok(None)
@@ -193,15 +193,12 @@ impl ListsDataMethods for ListsData {
             if indexes.stop <= indexes.start {
                 errors::not_in_list_err(value)
             } else {
-                let mut bound = Pos {
-                    pos: self.maxes().bisect_left(value)?,
-                    idx: 0,
-                };
+                let mut bound = self.maxes().bisect_left(value).map(Pos::with_pos)?;
                 if bound.pos == self.maxes().len() {
                     errors::not_in_list_err(value)
                 } else {
                     bound.idx = self.lists()[bound.pos].bisect_left(value)?;
-                    if self.inner().get_value(&bound).bind(py).ne(value)? {
+                    if self.lists().iloc(&bound).bind(py).ne(value)? {
                         errors::not_in_list_err(value)
                     } else {
                         indexes.stop -= 1;

@@ -14,6 +14,14 @@ use pyo3::{
     types::{PySlice, PySliceIndices},
 };
 pub type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
+pub(super) trait NestedVec<T> {
+    fn iloc(&self, pos: &Pos) -> &T;
+}
+impl<T> NestedVec<T> for [Vec<T>] {
+    fn iloc(&self, pos: &Pos) -> &T {
+        &self[pos.pos][pos.idx]
+    }
+}
 pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     fn irange_specs<'py>(
         &self,
@@ -126,7 +134,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
                 self.inner_mut().set_pos(index, &mut bounds)?;
             }
         }
-        let val = self.inner().get_value(&bounds).clone_ref(py);
+        let val = self.lists().iloc(&bounds).clone_ref(py);
         self.delete(py, &mut bounds)?;
         Ok(val.into_bound(py))
     }

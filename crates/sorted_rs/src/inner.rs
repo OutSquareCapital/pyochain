@@ -12,7 +12,7 @@ use pyo3_ext::{
 };
 use tap::Pipe;
 
-use crate::{Bounds, Pos, errors, pyassert};
+use crate::{Bounds, Pos, errors, pyassert, traits::NestedVec};
 
 /// A `Vec` which contains python objects.
 pub type VecPy = Vec<Py<PyAny>>;
@@ -46,12 +46,6 @@ impl InnerData {
         self.idx.clear();
         self.len = 0;
         self.offset = 0;
-    }
-
-    #[inline]
-    #[must_use]
-    pub(super) fn get_value(&self, pos: &Pos) -> &Py<PyAny> {
-        &self.lists[pos.pos][pos.idx]
     }
     #[inline]
     #[must_use]
@@ -152,7 +146,8 @@ impl InnerData {
             .pipe(Ok),
             _ => {
                 self.set_pos(index, &mut bounds.min)?;
-                self.lists[bounds.min.pos][bounds.min.idx]
+                self.lists
+                    .iloc(&bounds.min)
                     .clone_ref(py)
                     .into_bound(py)
                     .pipe(Ok)
@@ -187,14 +182,14 @@ impl InnerData {
                     (false, true) => {
                         bounds.max.pos = self.lists.len() - 1;
                         bounds.max.idx = self.lists[bounds.max.pos].len();
-                        get_slice(self, &bounds)
+                        get_slice(&self.lists, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                             .pipe(Ok)
                     }
                     (false, false) => {
                         self.set_pos(stop, &mut bounds.max)?;
-                        get_slice(self, &bounds)
+                        get_slice(&self.lists, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                             .pipe(Ok)
@@ -618,13 +613,9 @@ macro_rules! impl_inner_getter {
     };
 }
 
-fn get_slice<'a>(data: &'a InnerData, bounds: &Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {
-    data.lists[bounds.min.pos][bounds.min.idx..]
+fn get_slice<'a>(lists: &'a [VecPy], bounds: &Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {
+    lists[bounds.min.pos][bounds.min.idx..]
         .iter()
-        .chain(
-            data.lists[bounds.min.pos + 1..bounds.max.pos]
-                .iter()
-                .flatten(),
-        )
-        .chain(data.lists[bounds.max.pos][0..bounds.max.idx].iter())
+        .chain(lists[bounds.min.pos + 1..bounds.max.pos].iter().flatten())
+        .chain(lists[bounds.max.pos][0..bounds.max.idx].iter())
 }

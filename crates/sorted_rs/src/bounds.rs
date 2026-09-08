@@ -34,6 +34,14 @@ impl Pos {
     pub fn new(pos: usize, idx: usize) -> Self {
         Self { pos, idx }
     }
+    #[must_use]
+    pub fn with_idx(idx: usize) -> Self {
+        Self { pos: 0, idx }
+    }
+    #[must_use]
+    pub fn with_pos(pos: usize) -> Self {
+        Self { pos, idx: 0 }
+    }
 }
 
 #[derive(Default)]

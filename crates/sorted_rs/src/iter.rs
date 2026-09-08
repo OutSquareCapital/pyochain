@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use pyo3::prelude::*;
 
-use crate::{Bounds, ListDataGetters, Pos};
+use crate::{Bounds, ListDataGetters, Pos, traits::NestedVec};
 struct ListDataIterInner<T: ListDataGetters> {
     data: Arc<Mutex<T>>,
     bounds: Bounds,
@@ -61,7 +61,7 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for Full<T> {
         if bound.pos == data.lists().len() {
             None
         } else {
-            let item = data.lists()[bound.pos][bound.idx].clone_ref(py);
+            let item = data.lists().iloc(bound).clone_ref(py);
             if bound.idx + 1 == data.lists()[bound.pos].len() {
                 bound.pos += 1;
                 bound.idx = 0;
@@ -85,7 +85,7 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for FullRev<T> {
                 bound.idx = data.lists()[bound.pos].len();
             }
             bound.idx -= 1;
-            Some(data.lists()[bound.pos][bound.idx].clone_ref(py))
+            Some(data.lists().iloc(bound).clone_ref(py))
         }
     }
 }
@@ -96,7 +96,7 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for Bounded<T> {
             None
         } else {
             let data = self.0.data.lock().expect("poisoned");
-            let item = data.lists()[self.0.bounds.min.pos][self.0.bounds.min.idx].clone_ref(py);
+            let item = data.lists().iloc(&self.0.bounds.min).clone_ref(py);
             let bound = &mut self.0.bounds.min;
             if bound.pos + 1 < data.lists().len() && bound.idx + 1 >= data.lists()[bound.pos].len()
             {
@@ -124,7 +124,7 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for BoundedRev<T> {
                 bound.pos -= 1;
                 bound.idx = data.lists()[bound.pos].len() - 1;
             }
-            Some(data.lists()[self.0.bounds.max.pos][self.0.bounds.max.idx].clone_ref(py))
+            Some(data.lists().iloc(&self.0.bounds.max).clone_ref(py))
         }
     }
 }
