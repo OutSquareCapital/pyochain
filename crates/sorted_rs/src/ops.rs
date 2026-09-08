@@ -5,7 +5,7 @@
 
 use pyo3::prelude::*;
 
-use crate::{ListsDataMethods, bisect::Bisect, bounds::Pos, errors};
+use crate::{bisect::Bisect, bounds::Pos, errors, inner::InnerData};
 
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
 pub(super) enum Maxes {
@@ -112,13 +112,13 @@ pub(super) enum Index<'py, 'a> {
     Searchable(IdxBounds),
 }
 impl<'py, 'a> Index<'py, 'a> {
-    pub fn new<T: ListsDataMethods>(
-        data: &T,
+    pub fn new(
+        data: &InnerData,
         value: &'a Bound<'py, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
     ) -> Self {
-        let length = data.length().cast_signed();
+        let length = data.len.cast_signed();
         if length == 0 {
             Self::Empty(value)
         } else {
@@ -135,8 +135,8 @@ impl<'py, 'a> Index<'py, 'a> {
             if stop <= start {
                 Self::InvalidRange(value)
             } else {
-                match data.maxes().bisect_left(value).map(Pos::with_pos) {
-                    Ok(bound) if bound.pos == data.maxes().len() => Self::NotFound(value),
+                match data.maxes.bisect_left(value).map(Pos::with_pos) {
+                    Ok(bound) if bound.pos == data.maxes.len() => Self::NotFound(value),
                     Ok(bound) => Self::Searchable((bound, start, stop)),
                     Err(err) => Self::BisectErr(err),
                 }

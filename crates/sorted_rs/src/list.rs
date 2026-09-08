@@ -184,7 +184,8 @@ impl ListsDataMethods for ListsData {
         stop: Option<isize>,
     ) -> PyResult<isize> {
         let py = value.py();
-        let (mut bound, start, mut stop) = ops::Index::new(self, value, start, stop).into_res()?;
+        let (mut bound, start, mut stop) =
+            ops::Index::new(self.inner(), value, start, stop).into_res()?;
         bound.idx = self.lists()[bound.pos].bisect_left(value)?;
         if self.lists().iloc(&bound).bind(py).ne(value)? {
             errors::not_in_list_err(value)

@@ -252,7 +252,8 @@ impl ListsDataMethods for KeysListsData {
     ) -> PyResult<isize> {
         let py = value.py();
         let key = self.2.bind(py).call1((&value,))?;
-        let (mut bound, start, mut stop) = ops::Index::new(self, &key, start, stop).into_res()?;
+        let (mut bound, start, mut stop) =
+            ops::Index::new(self.inner(), &key, start, stop).into_res()?;
         stop -= 1;
         let v_left = &self.1[bound.pos];
         bound.idx = v_left.bisect_left(&key)?;
