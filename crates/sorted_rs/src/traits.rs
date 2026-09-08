@@ -83,7 +83,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         self.inner_mut().set_pos(index, &mut bounds)?;
         self.delete(py, &mut bounds)
     }
-    fn delitem(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+    fn del_item_or_slice(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
             Either::Right(slice) => self.del_slice(py, slice),
             Either::Left(index) => self.del_item(py, index),

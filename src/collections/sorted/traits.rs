@@ -251,7 +251,7 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
     }
 
     fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
-        self.try_lock().delitem(py, index)
+        self.try_lock().del_item_or_slice(py, index)
     }
 
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
