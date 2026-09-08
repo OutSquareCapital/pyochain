@@ -209,6 +209,40 @@ pub trait TryIterator: Iterator {
         .break_value()
         .transpose()
     }
+    /// Faillible version of `Iterator::all`.
+    /// # Errors
+    ///
+    /// Returns the first error produced by the closure.
+    fn try_all<E, F>(&mut self, f: F) -> Result<bool, E>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> Result<bool, E>,
+    {
+        self.map(f)
+            .find_map(|x| match x {
+                Ok(true) => None,
+                Ok(false) => Some(Ok(false)),
+                Err(e) => Some(Err(e)),
+            })
+            .unwrap_or(Ok(true))
+    }
+    /// Faillible version of `Iterator::any`.
+    /// # Errors
+    ///
+    /// Returns the first error produced by the closure.
+    fn try_any<E, F>(&mut self, f: F) -> Result<bool, E>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> Result<bool, E>,
+    {
+        self.map(f)
+            .find_map(|x| match x {
+                Ok(true) => Some(Ok(true)),
+                Ok(false) => None,
+                Err(e) => Some(Err(e)),
+            })
+            .unwrap_or(Ok(false))
+    }
 }
 
 impl<I: Iterator> TryIterator for I {}

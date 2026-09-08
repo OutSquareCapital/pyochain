@@ -138,15 +138,7 @@ impl SliceView {
     }
 
     fn __contains__(slf: &Bound<'_, Self>, item: &Bound<'_, PyAny>) -> PyResult<bool> {
-        slf.try_iter()
-            .unwrap()
-            .map(|el| item.eq(el?))
-            .find_map(|x| match x {
-                Ok(true) => Some(Ok(true)),
-                Ok(false) => None,
-                Err(e) => Some(Err(e)),
-            })
-            .unwrap_or(Ok(false))
+        slf.try_iter().unwrap().try_any(|el| item.eq(el?))
     }
 
     fn __reversed__(&self, py: Python<'_>) -> PyResult<SliceViewReverseIterator> {
@@ -162,13 +154,7 @@ impl SliceView {
                 .iter_py()
                 .map(|x| seq.get_item(x?.extract::<usize>()?))
                 .zip(o.try_iter().unwrap())
-                .map(|(a, b)| a?.eq(b?))
-                .find_map(|x| match x {
-                    Ok(true) => None,
-                    Ok(false) => Some(Ok(false)),
-                    Err(e) => Some(Err(e)),
-                })
-                .unwrap_or(Ok(true))?;
+                .try_all(|(a, b)| a?.eq(b?))?;
             Ok(self.__len__(py)? == o.len()? && elem_eq)
         })
     }

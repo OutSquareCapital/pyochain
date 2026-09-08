@@ -409,13 +409,7 @@ impl InnerData {
                     let py = seq.py();
                     self.iter()
                         .zip(seq.iter_py())
-                        .map(|(a, b)| a.bind(py).eq(b?))
-                        .find_map(|x| match x {
-                            Ok(true) => None,
-                            Ok(false) => Some(Ok(false)),
-                            Err(e) => Some(Err(e)),
-                        })
-                        .unwrap_or(Ok(true))
+                        .try_all(|(a, b)| a.bind(py).eq(b?))
                         .map(Either::Left)
                 }
             }
@@ -433,13 +427,7 @@ impl InnerData {
                     let py = seq.py();
                     self.iter()
                         .zip(seq.iter_py())
-                        .map(|(a, b)| a.bind(py).eq(b?))
-                        .find_map(|x| match x {
-                            Ok(true) => None,
-                            Ok(false) => Some(Ok(true)),
-                            Err(e) => Some(Err(e)),
-                        })
-                        .unwrap_or(Ok(false))
+                        .try_any(|(a, b)| a.bind(py).ne(b?))
                         .map(Either::Left)
                 }
             }

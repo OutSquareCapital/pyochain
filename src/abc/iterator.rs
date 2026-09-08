@@ -169,7 +169,7 @@ impl PyoIterator {
 
         Ok(count)
     }
-
+    // TODO: Use `TryIterator` methods here. Need to benchmark current impl first.
     #[pyo3(signature = (predicate=None))]
     fn any<'py>(
         slf: &Bound<'py, Self>,
@@ -189,6 +189,7 @@ impl PyoIterator {
             None => pylibs::builtins::any(&slf),
         }
     }
+    // TODO: Use `TryIterator` methods here. Need to benchmark current impl first.
     #[pyo3(signature = (predicate=None))]
     fn all<'py>(
         slf: &Bound<'py, Self>,
@@ -733,6 +734,7 @@ impl PyoIterator {
             }),
         }
     }
+    // TODO: Use `TryIterator` methods here. Need to benchmark current impl first.
     fn find(slf: &Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         slf.try_iter()?
