@@ -7,10 +7,10 @@ from collections.abc import Set as AbstractSet
 from typing import Any, Final, Self, final, overload, override
 
 from pyochain import SetMut, Vec
+from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
-from ._list import BaseSortedListSet
-from ._views import SupportsHashableAndRichComparison
+from ._core import BaseSortedListSet
 
 class BaseSortedSet[T: SupportsHashableAndRichComparison](
     PyoMutableSet[T], PyoSequence[T], BaseSortedListSet[T], ABC

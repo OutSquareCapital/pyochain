@@ -9,6 +9,7 @@ from typing import Any, Self, final, overload, override
 from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
 from pyochain import Dict
+from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.abc import PyoIterator, PyoMutableMapping, PyoReversible
 from pyochain.collections import (
     SortedItemsView,
@@ -16,7 +17,6 @@ from pyochain.collections import (
     SortedValuesView,
 )
 
-from ..._types import SupportsHashableAndRichComparison
 from ._core import SortedCollection
 
 type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]

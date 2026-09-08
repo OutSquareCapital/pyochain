@@ -44,7 +44,7 @@ class PyoKeysView(PyoMappingView, PyoSet[_K_co], KeysView[_K_co]):  # pyright: i
     def __iter__(self) -> Iterator[_K_co]: ...
     @override
     # pyrefly: ignore [bad-override]
-    def __and__(self, other: Iterable[Any], /) -> SetMut[_K_co]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __and__(self, other: Iterable[Any], /) -> SetMut[_K_co]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-generic-class]
     @override
     # pyrefly: ignore [bad-override]
     def __rand__[T](self, other: Iterable[T], /) -> SetMut[T]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
@@ -114,7 +114,7 @@ class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance]
     def __iter__(self) -> Iterator[tuple[_K_co, _V_co]]: ...
     @override
     # pyrefly: ignore [bad-override]
-    def __and__(self, other: Iterable[Any], /) -> SetMut[tuple[_K_co, _V_co]]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __and__(self, other: Iterable[Any], /) -> SetMut[tuple[_K_co, _V_co]]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-generic-class]
     @override
     # pyrefly: ignore [bad-override]
     def __rand__[T](self, other: Iterable[T], /) -> SetMut[T]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]

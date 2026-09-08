@@ -5,17 +5,17 @@ from collections.abc import Callable, Iterable
 from collections.abc import Set as AbstractSet
 from typing import Any, Self, final, override
 
+from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.abc import PyoIterator
 
 from ._core import KeyFunc
 from ._set import BaseSortedSet
-from ._views import SupportsHashableAndRichComparison
 
 type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 
 @final
 # pyrefly: ignore [bad-specialization]
-class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
+class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments] # ty: ignore[invalid-type-arguments]
     def __new__(
         cls, key: SetKeyFunc[T, OT], iterable: Iterable[T] | None = None, /
     ) -> Self:
