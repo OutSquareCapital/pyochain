@@ -12,7 +12,7 @@ use pyo3_ext::{
 };
 use tap::Pipe;
 
-use crate::{Bounds, Pos, errors, pyassert, traits::NestedVec};
+use crate::{Bounds, Loc, errors, pyassert, traits::NestedVec};
 
 /// A `Vec` which contains python objects.
 pub type VecPy = Vec<Py<PyAny>>;
@@ -64,15 +64,15 @@ impl InnerData {
             .collect()
     }
 
-    pub fn loc(&mut self, pos: &Pos) -> usize {
-        if pos.pos == 0 {
-            pos.idx
+    pub fn loc(&mut self, loc: &Loc) -> usize {
+        if loc.pos == 0 {
+            loc.idx
         } else {
             if self.idx.is_empty() {
                 self.build_index();
             }
             // Increment pos to point in the index to len(self.lists[pos]).
-            let mut i = pos.pos + self.offset;
+            let mut i = loc.pos + self.offset;
             // Iterate until reaching the root of the index tree at pos = 0.
             let total = self.idx.pipe_ref_mut(|idx| {
                 let mut total = 0;
@@ -91,7 +91,7 @@ impl InnerData {
                 total
             });
 
-            total + pos.idx
+            total + loc.idx
         }
     }
 
@@ -283,9 +283,9 @@ impl InnerData {
         }
         self.idx[0] += 1;
     }
-    pub(super) fn remove_pos(&mut self, bound: &Pos) {
-        self.lists.remove(bound.pos);
-        self.maxes.remove(bound.pos);
+    pub(super) fn remove_pos(&mut self, loc: &Loc) {
+        self.lists.remove(loc.pos);
+        self.maxes.remove(loc.pos);
         self.idx.clear();
     }
     pub(super) fn expand_at_pos(
@@ -301,11 +301,11 @@ impl InnerData {
         self.idx.clear();
     }
 
-    pub(super) fn delete_on_idx(&mut self, bounds: &Pos, max_at_pos: Py<PyAny>) {
-        self.maxes[bounds.pos] = max_at_pos;
+    pub(super) fn delete_on_idx(&mut self, loc: &Loc, max_at_pos: Py<PyAny>) {
+        self.maxes[loc.pos] = max_at_pos;
 
         if !self.idx.is_empty() {
-            let mut child = self.offset + bounds.pos;
+            let mut child = self.offset + loc.pos;
             while child > 0 {
                 self.idx[child] -= 1;
                 child = (child - 1) >> 1;
@@ -314,11 +314,11 @@ impl InnerData {
         }
     }
 
-    pub(super) fn set_pos(&mut self, mut idx: isize, bound: &mut Pos) -> PyResult<()> {
+    pub(super) fn set_pos(&mut self, mut idx: isize, loc: &mut Loc) -> PyResult<()> {
         if idx < 0 {
             if idx >= -self.lists.last().unwrap().len().cast_signed() {
-                bound.pos = self.lists.len() - 1;
-                bound.idx = (self.lists.last().unwrap().len().cast_signed() + idx).cast_unsigned();
+                loc.pos = self.lists.len() - 1;
+                loc.idx = (self.lists.last().unwrap().len().cast_signed() + idx).cast_unsigned();
                 return Ok(());
             }
 
@@ -332,8 +332,8 @@ impl InnerData {
         }
 
         if idx < self.lists[0].len().cast_signed() {
-            bound.pos = 0;
-            bound.idx = idx.cast_unsigned();
+            loc.pos = 0;
+            loc.idx = idx.cast_unsigned();
             return Ok(());
         }
 
@@ -360,8 +360,8 @@ impl InnerData {
             pos
         });
 
-        bound.pos = pos - self.offset;
-        bound.idx = idx.cast_unsigned();
+        loc.pos = pos - self.offset;
+        loc.idx = idx.cast_unsigned();
         Ok(())
     }
 

@@ -3,11 +3,11 @@ use pyo3::prelude::*;
 use crate::{bisect::Bisect, inner::VecPy};
 
 #[derive(PartialEq, Eq, Default, Clone, Copy)]
-pub struct Pos {
+pub struct Loc {
     pub pos: usize,
     pub idx: usize,
 }
-impl Pos {
+impl Loc {
     #[must_use]
     pub fn new(pos: usize, idx: usize) -> Self {
         Self { pos, idx }
@@ -24,15 +24,15 @@ impl Pos {
 
 #[derive(Default)]
 pub struct Bounds {
-    pub min: Pos,
-    pub max: Pos,
+    pub min: Loc,
+    pub max: Loc,
 }
 impl Bounds {
     #[must_use]
     pub fn new(min_pos: usize, min_idx: usize, max_pos: usize, max_idx: usize) -> Self {
         Self {
-            min: Pos::new(min_pos, min_idx),
-            max: Pos::new(max_pos, max_idx),
+            min: Loc::new(min_pos, min_idx),
+            max: Loc::new(max_pos, max_idx),
         }
     }
     pub fn from_sorted(
@@ -46,7 +46,7 @@ impl Bounds {
             Ok(None)
         } else {
             let min = match minimum {
-                None => Pos::default(),
+                None => Loc::default(),
                 Some(minimum) => {
                     if inclusive.0 {
                         let min_pos = maxes.bisect_left(&minimum)?;
@@ -55,14 +55,14 @@ impl Bounds {
                             return Ok(None);
                         }
                         let min_idx = lists[min_pos].bisect_left(&minimum)?;
-                        Pos::new(min_pos, min_idx)
+                        Loc::new(min_pos, min_idx)
                     } else {
                         let min_pos = maxes.bisect_right(&minimum)?;
                         if min_pos == maxes.len() {
                             return Ok(None);
                         }
                         let min_idx = lists[min_pos].bisect_right(&minimum)?;
-                        Pos::new(min_pos, min_idx)
+                        Loc::new(min_pos, min_idx)
                     }
                 }
             };
@@ -73,7 +73,7 @@ impl Bounds {
                 || {
                     let max_pos = maxes.len() - 1;
                     let max_idx = lists[max_pos].len();
-                    Ok(Pos::new(max_pos, max_idx))
+                    Ok(Loc::new(max_pos, max_idx))
                 },
                 |m| {
                     if inclusive.1 {
@@ -85,7 +85,7 @@ impl Bounds {
                         } else {
                             lists[max_pos].bisect_right(&m)?
                         };
-                        Ok::<_, PyErr>(Pos::new(max_pos, max_idx))
+                        Ok::<_, PyErr>(Loc::new(max_pos, max_idx))
                     } else {
                         let mut max_pos = maxes.bisect_left(&m)?;
 
@@ -95,7 +95,7 @@ impl Bounds {
                         } else {
                             lists[max_pos].bisect_left(&m)?
                         };
-                        Ok(Pos::new(max_pos, max_idx))
+                        Ok(Loc::new(max_pos, max_idx))
                     }
                 },
             )?;

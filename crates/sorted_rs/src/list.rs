@@ -4,7 +4,7 @@ use tap::Pipe;
 use crate::{
     ListDataGetters,
     bisect::Bisect,
-    bounds::{Bounds, Pos},
+    bounds::{Bounds, Loc},
     cmp::py_cmp,
     errors, impl_inner_getter,
     inner::{InnerData, InnerGetter, VecPy},
@@ -23,7 +23,7 @@ impl ListsData {
         Ok(new_inst)
     }
     #[inline]
-    fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Pos>> {
+    fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {
         match ops::Maxes::left(self.maxes(), value) {
             ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(None),
@@ -81,7 +81,7 @@ impl ListsDataMethods for ListsData {
         if self.maxes().is_empty() {
             Ok(0)
         } else {
-            let mut bound = Pos::new(0, 0);
+            let mut bound = Loc::new(0, 0);
             bound.pos = func(self.maxes(), value)?;
             if bound.pos == self.maxes().len() {
                 Ok(self.length())
@@ -103,7 +103,7 @@ impl ListsDataMethods for ListsData {
             ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(0),
             ops::Maxes::LenNEPos(mut left) => {
-                let mut right = Pos::default();
+                let mut right = Loc::default();
                 left.idx = self.lists()[left.pos].bisect_left(value)?;
                 right.pos = self.maxes().bisect_right(value)?;
 
@@ -125,32 +125,32 @@ impl ListsDataMethods for ListsData {
         }
     }
 
-    fn delete(&mut self, py: Python<'_>, bounds: &mut Pos) -> PyResult<()> {
-        self.lists_mut().loc_remove(bounds);
+    fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()> {
+        self.lists_mut().loc_remove(loc);
         self.decrement_len();
-        match ops::Delete::new(self.lists(), self.load(), bounds) {
+        match ops::Delete::new(self.lists(), self.load(), loc) {
             ops::Delete::PosSupToLoad => {
-                let max_at_pos = self.lists().loc_last(bounds).clone_ref(py);
-                self.inner_mut().delete_on_idx(bounds, max_at_pos);
+                let max_at_pos = self.lists().loc_last(loc).clone_ref(py);
+                self.inner_mut().delete_on_idx(loc, max_at_pos);
             }
             ops::Delete::DataLenGTOne => {
-                if bounds.pos == 0 {
-                    bounds.pos += 1;
+                if loc.pos == 0 {
+                    loc.pos += 1;
                 }
-                let prev = bounds.pos - 1;
-                let mut removed = self.lists()[bounds.pos]
+                let prev = loc.pos - 1;
+                let mut removed = self.lists()[loc.pos]
                     .iter()
                     .map(|x| x.clone_ref(py))
                     .collect::<Vec<_>>();
                 self.lists_mut()[prev].append(removed.as_mut());
-                self.inner_mut().remove_pos(bounds);
+                self.inner_mut().remove_pos(loc);
                 self.maxes_mut()[prev] = self.lists()[prev].last().unwrap().clone_ref(py);
                 self.expand(py, prev);
             }
             ops::Delete::LenPosNotZero => {
-                self.maxes_mut()[bounds.pos] = self.lists().loc_last(bounds).clone_ref(py);
+                self.maxes_mut()[loc.pos] = self.lists().loc_last(loc).clone_ref(py);
             }
-            ops::Delete::Other => self.inner_mut().remove_pos(bounds),
+            ops::Delete::Other => self.inner_mut().remove_pos(loc),
         }
         Ok(())
     }

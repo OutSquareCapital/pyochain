@@ -9,7 +9,7 @@ mod keylist;
 mod list;
 mod ops;
 mod traits;
-pub use bounds::{Bounds, Pos};
+pub use bounds::{Bounds, Loc};
 pub use inner::{InnerGetter, ListDataGetters, SeqOrAny};
 pub use keylist::KeysListsData;
 pub use list::ListsData;

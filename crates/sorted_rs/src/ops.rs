@@ -5,13 +5,13 @@
 
 use pyo3::prelude::*;
 
-use crate::{bisect::Bisect, bounds::Pos, errors, inner::InnerData, traits::NestedVec};
+use crate::{bisect::Bisect, bounds::Loc, errors, inner::InnerData, traits::NestedVec};
 
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
 pub(super) enum Maxes {
     Empty,
-    LenEQPos(Pos),
-    LenNEPos(Pos),
+    LenEQPos(Loc),
+    LenNEPos(Loc),
     BisectErr(PyErr),
 }
 impl Maxes {
@@ -31,7 +31,7 @@ impl Maxes {
             Self::Empty
         } else {
             func(maxes, value)
-                .map(Pos::with_pos)
+                .map(Loc::with_pos)
                 .map_or_else(Self::BisectErr, |bound| {
                     if bound.pos == maxes.len() {
                         Self::LenEQPos(bound)
@@ -72,8 +72,8 @@ pub enum Delete {
 impl Delete {
     #[inline(always)]
     #[must_use]
-    pub fn new<T>(lists: &[Vec<T>], load: usize, bounds: &Pos) -> Self {
-        let len_pos = lists.loc_len(bounds);
+    pub fn new<T>(lists: &[Vec<T>], load: usize, loc: &Loc) -> Self {
+        let len_pos = lists.loc_len(loc);
         if len_pos > (load >> 1) {
             Self::PosSupToLoad
         } else if lists.len() > 1 {
@@ -102,8 +102,8 @@ impl Update {
         }
     }
 }
-/// `Pos`, `start`, and `stop` bounds for a search in a sorted list.
-type IdxBounds = (Pos, usize, usize);
+/// `Loc`, `start`, and `stop` bounds for a search in a sorted list.
+type IdxBounds = (Loc, usize, usize);
 pub(super) enum Index<'py, 'a> {
     NotFound(&'a Bound<'py, PyAny>),
     Empty(&'a Bound<'py, PyAny>),
@@ -135,7 +135,7 @@ impl<'py, 'a> Index<'py, 'a> {
             if stop <= start {
                 Self::InvalidRange(value)
             } else {
-                match data.maxes.bisect_left(value).map(Pos::with_pos) {
+                match data.maxes.bisect_left(value).map(Loc::with_pos) {
                     Ok(bound) if bound.pos == data.maxes.len() => Self::NotFound(value),
                     Ok(bound) => {
                         Self::Searchable((bound, start.cast_unsigned(), stop.cast_unsigned()))

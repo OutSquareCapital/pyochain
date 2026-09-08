@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 use crate::{
-    Bounds, Pos,
+    Bounds, Loc,
     bisect::Bisect,
     debug::check_list,
     inner::{InnerGetter, ListDataGetters, VecPy},
@@ -15,31 +15,31 @@ use pyo3::{
 };
 pub type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
 pub(super) trait NestedVec<T> {
-    fn loc(&self, pos: &Pos) -> &T;
-    fn loc_insert(&mut self, pos: &Pos, value: T);
-    fn loc_remove(&mut self, pos: &Pos);
-    fn loc_push(&mut self, pos: &Pos, value: T);
-    fn loc_last(&self, pos: &Pos) -> &T;
-    fn loc_len(&self, pos: &Pos) -> usize;
+    fn loc(&self, loc: &Loc) -> &T;
+    fn loc_insert(&mut self, loc: &Loc, value: T);
+    fn loc_remove(&mut self, loc: &Loc);
+    fn loc_push(&mut self, loc: &Loc, value: T);
+    fn loc_last(&self, loc: &Loc) -> &T;
+    fn loc_len(&self, loc: &Loc) -> usize;
 }
 impl<T> NestedVec<T> for [Vec<T>] {
-    fn loc(&self, pos: &Pos) -> &T {
-        &self[pos.pos][pos.idx]
+    fn loc(&self, loc: &Loc) -> &T {
+        &self[loc.pos][loc.idx]
     }
-    fn loc_insert(&mut self, pos: &Pos, value: T) {
-        self[pos.pos].insert(pos.idx, value);
+    fn loc_insert(&mut self, loc: &Loc, value: T) {
+        self[loc.pos].insert(loc.idx, value);
     }
-    fn loc_remove(&mut self, pos: &Pos) {
-        self[pos.pos].remove(pos.idx);
+    fn loc_remove(&mut self, loc: &Loc) {
+        self[loc.pos].remove(loc.idx);
     }
-    fn loc_push(&mut self, pos: &Pos, value: T) {
-        self[pos.pos].push(value);
+    fn loc_push(&mut self, loc: &Loc, value: T) {
+        self[loc.pos].push(value);
     }
-    fn loc_last(&self, pos: &Pos) -> &T {
-        self[pos.pos].last().unwrap()
+    fn loc_last(&self, loc: &Loc) -> &T {
+        self[loc.pos].last().unwrap()
     }
-    fn loc_len(&self, pos: &Pos) -> usize {
-        self[pos.pos].len()
+    fn loc_len(&self, loc: &Loc) -> usize {
+        self[loc.pos].len()
     }
 }
 pub trait ListsDataMethods: InnerGetter + ListDataGetters {
@@ -57,7 +57,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     fn check(&self, py: Python<'_>) -> PyResult<()> {
         check_list(self, py)
     }
-    fn delete(&mut self, py: Python<'_>, bounds: &mut Pos) -> PyResult<()>;
+    fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()>;
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()>;
     fn update(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()>;
@@ -82,7 +82,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     }
     fn del_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
         let length = self.length().cast_signed();
-        let mut bounds = Pos::default();
+        let mut loc = Loc::default();
         let PySliceIndices {
             start, stop, step, ..
         } = slice.indices(length)?;
@@ -109,8 +109,8 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
                 .step_by(step.cast_unsigned())
                 .rev()
                 .try_for_each(|idx| {
-                    self.inner_mut().set_pos(idx, &mut bounds)?;
-                    self.delete(py, &mut bounds)
+                    self.inner_mut().set_pos(idx, &mut loc)?;
+                    self.delete(py, &mut loc)
                 }),
             // Negative step with nothing to delete (mirrors Python's
             // `range`, which is empty when `start <= stop`).
@@ -119,20 +119,20 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .try_for_each(|idx| {
-                        self.inner_mut().set_pos(idx, &mut bounds)?;
-                        self.delete(py, &mut bounds)
+                        self.inner_mut().set_pos(idx, &mut loc)?;
+                        self.delete(py, &mut loc)
                     })
             }
         }
     }
     fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
-        let mut bounds = Pos::default();
+        let mut bounds = Loc::default();
         self.inner_mut().set_pos(index, &mut bounds)?;
         self.delete(py, &mut bounds)
     }
 
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let mut bounds = Pos::default();
+        let mut bounds = Loc::default();
         if self.length() == 0 {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));

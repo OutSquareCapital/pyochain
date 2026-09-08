@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use pyo3::prelude::*;
 
-use crate::{Bounds, ListDataGetters, Pos, traits::NestedVec};
+use crate::{Bounds, ListDataGetters, Loc, traits::NestedVec};
 struct ListDataIterInner<T: ListDataGetters> {
     data: Arc<Mutex<T>>,
     bounds: Bounds,
@@ -10,7 +10,7 @@ struct ListDataIterInner<T: ListDataGetters> {
 
 struct ListDataFullInner<T: ListDataGetters> {
     data: Arc<Mutex<T>>,
-    pos: Pos,
+    loc: Loc,
 }
 
 pub struct Bounded<T: ListDataGetters>(ListDataIterInner<T>);
@@ -37,7 +37,7 @@ impl<T: ListDataGetters> Full<T> {
     pub fn new(data: Arc<Mutex<T>>) -> Self {
         Self(ListDataFullInner {
             data,
-            pos: Pos::default(),
+            loc: Loc::default(),
         })
     }
 }
@@ -45,28 +45,28 @@ impl<T: ListDataGetters> Full<T> {
 impl<T: ListDataGetters> FullRev<T> {
     pub fn new(data: Arc<Mutex<T>>) -> Self {
         let data_ref = data.lock().expect("poisoned");
-        let pos = Pos::new(
+        let loc = Loc::new(
             data_ref.lists().len().saturating_sub(1),
             data_ref.lists().last().map_or(0, Vec::len),
         );
         drop(data_ref);
-        Self(ListDataFullInner { data, pos })
+        Self(ListDataFullInner { data, loc })
     }
 }
 
 impl<T: ListDataGetters> ListDataIteratorMethods<T> for Full<T> {
     fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
         let data = self.0.data.lock().expect("poisoned");
-        let bound = &mut self.0.pos;
-        if bound.pos == data.lists().len() {
+        let loc = &mut self.0.loc;
+        if loc.pos == data.lists().len() {
             None
         } else {
-            let item = data.lists().loc(bound).clone_ref(py);
-            if bound.idx + 1 == data.lists().loc_len(bound) {
-                bound.pos += 1;
-                bound.idx = 0;
+            let item = data.lists().loc(loc).clone_ref(py);
+            if loc.idx + 1 == data.lists().loc_len(loc) {
+                loc.pos += 1;
+                loc.idx = 0;
             } else {
-                bound.idx += 1;
+                loc.idx += 1;
             }
             Some(item)
         }
@@ -76,16 +76,16 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for Full<T> {
 impl<T: ListDataGetters> ListDataIteratorMethods<T> for FullRev<T> {
     fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
         let data = self.0.data.lock().expect("poisoned");
-        let bound = &mut self.0.pos;
-        if bound.pos == 0 && bound.idx == 0 {
+        let loc = &mut self.0.loc;
+        if loc.pos == 0 && loc.idx == 0 {
             None
         } else {
-            if bound.idx == 0 {
-                bound.pos -= 1;
-                bound.idx = data.lists().loc_len(bound);
+            if loc.idx == 0 {
+                loc.pos -= 1;
+                loc.idx = data.lists().loc_len(loc);
             }
-            bound.idx -= 1;
-            Some(data.lists().loc(bound).clone_ref(py))
+            loc.idx -= 1;
+            Some(data.lists().loc(loc).clone_ref(py))
         }
     }
 }
@@ -97,12 +97,12 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for Bounded<T> {
         } else {
             let data = self.0.data.lock().expect("poisoned");
             let item = data.lists().loc(&self.0.bounds.min).clone_ref(py);
-            let bound = &mut self.0.bounds.min;
-            if bound.pos + 1 < data.lists().len() && bound.idx + 1 >= data.lists().loc_len(bound) {
-                bound.pos += 1;
-                bound.idx = 0;
+            let loc = &mut self.0.bounds.min;
+            if loc.pos + 1 < data.lists().len() && loc.idx + 1 >= data.lists().loc_len(loc) {
+                loc.pos += 1;
+                loc.idx = 0;
             } else {
-                bound.idx += 1;
+                loc.idx += 1;
             }
             Some(item)
         }
@@ -115,13 +115,13 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for BoundedRev<T> {
             None
         } else {
             let data = self.0.data.lock().expect("poisoned");
-            let bound = &mut self.0.bounds.max;
+            let loc = &mut self.0.bounds.max;
 
-            if bound.idx > 0 {
-                bound.idx -= 1;
+            if loc.idx > 0 {
+                loc.idx -= 1;
             } else {
-                bound.pos -= 1;
-                bound.idx = data.lists().loc_len(bound) - 1;
+                loc.pos -= 1;
+                loc.idx = data.lists().loc_len(loc) - 1;
             }
             Some(data.lists().loc(&self.0.bounds.max).clone_ref(py))
         }
