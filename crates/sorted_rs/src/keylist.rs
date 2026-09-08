@@ -54,16 +54,16 @@ impl ListsDataMethods for KeysListsData {
             ops::Maxes::LenEQPos(mut bound) => {
                 bound.pos -= 1;
                 let v = key.unbind();
-                self.lists_mut()[bound.pos].push(value);
-                self.1[bound.pos].push(v.clone_ref(py));
+                self.lists_mut().loc_push(&bound, value);
+                self.1.loc_push(&bound, v.clone_ref(py));
                 self.maxes_mut()[bound.pos] = v;
                 self.expand(py, bound.pos);
             }
             ops::Maxes::LenNEPos(mut bound) => {
                 let v = &self.1[bound.pos];
                 bound.idx = v.bisect_right(&key)?;
-                self.lists_mut()[bound.pos].insert(bound.idx, value);
-                self.1[bound.pos].insert(bound.idx, key.unbind());
+                self.lists_mut().loc_insert(&bound, value);
+                self.1.loc_insert(&bound, key.unbind());
                 self.expand(py, bound.pos);
             }
         }
@@ -108,10 +108,10 @@ impl ListsDataMethods for KeysListsData {
                 let mut len_sublist = first_sublist.len();
 
                 loop {
-                    if self.1.iloc(&bound).bind(py).ne(&key)? {
+                    if self.1.loc(&bound).bind(py).ne(&key)? {
                         return Ok(false);
                     }
-                    if self.lists().iloc(&bound).bind(py).eq(value)? {
+                    if self.lists().loc(&bound).bind(py).eq(value)? {
                         return Ok(true);
                     }
                     bound.idx += 1;
@@ -120,7 +120,7 @@ impl ListsDataMethods for KeysListsData {
                         if bound.pos == len_keys {
                             return Ok(false);
                         }
-                        len_sublist = self.1[bound.pos].len();
+                        len_sublist = self.1.loc_len(&bound);
                         bound.idx = 0;
                     }
                 }
@@ -141,10 +141,10 @@ impl ListsDataMethods for KeysListsData {
                 let len_keys = self.1.len();
                 let mut len_sublist = first_sublist.len();
                 loop {
-                    if self.1.iloc(&bound).bind(py).ne(&key)? {
+                    if self.1.loc(&bound).bind(py).ne(&key)? {
                         return Ok(total);
                     }
-                    if self.lists().iloc(&bound).bind(py).eq(value)? {
+                    if self.lists().loc(&bound).bind(py).eq(value)? {
                         total += 1;
                     }
                     bound.idx += 1;
@@ -153,7 +153,7 @@ impl ListsDataMethods for KeysListsData {
                         if bound.pos == len_keys {
                             return Ok(total);
                         }
-                        len_sublist = self.1[bound.pos].len();
+                        len_sublist = self.1.loc_len(&bound);
                         bound.idx = 0;
                     }
                 }
@@ -162,12 +162,12 @@ impl ListsDataMethods for KeysListsData {
     }
 
     fn delete(&mut self, py: Python<'_>, bounds: &mut Pos) -> PyResult<()> {
-        self.1[bounds.pos].remove(bounds.idx);
-        self.lists_mut()[bounds.pos].remove(bounds.idx);
+        self.1.loc_remove(bounds);
+        self.lists_mut().loc_remove(bounds);
         self.decrement_len();
         match ops::Delete::new(&self.1, self.load(), bounds) {
             ops::Delete::PosSupToLoad => {
-                let max_at_pos = self.1[bounds.pos].last().unwrap().clone_ref(py);
+                let max_at_pos = self.1.loc_last(bounds).clone_ref(py);
                 self.inner_mut().delete_on_idx(bounds, max_at_pos);
             }
             ops::Delete::DataLenGTOne => {
@@ -189,7 +189,7 @@ impl ListsDataMethods for KeysListsData {
                 self.expand(py, prev);
             }
             ops::Delete::LenPosNotZero => {
-                self.maxes_mut()[bounds.pos] = self.1[bounds.pos].last().unwrap().clone_ref(py);
+                self.maxes_mut()[bounds.pos] = self.1.loc_last(bounds).clone_ref(py);
             }
             ops::Delete::Other => {
                 self.inner_mut().remove_pos(bounds);
@@ -211,10 +211,10 @@ impl ListsDataMethods for KeysListsData {
                 let len_keys = self.1.len();
                 let mut len_sublist = first_sublist.len();
                 loop {
-                    if self.1.iloc(&bound).bind(py).ne(&key)? {
+                    if self.1.loc(&bound).bind(py).ne(&key)? {
                         return Ok(());
                     }
-                    if self.lists().iloc(&bound).bind(py).eq(&value)? {
+                    if self.lists().loc(&bound).bind(py).eq(&value)? {
                         return self.delete(py, &mut bound);
                     }
                     bound.idx += 1;
@@ -223,7 +223,7 @@ impl ListsDataMethods for KeysListsData {
                         if bound.pos == len_keys {
                             return Ok(());
                         }
-                        len_sublist = self.1[bound.pos].len();
+                        len_sublist = self.1.loc_len(&bound);
                         bound.idx = 0;
                     }
                 }
@@ -264,10 +264,10 @@ impl ListsDataMethods for KeysListsData {
         let mut len_sublist = v_left.len();
 
         loop {
-            if self.1.iloc(&bound).bind(py).ne(&key)? {
+            if self.1.loc(&bound).bind(py).ne(&key)? {
                 return errors::not_in_list_err(value);
             }
-            if self.lists().iloc(&bound).bind(py).eq(value)? {
+            if self.lists().loc(&bound).bind(py).eq(value)? {
                 let loc = self.inner_mut().loc(&bound);
                 if start <= loc && loc <= stop {
                     return Ok(loc);
@@ -281,7 +281,7 @@ impl ListsDataMethods for KeysListsData {
                 if bound.pos == len_keys {
                     return errors::not_in_list_err(value);
                 }
-                len_sublist = self.1[bound.pos].len();
+                len_sublist = self.1.loc_len(&bound);
                 bound.idx = 0;
             }
         }
@@ -320,10 +320,10 @@ impl ListsDataMethods for KeysListsData {
                 let mut len_sublist = first_sublist.len();
 
                 loop {
-                    if self.1.iloc(&bound).bind(py).ne(&key)? {
+                    if self.1.loc(&bound).bind(py).ne(&key)? {
                         return errors::not_in_list_err(value);
                     }
-                    if self.lists().iloc(&bound).bind(py).eq(value)? {
+                    if self.lists().loc(&bound).bind(py).eq(value)? {
                         return self.delete(py, &mut bound);
                     }
                     bound.idx += 1;
@@ -332,7 +332,7 @@ impl ListsDataMethods for KeysListsData {
                         if bound.pos == len_keys {
                             return errors::not_in_list_err(value);
                         }
-                        len_sublist = self.1[bound.pos].len();
+                        len_sublist = self.1.loc_len(&bound);
                         bound.idx = 0;
                     }
                 }

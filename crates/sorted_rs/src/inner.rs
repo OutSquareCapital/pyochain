@@ -147,7 +147,7 @@ impl InnerData {
             _ => {
                 self.set_pos(index, &mut bounds.min)?;
                 self.lists
-                    .iloc(&bounds.min)
+                    .loc(&bounds.min)
                     .clone_ref(py)
                     .into_bound(py)
                     .pipe(Ok)
@@ -181,7 +181,7 @@ impl InnerData {
                         .pipe(Ok),
                     (false, true) => {
                         bounds.max.pos = self.lists.len() - 1;
-                        bounds.max.idx = self.lists[bounds.max.pos].len();
+                        bounds.max.idx = self.lists.loc_len(&bounds.max);
                         get_slice(&self.lists, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()

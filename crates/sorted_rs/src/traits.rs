@@ -15,11 +15,31 @@ use pyo3::{
 };
 pub type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
 pub(super) trait NestedVec<T> {
-    fn iloc(&self, pos: &Pos) -> &T;
+    fn loc(&self, pos: &Pos) -> &T;
+    fn loc_insert(&mut self, pos: &Pos, value: T);
+    fn loc_remove(&mut self, pos: &Pos);
+    fn loc_push(&mut self, pos: &Pos, value: T);
+    fn loc_last(&self, pos: &Pos) -> &T;
+    fn loc_len(&self, pos: &Pos) -> usize;
 }
 impl<T> NestedVec<T> for [Vec<T>] {
-    fn iloc(&self, pos: &Pos) -> &T {
+    fn loc(&self, pos: &Pos) -> &T {
         &self[pos.pos][pos.idx]
+    }
+    fn loc_insert(&mut self, pos: &Pos, value: T) {
+        self[pos.pos].insert(pos.idx, value);
+    }
+    fn loc_remove(&mut self, pos: &Pos) {
+        self[pos.pos].remove(pos.idx);
+    }
+    fn loc_push(&mut self, pos: &Pos, value: T) {
+        self[pos.pos].push(value);
+    }
+    fn loc_last(&self, pos: &Pos) -> &T {
+        self[pos.pos].last().unwrap()
+    }
+    fn loc_len(&self, pos: &Pos) -> usize {
+        self[pos.pos].len()
     }
 }
 pub trait ListsDataMethods: InnerGetter + ListDataGetters {
@@ -121,7 +141,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         match index {
             -1 => {
                 bounds.pos = self.lists().len() - 1;
-                bounds.idx = self.lists()[bounds.pos].len() - 1_usize;
+                bounds.idx = self.lists().loc_len(&bounds) - 1_usize;
             }
             _ if 0 <= index && index < self.lists()[0].len().cast_signed() => {
                 bounds.idx = index.cast_unsigned();
@@ -134,7 +154,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
                 self.inner_mut().set_pos(index, &mut bounds)?;
             }
         }
-        let val = self.lists().iloc(&bounds).clone_ref(py);
+        let val = self.lists().loc(&bounds).clone_ref(py);
         self.delete(py, &mut bounds)?;
         Ok(val.into_bound(py))
     }

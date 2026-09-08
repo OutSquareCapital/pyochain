@@ -5,7 +5,7 @@
 
 use pyo3::prelude::*;
 
-use crate::{bisect::Bisect, bounds::Pos, errors, inner::InnerData};
+use crate::{bisect::Bisect, bounds::Pos, errors, inner::InnerData, traits::NestedVec};
 
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
 pub(super) enum Maxes {
@@ -73,7 +73,7 @@ impl Delete {
     #[inline(always)]
     #[must_use]
     pub fn new<T>(lists: &[Vec<T>], load: usize, bounds: &Pos) -> Self {
-        let len_pos = lists[bounds.pos].len();
+        let len_pos = lists.loc_len(bounds);
         if len_pos > (load >> 1) {
             Self::PosSupToLoad
         } else if lists.len() > 1 {

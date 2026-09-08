@@ -29,7 +29,7 @@ impl ListsData {
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(None),
             ops::Maxes::LenNEPos(mut bound) => {
                 bound.idx = self.lists()[bound.pos].bisect_left(value)?;
-                if self.lists().iloc(&bound).bind(value.py()).eq(value)? {
+                if self.lists().loc(&bound).bind(value.py()).eq(value)? {
                     Ok(Some(bound))
                 } else {
                     Ok(None)
@@ -59,7 +59,7 @@ impl ListsDataMethods for ListsData {
             }
             ops::Maxes::LenEQPos(mut bound) => {
                 bound.pos -= 1;
-                self.0.lists[bound.pos].push(value.clone_ref(py));
+                self.0.lists.loc_push(&bound, value.clone_ref(py));
                 self.0.maxes[bound.pos] = value;
                 self.expand(py, bound.pos);
             }
@@ -126,11 +126,11 @@ impl ListsDataMethods for ListsData {
     }
 
     fn delete(&mut self, py: Python<'_>, bounds: &mut Pos) -> PyResult<()> {
-        self.lists_mut()[bounds.pos].remove(bounds.idx);
+        self.lists_mut().loc_remove(bounds);
         self.decrement_len();
         match ops::Delete::new(self.lists(), self.load(), bounds) {
             ops::Delete::PosSupToLoad => {
-                let max_at_pos = self.lists()[bounds.pos].last().unwrap().clone_ref(py);
+                let max_at_pos = self.lists().loc_last(bounds).clone_ref(py);
                 self.inner_mut().delete_on_idx(bounds, max_at_pos);
             }
             ops::Delete::DataLenGTOne => {
@@ -148,8 +148,7 @@ impl ListsDataMethods for ListsData {
                 self.expand(py, prev);
             }
             ops::Delete::LenPosNotZero => {
-                self.maxes_mut()[bounds.pos] =
-                    self.lists()[bounds.pos].last().unwrap().clone_ref(py);
+                self.maxes_mut()[bounds.pos] = self.lists().loc_last(bounds).clone_ref(py);
             }
             ops::Delete::Other => self.inner_mut().remove_pos(bounds),
         }
@@ -187,7 +186,7 @@ impl ListsDataMethods for ListsData {
         let (mut bound, start, mut stop) =
             ops::Index::new(self.inner(), value, start, stop).into_res()?;
         bound.idx = self.lists()[bound.pos].bisect_left(value)?;
-        if self.lists().iloc(&bound).bind(py).ne(value)? {
+        if self.lists().loc(&bound).bind(py).ne(value)? {
             errors::not_in_list_err(value)
         } else {
             stop -= 1;

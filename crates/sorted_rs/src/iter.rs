@@ -61,8 +61,8 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for Full<T> {
         if bound.pos == data.lists().len() {
             None
         } else {
-            let item = data.lists().iloc(bound).clone_ref(py);
-            if bound.idx + 1 == data.lists()[bound.pos].len() {
+            let item = data.lists().loc(bound).clone_ref(py);
+            if bound.idx + 1 == data.lists().loc_len(bound) {
                 bound.pos += 1;
                 bound.idx = 0;
             } else {
@@ -82,10 +82,10 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for FullRev<T> {
         } else {
             if bound.idx == 0 {
                 bound.pos -= 1;
-                bound.idx = data.lists()[bound.pos].len();
+                bound.idx = data.lists().loc_len(bound);
             }
             bound.idx -= 1;
-            Some(data.lists().iloc(bound).clone_ref(py))
+            Some(data.lists().loc(bound).clone_ref(py))
         }
     }
 }
@@ -96,10 +96,9 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for Bounded<T> {
             None
         } else {
             let data = self.0.data.lock().expect("poisoned");
-            let item = data.lists().iloc(&self.0.bounds.min).clone_ref(py);
+            let item = data.lists().loc(&self.0.bounds.min).clone_ref(py);
             let bound = &mut self.0.bounds.min;
-            if bound.pos + 1 < data.lists().len() && bound.idx + 1 >= data.lists()[bound.pos].len()
-            {
+            if bound.pos + 1 < data.lists().len() && bound.idx + 1 >= data.lists().loc_len(bound) {
                 bound.pos += 1;
                 bound.idx = 0;
             } else {
@@ -122,9 +121,9 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for BoundedRev<T> {
                 bound.idx -= 1;
             } else {
                 bound.pos -= 1;
-                bound.idx = data.lists()[bound.pos].len() - 1;
+                bound.idx = data.lists().loc_len(bound) - 1;
             }
-            Some(data.lists().iloc(&self.0.bounds.max).clone_ref(py))
+            Some(data.lists().loc(&self.0.bounds.max).clone_ref(py))
         }
     }
 }
