@@ -4,7 +4,7 @@ use tap::Pipe;
 use crate::{
     ListDataGetters,
     bisect::Bisect,
-    bounds::{Bounds, Indexes, Pos},
+    bounds::{Bounds, Pos},
     cmp::py_cmp,
     errors, impl_inner_getter,
     inner::{InnerData, InnerGetter, VecPy},
@@ -24,7 +24,8 @@ impl ListsData {
     }
     #[inline]
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Pos>> {
-        match ops::Maxes::left(self.maxes(), value)? {
+        match ops::Maxes::left(self.maxes(), value) {
+            ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(None),
             ops::Maxes::LenNEPos(mut bound) => {
                 bound.idx = self.lists()[bound.pos].bisect_left(value)?;
@@ -50,7 +51,8 @@ impl ListsDataMethods for ListsData {
     }
 
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        match ops::Maxes::right(&self.0.maxes, value.bind(py))? {
+        match ops::Maxes::right(&self.0.maxes, value.bind(py)) {
+            ops::Maxes::BisectErr(err) => return Err(err),
             ops::Maxes::Empty => {
                 self.0.lists.push(vec![value.clone_ref(py)]);
                 self.0.maxes.push(value);
@@ -97,7 +99,8 @@ impl ListsDataMethods for ListsData {
         self.find(value).map(|x| x.is_some())
     }
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        match ops::Maxes::left(self.maxes(), value)? {
+        match ops::Maxes::left(self.maxes(), value) {
+            ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(0),
             ops::Maxes::LenNEPos(mut left) => {
                 let mut right = Pos::default();
@@ -181,42 +184,28 @@ impl ListsDataMethods for ListsData {
         stop: Option<isize>,
     ) -> PyResult<isize> {
         let py = value.py();
-        let length = self.length().cast_signed();
-        if length == 0 {
+        let (mut bound, start, mut stop) = ops::Index::new(self, value, start, stop).into_res()?;
+        bound.idx = self.lists()[bound.pos].bisect_left(value)?;
+        if self.lists().iloc(&bound).bind(py).ne(value)? {
             errors::not_in_list_err(value)
         } else {
-            let mut indexes = Indexes::new(start, stop, length);
-            if indexes.stop <= indexes.start {
-                errors::not_in_list_err(value)
+            stop -= 1;
+            let left = self.inner_mut().loc(&bound);
+            if start <= left {
+                if left <= stop {
+                    return Ok(left);
+                }
             } else {
-                let mut bound = self.maxes().bisect_left(value).map(Pos::with_pos)?;
-                if bound.pos == self.maxes().len() {
-                    errors::not_in_list_err(value)
-                } else {
-                    bound.idx = self.lists()[bound.pos].bisect_left(value)?;
-                    if self.lists().iloc(&bound).bind(py).ne(value)? {
-                        errors::not_in_list_err(value)
-                    } else {
-                        indexes.stop -= 1;
-                        let left = self.inner_mut().loc(&bound);
+                let right = self.bisect_right(value)? - 1;
 
-                        if indexes.start <= left {
-                            if left <= indexes.stop {
-                                return Ok(left);
-                            }
-                        } else {
-                            let right = self.bisect_right(value)? - 1;
-
-                            if indexes.start <= right {
-                                return Ok(indexes.start);
-                            }
-                        }
-                        errors::not_in_list_err(value)
-                    }
+                if start <= right {
+                    return Ok(start);
                 }
             }
+            errors::not_in_list_err(value)
         }
     }
+
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         match self.find(value)? {
             Some(mut bound) => self.delete(value.py(), &mut bound),

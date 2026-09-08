@@ -1,7 +1,7 @@
 use crate::{
     Bounds,
     bisect::Bisect,
-    bounds::{Indexes, Pos},
+    bounds::Pos,
     cmp::py_cmp_by_key,
     errors, impl_inner_getter,
     inner::{InnerData, InnerGetter, ListDataGetters, VecPy},
@@ -9,7 +9,7 @@ use crate::{
     traits::{ListsDataMethods, NestedVec, update_list_by},
 };
 use pyo3::prelude::*;
-use tap::Pipe;
+use tap::prelude::*;
 pub struct KeysListsData(InnerData, pub Vec<VecPy>, pub Py<PyAny>);
 
 impl KeysListsData {
@@ -40,7 +40,8 @@ impl ListsDataMethods for KeysListsData {
 
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
         let key = self.2.bind(py).call1((&value,))?;
-        match ops::Maxes::right(self.maxes(), &key)? {
+        match ops::Maxes::right(self.maxes(), &key) {
+            ops::Maxes::BisectErr(err) => return Err(err),
             ops::Maxes::Empty => {
                 self.lists_mut().push(vec![value]);
                 let v = key.unbind();
@@ -94,7 +95,8 @@ impl ListsDataMethods for KeysListsData {
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let key = self.2.bind(py).call1((&value,))?;
-        match ops::Maxes::left(self.maxes(), &key)? {
+        match ops::Maxes::left(self.maxes(), &key) {
+            ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(false),
             ops::Maxes::LenNEPos(mut bound) => {
                 let first_sublist = &self.1[bound.pos];
@@ -126,7 +128,8 @@ impl ListsDataMethods for KeysListsData {
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
         let key = self.2.bind(py).call1((value,))?;
-        match ops::Maxes::left(self.maxes(), &key)? {
+        match ops::Maxes::left(self.maxes(), &key) {
+            ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(0),
             ops::Maxes::LenNEPos(mut bound) => {
                 let first_sublist = &self.1[bound.pos];
@@ -196,7 +199,8 @@ impl ListsDataMethods for KeysListsData {
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let key = self.2.bind(py).call1((&value,))?;
-        match ops::Maxes::left(self.maxes(), &key)? {
+        match ops::Maxes::left(self.maxes(), &key) {
+            ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(()),
             ops::Maxes::LenNEPos(mut bound) => {
                 let first_sublist = &self.1[bound.pos];
@@ -247,48 +251,34 @@ impl ListsDataMethods for KeysListsData {
         stop: Option<isize>,
     ) -> PyResult<isize> {
         let py = value.py();
-        let length = self.length().cast_signed();
         let key = self.2.bind(py).call1((&value,))?;
-        if length == 0 {
-            errors::not_in_list_err(value)
-        } else {
-            let mut indexes = Indexes::new(start, stop, length);
-            if indexes.stop <= indexes.start {
-                errors::not_in_list_err(value)
-            } else {
-                let mut bound = self.maxes().bisect_left(&key).map(Pos::with_pos)?;
-                if bound.pos == self.maxes().len() {
-                    errors::not_in_list_err(value)
-                } else {
-                    indexes.stop -= 1;
-                    let v_left = &self.1[bound.pos];
-                    bound.idx = v_left.bisect_left(&key)?;
-                    let len_keys = self.1.len();
-                    let mut len_sublist = v_left.len();
+        let (mut bound, start, mut stop) = ops::Index::new(self, &key, start, stop).into_res()?;
+        stop -= 1;
+        let v_left = &self.1[bound.pos];
+        bound.idx = v_left.bisect_left(&key)?;
+        let len_keys = self.1.len();
+        let mut len_sublist = v_left.len();
 
-                    loop {
-                        if self.1.iloc(&bound).bind(py).ne(&key)? {
-                            return errors::not_in_list_err(value);
-                        }
-                        if self.lists().iloc(&bound).bind(py).eq(value)? {
-                            let loc = self.inner_mut().loc(&bound);
-                            if indexes.start <= loc && loc <= indexes.stop {
-                                return Ok(loc);
-                            } else if loc > indexes.stop {
-                                return errors::not_in_list_err(value);
-                            }
-                        }
-                        bound.idx += 1;
-                        if bound.idx == len_sublist {
-                            bound.pos += 1;
-                            if bound.pos == len_keys {
-                                return errors::not_in_list_err(value);
-                            }
-                            len_sublist = self.1[bound.pos].len();
-                            bound.idx = 0;
-                        }
-                    }
+        loop {
+            if self.1.iloc(&bound).bind(py).ne(&key)? {
+                return errors::not_in_list_err(value);
+            }
+            if self.lists().iloc(&bound).bind(py).eq(value)? {
+                let loc = self.inner_mut().loc(&bound);
+                if start <= loc && loc <= stop {
+                    return Ok(loc);
+                } else if loc > stop {
+                    return errors::not_in_list_err(value);
                 }
+            }
+            bound.idx += 1;
+            if bound.idx == len_sublist {
+                bound.pos += 1;
+                if bound.pos == len_keys {
+                    return errors::not_in_list_err(value);
+                }
+                len_sublist = self.1[bound.pos].len();
+                bound.idx = 0;
             }
         }
     }
@@ -316,7 +306,8 @@ impl ListsDataMethods for KeysListsData {
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let key = self.2.bind(py).call1((&value,))?;
-        match ops::Maxes::left(self.maxes(), &key)? {
+        match ops::Maxes::left(self.maxes(), &key) {
+            ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => errors::not_in_list_err(value),
             ops::Maxes::LenNEPos(mut bound) => {
                 let first_sublist = &self.1[bound.pos];

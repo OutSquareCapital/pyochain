@@ -5,19 +5,20 @@
 
 use pyo3::prelude::*;
 
-use crate::{bisect::Bisect, bounds::Pos};
+use crate::{ListsDataMethods, bisect::Bisect, bounds::Pos, errors};
 
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
 pub(super) enum Maxes {
     Empty,
     LenEQPos(Pos),
     LenNEPos(Pos),
+    BisectErr(PyErr),
 }
 impl Maxes {
-    pub fn left(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> PyResult<Self> {
+    pub fn left(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
         Self::new(maxes, value, Bisect::bisect_left)
     }
-    pub fn right(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> PyResult<Self> {
+    pub fn right(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
         Self::new(maxes, value, Bisect::bisect_right)
     }
     #[inline(always)]
@@ -25,17 +26,19 @@ impl Maxes {
         maxes: &[Py<PyAny>],
         value: &Bound<'_, PyAny>,
         func: F,
-    ) -> PyResult<Self> {
+    ) -> Self {
         if maxes.is_empty() {
-            Ok(Self::Empty)
+            Self::Empty
         } else {
-            func(maxes, value).map(Pos::with_pos).map(|bound| {
-                if bound.pos == maxes.len() {
-                    Self::LenEQPos(bound)
-                } else {
-                    Self::LenNEPos(bound)
-                }
-            })
+            func(maxes, value)
+                .map(Pos::with_pos)
+                .map_or_else(Self::BisectErr, |bound| {
+                    if bound.pos == maxes.len() {
+                        Self::LenEQPos(bound)
+                    } else {
+                        Self::LenNEPos(bound)
+                    }
+                })
         }
     }
 }
@@ -96,6 +99,57 @@ impl Update {
             Self::OtherGESelf
         } else {
             Self::OtherLTSelf
+        }
+    }
+}
+/// `Pos`, `start`, and `stop` bounds for a search in a sorted list.
+type IdxBounds = (Pos, isize, isize);
+pub(super) enum Index<'py, 'a> {
+    NotFound(&'a Bound<'py, PyAny>),
+    Empty(&'a Bound<'py, PyAny>),
+    InvalidRange(&'a Bound<'py, PyAny>),
+    BisectErr(PyErr),
+    Searchable(IdxBounds),
+}
+impl<'py, 'a> Index<'py, 'a> {
+    pub fn new<T: ListsDataMethods>(
+        data: &T,
+        value: &'a Bound<'py, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> Self {
+        let length = data.length().cast_signed();
+        if length == 0 {
+            Self::Empty(value)
+        } else {
+            let mut start = start.unwrap_or(0);
+            let mut stop = stop.unwrap_or(length);
+            if start < 0 {
+                start += length;
+            }
+            start = start.max(0);
+            if stop < 0 {
+                stop += length;
+            }
+            stop = stop.min(length);
+            if stop <= start {
+                Self::InvalidRange(value)
+            } else {
+                match data.maxes().bisect_left(value).map(Pos::with_pos) {
+                    Ok(bound) if bound.pos == data.maxes().len() => Self::NotFound(value),
+                    Ok(bound) => Self::Searchable((bound, start, stop)),
+                    Err(err) => Self::BisectErr(err),
+                }
+            }
+        }
+    }
+    pub fn into_res(self) -> PyResult<IdxBounds> {
+        match self {
+            Self::Searchable((bound, start, stop)) => Ok((bound, start, stop)),
+            Self::NotFound(value) | Self::Empty(value) | Self::InvalidRange(value) => {
+                errors::not_in_list_err(value)
+            }
+            Self::BisectErr(err) => Err(err),
         }
     }
 }
