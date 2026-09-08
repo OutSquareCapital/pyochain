@@ -22,21 +22,6 @@ impl ListsData {
         new_inst.update(py, values)?;
         Ok(new_inst)
     }
-    #[inline]
-    fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {
-        match ops::Maxes::left(self.maxes(), value) {
-            ops::Maxes::BisectErr(err) => Err(err),
-            ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(None),
-            ops::Maxes::LenNEPos(mut bound) => {
-                bound.idx = self.lists()[bound.pos].bisect_left(value)?;
-                if self.lists().loc(&bound).bind(value.py()).eq(value)? {
-                    Ok(Some(bound))
-                } else {
-                    Ok(None)
-                }
-            }
-        }
-    }
 }
 impl_inner_getter!(ListsData);
 impl ListsDataMethods for ListsData {
@@ -57,16 +42,16 @@ impl ListsDataMethods for ListsData {
                 self.0.lists.push(vec![value.clone_ref(py)]);
                 self.0.maxes.push(value);
             }
-            ops::Maxes::LenEQPos(mut bound) => {
-                bound.pos -= 1;
-                self.0.lists.loc_push(&bound, value.clone_ref(py));
-                self.0.maxes[bound.pos] = value;
-                self.expand(py, bound.pos);
+            ops::Maxes::LenEQPos(mut loc) => {
+                loc.pos -= 1;
+                self.0.lists.loc_push(&loc, value.clone_ref(py));
+                self.0.maxes[loc.pos] = value;
+                self.expand(py, loc.pos);
             }
-            ops::Maxes::LenNEPos(bound) => {
-                let res = self.0.lists[bound.pos].bisect_right(value.bind(py))?;
-                self.0.lists[bound.pos].insert(res, value.clone_ref(py));
-                self.expand(py, bound.pos);
+            ops::Maxes::LenNEPos(loc) => {
+                let res = self.0.lists[loc.pos].bisect_right(value.bind(py))?;
+                self.0.lists[loc.pos].insert(res, value.clone_ref(py));
+                self.expand(py, loc.pos);
             }
         }
         self.increment_len();
@@ -81,22 +66,19 @@ impl ListsDataMethods for ListsData {
         if self.maxes().is_empty() {
             Ok(0)
         } else {
-            let mut bound = Loc::new(0, 0);
-            bound.pos = func(self.maxes(), value)?;
-            if bound.pos == self.maxes().len() {
+            let mut loc = Loc::new(0, 0);
+            loc.pos = func(self.maxes(), value)?;
+            if loc.pos == self.maxes().len() {
                 Ok(self.length())
             } else {
-                bound.idx = func(&self.lists()[bound.pos], value)?;
-                Ok(self.inner_mut().loc(&bound))
+                loc.idx = func(&self.lists()[loc.pos], value)?;
+                Ok(self.inner_mut().loc(&loc))
             }
         }
     }
     #[inline]
     fn clear(&mut self) {
         self.0.clear();
-    }
-    fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.find(value).map(|x| x.is_some())
     }
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         match ops::Maxes::left(self.maxes(), value) {
@@ -154,14 +136,6 @@ impl ListsDataMethods for ListsData {
         }
         Ok(())
     }
-
-    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.find(&value)?
-            .map(|mut bound| self.delete(value.py(), &mut bound))
-            .transpose()
-            .map(|_| ())
-    }
-
     fn expand(&mut self, py: Python<'_>, pos: usize) {
         match ops::Expand::new(self.0.lists[pos].len(), self.0.load, &self.0.idx) {
             ops::Expand::PosLenGtLoad => {
@@ -183,14 +157,14 @@ impl ListsDataMethods for ListsData {
         stop: Option<isize>,
     ) -> PyResult<usize> {
         let py = value.py();
-        let (mut bound, start, mut stop) =
+        let (mut loc, start, mut stop) =
             ops::Index::new(self.inner(), value, start, stop).into_res()?;
-        bound.idx = self.lists()[bound.pos].bisect_left(value)?;
-        if self.lists().loc(&bound).bind(py).ne(value)? {
+        loc.idx = self.lists()[loc.pos].bisect_left(value)?;
+        if self.lists().loc(&loc).bind(py).ne(value)? {
             errors::not_in_list_err(value)
         } else {
             stop -= 1;
-            let left = self.inner_mut().loc(&bound);
+            let left = self.inner_mut().loc(&loc);
             if start <= left {
                 if left <= stop {
                     return Ok(left);
@@ -205,14 +179,21 @@ impl ListsDataMethods for ListsData {
             errors::not_in_list_err(value)
         }
     }
-
-    fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        match self.find(value)? {
-            Some(mut bound) => self.delete(value.py(), &mut bound),
-            None => errors::not_in_list_err(value),
+    #[inline]
+    fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {
+        match ops::Maxes::left(self.maxes(), value) {
+            ops::Maxes::BisectErr(err) => Err(err),
+            ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(None),
+            ops::Maxes::LenNEPos(mut loc) => {
+                loc.idx = self.lists()[loc.pos].bisect_left(value)?;
+                if self.lists().loc(&loc).bind(value.py()).eq(value)? {
+                    Ok(Some(loc))
+                } else {
+                    Ok(None)
+                }
+            }
         }
     }
-
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
         self.inner_mut().extend_lists(py, values);
         self.0

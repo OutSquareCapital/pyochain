@@ -4,6 +4,7 @@ use crate::{
     Bounds, Loc,
     bisect::Bisect,
     debug::check_list,
+    errors,
     inner::{InnerGetter, ListDataGetters, VecPy},
     ops,
 };
@@ -51,14 +52,13 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         inclusive: (bool, bool),
     ) -> PyResult<Option<Bounds>>;
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
-    fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
     fn clear(&mut self);
     fn check(&self, py: Python<'_>) -> PyResult<()> {
         check_list(self, py)
     }
     fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()>;
-    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()>;
     fn update(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()>;
     fn index(
@@ -68,7 +68,6 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         stop: Option<isize>,
     ) -> PyResult<usize>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()>;
     fn bisect(
         &mut self,
         value: &Bound<'_, PyAny>,
@@ -79,6 +78,9 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     }
     fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.bisect(value, Bisect::bisect_right)
+    }
+    fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+        self.find(value).map(|x| x.is_some())
     }
     fn del_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
         let length = self.length().cast_signed();
@@ -130,7 +132,10 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         self.inner_mut().set_pos(index, &mut bounds)?;
         self.delete(py, &mut bounds)
     }
-
+    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.find(&value)?
+            .map_or(Ok(()), |mut loc| self.delete(value.py(), &mut loc))
+    }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut bounds = Loc::default();
         if self.length() == 0 {
@@ -158,7 +163,12 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         self.delete(py, &mut bounds)?;
         Ok(val.into_bound(py))
     }
-
+    fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        match self.find(value)? {
+            Some(mut loc) => self.delete(value.py(), &mut loc),
+            None => errors::not_in_list_err(value),
+        }
+    }
     fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
         let values = self.inner().collapse(py);
         self.clear();
