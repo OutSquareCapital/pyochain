@@ -97,11 +97,11 @@ impl SortedKeySet {
     fn get_key(&self, py: Python<'_>) -> Py<PyAny> {
         self.try_lock().2.clone_ref(py)
     }
-    fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().bisect_left(key)
     }
 
-    fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().bisect_right(key)
     }
 }

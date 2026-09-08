@@ -103,7 +103,7 @@ impl Update {
     }
 }
 /// `Pos`, `start`, and `stop` bounds for a search in a sorted list.
-type IdxBounds = (Pos, isize, isize);
+type IdxBounds = (Pos, usize, usize);
 pub(super) enum Index<'py, 'a> {
     NotFound(&'a Bound<'py, PyAny>),
     Empty(&'a Bound<'py, PyAny>),
@@ -137,7 +137,9 @@ impl<'py, 'a> Index<'py, 'a> {
             } else {
                 match data.maxes.bisect_left(value).map(Pos::with_pos) {
                     Ok(bound) if bound.pos == data.maxes.len() => Self::NotFound(value),
-                    Ok(bound) => Self::Searchable((bound, start, stop)),
+                    Ok(bound) => {
+                        Self::Searchable((bound, start.cast_unsigned(), stop.cast_unsigned()))
+                    }
                     Err(err) => Self::BisectErr(err),
                 }
             }

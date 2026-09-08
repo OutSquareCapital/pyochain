@@ -46,18 +46,18 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         value: &Bound<'_, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
-    ) -> PyResult<isize>;
+    ) -> PyResult<usize>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()>;
     fn bisect(
         &mut self,
         value: &Bound<'_, PyAny>,
         func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
-    ) -> PyResult<isize>;
-    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+    ) -> PyResult<usize>;
+    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.bisect(value, Bisect::bisect_left)
     }
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.bisect(value, Bisect::bisect_right)
     }
     fn del_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {

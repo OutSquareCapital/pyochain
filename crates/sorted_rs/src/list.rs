@@ -77,14 +77,14 @@ impl ListsDataMethods for ListsData {
         &mut self,
         value: &Bound<'_, PyAny>,
         func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
-    ) -> PyResult<isize> {
+    ) -> PyResult<usize> {
         if self.maxes().is_empty() {
             Ok(0)
         } else {
             let mut bound = Pos::new(0, 0);
             bound.pos = func(self.maxes(), value)?;
             if bound.pos == self.maxes().len() {
-                Ok(self.length().cast_signed())
+                Ok(self.length())
             } else {
                 bound.idx = func(&self.lists()[bound.pos], value)?;
                 Ok(self.inner_mut().loc(&bound))
@@ -109,7 +109,7 @@ impl ListsDataMethods for ListsData {
 
                 if right.pos == self.maxes().len() {
                     let left_loc = self.inner_mut().loc(&left);
-                    Ok(self.length() - left_loc.cast_unsigned())
+                    Ok(self.length() - left_loc)
                 } else {
                     right.idx = self.lists()[right.pos].bisect_right(value)?;
 
@@ -118,7 +118,7 @@ impl ListsDataMethods for ListsData {
                     } else {
                         let right_loc = self.inner_mut().loc(&right);
                         let left_loc = self.inner_mut().loc(&left);
-                        Ok((right_loc - left_loc).cast_unsigned())
+                        Ok(right_loc - left_loc)
                     }
                 }
             }
@@ -182,7 +182,7 @@ impl ListsDataMethods for ListsData {
         value: &Bound<'_, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
-    ) -> PyResult<isize> {
+    ) -> PyResult<usize> {
         let py = value.py();
         let (mut bound, start, mut stop) =
             ops::Index::new(self.inner(), value, start, stop).into_res()?;

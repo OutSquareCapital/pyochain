@@ -38,10 +38,10 @@ impl SortedKeyList {
         slf.init().pipe(Ok)
     }
 
-    pub(super) fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
+    pub(super) fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().bisect_left(key)
     }
-    pub(super) fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
+    pub(super) fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().bisect_right(key)
     }
 }
@@ -59,13 +59,13 @@ impl SortedCollection for SortedKeyList {
         self.try_lock().contains(value)
     }
 
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let mut data = self.try_lock();
         let key = data.2.bind(value.py()).call1((value,))?;
         data.bisect_left(&key)
     }
 
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let mut data = self.try_lock();
         let key = data.2.bind(value.py()).call1((value,))?;
         data.bisect_right(&key)
@@ -78,7 +78,7 @@ impl SortedCollection for SortedKeyList {
         value: Bound<'_, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
-    ) -> PyResult<isize> {
+    ) -> PyResult<usize> {
         self.try_lock().index(&value, start, stop)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {

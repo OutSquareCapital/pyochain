@@ -48,8 +48,8 @@ pub(super) trait SortedCollection:
 {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py>;
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
         &self,
@@ -98,7 +98,7 @@ pub(super) trait SortedCollection:
         value: Bound<'_, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
-    ) -> PyResult<isize>;
+    ) -> PyResult<usize>;
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()>;
     fn clear(&self, py: Python<'_>);
 }
@@ -706,11 +706,11 @@ macro_rules! impl_sorted_collection_for_set {
                     .map(|tup| (Self::type_object(py), tup))
             }
 
-            fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+            fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
                 self.try_lock().bisect_left(value)
             }
 
-            fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+            fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
                 self.try_lock().bisect_right(value)
             }
 
@@ -719,7 +719,7 @@ macro_rules! impl_sorted_collection_for_set {
                 value: Bound<'_, PyAny>,
                 start: Option<isize>,
                 stop: Option<isize>,
-            ) -> PyResult<isize> {
+            ) -> PyResult<usize> {
                 self.try_lock().index(&value, start, stop)
             }
             fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {

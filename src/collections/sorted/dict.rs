@@ -134,11 +134,11 @@ impl SortedKeyDict {
         self.try_lock().2.clone_ref(py)
     }
 
-    fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().bisect_left(key)
     }
 
-    fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().bisect_right(key)
     }
 }
@@ -191,11 +191,11 @@ impl SortedCollection for SortedDict {
         self.get_dict().bind(value.py()).contains(value)
     }
 
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().bisect_left(value)
     }
 
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().bisect_right(value)
     }
     fn index(
@@ -203,7 +203,7 @@ impl SortedCollection for SortedDict {
         value: Bound<'_, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
-    ) -> PyResult<isize> {
+    ) -> PyResult<usize> {
         self.try_lock().index(&value, start, stop)
     }
 
@@ -230,14 +230,14 @@ impl SortedCollection for SortedKeyDict {
         self.get_dict().bind(value.py()).contains(value)
     }
 
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
         let mut data = self.try_lock();
         let key = data.2.bind(py).call1((value,))?;
         data.bisect_left(&key)
     }
 
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
         let mut data = self.try_lock();
         let key = data.2.bind(py).call1((value,))?;
@@ -248,7 +248,7 @@ impl SortedCollection for SortedKeyDict {
         value: Bound<'_, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
-    ) -> PyResult<isize> {
+    ) -> PyResult<usize> {
         self.try_lock().index(&value, start, stop)
     }
 

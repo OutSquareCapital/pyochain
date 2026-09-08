@@ -64,9 +64,9 @@ impl InnerData {
             .collect()
     }
 
-    pub fn loc(&mut self, pos: &Pos) -> isize {
+    pub fn loc(&mut self, pos: &Pos) -> usize {
         if pos.pos == 0 {
-            pos.idx.cast_signed()
+            pos.idx
         } else {
             if self.idx.is_empty() {
                 self.build_index();
@@ -81,7 +81,7 @@ impl InnerData {
                     // account the total below the left child node.
 
                     if i.is_multiple_of(2) {
-                        total += idx[i - 1].cast_signed();
+                        total += idx[i - 1];
                     }
 
                     // Advance pos to the parent node.
@@ -91,7 +91,7 @@ impl InnerData {
                 total
             });
 
-            total + pos.idx.cast_signed()
+            total + pos.idx
         }
     }
 
