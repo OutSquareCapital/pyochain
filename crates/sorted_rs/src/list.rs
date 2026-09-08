@@ -2,7 +2,8 @@ use pyo3::prelude::*;
 use tap::Pipe;
 
 use crate::{
-    ListDataGetters, bisect,
+    ListDataGetters,
+    bisect::Bisect,
     bounds::{Bounds, Indexes, Pos},
     cmp::py_cmp,
     errors, impl_inner_getter,
@@ -24,10 +25,10 @@ impl ListsData {
     #[inline]
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Pos>> {
         let mut bound = Pos::default();
-        match ops::Maxes::new(self.maxes(), &mut bound, value, bisect::left)? {
+        match ops::Maxes::left(self.maxes(), &mut bound, value)? {
             ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(None),
             ops::Maxes::LenNEPos => {
-                bound.idx = bisect::left(&self.lists()[bound.pos], value)?;
+                bound.idx = self.lists()[bound.pos].bisect_left(value)?;
                 if self.inner().get_value(&bound).bind(value.py()).eq(value)? {
                     Ok(Some(bound))
                 } else {
@@ -51,7 +52,7 @@ impl ListsDataMethods for ListsData {
 
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
         let mut bound = Pos::default();
-        match ops::Maxes::new(&self.0.maxes, &mut bound, value.bind(py), bisect::right)? {
+        match ops::Maxes::right(&self.0.maxes, &mut bound, value.bind(py))? {
             ops::Maxes::Empty => {
                 self.0.lists.push(vec![value.clone_ref(py)]);
                 self.0.maxes.push(value);
@@ -63,7 +64,7 @@ impl ListsDataMethods for ListsData {
                 self.expand(py, bound.pos);
             }
             ops::Maxes::LenNEPos => {
-                let res = bisect::right(&self.0.lists[bound.pos], value.bind(py))?;
+                let res = self.0.lists[bound.pos].bisect_right(value.bind(py))?;
                 self.0.lists[bound.pos].insert(res, value.clone_ref(py));
                 self.expand(py, bound.pos);
             }
@@ -99,18 +100,18 @@ impl ListsDataMethods for ListsData {
     }
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let mut left = Pos::default();
-        match ops::Maxes::new(self.maxes(), &mut left, value, bisect::left)? {
+        match ops::Maxes::left(self.maxes(), &mut left, value)? {
             ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(0),
             ops::Maxes::LenNEPos => {
                 let mut right = Pos::default();
-                left.idx = bisect::left(&self.lists()[left.pos], value)?;
-                right.pos = bisect::right(self.maxes(), value)?;
+                left.idx = self.lists()[left.pos].bisect_left(value)?;
+                right.pos = self.maxes().bisect_right(value)?;
 
                 if right.pos == self.maxes().len() {
                     let left_loc = self.inner_mut().loc(&left);
                     Ok(self.length() - left_loc.cast_unsigned())
                 } else {
-                    right.idx = bisect::right(&self.lists()[right.pos], value)?;
+                    right.idx = self.lists()[right.pos].bisect_right(value)?;
 
                     if left.pos == right.pos {
                         Ok(right.idx - left.idx)
@@ -193,13 +194,13 @@ impl ListsDataMethods for ListsData {
                 errors::not_in_list_err(value)
             } else {
                 let mut bound = Pos {
-                    pos: bisect::left(self.maxes(), value)?,
+                    pos: self.maxes().bisect_left(value)?,
                     idx: 0,
                 };
                 if bound.pos == self.maxes().len() {
                     errors::not_in_list_err(value)
                 } else {
-                    bound.idx = bisect::left(&self.lists()[bound.pos], value)?;
+                    bound.idx = self.lists()[bound.pos].bisect_left(value)?;
                     if self.inner().get_value(&bound).bind(py).ne(value)? {
                         errors::not_in_list_err(value)
                     } else {

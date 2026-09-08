@@ -5,17 +5,23 @@
 
 use pyo3::prelude::*;
 
-use crate::bounds::Pos;
+use crate::{bisect::Bisect, bounds::Pos};
 
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
-pub enum Maxes {
+pub(super) enum Maxes {
     Empty,
     LenEQPos,
     LenNEPos,
 }
 impl Maxes {
+    pub fn left(maxes: &[Py<PyAny>], bound: &mut Pos, value: &Bound<'_, PyAny>) -> PyResult<Self> {
+        Self::new(maxes, bound, value, Bisect::bisect_left)
+    }
+    pub fn right(maxes: &[Py<PyAny>], bound: &mut Pos, value: &Bound<'_, PyAny>) -> PyResult<Self> {
+        Self::new(maxes, bound, value, Bisect::bisect_right)
+    }
     #[inline(always)]
-    pub fn new<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
+    fn new<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
         maxes: &[Py<PyAny>],
         bound: &mut Pos,
         value: &Bound<'_, PyAny>,

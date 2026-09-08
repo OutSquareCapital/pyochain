@@ -1,6 +1,6 @@
 use pyo3::prelude::*;
 
-use crate::{bisect, inner::VecPy};
+use crate::{bisect::Bisect, inner::VecPy};
 
 pub struct Indexes {
     pub start: isize,
@@ -57,71 +57,68 @@ impl Bounds {
         inclusive: (bool, bool),
     ) -> PyResult<Option<Bounds>> {
         if maxes.is_empty() {
-            return Ok(None);
-        }
-
-        let min = match minimum {
-            None => Pos::default(),
-            Some(minimum) => {
-                if inclusive.0 {
-                    let min_pos = bisect::left(maxes, &minimum)?;
-
-                    if min_pos == maxes.len() {
-                        return Ok(None);
-                    }
-
-                    let min_idx = bisect::left(&lists[min_pos], &minimum)?;
-                    Pos::new(min_pos, min_idx)
-                } else {
-                    let min_pos = bisect::right(maxes, &minimum)?;
-
-                    if min_pos == maxes.len() {
-                        return Ok(None);
-                    }
-
-                    let min_idx = bisect::right(&lists[min_pos], &minimum)?;
-                    Pos::new(min_pos, min_idx)
-                }
-            }
-        };
-
-        // Calculate the maximum (pos, idx) pair. By default this location
-        // will be exclusive in our calculation.
-        let max = maximum.map_or_else(
-            || {
-                let max_pos = maxes.len() - 1;
-                let max_idx = lists[max_pos].len();
-                Ok(Pos::new(max_pos, max_idx))
-            },
-            |m| {
-                if inclusive.1 {
-                    let mut max_pos = bisect::right(maxes, &m)?;
-
-                    let max_idx = if max_pos == maxes.len() {
-                        max_pos -= 1;
-                        lists[max_pos].len()
-                    } else {
-                        bisect::right(&lists[max_pos], &m)?
-                    };
-                    Ok::<_, PyErr>(Pos::new(max_pos, max_idx))
-                } else {
-                    let mut max_pos = bisect::left(maxes, &m)?;
-
-                    let max_idx = if max_pos == maxes.len() {
-                        max_pos -= 1;
-                        lists[max_pos].len()
-                    } else {
-                        bisect::left(&lists[max_pos], &m)?
-                    };
-                    Ok(Pos::new(max_pos, max_idx))
-                }
-            },
-        )?;
-
-        if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
             Ok(None)
         } else {
-            Ok(Some(Bounds { min, max }))
+            let min = match minimum {
+                None => Pos::default(),
+                Some(minimum) => {
+                    if inclusive.0 {
+                        let min_pos = maxes.bisect_left(&minimum)?;
+
+                        if min_pos == maxes.len() {
+                            return Ok(None);
+                        }
+                        let min_idx = lists[min_pos].bisect_left(&minimum)?;
+                        Pos::new(min_pos, min_idx)
+                    } else {
+                        let min_pos = maxes.bisect_right(&minimum)?;
+                        if min_pos == maxes.len() {
+                            return Ok(None);
+                        }
+                        let min_idx = lists[min_pos].bisect_right(&minimum)?;
+                        Pos::new(min_pos, min_idx)
+                    }
+                }
+            };
+
+            // Calculate the maximum (pos, idx) pair. By default this location
+            // will be exclusive in our calculation.
+            let max = maximum.map_or_else(
+                || {
+                    let max_pos = maxes.len() - 1;
+                    let max_idx = lists[max_pos].len();
+                    Ok(Pos::new(max_pos, max_idx))
+                },
+                |m| {
+                    if inclusive.1 {
+                        let mut max_pos = maxes.bisect_right(&m)?;
+
+                        let max_idx = if max_pos == maxes.len() {
+                            max_pos -= 1;
+                            lists[max_pos].len()
+                        } else {
+                            lists[max_pos].bisect_right(&m)?
+                        };
+                        Ok::<_, PyErr>(Pos::new(max_pos, max_idx))
+                    } else {
+                        let mut max_pos = maxes.bisect_left(&m)?;
+
+                        let max_idx = if max_pos == maxes.len() {
+                            max_pos -= 1;
+                            lists[max_pos].len()
+                        } else {
+                            lists[max_pos].bisect_left(&m)?
+                        };
+                        Ok(Pos::new(max_pos, max_idx))
+                    }
+                },
+            )?;
+
+            if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
+                Ok(None)
+            } else {
+                Ok(Some(Bounds { min, max }))
+            }
         }
     }
 }

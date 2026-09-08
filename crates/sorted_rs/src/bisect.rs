@@ -1,14 +1,20 @@
 /// Module for bisect functions, adapted from the Python standard library's bisect module.\
 use pyo3::prelude::*;
-#[inline]
-pub fn right(lst: &[Py<PyAny>], item: &Bound<'_, PyAny>) -> PyResult<usize> {
-    let py = item.py();
-    resolve(lst.len(), |mid| item.lt(lst[mid].bind(py)))
+pub(super) trait Bisect {
+    fn bisect_left(&self, item: &Bound<'_, PyAny>) -> PyResult<usize>;
+    fn bisect_right(&self, item: &Bound<'_, PyAny>) -> PyResult<usize>;
 }
-#[inline]
-pub fn left(lst: &[Py<PyAny>], item: &Bound<'_, PyAny>) -> PyResult<usize> {
-    let py = item.py();
-    resolve(lst.len(), |mid| Ok(!lst[mid].bind(py).lt(item)?))
+impl Bisect for [Py<PyAny>] {
+    #[inline]
+    fn bisect_left(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
+        let py = item.py();
+        resolve(self.len(), |mid| item.lt(self[mid].bind(py)))
+    }
+    #[inline]
+    fn bisect_right(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
+        let py = item.py();
+        resolve(self.len(), |mid| Ok(!self[mid].bind(py).lt(item)?))
+    }
 }
 
 #[inline(always)]
