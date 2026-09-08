@@ -198,21 +198,21 @@ impl ListsDataMethods for KeysListsData {
 
         loop {
             if self.1.loc(&loc).bind(py).ne(&key)? {
-                return errors::not_in_list_err(value);
+                return Err(errors::not_in_list(&value.repr()?));
             }
             if self.lists().loc(&loc).bind(py).eq(value)? {
                 let loc = self.inner_mut().loc(&loc);
                 if start <= loc && loc <= stop {
                     return Ok(loc);
                 } else if loc > stop {
-                    return errors::not_in_list_err(value);
+                    return Err(errors::not_in_list(&value.repr()?));
                 }
             }
             loc.idx += 1;
             if loc.idx == len_sublist {
                 loc.pos += 1;
                 if loc.pos == len_keys {
-                    return errors::not_in_list_err(value);
+                    return Err(errors::not_in_list(&value.repr()?));
                 }
                 len_sublist = self.1.loc_len(&loc);
                 loc.idx = 0;

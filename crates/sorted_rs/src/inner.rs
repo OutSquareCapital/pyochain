@@ -327,10 +327,10 @@ impl InnerData {
             idx += self.len.cast_signed();
 
             if idx < 0 {
-                return errors::out_of_range_err();
+                return Err(errors::out_of_range());
             }
         } else if idx >= self.len.cast_signed() {
-            return errors::out_of_range_err();
+            return Err(errors::out_of_range());
         }
 
         if idx < self.lists[0].len().cast_signed() {

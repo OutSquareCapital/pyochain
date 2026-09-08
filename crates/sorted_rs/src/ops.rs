@@ -149,7 +149,7 @@ impl<'py, 'a> Index<'py, 'a> {
         match self {
             Self::Searchable((bound, start, stop)) => Ok((bound, start, stop)),
             Self::NotFound(value) | Self::Empty(value) | Self::InvalidRange(value) => {
-                errors::not_in_list_err(value)
+                Err(errors::not_in_list(&value.repr()?))
             }
             Self::BisectErr(err) => Err(err),
         }

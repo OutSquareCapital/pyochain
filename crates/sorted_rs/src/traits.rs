@@ -173,7 +173,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         match self.find(value)? {
             Some(mut loc) => self.delete(value.py(), &mut loc),
-            None => errors::not_in_list_err(value),
+            None => Err(errors::not_in_list(&value.repr()?)),
         }
     }
     fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {

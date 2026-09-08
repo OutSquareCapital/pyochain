@@ -161,7 +161,7 @@ impl ListsDataMethods for ListsData {
             ops::Index::new(self.inner(), value, start, stop).into_res()?;
         loc.idx = self.lists()[loc.pos].bisect_left(value)?;
         if self.lists().loc(&loc).bind(py).ne(value)? {
-            errors::not_in_list_err(value)
+            Err(errors::not_in_list(&value.repr()?))
         } else {
             stop -= 1;
             let left = self.inner_mut().loc(&loc);
@@ -176,7 +176,7 @@ impl ListsDataMethods for ListsData {
                     return Ok(start);
                 }
             }
-            errors::not_in_list_err(value)
+            Err(errors::not_in_list(&value.repr()?))
         }
     }
     #[inline]
