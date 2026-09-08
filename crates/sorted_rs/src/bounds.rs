@@ -2,7 +2,7 @@ use pyo3::prelude::*;
 
 use crate::{bisect::Bisect, inner::VecPy};
 
-#[derive(PartialEq, Eq, Default)]
+#[derive(PartialEq, Eq, Default, Clone, Copy)]
 pub struct Pos {
     pub pos: usize,
     pub idx: usize,
