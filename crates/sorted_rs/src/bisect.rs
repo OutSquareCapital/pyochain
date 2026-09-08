@@ -1,12 +1,5 @@
 /// Module for bisect functions, adapted from the Python standard library's bisect module.\
-/// Adapted to only handle `pyochain::PyoVec` for both simplicity and performance.
 use pyo3::prelude::*;
-/// The following documentation and code is adapted from the Python standard library's bisect module.
-///Return the index where to insert item x in list a, assuming a is sorted.\
-///The return value i is such that all e in a[:i] have e <= x, and all e in
-///a[i:] have e > x.  So if x already appears in the list, a.insert(i, x) will
-///insert just after the rightmost x already there.
-///Optional args lo (default 0) and hi (default len(a)) bound the slice of a to be searched.
 #[inline]
 pub fn right(lst: &[Py<PyAny>], item: &Bound<'_, PyAny>) -> PyResult<usize> {
     let py = item.py();
