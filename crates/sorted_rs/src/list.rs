@@ -24,10 +24,9 @@ impl ListsData {
     }
     #[inline]
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Pos>> {
-        let mut bound = Pos::default();
-        match ops::Maxes::left(self.maxes(), &mut bound, value)? {
-            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(None),
-            ops::Maxes::LenNEPos => {
+        match ops::Maxes::left(self.maxes(), value)? {
+            ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(None),
+            ops::Maxes::LenNEPos(mut bound) => {
                 bound.idx = self.lists()[bound.pos].bisect_left(value)?;
                 if self.lists().iloc(&bound).bind(value.py()).eq(value)? {
                     Ok(Some(bound))
@@ -51,19 +50,18 @@ impl ListsDataMethods for ListsData {
     }
 
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        let mut bound = Pos::default();
-        match ops::Maxes::right(&self.0.maxes, &mut bound, value.bind(py))? {
+        match ops::Maxes::right(&self.0.maxes, value.bind(py))? {
             ops::Maxes::Empty => {
                 self.0.lists.push(vec![value.clone_ref(py)]);
                 self.0.maxes.push(value);
             }
-            ops::Maxes::LenEQPos => {
+            ops::Maxes::LenEQPos(mut bound) => {
                 bound.pos -= 1;
                 self.0.lists[bound.pos].push(value.clone_ref(py));
                 self.0.maxes[bound.pos] = value;
                 self.expand(py, bound.pos);
             }
-            ops::Maxes::LenNEPos => {
+            ops::Maxes::LenNEPos(bound) => {
                 let res = self.0.lists[bound.pos].bisect_right(value.bind(py))?;
                 self.0.lists[bound.pos].insert(res, value.clone_ref(py));
                 self.expand(py, bound.pos);
@@ -99,10 +97,9 @@ impl ListsDataMethods for ListsData {
         self.find(value).map(|x| x.is_some())
     }
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let mut left = Pos::default();
-        match ops::Maxes::left(self.maxes(), &mut left, value)? {
-            ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(0),
-            ops::Maxes::LenNEPos => {
+        match ops::Maxes::left(self.maxes(), value)? {
+            ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(0),
+            ops::Maxes::LenNEPos(mut left) => {
                 let mut right = Pos::default();
                 left.idx = self.lists()[left.pos].bisect_left(value)?;
                 right.pos = self.maxes().bisect_right(value)?;

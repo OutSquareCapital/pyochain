@@ -10,32 +10,32 @@ use crate::{bisect::Bisect, bounds::Pos};
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
 pub(super) enum Maxes {
     Empty,
-    LenEQPos,
-    LenNEPos,
+    LenEQPos(Pos),
+    LenNEPos(Pos),
 }
 impl Maxes {
-    pub fn left(maxes: &[Py<PyAny>], bound: &mut Pos, value: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Self::new(maxes, bound, value, Bisect::bisect_left)
+    pub fn left(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> PyResult<Self> {
+        Self::new(maxes, value, Bisect::bisect_left)
     }
-    pub fn right(maxes: &[Py<PyAny>], bound: &mut Pos, value: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Self::new(maxes, bound, value, Bisect::bisect_right)
+    pub fn right(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> PyResult<Self> {
+        Self::new(maxes, value, Bisect::bisect_right)
     }
     #[inline(always)]
     fn new<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
         maxes: &[Py<PyAny>],
-        bound: &mut Pos,
         value: &Bound<'_, PyAny>,
         func: F,
     ) -> PyResult<Self> {
         if maxes.is_empty() {
             Ok(Self::Empty)
         } else {
-            bound.pos = func(maxes, value)?;
-            if bound.pos == maxes.len() {
-                Ok(Self::LenEQPos)
-            } else {
-                Ok(Self::LenNEPos)
-            }
+            func(maxes, value).map(Pos::with_pos).map(|bound| {
+                if bound.pos == maxes.len() {
+                    Self::LenEQPos(bound)
+                } else {
+                    Self::LenNEPos(bound)
+                }
+            })
         }
     }
 }
