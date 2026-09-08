@@ -91,17 +91,17 @@ class Deque[T](PyoMutableSequence[T], ArgsWrapper[T]):
 
     @override
     # pyrefly: ignore [bad-override]
-    def __getitem__(self, key: SupportsIndex, /) -> T:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __getitem__(self, key: SupportsIndex, /) -> T:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return self[key]."""
 
     @override
     # pyrefly: ignore [bad-override]
-    def __setitem__(self, key: SupportsIndex, value: T, /) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __setitem__(self, key: SupportsIndex, value: T, /) -> None:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Set self[key] to value."""
 
     @override
     # pyrefly: ignore [bad-override]
-    def __delitem__(self, key: SupportsIndex, /) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __delitem__(self, key: SupportsIndex, /) -> None:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Delete self[key]."""
 
     @override
@@ -161,7 +161,7 @@ class Deque[T](PyoMutableSequence[T], ArgsWrapper[T]):
     ) -> Deque[T1]: ...
     @override
     @staticmethod
-    def wrap[T1](data: deque[T1]) -> Deque[T1]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def wrap[T1](data: deque[T1]) -> Deque[T1]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     def append(self, x: T, /) -> None: ...
     def append_left(self, x: T, /) -> None:
@@ -269,6 +269,6 @@ class Deque[T](PyoMutableSequence[T], ArgsWrapper[T]):
     def index(self, x: T, start: int = 0, stop: int = ..., /) -> int: ...
     @override
     # pyrefly: ignore [bad-override]
-    def pop(self) -> T: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def pop(self) -> T: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     def remove(self, value: T, /) -> None: ...

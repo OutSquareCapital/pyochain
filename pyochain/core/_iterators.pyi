@@ -102,7 +102,7 @@ class Iter[T](PyoIterator[T], ArgsWrapper[T]):
     def of[I](*elements: I) -> Iter[I]: ...
     @override
     @staticmethod
-    def wrap[W](wrapped: Iterator[W], /) -> Iter[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def wrap[W](wrapped: Iterator[W], /) -> Iter[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
 
 @final
 class Peekable[T](PyoIterator[T]):

@@ -49,7 +49,7 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
 
     @override
     # pyrefly: ignore [bad-override]
-    def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         self,
     ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]: ...
     @property

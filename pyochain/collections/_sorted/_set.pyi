@@ -4,7 +4,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from collections.abc import Set as AbstractSet
-from types import NotImplementedType
 from typing import Any, Final, Self, final, overload, override
 
 from pyochain import SetMut, Vec
@@ -116,25 +115,17 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         """
 
     @override
-    def __eq__(self, other: object) -> bool | NotImplementedType: ...
+    def __eq__(self, other: object) -> bool: ...
     @override
-    def __ne__(self, other: object) -> bool | NotImplementedType: ...
+    def __ne__(self, other: object) -> bool: ...
     @override
-    def __lt__(
-        self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType: ...
+    def __lt__(self, other: AbstractSet[object] | Self | object) -> bool: ...
     @override
-    def __gt__(
-        self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType: ...
+    def __gt__(self, other: AbstractSet[object] | Self | object) -> bool: ...
     @override
-    def __le__(
-        self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType: ...
+    def __le__(self, other: AbstractSet[object] | Self | object) -> bool: ...
     @override
-    def __ge__(
-        self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType: ...
+    def __ge__(self, other: AbstractSet[object] | Self | object) -> bool: ...
     @override
     def __len__(self) -> int:
         """Return the size of the sorted set.
@@ -193,7 +184,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
     @override
     @abstractmethod
     # pyrefly: ignore [bad-override]
-    def union(self, *iterables: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def union(self, *iterables: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return new sorted set with values from itself and all `iterables`.
 
         The `union` method also corresponds to operator ``|``.
@@ -384,7 +375,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
     @override
     # pyrefly: ignore [bad-override]
-    def difference(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def difference(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return the difference of two or more sets as a new sorted set.
 
         The `difference` method also corresponds to operator ``-``.
@@ -434,7 +425,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
     @override
     # pyrefly: ignore [bad-override]
-    def intersection(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def intersection(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return the intersection of two or more sets as a new sorted set.
 
         The `intersection` method also corresponds to operator ``&``.

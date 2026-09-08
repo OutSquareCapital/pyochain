@@ -510,17 +510,17 @@ class SortedKeyDict[
     ) -> Self: ...
     @override
     # pyrefly: ignore [bad-override]
-    def __ror__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __ror__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         self, value: Mapping[K, T2], /
     ) -> SortedKeyDict[K, V | T2, OT]: ...
     @override
     # pyrefly: ignore [bad-override]
-    def __or__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __or__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         self, value: Mapping[K, T2], /
     ) -> SortedKeyDict[K, V | T2, OT]: ...
     @override
     # pyrefly: ignore [bad-override]
-    def __reduce__(self) -> tuple[partial[Self], tuple[Dict[K, V]]]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __reduce__(self) -> tuple[partial[Self], tuple[Dict[K, V]]]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @property
     def key(self) -> KeyFunc[K, OT]:
         """Function used to extract comparison key from keys.

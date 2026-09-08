@@ -75,7 +75,7 @@ class Set[T](PyoSet[T], ArgsWrapper[T]):
     def __len__(self) -> int: ...
     @override
     # pyrefly: ignore [bad-override]
-    def __and__(self, value: AbstractSet[object], /) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __and__(self, value: AbstractSet[object], /) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return self&value.
 
         Args:
@@ -97,7 +97,7 @@ class Set[T](PyoSet[T], ArgsWrapper[T]):
 
     @override
     # pyrefly: ignore [bad-override]
-    def __or__[S](self, value: AbstractSet[S], /) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __or__[S](self, value: AbstractSet[S], /) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return self|value.
 
         Args:
@@ -119,7 +119,7 @@ class Set[T](PyoSet[T], ArgsWrapper[T]):
 
     @override
     # pyrefly: ignore [bad-override]
-    def __sub__(self, value: AbstractSet[object], /) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __sub__(self, value: AbstractSet[object], /) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return self-value.
 
         Args:
@@ -142,7 +142,7 @@ class Set[T](PyoSet[T], ArgsWrapper[T]):
 
     @override
     # pyrefly: ignore [bad-override]
-    def __xor__[S](self, value: AbstractSet[S], /) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __xor__[S](self, value: AbstractSet[S], /) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return self^value.
 
         Args:
@@ -252,7 +252,7 @@ class Set[T](PyoSet[T], ArgsWrapper[T]):
     def __hash__(self) -> int: ...
     @override
     @staticmethod
-    def wrap[W](iterable: frozenset[W]) -> Set[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def wrap[W](iterable: frozenset[W]) -> Set[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     @staticmethod
     def from_iter[I](iterable: Iterable[I], /) -> Set[I]: ...
@@ -269,14 +269,14 @@ class Set[T](PyoSet[T], ArgsWrapper[T]):
     def is_superset(self, other: Iterable[object]) -> bool: ...
     @override
     # pyrefly: ignore [bad-override]
-    def intersection(self, *others: Iterable[object]) -> Self: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def intersection(self, *others: Iterable[object]) -> Self: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     # pyrefly: ignore [bad-override]
-    def union[S](self, *others: Iterable[S]) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def union[S](self, *others: Iterable[S]) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         ...
     @override
     # pyrefly: ignore [bad-override]
-    def difference(self, *others: Iterable[object]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def difference(self, *others: Iterable[object]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         ...
     @override
     def symmetric_difference[S](self, other: Iterable[S]) -> Set[T | S]: ...
@@ -340,7 +340,7 @@ class SetMut[T](PyoMutableSet[T], ArgsWrapper[T]):
     def __eq__(self, other: object) -> bool: ...
     @override
     # pyrefly: ignore [bad-override]
-    def __and__(self, value: AbstractSet[object], /) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __and__(self, value: AbstractSet[object], /) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return self&value."""
 
     @override
@@ -349,7 +349,7 @@ class SetMut[T](PyoMutableSet[T], ArgsWrapper[T]):
 
     @override
     # pyrefly: ignore [bad-override]
-    def __or__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __or__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return self|value.
 
         Args:
@@ -392,7 +392,7 @@ class SetMut[T](PyoMutableSet[T], ArgsWrapper[T]):
 
     @override
     # pyrefly: ignore [bad-override]
-    def __sub__(self, value: AbstractSet[object], /) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __sub__(self, value: AbstractSet[object], /) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return self-value.
 
         Args:
@@ -435,7 +435,7 @@ class SetMut[T](PyoMutableSet[T], ArgsWrapper[T]):
 
     @override
     # pyrefly: ignore [bad-override]
-    def __xor__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __xor__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return self^value.
 
         Args:
@@ -562,7 +562,7 @@ class SetMut[T](PyoMutableSet[T], ArgsWrapper[T]):
 
     @override
     @staticmethod
-    def wrap[W](iterable: set[W]) -> SetMut[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def wrap[W](iterable: set[W]) -> SetMut[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     @staticmethod
     def from_iter[I](iterable: Iterable[I], /) -> SetMut[I]: ...
@@ -646,18 +646,18 @@ class SetMut[T](PyoMutableSet[T], ArgsWrapper[T]):
 
     @override
     # pyrefly: ignore [bad-override]
-    def intersection(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def intersection(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         ...
     @override
     # pyrefly: ignore [bad-override]
-    def union[S](self, *others: Iterable[S]) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def union[S](self, *others: Iterable[S]) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         ...
     def update(self, *s: Iterable[T]) -> None:
         """Update the set, adding elements from all others."""
 
     @override
     # pyrefly: ignore [bad-override]
-    def difference(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def difference(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         ...
     def difference_update(self, *s: Iterable[object]) -> None:
         """Update the set, removing elements found in others."""

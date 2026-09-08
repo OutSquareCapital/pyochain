@@ -87,7 +87,7 @@ class StableSet[T](PyoMutableSet[T], ArgsWrapper[T]):
     def of[T1](*elements: T1) -> StableSet[T1]: ...
     @override
     @staticmethod
-    def wrap[V](data: dict[V, Any]) -> StableSet[V]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def wrap[V](data: dict[V, Any]) -> StableSet[V]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     def add(self, value: T) -> None: ...
     def copy(self) -> StableSet[T]:

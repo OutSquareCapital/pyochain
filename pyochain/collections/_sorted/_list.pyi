@@ -116,7 +116,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         """
 
     @override
-    def __eq__(self, other: object) -> NotImplementedType | bool:
+    def __eq__(self, other: object) -> bool:
         """Return `True` if and only if sorted list is equal to `other`.
 
         ``sl.__eq__(other)`` <==> ``sl == other``
@@ -134,7 +134,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         """
 
     @override
-    def __ne__(self, other: object) -> NotImplementedType | bool:
+    def __ne__(self, other: object) -> bool:
         """Return `True` if and only if sorted list is not equal to `other`.
 
         ``sl.__ne__(other)`` <==> ``sl != other``

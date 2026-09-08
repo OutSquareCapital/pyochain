@@ -116,7 +116,7 @@ class Seq[T](PyoSequence[T], ArgsWrapper[T]):
     def __reversed__(self) -> Iterator[T]: ...
     @override
     @staticmethod
-    def wrap[S](iterable: tuple[S, ...]) -> Seq[S]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def wrap[S](iterable: tuple[S, ...]) -> Seq[S]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     @staticmethod
     def of[E](*elements: E) -> Seq[E]: ...
