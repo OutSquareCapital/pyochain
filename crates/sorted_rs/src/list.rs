@@ -181,12 +181,11 @@ impl ListsDataMethods for ListsData {
         stop: Option<isize>,
     ) -> PyResult<isize> {
         let py = value.py();
-        let len_ = self.length().cast_signed();
-
-        if len_ == 0 {
+        let length = self.length().cast_signed();
+        if length == 0 {
             errors::not_in_list_err(value)
         } else {
-            let mut indexes = Indexes::new(start, stop, len_);
+            let mut indexes = Indexes::new(start, stop, length);
             if indexes.stop <= indexes.start {
                 errors::not_in_list_err(value)
             } else {

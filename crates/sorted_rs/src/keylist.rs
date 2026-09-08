@@ -248,6 +248,7 @@ impl ListsDataMethods for KeysListsData {
     ) -> PyResult<isize> {
         let py = value.py();
         let length = self.length().cast_signed();
+        let key = self.2.bind(py).call1((&value,))?;
         if length == 0 {
             errors::not_in_list_err(value)
         } else {
@@ -255,11 +256,7 @@ impl ListsDataMethods for KeysListsData {
             if indexes.stop <= indexes.start {
                 errors::not_in_list_err(value)
             } else {
-                let key = self.2.bind(value.py()).call1((&value,))?;
-                let mut bound = Pos {
-                    pos: self.maxes().bisect_left(&key)?,
-                    idx: Default::default(),
-                };
+                let mut bound = self.maxes().bisect_left(&key).map(Pos::with_pos)?;
                 if bound.pos == self.maxes().len() {
                     errors::not_in_list_err(value)
                 } else {
@@ -278,7 +275,7 @@ impl ListsDataMethods for KeysListsData {
                             if indexes.start <= loc && loc <= indexes.stop {
                                 return Ok(loc);
                             } else if loc > indexes.stop {
-                                break;
+                                return errors::not_in_list_err(value);
                             }
                         }
                         bound.idx += 1;
@@ -291,8 +288,6 @@ impl ListsDataMethods for KeysListsData {
                             bound.idx = 0;
                         }
                     }
-
-                    errors::not_in_list_err(value)
                 }
             }
         }
