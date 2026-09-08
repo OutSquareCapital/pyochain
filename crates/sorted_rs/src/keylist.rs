@@ -22,6 +22,9 @@ impl KeysListsData {
         new_inst.update(py, values)?;
         Ok(new_inst)
     }
+    fn extract_key<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        self.2.bind(value.py()).call1((&value,))
+    }
 }
 impl_inner_getter!(KeysListsData);
 impl ListsDataMethods for KeysListsData {
@@ -39,7 +42,7 @@ impl ListsDataMethods for KeysListsData {
     }
 
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        let key = self.2.bind(py).call1((&value,))?;
+        let key = self.extract_key(value.bind(py))?;
         match ops::Maxes::right(self.maxes(), &key) {
             ops::Maxes::BisectErr(err) => return Err(err),
             ops::Maxes::Empty => {
@@ -94,7 +97,7 @@ impl ListsDataMethods for KeysListsData {
 
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let key = self.2.bind(py).call1((&value,))?;
+        let key = self.extract_key(value)?;
         match ops::Maxes::left(self.maxes(), &key) {
             ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(false),
@@ -198,7 +201,7 @@ impl ListsDataMethods for KeysListsData {
 
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
-        let key = self.2.bind(py).call1((&value,))?;
+        let key = self.extract_key(&value)?;
         match ops::Maxes::left(self.maxes(), &key) {
             ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(()),
@@ -251,7 +254,7 @@ impl ListsDataMethods for KeysListsData {
         stop: Option<isize>,
     ) -> PyResult<usize> {
         let py = value.py();
-        let key = self.2.bind(py).call1((&value,))?;
+        let key = self.extract_key(value)?;
         let (mut bound, start, mut stop) =
             ops::Index::new(self.inner(), &key, start, stop).into_res()?;
         stop -= 1;
@@ -306,7 +309,7 @@ impl ListsDataMethods for KeysListsData {
     }
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
-        let key = self.2.bind(py).call1((&value,))?;
+        let key = self.extract_key(value)?;
         match ops::Maxes::left(self.maxes(), &key) {
             ops::Maxes::BisectErr(err) => Err(err),
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => errors::not_in_list_err(value),
