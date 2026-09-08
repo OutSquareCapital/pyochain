@@ -129,7 +129,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            NotImplementedType | bool: true if sorted list is equal to `other`
+            bool: true if sorted list is equal to `other`
 
         """
 
@@ -147,7 +147,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            NotImplementedType | bool: `True` if sorted list is not equal to `other`
+            bool: `True` if sorted list is not equal to `other`
 
         """
 
