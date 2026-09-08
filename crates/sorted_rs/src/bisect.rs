@@ -8,12 +8,12 @@ impl Bisect for [Py<PyAny>] {
     #[inline]
     fn bisect_left(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
         let py = item.py();
-        resolve(self.len(), |mid| item.lt(self[mid].bind(py)))
+        resolve(self.len(), |mid| Ok(!self[mid].bind(py).lt(item)?))
     }
     #[inline]
     fn bisect_right(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
         let py = item.py();
-        resolve(self.len(), |mid| Ok(!self[mid].bind(py).lt(item)?))
+        resolve(self.len(), |mid| item.lt(self[mid].bind(py)))
     }
 }
 

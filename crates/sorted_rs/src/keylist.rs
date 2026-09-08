@@ -6,7 +6,7 @@ use crate::{
     errors, impl_inner_getter,
     inner::{InnerData, InnerGetter, ListDataGetters, VecPy},
     ops,
-    traits::{ListsDataMethods, update_list_by},
+    traits::{ListsDataMethods, NestedVec, update_list_by},
 };
 use pyo3::prelude::*;
 use tap::Pipe;
@@ -105,10 +105,10 @@ impl ListsDataMethods for KeysListsData {
                 let mut len_sublist = self.1[bound.pos].len();
 
                 loop {
-                    if self.1[bound.pos][bound.idx].bind(py).ne(&key)? {
+                    if self.1.iloc(&bound).bind(py).ne(&key)? {
                         return Ok(false);
                     }
-                    if self.inner().get_value(&bound).bind(py).eq(value)? {
+                    if self.lists().iloc(&bound).bind(py).eq(value)? {
                         return Ok(true);
                     }
                     bound.idx += 1;
@@ -138,10 +138,10 @@ impl ListsDataMethods for KeysListsData {
                 let len_keys = self.1.len();
                 let mut len_sublist = self.1[bound.pos].len();
                 loop {
-                    if self.1[bound.pos][bound.idx].bind(py).ne(&key)? {
+                    if self.1.iloc(&bound).bind(py).ne(&key)? {
                         return Ok(total);
                     }
-                    if self.lists()[bound.pos][bound.idx].bind(py).eq(value)? {
+                    if self.lists().iloc(&bound).bind(py).eq(value)? {
                         total += 1;
                     }
                     bound.idx += 1;
@@ -207,10 +207,10 @@ impl ListsDataMethods for KeysListsData {
                 let len_keys = self.1.len();
                 let mut len_sublist = self.1[bound.pos].len();
                 loop {
-                    if self.1[bound.pos][bound.idx].bind(py).ne(&key)? {
+                    if self.1.iloc(&bound).bind(py).ne(&key)? {
                         break;
                     }
-                    if self.inner().get_value(&bound).bind(py).eq(&value)? {
+                    if self.lists().iloc(&bound).bind(py).eq(&value)? {
                         self.delete(py, &mut bound)?;
                         break;
                     }
@@ -275,10 +275,10 @@ impl ListsDataMethods for KeysListsData {
                     let mut len_sublist = v_left.len();
 
                     loop {
-                        if self.1[bound.pos][bound.idx].bind(py).ne(&key)? {
+                        if self.1.iloc(&bound).bind(py).ne(&key)? {
                             return errors::not_in_list_err(value);
                         }
-                        if self.inner().get_value(&bound).bind(py).eq(value)? {
+                        if self.lists().iloc(&bound).bind(py).eq(value)? {
                             let loc = self.inner_mut().loc(&bound);
                             if indexes.start <= loc && loc <= indexes.stop {
                                 return Ok(loc);
@@ -336,10 +336,10 @@ impl ListsDataMethods for KeysListsData {
                 let mut len_sublist = self.1[bound.pos].len();
 
                 loop {
-                    if self.1[bound.pos][bound.idx].bind(py).ne(&key)? {
+                    if self.1.iloc(&bound).bind(py).ne(&key)? {
                         return errors::not_in_list_err(value);
                     }
-                    if self.inner().get_value(&bound).bind(py).eq(value)? {
+                    if self.lists().iloc(&bound).bind(py).eq(value)? {
                         self.delete(py, &mut bound)?;
                         break;
                     }
