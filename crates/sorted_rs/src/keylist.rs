@@ -73,17 +73,16 @@ impl ListsDataMethods for KeysListsData {
         func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
     ) -> PyResult<isize> {
         if self.maxes().is_empty() {
-            return Ok(0);
-        }
-        let mut bound = Pos::new(0, 0);
-
-        bound.pos = func(self.maxes(), value)?;
-
-        if bound.pos == self.maxes().len() {
-            Ok(self.length().cast_signed())
+            Ok(0)
         } else {
-            bound.idx = func(&self.1[bound.pos], value)?;
-            Ok(self.inner_mut().loc(&bound))
+            let mut bound = Pos::new(0, 0);
+            bound.pos = func(self.maxes(), value)?;
+            if bound.pos == self.maxes().len() {
+                Ok(self.length().cast_signed())
+            } else {
+                bound.idx = func(&self.1[bound.pos], value)?;
+                Ok(self.inner_mut().loc(&bound))
+            }
         }
     }
     #[inline]
@@ -180,11 +179,7 @@ impl ListsDataMethods for KeysListsData {
                     .map(|x| x.clone_ref(py))
                     .collect::<Vec<_>>();
                 self.0.lists[prev].append(removed.as_mut());
-                // NOTE: those three lines below are identical to `remove_pos`, but we have to inline it for the borrow checker to be happy.
-                self.0.lists.remove(bounds.pos);
-                self.0.maxes.remove(bounds.pos);
-                self.0.idx.clear();
-
+                self.0.remove_pos(bounds);
                 self.maxes_mut()[prev] = left[prev].last().unwrap().clone_ref(py);
                 self.1.remove(bounds.pos);
                 self.expand(py, prev);

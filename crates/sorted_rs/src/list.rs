@@ -78,17 +78,16 @@ impl ListsDataMethods for ListsData {
         func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
     ) -> PyResult<isize> {
         if self.maxes().is_empty() {
-            return Ok(0);
-        }
-        let mut bound = Pos::new(0, 0);
-
-        bound.pos = func(self.maxes(), value)?;
-
-        if bound.pos == self.maxes().len() {
-            Ok(self.length().cast_signed())
+            Ok(0)
         } else {
-            bound.idx = func(&self.lists()[bound.pos], value)?;
-            Ok(self.inner_mut().loc(&bound))
+            let mut bound = Pos::new(0, 0);
+            bound.pos = func(self.maxes(), value)?;
+            if bound.pos == self.maxes().len() {
+                Ok(self.length().cast_signed())
+            } else {
+                bound.idx = func(&self.lists()[bound.pos], value)?;
+                Ok(self.inner_mut().loc(&bound))
+            }
         }
     }
     #[inline]
