@@ -10,6 +10,7 @@ use pyo3::{
     types::{PyIterator, PySet, PyType},
 };
 use pyo3_ext::prelude::*;
+use std_tools::prelude::*;
 use tap::Pipe;
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSized)]
 pub struct PyoMappingView(pub Py<PyAny>);

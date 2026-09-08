@@ -6,7 +6,7 @@ use std::{
 use crate::{
     abc,
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
-    traits::{IntoInit, OptionExt, PyWrapper},
+    traits::{IntoInit, PyWrapper},
 };
 use pyo3::{
     IntoPyObjectExt, PyTypeInfo,
@@ -17,6 +17,7 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use smallvec::SmallVec;
+use std_tools::prelude::*;
 use tap::prelude::*;
 
 #[pyclass(frozen, module = "pyochain._iterators")]

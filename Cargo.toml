@@ -5,6 +5,7 @@ members = [
     "./crates/pyochain_macros",
     "./crates/pyo3_ext",
     "./crates/sorted_rs",
+    "./crates/std_tools",
 ]
 
 [workspace.lints.clippy]
@@ -44,6 +45,7 @@ pyo3 = { version = ">=0.29", features = [
 pyo3_ext = { path = "crates/pyo3_ext" }
 pyochain_macros = { path = "crates/pyochain_macros" }
 sorted_rs = { path = "crates/sorted_rs" }
+std_tools = { path = "crates/std_tools" }
 smallvec = "1.15.2"
 tap = "1.0.1"
 

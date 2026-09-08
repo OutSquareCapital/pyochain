@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use crate::{Bounds, Loc, debug::check_list, errors, pyassert, traits::NestedVec};
 use either::Either;
 use pyo3::{
     exceptions::PyIndexError,
@@ -10,9 +11,8 @@ use pyo3_ext::{
     prelude::*,
     types::{FromCmp, PyCmpOut},
 };
+use std_tools::prelude::*;
 use tap::Pipe;
-
-use crate::{Bounds, Loc, debug::check_list, errors, pyassert, traits::NestedVec};
 
 /// A `Vec` which contains python objects.
 pub type VecPy = Vec<Py<PyAny>>;

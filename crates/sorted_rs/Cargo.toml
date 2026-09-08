@@ -15,5 +15,6 @@ pyo3 = { version = ">=0.29", features = [
 ] }
 either = "1.16.0"
 pyo3_ext = { path = "../pyo3_ext" }
+std_tools = { path = "../std_tools" }
 [lints]
 workspace = true

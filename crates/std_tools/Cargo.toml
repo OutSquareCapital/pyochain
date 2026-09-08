@@ -1,0 +1,11 @@
+[package]
+edition = "2024"
+name = "std_tools"
+version = "0.1.0"
+[lib]
+name = "std_tools"
+
+[dependencies]
+tap = "1.0.1"
+[lints]
+workspace = true
