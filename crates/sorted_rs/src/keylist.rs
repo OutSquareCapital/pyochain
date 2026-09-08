@@ -99,10 +99,10 @@ impl ListsDataMethods for KeysListsData {
         match ops::Maxes::left(self.maxes(), &mut bound, &key)? {
             ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(false),
             ops::Maxes::LenNEPos => {
-                let v = &self.1[bound.pos];
-                bound.idx = v.bisect_left(&key)?;
+                let first_sublist = &self.1[bound.pos];
+                bound.idx = first_sublist.bisect_left(&key)?;
                 let len_keys = self.1.len();
-                let mut len_sublist = self.1[bound.pos].len();
+                let mut len_sublist = first_sublist.len();
 
                 loop {
                     if self.1.iloc(&bound).bind(py).ne(&key)? {
@@ -132,11 +132,11 @@ impl ListsDataMethods for KeysListsData {
         match ops::Maxes::left(self.maxes(), &mut bound, &key)? {
             ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(0),
             ops::Maxes::LenNEPos => {
-                let v_left = &self.1[bound.pos];
-                bound.idx = v_left.bisect_left(&key)?;
+                let first_sublist = &self.1[bound.pos];
+                bound.idx = first_sublist.bisect_left(&key)?;
                 let mut total = 0;
                 let len_keys = self.1.len();
-                let mut len_sublist = self.1[bound.pos].len();
+                let mut len_sublist = first_sublist.len();
                 loop {
                     if self.1.iloc(&bound).bind(py).ne(&key)? {
                         return Ok(total);
@@ -203,28 +203,27 @@ impl ListsDataMethods for KeysListsData {
         match ops::Maxes::left(&self.0.maxes, &mut bound, &key)? {
             ops::Maxes::Empty | ops::Maxes::LenEQPos => Ok(()),
             ops::Maxes::LenNEPos => {
-                bound.idx = self.1[bound.pos].bisect_left(&key)?;
+                let first_sublist = &self.1[bound.pos];
+                bound.idx = first_sublist.bisect_left(&key)?;
                 let len_keys = self.1.len();
-                let mut len_sublist = self.1[bound.pos].len();
+                let mut len_sublist = first_sublist.len();
                 loop {
                     if self.1.iloc(&bound).bind(py).ne(&key)? {
-                        break;
+                        return Ok(());
                     }
                     if self.lists().iloc(&bound).bind(py).eq(&value)? {
-                        self.delete(py, &mut bound)?;
-                        break;
+                        return self.delete(py, &mut bound);
                     }
                     bound.idx += 1;
                     if bound.idx == len_sublist {
                         bound.pos += 1;
                         if bound.pos == len_keys {
-                            break;
+                            return Ok(());
                         }
                         len_sublist = self.1[bound.pos].len();
                         bound.idx = 0;
                     }
                 }
-                Ok(())
             }
         }
     }
@@ -330,18 +329,17 @@ impl ListsDataMethods for KeysListsData {
         match ops::Maxes::left(self.maxes(), &mut bound, &key)? {
             ops::Maxes::Empty | ops::Maxes::LenEQPos => errors::not_in_list_err(value),
             ops::Maxes::LenNEPos => {
-                let v = &self.1[bound.pos];
-                bound.idx = v.bisect_left(&key)?;
+                let first_sublist = &self.1[bound.pos];
+                bound.idx = first_sublist.bisect_left(&key)?;
                 let len_keys = self.1.len();
-                let mut len_sublist = self.1[bound.pos].len();
+                let mut len_sublist = first_sublist.len();
 
                 loop {
                     if self.1.iloc(&bound).bind(py).ne(&key)? {
                         return errors::not_in_list_err(value);
                     }
                     if self.lists().iloc(&bound).bind(py).eq(value)? {
-                        self.delete(py, &mut bound)?;
-                        break;
+                        return self.delete(py, &mut bound);
                     }
                     bound.idx += 1;
                     if bound.idx == len_sublist {
@@ -353,7 +351,6 @@ impl ListsDataMethods for KeysListsData {
                         bound.idx = 0;
                     }
                 }
-                Ok(())
             }
         }
     }
