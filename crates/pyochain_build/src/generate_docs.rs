@@ -75,7 +75,7 @@ fn extract_classes_from_file(
         .into_iter()
         .filter_map(|item| PyClass::from_item(item, src.make_relative(path)))
         .filter(|pyclass| registered_classes.contains(&pyclass.rust_name))
-        .collect::<Vec<_>>()
+        .collect()
 }
 fn get_nav_paths(parsed: &toml::map::Map<String, toml::Value>) -> Vec<String> {
     let api_ref = parsed

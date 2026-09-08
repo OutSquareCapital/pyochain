@@ -401,7 +401,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         set.intersection_update(iterables)?;
         let mut data = self.try_lock();
         data.clear();
-        data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
+        data.update(py, set.iter().map(Bound::unbind).collect())
     }
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
         let mut data = self.try_lock();
@@ -604,7 +604,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             set.difference_update((values,))?;
             let mut data = slf_ref.try_lock();
             data.clear();
-            data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
+            data.update(py, set.iter().map(Bound::unbind).collect())?;
         } else {
             for value in values {
                 slf_ref.discard(value)?;
@@ -649,7 +649,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let mut data = slf_clone.try_lock();
         set.symmetric_difference_update(other)?;
         data.clear();
-        data.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
+        data.update(py, set.iter().map(Bound::unbind).collect())?;
         // NOTE: the clone here is cheap (just an incref) and necessary to return `Self`
         Ok(slf.clone())
     }

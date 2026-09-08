@@ -315,7 +315,7 @@ impl ListsDataMethods for KeysListsData {
             .map(|list| {
                 list.iter()
                     .map(|x| key_fn.call1((x,)).map(Bound::unbind))
-                    .collect::<PyResult<Vec<_>>>()
+                    .collect()
             })
             .collect::<PyResult<Vec<_>>>()
             .map(|mut vec| self.1.append(vec.as_mut()))?;

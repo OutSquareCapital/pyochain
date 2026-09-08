@@ -25,6 +25,19 @@ pub struct InnerData {
     pub offset: usize,
     pub load: usize,
 }
+
+impl Default for InnerData {
+    fn default() -> Self {
+        Self {
+            lists: Vec::default(),
+            maxes: Vec::default(),
+            idx: Vec::default(),
+            len: usize::default(),
+            offset: usize::default(),
+            load: 1000,
+        }
+    }
+}
 impl InnerData {
     #[inline]
     pub fn clear(&mut self) {
@@ -54,7 +67,7 @@ impl InnerData {
         self.iter()
             .map(|x| x.clone_ref(py).pipe(Ok))
             .chain(other.try_iter()?.map(|x| x?.unbind().pipe(Ok)))
-            .collect::<PyResult<Vec<_>>>()
+            .collect()
     }
 
     pub fn loc(&mut self, pos: &Pos) -> isize {
@@ -198,7 +211,7 @@ impl InnerData {
             _ if step > 0 => (start..stop)
                 .step_by(step.cast_unsigned())
                 .map(|i| self.get_item(py, i).map(Bound::unbind))
-                .collect::<PyResult<Vec<_>>>(),
+                .collect(),
             // Negative step with nothing to iterate (mirrors Python's `range`,
             // which is empty when `start <= stop` for a negative step).
             (_, Ordering::Less | Ordering::Equal) => Ok(Vec::new()),
@@ -206,7 +219,7 @@ impl InnerData {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .map(|i| self.get_item(py, i).map(Bound::unbind))
-                    .collect::<PyResult<Vec<_>>>()
+                    .collect()
             }
         }
     }
@@ -521,18 +534,6 @@ impl InnerData {
                     .collect::<Vec<_>>()
             })
             .pipe(|it| self.lists.extend(it));
-    }
-}
-impl Default for InnerData {
-    fn default() -> Self {
-        Self {
-            lists: Vec::default(),
-            maxes: Vec::default(),
-            idx: Vec::default(),
-            len: usize::default(),
-            offset: usize::default(),
-            load: 1000,
-        }
     }
 }
 pub trait InnerGetter: Sized {
