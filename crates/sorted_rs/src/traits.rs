@@ -1,11 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::{
-    Bounds, Loc,
-    bisect::Bisect,
-    errors,
-    inner::{InnerGetter, ListDataGetters, VecPy},
-};
+use crate::{Bounds, InnerGetter, ListDataGetters, Loc, bisect::Bisect, errors, inner::VecPy};
 use either::Either;
 use pyo3::{
     exceptions::PyIndexError,
@@ -182,6 +177,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         self.update(py, values)
     }
 }
+
 pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) -> Ordering>(
     list: &mut T,
     py: Python<'_>,

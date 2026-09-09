@@ -2,18 +2,16 @@ use pyo3::prelude::*;
 use tap::Pipe;
 
 use crate::{
-    ListDataGetters,
+    InnerGetter, ListDataGetters,
     bisect::Bisect,
     bounds::{Bounds, Loc},
     cmp::py_cmp,
     errors, impl_inner_getter,
-    inner::{InnerData, InnerGetter, VecPy},
+    inner::{InnerData, VecPy},
     ops,
     traits::{ListsDataMethods, NestedVec, update_list_by},
 };
 
-//TODO: This struct is way too big and do way too many things.
-// Unfortunately we must first decouple as much as possible code from the main src/ folder into this crate.
 #[derive(Default)]
 pub struct ListsData(InnerData);
 impl ListsData {

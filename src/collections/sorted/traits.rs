@@ -204,10 +204,10 @@ impl KeyedSortedCollection for sorted::SortedKeyDict {}
 
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
 pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
-    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().count(&value)
-    }
-
+    fn __add__<'py>(slf: Bound<'py, Self>, other: &Bound<'py, PyAny>)
+    -> PyResult<Bound<'py, Self>>;
+    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>>;
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
     #[pyo3(name = "update")]
     fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
@@ -221,10 +221,6 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         self.try_lock().pop(py, index)
     }
-    fn __add__<'py>(slf: Bound<'py, Self>, other: &Bound<'py, PyAny>)
-    -> PyResult<Bound<'py, Self>>;
-    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>>;
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
     }
@@ -302,7 +298,9 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
         let msg = "use ``sl.add(value)`` instead";
         Err(PyNotImplementedError::new_err(msg))
     }
-
+    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
+        self.try_lock().count(&value)
+    }
     #[allow(unused_variables)]
     fn extend(&self, values: Bound<'_, PyAny>) -> PyResult<()> {
         let msg = "use ``sl.update(values)`` instead";

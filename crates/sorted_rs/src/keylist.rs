@@ -3,8 +3,10 @@ use crate::{
     bisect::Bisect,
     bounds::Loc,
     cmp::py_cmp_by_key,
-    errors, impl_inner_getter,
-    inner::{InnerData, InnerGetter, ListDataGetters, VecPy},
+    errors,
+    getters::{InnerGetter, ListDataGetters},
+    impl_inner_getter,
+    inner::{InnerData, VecPy},
     ops,
     traits::{ListsDataMethods, NestedVec, update_list_by},
 };
