@@ -121,8 +121,4 @@ impl BaseSortedList for SortedList {
             .repr()
             .map(|repr| format!("{cls_name}({repr})"))
     }
-
-    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().count(&value)
-    }
 }

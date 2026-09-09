@@ -132,8 +132,4 @@ impl BaseSortedList for SortedKeyList {
             .repr()
             .map(|repr| format!("{type_name}({repr}, key={key_repr})"))
     }
-
-    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().count(&value)
-    }
 }

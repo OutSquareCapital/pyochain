@@ -204,7 +204,9 @@ impl KeyedSortedCollection for sorted::SortedKeyDict {}
 
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
 pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
-    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
+    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
+        self.try_lock().count(&value)
+    }
 
     #[pyo3(name = "update")]
     fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
