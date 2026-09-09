@@ -440,7 +440,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __eq__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
-                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
+                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .eq(sorted.get().get_set().bind(py))
@@ -454,7 +454,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __ne__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
-                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
+                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .ne(sorted.get().get_set().bind(py))
@@ -468,7 +468,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __lt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
-                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
+                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .lt(sorted.get().get_set().bind(py))
@@ -482,7 +482,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __gt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
-                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
+                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .gt(sorted.get().get_set().bind(py))
@@ -496,7 +496,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __le__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
-                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
+                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .le(sorted.get().get_set().bind(py))
@@ -510,7 +510,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __ge__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
-                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
+                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .ge(sorted.get().get_set().bind(py))
