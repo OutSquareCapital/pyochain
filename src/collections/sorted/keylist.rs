@@ -20,7 +20,7 @@ impl SortedKeyList {
     ) -> PyResult<PyClassInitializer<Self>> {
         let slf = key.unbind().pipe(KeysListsData::new).conv::<Self>();
         if let Some(iterable) = iterable {
-            slf.update(&iterable)?;
+            slf.extend(&iterable)?;
         }
         slf.init().pipe(Ok)
     }

@@ -433,18 +433,6 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
     @override
     def clear(self) -> None: ...
     @override
-    def extend(self, values: object) -> None:
-        """Warning: raise not-implemented error.
-
-        use ``sl.update(values)`` instead
-
-        Implemented to override `MutableSequence.extend` which provides an erroneous default implementation.
-
-        Args:
-            values (object): values to extend sorted list with
-        """
-
-    @override
     def insert(self, index: int, value: T) -> None:
         """Warning: raise not-implemented error.
 
@@ -494,8 +482,9 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
     ) -> int: ...
     @override
     def reset(self, load: int) -> None: ...
-    def update(self, iterable: Iterable[T]) -> None:
-        """Add all the values from *iterable* to the `SortedCollection`.
+    @override
+    def extend(self, iterable: Iterable[T]) -> None:
+        """Add all the values from *iterable* to the `BaseSortedList`.
 
         Runtime complexity: `O(k*log(n))` -- approximate.
 
@@ -507,13 +496,13 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             from pyochain.collections import SortedList, SortedKeyList
 
             sl = SortedList()
-            sl.update([3, 1, 2])
+            sl.extend([3, 1, 2])
             assert sl == SortedList([1, 2, 3])
 
             from operator import neg
 
             skl = SortedKeyList(neg)
-            skl.update([3, 1, 2])
+            skl.extend([3, 1, 2])
             assert skl == [3, 2, 1]
             ```
         """

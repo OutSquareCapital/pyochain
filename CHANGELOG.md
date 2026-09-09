@@ -4,6 +4,12 @@
 
 ### 💥 Breaking changes
 
+#### `SortedKeyList` and `SortedList` `update` methods replaced by `extend`
+
+This is just a naming change, fixed from the original `sortedcontainers` library who incorrectly raise error at runtime when `extend` is called, suggesting to use `update` instead.
+
+However this violates the `MutableSequence` protocol, is counter-intuitive, AND not justified by any practical reason.
+
 #### No more identity function as default key for "key containers"
 
 "keys" sorted containers (i.e `SortedKeyList`, `SortedKeySet`, etc...) now require an explicit key argument, instead of providing by default an identity function.

@@ -94,34 +94,39 @@ def test_key2() -> None:
 def test_add() -> None:
     random.seed(0)
     slt = _modulo_list()
-    for val in range(1000):
+    nb = 1000
+    for val in range(nb):
         slt.add(val)
     check_sorted_key_list(slt)
 
     slt = _modulo_list()
-    for val in range(1000, 0, -1):
+    for val in range(nb, 0, -1):
         slt.add(val)
     check_sorted_key_list(slt)
 
     slt = _modulo_list()
-    for _ in range(1000):
+    for _ in range(nb):
         slt.add(random.random())
     check_sorted_key_list(slt)
 
 
 def test_update() -> None:
     slt = _modulo_list()
-
-    slt.update(range(1000))
-    assert all(
-        tup[0] == tup[1]
-        for tup in zip(slt, Range(1000).iter().sort_by(modulo), strict=False)
+    r = Range(100)
+    slt.extend(r)
+    assert (
+        r
+        .iter()
+        .sort_by(modulo)
+        .iter()
+        .zip(slt, strict=False)
+        .all(lambda tup: tup[0] == tup[1])
     )
-    assert len(slt) == 1000
+    assert slt.len() == r.len()
     check_sorted_key_list(slt)
 
-    slt.update(range(100))
-    assert len(slt) == 1100
+    slt.extend(r)
+    assert slt.len() == r.len() * 2
     check_sorted_key_list(slt)
 
 
@@ -132,7 +137,7 @@ def test_update_order_consistency() -> None:
     addition = [40, 50, 60]
     for value in addition:
         slt1.add(value)
-    slt2.update(addition)
+    slt2.extend(addition)
     assert slt1 == slt2
 
 
@@ -142,7 +147,7 @@ def test_contains() -> None:
 
     assert 0 not in slt
 
-    slt.update(range(100))
+    slt.extend(range(100))
 
     for val in range(100):
         assert val in slt
@@ -251,7 +256,7 @@ def test_getitem() -> None:
     r = Range(100)
 
     lst = r.iter().map(lambda _: random.random()).collect(Vec)
-    slt.update(lst)
+    slt.extend(lst)
     _ = lst.sort_by(modulo)
 
     assert all(slt[idx] == lst[idx] for idx in r)
@@ -396,26 +401,27 @@ def test_islice() -> None:
     sl = _modulo_list()
     sl.reset(7)
 
-    assert list(sl.islice()) == []
+    assert sl.islice().count() == 0
 
     values = Range(100).iter().sort_by(modulo)
-    sl.update(values)
+    sl.extend(values)
+    nb = 53
 
-    for start in range(53):
-        for stop in range(53):
+    for start in range(nb):
+        for stop in range(nb):
             assert list(sl.islice(start, stop)) == values[start:stop]
 
-    for start in range(53):
-        for stop in range(53):
+    for start in range(nb):
+        for stop in range(nb):
             assert (
                 list(sl.islice(start, stop, reverse=True)) == values[start:stop][::-1]
             )
 
-    for start in range(53):
+    for start in range(nb):
         assert list(sl.islice(start=start)) == values[start:]
         assert list(sl.islice(start=start, reverse=True)) == values[start:][::-1]
 
-    for stop in range(53):
+    for stop in range(nb):
         assert list(sl.islice(stop=stop)) == values[:stop]
         assert list(sl.islice(stop=stop, reverse=True)) == values[:stop][::-1]
 
@@ -513,7 +519,7 @@ def test_bisect_left() -> None:
     assert slt.bisect_left(0) == 0
     slt = _modulo_list(range(100))
     slt.reset(17)
-    slt.update(range(100))
+    slt.extend(range(100))
     check_sorted_key_list(slt)
     assert slt.bisect_left(50) == 0
     assert slt.bisect_left(0) == 0
@@ -524,7 +530,7 @@ def test_bisect_right() -> None:
     assert slt.bisect_right(10) == 0
     slt = _modulo_list(range(100))
     slt.reset(17)
-    slt.update(range(100))
+    slt.extend(range(100))
     check_sorted_key_list(slt)
     assert slt.bisect_right(10) == 20
     assert slt.bisect_right(0) == 20
@@ -535,7 +541,7 @@ def test_bisect_key_left() -> None:
     assert slt.bisect_key_left(10) == 0
     slt = _modulo_list(range(100))
     slt.reset(17)
-    slt.update(range(100))
+    slt.extend(range(100))
     check_sorted_key_list(slt)
     assert slt.bisect_key_left(0) == 0
     assert slt.bisect_key_left(5) == 100
@@ -547,7 +553,7 @@ def test_bisect_key_right() -> None:
     assert slt.bisect_key_right(0) == 0
     slt = _modulo_list(range(100))
     slt.reset(17)
-    slt.update(range(100))
+    slt.extend(range(100))
     check_sorted_key_list(slt)
     assert slt.bisect_key_right(0) == 20
     assert slt.bisect_key_right(5) == 120

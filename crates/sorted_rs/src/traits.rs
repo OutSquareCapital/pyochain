@@ -50,7 +50,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()>;
-    fn update(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()>;
+    fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()>;
     fn index(
         &mut self,
         value: &Bound<'_, PyAny>,
@@ -107,7 +107,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
                     values.extend(new_slice);
                 }
                 self.clear();
-                self.update(py, values)?;
+                self.extend(py, values)?;
                 Ok(())
             }
             _ if step > 0 => (start..stop)
@@ -137,7 +137,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
         let values = self.inner().repeat(py, num);
         self.clear();
-        self.update(py, values)
+        self.extend(py, values)
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut bounds = Loc::default();
@@ -176,7 +176,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         let values = self.inner().collapse(py);
         self.clear();
         self.set_load(load);
-        self.update(py, values)
+        self.extend(py, values)
     }
 }
 

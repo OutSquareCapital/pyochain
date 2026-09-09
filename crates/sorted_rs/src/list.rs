@@ -17,7 +17,7 @@ pub struct ListsData(InnerData);
 impl ListsData {
     pub fn from_vec(py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::default();
-        new_inst.update(py, values)?;
+        new_inst.extend(py, values)?;
         Ok(new_inst)
     }
 }
@@ -147,7 +147,9 @@ impl ListsDataMethods for ListsData {
             ops::Expand::Other => (),
         }
     }
-
+    fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
+        update_list_by(self, py, values, |a, b| py_cmp(py, a, b))
+    }
     fn index(
         &mut self,
         value: &Bound<'_, PyAny>,
@@ -211,8 +213,5 @@ impl ListsDataMethods for ListsData {
         self.set_len(values.len());
         self.idx_mut().clear();
         Ok(())
-    }
-    fn update(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
-        update_list_by(self, py, values, |a, b| py_cmp(py, a, b))
     }
 }

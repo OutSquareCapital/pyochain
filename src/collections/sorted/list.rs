@@ -17,7 +17,7 @@ impl SortedList {
     fn py_new(iterable: Option<Bound<'_, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
         let data = Self::from(ListsData::default());
         if let Some(values) = iterable {
-            data.update(&values)?;
+            data.extend(&values)?;
         }
         data.init().pipe(Ok)
     }

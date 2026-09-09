@@ -77,15 +77,15 @@ def test_add() -> None:
 def test_update() -> None:
     slt = SortedKeyList[float, float](operator.neg)
 
-    slt.update(range(1000))
+    slt.extend(range(1000))
     assert len(slt) == 1000
     check_sorted_key_list(slt)
 
-    slt.update(range(100))
+    slt.extend(range(100))
     assert len(slt) == 1100
     check_sorted_key_list(slt)
 
-    slt.update(range(10000))
+    slt.extend(range(10000))
     assert len(slt) == 11100
     check_sorted_key_list(slt)
 
@@ -99,7 +99,7 @@ def test_contains() -> None:
     slt = _neg_list()
     assert 0 not in slt
 
-    slt.update(range(100))
+    slt.extend(range(100))
 
     for val in range(100):
         assert val in slt
@@ -330,7 +330,7 @@ def test_islice() -> None:
     assert list(slt.islice()) == []
 
     values = sorted(range(53), key=operator.neg)
-    slt.update(values)
+    slt.extend(values)
 
     for start in range(53):
         for stop in range(53):
@@ -358,7 +358,7 @@ def test_irange() -> None:  # ruff:ignore[complex-structure]
     assert list(slt.irange()) == []
 
     values = list(range(53))
-    slt.update(values)
+    slt.extend(values)
     nb = 20
 
     for start in range(nb):
@@ -420,7 +420,7 @@ def test_bisect_left() -> None:
     assert slt.bisect_left(0) == 0
     slt = _neg_list(range(100))
     slt.reset(17)
-    slt.update(range(100))
+    slt.extend(range(100))
     check_sorted_key_list(slt)
     assert slt.bisect_left(50) == 98
     assert slt.bisect_left(0) == 198
@@ -432,7 +432,7 @@ def test_bisect_right() -> None:
     assert slt.bisect_right(10) == 0
     slt = _neg_list(range(100))
     slt.reset(17)
-    slt.update(range(100))
+    slt.extend(range(100))
     check_sorted_key_list(slt)
     assert slt.bisect_right(10) == 180
     assert slt.bisect_right(0) == 200
@@ -602,7 +602,7 @@ def test_eq() -> None:
     that.reset(4)
     assert this != that
     that.clear()
-    that.update(range(10))
+    that.extend(range(10))
     assert this == that
 
 

@@ -21,7 +21,7 @@ impl KeysListsData {
     }
     pub fn from_vec(py: Python<'_>, values: VecPy, key: Py<PyAny>) -> PyResult<Self> {
         let mut new_inst = Self::new(key);
-        new_inst.update(py, values)?;
+        new_inst.extend(py, values)?;
         Ok(new_inst)
     }
     fn extract_key<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
@@ -281,7 +281,7 @@ impl ListsDataMethods for KeysListsData {
             .repr()
             .map(|repr| format!("{name}({repr}, key={key_repr})"))
     }
-    fn update(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
+    fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);
         update_list_by(self, py, values, |a, b| py_cmp_by_key(a, b, key_fn))
     }

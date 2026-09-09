@@ -63,7 +63,7 @@ def test_add() -> None:
 def test_update() -> None:
 
     def _update_check(mul: int) -> None:
-        slt.update(r)
+        slt.extend(r)
         assert slt.len() == r.len() * mul
         check_sorted_list(slt)
 
@@ -81,7 +81,7 @@ def test_contains() -> None:
     nb = 10
     assert 0 not in slt
 
-    slt.update(range(nb))
+    slt.extend(range(nb))
 
     for val in range(nb):
         assert val in slt
@@ -309,7 +309,7 @@ def test_islice() -> None:
     assert list(sl.islice()) == []
 
     values = list(range(53))
-    sl.update(values)
+    sl.extend(values)
 
     for start in range(53):
         for stop in range(53):
@@ -338,7 +338,7 @@ def test_irange() -> None:  # ruff:ignore[complex-structure]
 
     nb = 20
     values = list(range(nb))
-    sl.update(values)
+    sl.extend(values)
 
     for start in range(nb):
         for end in range(start, nb):
@@ -389,7 +389,7 @@ def test_bisect_left() -> None:
     assert slt.bisect_left(0) == 0
     slt = SortedList(range(100))
     slt.reset(17)
-    slt.update(range(100))
+    slt.extend(range(100))
     check_sorted_list(slt)
     assert slt.bisect_left(50) == 100
     assert slt.bisect_left(200) == 200
@@ -400,7 +400,7 @@ def test_bisect_right() -> None:
     assert slt.bisect_right(10) == 0
     slt = SortedList(range(100))
     slt.reset(17)
-    slt.update(range(100))
+    slt.extend(range(100))
     check_sorted_list(slt)
     assert slt.bisect_right(10) == 22
     assert slt.bisect_right(200) == 200
