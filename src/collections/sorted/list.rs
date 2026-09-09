@@ -14,14 +14,8 @@ use tap::prelude::*;
 pub struct SortedList(pub(super) Arc<Mutex<ListsData>>);
 impl SortedList {
     #[inline]
-    pub(super) fn new() -> Self {
-        Self(Arc::new(Mutex::new(ListsData::default())))
-    }
-    #[inline]
-    fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
-        let new_inst = Self::new();
-        new_inst.try_lock().update(py, values)?;
-        Ok(new_inst)
+    pub(super) fn new(data: ListsData) -> Self {
+        Self(Arc::new(Mutex::new(data)))
     }
 }
 #[pymethods]
@@ -29,11 +23,10 @@ impl SortedList {
     #[new]
     #[pyo3(signature = (iterable = None))]
     fn py_new(iterable: Option<Bound<'_, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
-        let data = Self::new();
+        let data = Self::new(ListsData::default());
         if let Some(values) = iterable {
             data.py_update(&values)?;
         }
-
         data.init().pipe(Ok)
     }
 }
@@ -87,7 +80,12 @@ impl BaseSortedListSet for SortedList {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.try_lock().inner().collapse(py))?.into_bound(py)
+        self.try_lock()
+            .inner()
+            .collapse(py)
+            .pipe(|out| ListsData::from_vec(py, out))
+            .map(Self::new)?
+            .into_bound(py)
     }
 }
 impl BaseSortedList for SortedList {
@@ -102,11 +100,16 @@ impl BaseSortedList for SortedList {
         } else {
             data.inner().concat(py, other)?
         };
-        Self::from_vec(py, out)?.into_bound(py)
+        ListsData::from_vec(py, out).map(Self::new)?.into_bound(py)
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.try_lock().inner().repeat(py, num))?.into_bound(py)
+        self.try_lock()
+            .inner()
+            .repeat(py, num)
+            .pipe(|out| ListsData::from_vec(py, out))
+            .map(Self::new)?
+            .into_bound(py)
     }
 
     // @recursive_repr()

@@ -13,13 +13,8 @@ use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedKeyList(pub(super) Arc<Mutex<KeysListsData>>);
 impl SortedKeyList {
-    pub(super) fn new(key: Py<PyAny>) -> Self {
-        Self(Arc::new(Mutex::new(KeysListsData::new(key))))
-    }
-    fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>, key: &Py<PyAny>) -> PyResult<Self> {
-        let new_inst = Self::new(key.clone_ref(py));
-        new_inst.try_lock().update(py, values)?;
-        Ok(new_inst)
+    pub(super) fn new(data: KeysListsData) -> Self {
+        Self(Arc::new(Mutex::new(data)))
     }
 }
 #[pymethods]
@@ -30,7 +25,7 @@ impl SortedKeyList {
         key: Bound<'_, PyAny>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let slf = Self::new(key.unbind());
+        let slf = KeysListsData::new(key.unbind()).pipe(SortedKeyList::new);
         if let Some(iterable) = iterable {
             slf.py_update(&iterable)?;
         }
@@ -97,7 +92,9 @@ impl BaseSortedListSet for SortedKeyList {
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         let data = self.try_lock();
-        Self::from_vec(py, data.inner().collapse(py), &data.2)?.into_bound(py)
+        KeysListsData::from_vec(py, data.inner().collapse(py), data.2.clone_ref(py))
+            .map(Self::new)?
+            .into_bound(py)
     }
 }
 impl BaseSortedList for SortedKeyList {
@@ -112,12 +109,16 @@ impl BaseSortedList for SortedKeyList {
         } else {
             data.inner().concat(py, other)?
         };
-        Self::from_vec(py, out, &data.2)?.into_bound(py)
+        KeysListsData::from_vec(py, out, data.2.clone_ref(py))
+            .map(Self::new)?
+            .into_bound(py)
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
         let data = self.try_lock();
-        Self::from_vec(py, data.inner().repeat(py, num), &data.2)?.into_bound(py)
+        KeysListsData::from_vec(py, data.inner().repeat(py, num), data.2.clone_ref(py))
+            .map(Self::new)?
+            .into_bound(py)
     }
 
     //recursive_repr()
