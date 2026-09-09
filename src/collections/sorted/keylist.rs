@@ -1,6 +1,6 @@
 use crate::{
     abc,
-    collections::sorted::traits::{BaseSortedList, ListGetter, Reduced, SortedCollection},
+    collections::sorted::traits::{ListGetter, Reduced, SortedCollection, SortedListMethods},
     traits::IntoInit,
 };
 use pyo3::{PyTypeInfo, prelude::*};
@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedKeyList(pub(super) Arc<Mutex<KeysListsData>>);
-impl BaseSortedList for SortedKeyList {}
+impl SortedListMethods for SortedKeyList {}
 #[pymethods]
 impl SortedKeyList {
     #[new]

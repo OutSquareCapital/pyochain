@@ -190,7 +190,7 @@ impl KeyedSortedCollection for sorted::SortedKeySet {}
 impl KeyedSortedCollection for sorted::SortedKeyDict {}
 
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
-pub(super) trait BaseSortedList: ListGetter + IntoInit + From<Self::T> {
+pub(super) trait SortedListMethods: ListGetter + IntoInit + From<Self::T> {
     fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let data = self.try_lock();
@@ -330,7 +330,7 @@ pub(super) trait BaseSortedList: ListGetter + IntoInit + From<Self::T> {
     }
 }
 #[py_abc(sorted::SortedSet, sorted::SortedKeySet)]
-pub(super) trait BaseSortedSet: ListGetter {
+pub(super) trait SortedSetMethods: ListGetter {
     #[inline(always)]
     #[skip]
     fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
@@ -729,7 +729,7 @@ impl<'py> IntoUpdate<'py> {
         }
     }
 }
-impl<T: BaseSortedSet> SortedCollection for T {
+impl<T: SortedSetMethods> SortedCollection for T {
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.get_set().bind(value.py()).contains(value)
     }
@@ -768,10 +768,10 @@ impl<T: BaseSortedSet> SortedCollection for T {
     sorted::SortedByKeyKeysView,
     sorted::SortedByKeyValuesView
 )]
-pub trait BaseSortedView:
+pub trait SortedViewMethods:
     Sized + PyClass<BaseType = abc::PyoSequence> + abc::traits::MappingView + Send + Sync
 where
-    Self::M: BaseSortedDict + PyClass,
+    Self::M: SortedDictMethods + PyClass,
 {
     #[skip]
     fn new(mapping: Bound<'_, Self::M>) -> Self;
@@ -802,10 +802,10 @@ where
 }
 
 #[py_abc(sorted::SortedDict, sorted::SortedKeyDict)]
-pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
-    type KView: BaseSortedView<M = Self>;
-    type VView: BaseSortedView<M = Self>;
-    type IView: BaseSortedView<M = Self>;
+pub(super) trait SortedDictMethods: ListGetter + SortedCollection {
+    type KView: SortedViewMethods<M = Self>;
+    type VView: SortedViewMethods<M = Self>;
+    type IView: SortedViewMethods<M = Self>;
     #[getter]
     fn get_dict(&self) -> &Py<PyDict>;
     fn keys(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::KView>> {
@@ -1010,13 +1010,13 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
     }
 }
 
-pub(super) struct SortedDictIter<'a, 'py, D: BaseSortedDict> {
+pub(super) struct SortedDictIter<'a, 'py, D: SortedDictMethods> {
     py: Python<'py>,
     mapping: Bound<'py, PyAny>,
     mapping_list: MutexGuard<'a, D::T>,
     range: std::ops::Range<isize>,
 }
-impl<'a, 'py, D: BaseSortedDict> SortedDictIter<'a, 'py, D> {
+impl<'a, 'py, D: SortedDictMethods> SortedDictIter<'a, 'py, D> {
     fn new(owner: &'a D, py: Python<'py>) -> Self {
         let mapping = owner.get_dict().clone_ref(py).into_bound(py).into_any();
         let mapping_list = owner.try_lock();
@@ -1029,7 +1029,7 @@ impl<'a, 'py, D: BaseSortedDict> SortedDictIter<'a, 'py, D> {
         }
     }
 }
-impl<'py, D: BaseSortedDict> Iterator for SortedDictIter<'_, 'py, D> {
+impl<'py, D: SortedDictMethods> Iterator for SortedDictIter<'_, 'py, D> {
     type Item = PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>;
     fn next(&mut self) -> Option<PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>> {
         let index = self.range.next()?;

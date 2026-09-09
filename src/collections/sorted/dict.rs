@@ -2,7 +2,7 @@ use crate::{
     abc,
     collections::sorted::{
         SortedItemsView, SortedKeysView, SortedValuesView,
-        traits::{BaseSortedDict, ListGetter, Reduced, SortedCollection},
+        traits::{ListGetter, Reduced, SortedCollection, SortedDictMethods},
         views::{SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView},
     },
     traits::IntoInit,
@@ -63,7 +63,7 @@ impl SortedDict {
         slf.init().pipe(Ok)
     }
 }
-impl BaseSortedDict for SortedDict {
+impl SortedDictMethods for SortedDict {
     type IView = SortedItemsView;
     type KView = SortedKeysView;
     type VView = SortedValuesView;
@@ -151,7 +151,7 @@ impl SortedKeyDict {
         self.try_lock().bisect_right(key)
     }
 }
-impl BaseSortedDict for SortedKeyDict {
+impl SortedDictMethods for SortedKeyDict {
     type IView = SortedByKeyItemsView;
     type KView = SortedByKeyKeysView;
     type VView = SortedByKeyValuesView;

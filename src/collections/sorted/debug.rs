@@ -2,7 +2,7 @@ use crate::collections::{
     SortedDict, SortedKeyDict, SortedKeyList, SortedList,
     sorted::{
         set::{SortedKeySet, SortedSet},
-        traits::{BaseSortedDict, BaseSortedSet, ListGetter},
+        traits::{ListGetter, SortedDictMethods, SortedSetMethods},
     },
 };
 use either::Either;
@@ -18,7 +18,7 @@ pub fn check_sorted_dict(
         .into_inner()
 }
 
-fn check_dict(x: &impl BaseSortedDict, py: Python<'_>) -> PyResult<()> {
+fn check_dict(x: &impl SortedDictMethods, py: Python<'_>) -> PyResult<()> {
     let data = x.try_lock();
     data.inner().check(py)?;
 
@@ -41,7 +41,7 @@ pub fn check_sorted_set(
     .into_inner()
 }
 
-fn check_set_len<T: BaseSortedSet>(checked: &T, py: Python<'_>) -> PyResult<()> {
+fn check_set_len<T: SortedSetMethods>(checked: &T, py: Python<'_>) -> PyResult<()> {
     let set = checked.get_set().clone_ref(py).into_bound(py);
     let data = checked.try_lock();
     pyassert!(set.len() == data.length());

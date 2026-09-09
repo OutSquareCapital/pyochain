@@ -6,7 +6,7 @@ use tap::Pipe;
 
 use crate::{
     abc,
-    collections::sorted::traits::{BaseSortedSet, IntoUpdate, ListGetter},
+    collections::sorted::traits::{IntoUpdate, ListGetter, SortedSetMethods},
     traits::IntoInit,
 };
 
@@ -40,7 +40,7 @@ impl SortedSet {
         slf.init().pipe(Ok)
     }
 }
-impl BaseSortedSet for SortedSet {
+impl SortedSetMethods for SortedSet {
     #[inline(always)]
     fn get_set(&self) -> &Py<PySet> {
         &self.1
@@ -97,7 +97,7 @@ impl SortedKeySet {
         self.try_lock().bisect_right(key)
     }
 }
-impl BaseSortedSet for SortedKeySet {
+impl SortedSetMethods for SortedKeySet {
     #[inline(always)]
     fn get_set(&self) -> &Py<PySet> {
         &self.1

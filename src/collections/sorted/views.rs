@@ -11,7 +11,7 @@ use crate::{
     abc,
     collections::{
         SortedDict, SortedKeyDict, SortedSet,
-        sorted::traits::{BaseSortedDict, BaseSortedView, ListGetter, ObjOrVec},
+        sorted::traits::{SortedDictMethods, ListGetter, ObjOrVec, SortedViewMethods},
     },
     traits::IntoInit,
 };
@@ -51,7 +51,7 @@ macro_rules! impl_mapping_view_for_sorted_view {
 macro_rules! impl_base_sorted_view_for_items {
     ($($t:ty),*) => {
         $(
-            impl BaseSortedView for $t {
+            impl SortedViewMethods for $t {
                 fn new(mapping: Bound<'_, Self::M>) -> Self {
                     Self(mapping.unbind())
                 }
@@ -65,7 +65,7 @@ macro_rules! impl_base_sorted_view_for_items {
 macro_rules! impl_base_sorted_view_for_values {
     ($($t:ty),*) => {
         $(
-            impl BaseSortedView for $t {
+            impl SortedViewMethods for $t {
                 fn new(mapping: Bound<'_, Self::M>) -> Self {
                     Self(mapping.unbind())
                 }
@@ -79,7 +79,7 @@ macro_rules! impl_base_sorted_view_for_values {
 macro_rules! impl_base_sorted_view_for_keys {
     ($($t:ty),*) => {
         $(
-            impl BaseSortedView for $t {
+            impl SortedViewMethods for $t {
                 fn new(mapping: Bound<'_, Self::M>) -> Self {
                     Self(mapping.unbind())
                 }
@@ -123,7 +123,7 @@ impl_from_iterable!(
     SortedByKeyKeysView
 );
 #[inline(always)]
-fn get_item_for_items_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
+fn get_item_for_items_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
     slf: &T,
     index: Bound<'py, PyAny>,
 ) -> ObjOrVec<'py> {
@@ -153,7 +153,7 @@ fn get_item_for_items_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     }
 }
 #[inline(always)]
-fn get_item_for_values_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
+fn get_item_for_values_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
     slf: &T,
     index: Bound<'py, PyAny>,
 ) -> ObjOrVec<'py> {
@@ -179,7 +179,7 @@ fn get_item_for_values_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
     }
 }
 #[inline(always)]
-fn get_item_for_key_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
+fn get_item_for_key_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
     slf: &T,
     index: Bound<'py, PyAny>,
 ) -> ObjOrVec<'py> {
