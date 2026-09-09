@@ -116,19 +116,6 @@ pub(super) trait KeyedSortedCollection:
         self.iter_bounds(py, bounds, reverse)
     }
 }
-
-#[py_abc(
-    sorted::SortedList,
-    sorted::SortedKeyList,
-    sorted::SortedSet,
-    sorted::SortedKeySet
-)]
-pub(super) trait BaseSortedListSet: SortedCollection {
-    fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
-    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
-    fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()>;
-    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
-}
 pub(super) trait ListGetter:
     Sized + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
@@ -203,11 +190,10 @@ impl KeyedSortedCollection for sorted::SortedKeySet {}
 impl KeyedSortedCollection for sorted::SortedKeyDict {}
 
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
-pub(super) trait BaseSortedList:
-    ListGetter + BaseSortedListSet + IntoInit + From<Self::T>
-{
+pub(super) trait BaseSortedList: ListGetter + IntoInit + From<Self::T> {
     fn __add__<'py>(slf: Bound<'py, Self>, other: &Bound<'py, PyAny>)
     -> PyResult<Bound<'py, Self>>;
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
     }
@@ -292,8 +278,14 @@ pub(super) trait BaseSortedList:
         let msg = "use ``sl.add(value)`` instead";
         Err(PyNotImplementedError::new_err(msg))
     }
+    fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
+        self.try_lock().add(py, value)
+    }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().count(&value)
+    }
+    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.try_lock().discard(value)
     }
     #[allow(unused_variables)]
     fn extend(&self, values: Bound<'_, PyAny>) -> PyResult<()> {
@@ -309,6 +301,9 @@ pub(super) trait BaseSortedList:
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         self.try_lock().pop(py, index)
     }
+    fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.try_lock().remove(value)
+    }
     fn reverse(&self) -> PyResult<()> {
         let msg = "use ``reversed(sl)`` instead";
         Err(PyNotImplementedError::new_err(msg))
@@ -323,7 +318,7 @@ pub(super) trait BaseSortedList:
     }
 }
 #[py_abc(sorted::SortedSet, sorted::SortedKeySet)]
-pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
+pub(super) trait BaseSortedSet: ListGetter {
     #[inline(always)]
     #[skip]
     fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
@@ -562,7 +557,34 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __ror__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__or__(other)
     }
-
+    fn __xor__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.symmetric_difference(other)
+    }
+    fn __rxor__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.symmetric_difference(other)
+    }
+    fn __ixor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
+        Self::symmetric_difference_update(slf, other).map(|_| ())
+    }
+    fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
+        let set = self.get_set().bind(py);
+        if !set.contains(&value)? {
+            set.add(&value)?;
+            self.try_lock().add(py, value)?;
+        }
+        Ok(())
+    }
+    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let set = self.get_set().bind(value.py());
+        if set.contains(&value)? {
+            set.remove(&value)?;
+            self.try_lock().remove(&value)?;
+        }
+        Ok(())
+    }
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        PySet::new(py, self.get_set().bind(py).iter()).and_then(|x| self.wrap(x))
+    }
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
         self.get_set().bind(other.py()).isdisjoint(other)
     }
@@ -633,17 +655,15 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
             .map(|()| slf)
     }
 
+    fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.get_set().bind(value.py()).remove(value)?;
+        self.try_lock().remove(value)
+    }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.get_set()
             .bind(other.py())
             .symmetric_difference(other)
             .and_then(|diff| self.wrap(diff))
-    }
-    fn __xor__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.symmetric_difference(other)
-    }
-    fn __rxor__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.symmetric_difference(other)
     }
     fn symmetric_difference_update<'py>(
         slf: Bound<'py, Self>,
@@ -658,9 +678,6 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         data.update(py, set.iter().map(Bound::unbind).collect())?;
         // NOTE: the clone here is cheap (just an incref) and necessary to return `Self`
         Ok(slf.clone())
-    }
-    fn __ixor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
-        Self::symmetric_difference_update(slf, other).map(|_| ())
     }
     #[pyo3(name = "union", signature= (*iterables))]
     fn py_union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
@@ -734,32 +751,6 @@ macro_rules! impl_sorted_collection_for_set {
             fn clear(&self, py: Python<'_>) -> () {
                 self.get_set().bind(py).clear();
                 self.try_lock().clear()
-            }
-        }
-        impl BaseSortedListSet for $set {
-            fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-                let set = self.get_set().bind(py);
-                if !set.contains(&value)? {
-                    set.add(&value)?;
-                    self.try_lock().add(py, value)?;
-                }
-                Ok(())
-            }
-            fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-                let set = self.get_set().bind(value.py());
-                if set.contains(&value)? {
-                    set.remove(&value)?;
-                    self.try_lock().remove(&value)?;
-                }
-                Ok(())
-            }
-
-            fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-                self.get_set().bind(value.py()).remove(&value)?;
-                self.try_lock().remove(value)
-            }
-            fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-                PySet::new(py, self.get_set().bind(py).iter()).and_then(|x| self.wrap(x))
             }
         }
     };

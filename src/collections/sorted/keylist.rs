@@ -1,8 +1,6 @@
 use crate::{
     abc,
-    collections::sorted::traits::{
-        BaseSortedList, BaseSortedListSet, ListGetter, Reduced, SortedCollection,
-    },
+    collections::sorted::traits::{BaseSortedList, ListGetter, Reduced, SortedCollection},
     traits::IntoInit,
 };
 use pyo3::{PyTypeInfo, prelude::*};
@@ -71,26 +69,6 @@ impl SortedCollection for SortedKeyList {
         self.try_lock().reset(py, load)
     }
 }
-impl BaseSortedListSet for SortedKeyList {
-    fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        self.try_lock().add(py, value)
-    }
-
-    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().discard(value)
-    }
-
-    fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().remove(value)
-    }
-
-    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        let data = self.try_lock();
-        KeysListsData::from_vec(py, data.inner().collapse(py), data.2.clone_ref(py))
-            .map(Self::from)?
-            .into_bound(py)
-    }
-}
 impl BaseSortedList for SortedKeyList {
     fn __add__<'py>(
         slf: Bound<'py, Self>,
@@ -105,6 +83,12 @@ impl BaseSortedList for SortedKeyList {
         };
         KeysListsData::from_vec(py, out, data.2.clone_ref(py))?
             .conv::<Self>()
+            .into_bound(py)
+    }
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        let data = self.try_lock();
+        KeysListsData::from_vec(py, data.inner().collapse(py), data.2.clone_ref(py))
+            .map(Self::from)?
             .into_bound(py)
     }
 }
