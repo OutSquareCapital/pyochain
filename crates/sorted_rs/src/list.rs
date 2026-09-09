@@ -14,15 +14,13 @@ use crate::{
 
 #[derive(Default)]
 pub struct ListsData(InnerData);
-impl ListsData {
-    pub fn from_vec(py: Python<'_>, values: VecPy) -> PyResult<Self> {
+impl_inner_getter!(ListsData);
+impl ListsDataMethods for ListsData {
+    fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::default();
         new_inst.extend(py, values)?;
         Ok(new_inst)
     }
-}
-impl_inner_getter!(ListsData);
-impl ListsDataMethods for ListsData {
     fn irange_specs<'py>(
         &self,
         _py: Python<'py>,
@@ -193,9 +191,6 @@ impl ListsDataMethods for ListsData {
                 }
             }
         }
-    }
-    fn repeat(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
-        Self::from_vec(py, self.inner().repeat(py, num))
     }
     fn repr(&self, py: Python<'_>, name: Bound<'_, PyString>) -> PyResult<String> {
         self.inner()

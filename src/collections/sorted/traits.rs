@@ -191,9 +191,16 @@ impl KeyedSortedCollection for sorted::SortedKeyDict {}
 
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
 pub(super) trait BaseSortedList: ListGetter + IntoInit + From<Self::T> {
-    fn __add__<'py>(slf: Bound<'py, Self>, other: &Bound<'py, PyAny>)
-    -> PyResult<Bound<'py, Self>>;
-    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
+    fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        let py = other.py();
+        let data = self.try_lock();
+        let out = match other.cast_exact::<Self>().map(Bound::get) {
+            Ok(slf) if Arc::ptr_eq(self.inner(), slf.inner()) => data.inner().repeat(py, 2),
+            Ok(list) => data.inner().concat(py, list.try_lock().inner()),
+            Err(_) => data.inner().try_concat(py, other)?,
+        };
+        data.as_owned_from(py, out)?.conv::<Self>().into_bound(py)
+    }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
     }
@@ -242,11 +249,8 @@ pub(super) trait BaseSortedList: ListGetter + IntoInit + From<Self::T> {
         self.try_lock().length()
     }
 
-    fn __radd__<'py>(
-        slf: Bound<'py, Self>,
-        other: &Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        Self::__add__(slf, other)
+    fn __radd__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.__add__(other)
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         self.try_lock().repr(py, Self::type_object(py).name()?)
@@ -283,6 +287,9 @@ pub(super) trait BaseSortedList: ListGetter + IntoInit + From<Self::T> {
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().count(&value)
+    }
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.try_lock().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.try_lock().discard(value)
@@ -859,7 +866,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         iterable
             .try_iter()?
             .map(|key| Ok((key?, value.clone())))
-            .pipe(|v| sorted::SortedDict::try_from_iter(py, v))?
+            .pipe(|v| sorted::SortedDict::empty(py).copy_from_iter(py, v))?
             .into_bound(py)
     }
     #[pyo3(signature = (key, default=None))]

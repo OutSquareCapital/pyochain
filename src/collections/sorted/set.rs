@@ -47,7 +47,9 @@ impl BaseSortedSet for SortedSet {
     }
     fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
         let py = values.py();
-        let list = ListsData::from_vec(py, values.iter().map(Bound::unbind).collect())?;
+        let list = self
+            .try_lock()
+            .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
         Self::new(values, list).into_bound(py)
     }
     //@recursive_repr()
@@ -102,11 +104,9 @@ impl BaseSortedSet for SortedKeySet {
     }
     fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
         let py = values.py();
-        let list = KeysListsData::from_vec(
-            py,
-            values.iter().map(Bound::unbind).collect(),
-            self.try_lock().2.clone_ref(py),
-        )?;
+        let list = self
+            .try_lock()
+            .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
         Self::new(values, list).into_bound(py)
     }
     //@recursive_repr()

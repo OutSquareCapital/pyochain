@@ -19,17 +19,17 @@ impl KeysListsData {
     pub fn new(key: Py<PyAny>) -> Self {
         Self(InnerData::default(), Vec::default(), key)
     }
-    pub fn from_vec(py: Python<'_>, values: VecPy, key: Py<PyAny>) -> PyResult<Self> {
-        let mut new_inst = Self::new(key);
-        new_inst.extend(py, values)?;
-        Ok(new_inst)
-    }
     fn extract_key<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         self.2.bind(value.py()).call1((&value,))
     }
 }
 impl_inner_getter!(KeysListsData);
 impl ListsDataMethods for KeysListsData {
+    fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
+        let mut new_inst = Self::new(self.2.clone_ref(py));
+        new_inst.extend(py, values)?;
+        Ok(new_inst)
+    }
     fn irange_specs<'py>(
         &self,
         py: Python<'py>,
@@ -270,9 +270,6 @@ impl ListsDataMethods for KeysListsData {
         self.set_len(values.len());
         self.idx_mut().clear();
         Ok(())
-    }
-    fn repeat(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
-        Self::from_vec(py, self.inner().repeat(py, num), self.2.clone_ref(py))
     }
     fn repr(&self, py: Python<'_>, name: Bound<'_, PyString>) -> PyResult<String> {
         let key_repr = self.2.bind(py).repr()?;

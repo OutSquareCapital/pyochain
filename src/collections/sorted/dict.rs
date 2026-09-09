@@ -21,7 +21,13 @@ type DictItem<'py> = (Bound<'py, PyAny>, Bound<'py, PyAny>);
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends= abc::PyoMutableMapping, mapping)]
 pub struct SortedDict(pub(super) Arc<Mutex<ListsData>>, Py<PyDict>);
 impl SortedDict {
-    pub fn try_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
+    pub fn empty(py: Python<'_>) -> Self {
+        let inner = PyDict::new(py);
+        let list = ListsData::default().pipe(Mutex::new).pipe(Arc::new);
+        Self(list, inner.unbind())
+    }
+    pub fn copy_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
+        &self,
         py: Python<'py>,
         v: I,
     ) -> PyResult<Self> {
@@ -32,7 +38,9 @@ impl SortedDict {
             .map(|res| res.map(|(key, _)| key.unbind()))
             .collect::<PyResult<Vec<_>>>()?;
 
-        let list = ListsData::from_vec(py, unbounded)
+        let list = self
+            .try_lock()
+            .as_owned_from(py, unbounded)
             .map(Mutex::new)
             .map(Arc::new)?;
         Ok(Self(list, inner.unbind()))
@@ -65,19 +73,19 @@ impl BaseSortedDict for SortedDict {
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.iter(py)
-            .pipe(|v| Self::try_from_iter(py, v))?
+            .pipe(|v| self.copy_from_iter(py, v))?
             .into_bound(py)
     }
     fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let items = self.iter(py).chain(value.pipe(iter_mapping)?);
-        Self::try_from_iter(py, items)?.into_bound(py)
+        self.copy_from_iter(py, items)?.into_bound(py)
     }
 
     fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let items = value.pipe(iter_mapping)?.chain(self.iter(py));
-        Self::try_from_iter(py, items)?.into_bound(py)
+        self.copy_from_iter(py, items)?.into_bound(py)
     }
 
     // @recursive_repr()
@@ -95,10 +103,10 @@ impl BaseSortedDict for SortedDict {
 
 pub struct SortedKeyDict(pub(super) Arc<Mutex<KeysListsData>>, Py<PyDict>);
 impl SortedKeyDict {
-    pub fn try_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
+    pub fn copy_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
+        &self,
         py: Python<'py>,
         v: I,
-        key: Py<PyAny>,
     ) -> PyResult<Self> {
         let inner = PyDict::new(py);
         let unbounded = v
@@ -106,8 +114,9 @@ impl SortedKeyDict {
             .map(|res| res.and_then(|(key, value)| fill_dict(&inner, py, key, value)))
             .map(|x| x.map(|(k, _)| k.unbind()))
             .collect::<PyResult<Vec<_>>>()?;
-
-        let list = KeysListsData::from_vec(py, unbounded, key)
+        let list = self
+            .try_lock()
+            .as_owned_from(py, unbounded)
             .map(Mutex::new)
             .map(Arc::new)?;
         Ok(Self(list, inner.unbind()))
@@ -152,7 +161,7 @@ impl BaseSortedDict for SortedKeyDict {
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.iter(py)
-            .pipe(|v| Self::try_from_iter(py, v, self.try_lock().2.clone_ref(py)))?
+            .pipe(|v| self.copy_from_iter(py, v))?
             .into_bound(py)
     }
     // @recursive_repr()
@@ -173,13 +182,13 @@ impl BaseSortedDict for SortedKeyDict {
     fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let items = value.pipe(iter_mapping)?.chain(self.iter(py));
-        Self::try_from_iter(py, items, self.try_lock().2.clone_ref(py))?.into_bound(py)
+        self.copy_from_iter(py, items)?.into_bound(py)
     }
 
     fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let items = self.iter(py).chain(value.pipe(iter_mapping)?);
-        Self::try_from_iter(py, items, self.try_lock().2.clone_ref(py))?.into_bound(py)
+        self.copy_from_iter(py, items)?.into_bound(py)
     }
 }
 impl SortedCollection for SortedDict {

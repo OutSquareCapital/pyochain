@@ -45,6 +45,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         inclusive: (bool, bool),
     ) -> PyResult<Option<Bounds>>;
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
+    fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
     fn clear(&mut self);
     fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()>;
@@ -63,7 +64,6 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         value: &Bound<'_, PyAny>,
         func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
     ) -> PyResult<usize>;
-    fn repeat(&self, py: Python<'_>, num: usize) -> PyResult<Self>;
     fn repr(&self, py: Python<'_>, name: Bound<'_, PyString>) -> PyResult<String>;
     fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.bisect(value, Bisect::bisect_left)
@@ -73,6 +73,9 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     }
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.find(value).map(|x| x.is_some())
+    }
+    fn copy(&self, py: Python<'_>) -> PyResult<Self> {
+        self.as_owned_from(py, self.inner().collapse(py))
     }
     fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
         let mut bounds = Loc::default();
@@ -171,6 +174,9 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
             Some(mut loc) => self.delete(value.py(), &mut loc),
             None => Err(errors::not_in_list(&value.repr()?)),
         }
+    }
+    fn repeat(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
+        self.as_owned_from(py, self.inner().repeat(py, num))
     }
     fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
         let values = self.inner().collapse(py);

@@ -10,6 +10,7 @@ use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedList(pub(super) Arc<Mutex<ListsData>>);
+impl BaseSortedList for SortedList {}
 #[pymethods]
 impl SortedList {
     #[new]
@@ -56,29 +57,6 @@ impl SortedCollection for SortedList {
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.try_lock().reset(py, load)
-    }
-}
-impl BaseSortedList for SortedList {
-    fn __add__<'py>(
-        slf: Bound<'py, Self>,
-        other: &Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        let py = slf.py();
-        let data = slf.get().try_lock();
-        let out = if other.is(&slf) {
-            data.inner().repeat(py, 2)
-        } else {
-            data.inner().concat(py, other)?
-        };
-        ListsData::from_vec(py, out)?.conv::<Self>().into_bound(py)
-    }
-    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.try_lock()
-            .inner()
-            .collapse(py)
-            .pipe(|out| ListsData::from_vec(py, out))?
-            .conv::<Self>()
-            .into_bound(py)
     }
 }
 impl From<ListsData> for SortedList {
