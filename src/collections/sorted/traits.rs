@@ -21,8 +21,9 @@ use pyo3_ext::{
 };
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
 use sorted_rs::{
-    Bounds, InnerGetter, IntOrSlice, KeysListsData, ListDataGetters, ListsData, ListsDataMethods,
-    SeqOrAny, iter as rsiter,
+    Bounds, InnerGetter, KeysListsData, ListDataGetters, ListsData, ListsDataMethods,
+    iter as rsiter,
+    types::{IntOrSlice, SeqOrAny},
 };
 use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
 use tap::prelude::*;
