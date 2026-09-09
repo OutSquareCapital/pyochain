@@ -5,7 +5,6 @@ use crate::{
     bisect::Bisect,
     errors,
     inner::{InnerGetter, ListDataGetters, VecPy},
-    ops,
 };
 use either::Either;
 use pyo3::{
@@ -190,20 +189,18 @@ pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) 
     func: F,
 ) -> PyResult<()> {
     values.sort_by(&func);
-    match ops::Update::new(list.maxes(), list.length(), &values) {
-        ops::Update::EmptyMaxes => list.finalize_update(py, &values),
-        ops::Update::OtherGESelf => {
-            list.lists_mut().push(values);
-            values = list.inner().collapse(py);
-            values.sort_by(func);
-            list.clear();
-            list.finalize_update(py, &values)
+    if list.maxes().is_empty() {
+        list.finalize_update(py, &values)
+    } else if values.len() * 4 >= list.length() {
+        list.lists_mut().push(values);
+        values = list.inner().collapse(py);
+        values.sort_by(func);
+        list.clear();
+        list.finalize_update(py, &values)
+    } else {
+        for val in values {
+            list.add(py, val)?;
         }
-        ops::Update::OtherLTSelf => {
-            for val in values {
-                list.add(py, val)?;
-            }
-            Ok(())
-        }
+        Ok(())
     }
 }

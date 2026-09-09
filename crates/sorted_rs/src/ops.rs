@@ -85,23 +85,6 @@ impl Delete {
         }
     }
 }
-pub enum Update {
-    EmptyMaxes,
-    OtherGESelf,
-    OtherLTSelf,
-}
-impl Update {
-    #[inline(always)]
-    pub fn new<T, U>(maxes: &[T], length: usize, values: &[U]) -> Self {
-        if maxes.is_empty() {
-            Self::EmptyMaxes
-        } else if values.len() * 4 >= length {
-            Self::OtherGESelf
-        } else {
-            Self::OtherLTSelf
-        }
-    }
-}
 /// `Loc`, `start`, and `stop` bounds for a search in a sorted list.
 type IdxBounds = (Loc, usize, usize);
 pub(super) enum Index<'py, 'a> {
