@@ -154,12 +154,12 @@ fn rewrite_case(pattern: &PatTupleStruct) -> SynResult<(TokenStream2, Vec<Case>)
         CASE_EXACT => true,
         _ => return Ok((quote!(#pattern), Vec::new())),
     };
-    if pattern.path.segments.len() != 2 || pattern.elems.len() != 1 {
+    if pattern.path.segments.len() < 2 || pattern.elems.len() != 1 {
         return Err(syn::Error::new_spanned(pattern, INVALID_PATTERN_MSG));
     }
     let ty = Path {
         leading_colon: None,
-        segments: Punctuated::from_iter([pattern.path.segments[1].clone()]),
+        segments: Punctuated::from_iter(pattern.path.segments.iter().skip(1).cloned()),
     };
     let Pat::Ident(PatIdent {
         ident,
