@@ -6,9 +6,10 @@ use crate::{
     errors,
     getters::{InnerGetter, ListDataGetters},
     impl_inner_getter,
-    inner::{InnerData, VecPy},
+    inner::InnerData,
     ops,
     traits::{ListsDataMethods, NestedVec, update_list_by},
+    types::VecPy,
 };
 use pyo3::{prelude::*, types::PyString};
 use tap::prelude::*;

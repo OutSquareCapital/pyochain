@@ -1,6 +1,6 @@
 use pyo3::prelude::*;
 
-use crate::{bisect::Bisect, inner::VecPy};
+use crate::{bisect::Bisect, types::VecPy};
 
 #[derive(PartialEq, Eq, Default, Clone, Copy)]
 pub struct Loc {
