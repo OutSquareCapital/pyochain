@@ -9,7 +9,7 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    PyClass, PyTypeInfo,
+    PyClass,
     call::PyCallArgs,
     exceptions::{PyKeyError, PyNotImplementedError},
     prelude::*,
@@ -717,47 +717,37 @@ impl<'py> IntoUpdate<'py> {
         }
     }
 }
+impl<T: BaseSortedSet> SortedCollection for T {
+    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+        self.get_set().bind(value.py()).contains(value)
+    }
+    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
+        PyTuple::new(py, [self.get_set().clone_ref(py)]).map(|tup| (Self::type_object(py), tup))
+    }
 
-macro_rules! impl_sorted_collection_for_set {
-    ($set:ty, $list:ty) => {
-        impl SortedCollection for $set {
-            fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-                self.get_set().bind(value.py()).contains(value)
-            }
-            fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-                PyTuple::new(py, [self.get_set().clone_ref(py)])
-                    .map(|tup| (Self::type_object(py), tup))
-            }
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.try_lock().bisect_left(value)
+    }
 
-            fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-                self.try_lock().bisect_left(value)
-            }
-
-            fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-                self.try_lock().bisect_right(value)
-            }
-
-            fn index(
-                &self,
-                value: Bound<'_, PyAny>,
-                start: Option<isize>,
-                stop: Option<isize>,
-            ) -> PyResult<usize> {
-                self.try_lock().index(&value, start, stop)
-            }
-            fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-                self.try_lock().reset(py, load)
-            }
-            fn clear(&self, py: Python<'_>) -> () {
-                self.get_set().bind(py).clear();
-                self.try_lock().clear()
-            }
-        }
-    };
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.try_lock().bisect_right(value)
+    }
+    fn index(
+        &self,
+        value: Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<usize> {
+        self.try_lock().index(&value, start, stop)
+    }
+    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
+        self.try_lock().reset(py, load)
+    }
+    fn clear(&self, py: Python<'_>) {
+        self.get_set().bind(py).clear();
+        self.try_lock().clear();
+    }
 }
-impl_sorted_collection_for_set!(sorted::SortedSet, sorted::SortedList);
-impl_sorted_collection_for_set!(sorted::SortedKeySet, sorted::SortedKeyList);
-
 #[py_abc(
     sorted::SortedItemsView,
     sorted::SortedKeysView,
