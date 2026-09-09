@@ -20,9 +20,9 @@ impl SortedKeyList {
         key: Bound<'_, PyAny>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let slf = KeysListsData::new(key.unbind()).pipe(SortedKeyList::new);
+        let slf = key.unbind().pipe(KeysListsData::new).conv::<Self>();
         if let Some(iterable) = iterable {
-            slf.py_update(&iterable)?;
+            slf.update(&iterable)?;
         }
         slf.init().pipe(Ok)
     }
@@ -35,6 +35,9 @@ impl SortedKeyList {
     }
 }
 impl SortedCollection for SortedKeyList {
+    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+        self.try_lock().contains(value)
+    }
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         let data = self.try_lock();
         data.inner()
@@ -42,10 +45,6 @@ impl SortedCollection for SortedKeyList {
             .and_then(|x| tuple!(x.as_any(), data.2.bind(py)))
             .map(|tup| (Self::type_object(py), tup))
     }
-    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.try_lock().contains(value)
-    }
-
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let mut data = self.try_lock();
         let key = data.2.bind(value.py()).call1((value,))?;
@@ -88,14 +87,11 @@ impl BaseSortedListSet for SortedKeyList {
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         let data = self.try_lock();
         KeysListsData::from_vec(py, data.inner().collapse(py), data.2.clone_ref(py))
-            .map(Self::new)?
+            .map(Self::from)?
             .into_bound(py)
     }
 }
 impl BaseSortedList for SortedKeyList {
-    fn new(data: KeysListsData) -> Self {
-        Self(Arc::new(Mutex::new(data)))
-    }
     fn __add__<'py>(
         slf: Bound<'py, Self>,
         other: &Bound<'py, PyAny>,
@@ -107,20 +103,13 @@ impl BaseSortedList for SortedKeyList {
         } else {
             data.inner().concat(py, other)?
         };
-        KeysListsData::from_vec(py, out, data.2.clone_ref(py))
-            .map(Self::new)?
+        KeysListsData::from_vec(py, out, data.2.clone_ref(py))?
+            .conv::<Self>()
             .into_bound(py)
     }
-
-    //recursive_repr()
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let type_name = Self::type_object(py).name()?;
-        let data = self.try_lock();
-        let key_repr = data.2.bind(py).repr()?;
-
-        data.inner()
-            .as_pylist(py)?
-            .repr()
-            .map(|repr| format!("{type_name}({repr}, key={key_repr})"))
+}
+impl From<KeysListsData> for SortedKeyList {
+    fn from(data: KeysListsData) -> Self {
+        Self(Arc::new(Mutex::new(data)))
     }
 }

@@ -10,7 +10,7 @@ use crate::{
     ops,
     traits::{ListsDataMethods, NestedVec, update_list_by},
 };
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyString};
 use tap::prelude::*;
 pub struct KeysListsData(InnerData, pub Vec<VecPy>, pub Py<PyAny>);
 
@@ -273,6 +273,13 @@ impl ListsDataMethods for KeysListsData {
     }
     fn repeat(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
         Self::from_vec(py, self.inner().repeat(py, num), self.2.clone_ref(py))
+    }
+    fn repr(&self, py: Python<'_>, name: Bound<'_, PyString>) -> PyResult<String> {
+        let key_repr = self.2.bind(py).repr()?;
+        self.inner()
+            .as_pylist(py)?
+            .repr()
+            .map(|repr| format!("{name}({repr}, key={key_repr})"))
     }
     fn update(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);

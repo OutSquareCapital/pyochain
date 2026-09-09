@@ -1,4 +1,4 @@
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyString};
 use tap::Pipe;
 
 use crate::{
@@ -194,6 +194,12 @@ impl ListsDataMethods for ListsData {
     }
     fn repeat(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
         Self::from_vec(py, self.inner().repeat(py, num))
+    }
+    fn repr(&self, py: Python<'_>, name: Bound<'_, PyString>) -> PyResult<String> {
+        self.inner()
+            .as_pylist(py)?
+            .repr()
+            .map(|repr| format!("{name}({repr})"))
     }
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
         self.inner_mut().extend_lists(py, values);

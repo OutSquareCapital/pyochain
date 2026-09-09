@@ -17,9 +17,9 @@ impl SortedList {
     #[new]
     #[pyo3(signature = (iterable = None))]
     fn py_new(iterable: Option<Bound<'_, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
-        let data = Self::new(ListsData::default());
+        let data = Self::from(ListsData::default());
         if let Some(values) = iterable {
-            data.py_update(&values)?;
+            data.update(&values)?;
         }
         data.init().pipe(Ok)
     }
@@ -77,15 +77,12 @@ impl BaseSortedListSet for SortedList {
         self.try_lock()
             .inner()
             .collapse(py)
-            .pipe(|out| ListsData::from_vec(py, out))
-            .map(Self::new)?
+            .pipe(|out| ListsData::from_vec(py, out))?
+            .conv::<Self>()
             .into_bound(py)
     }
 }
 impl BaseSortedList for SortedList {
-    fn new(data: ListsData) -> Self {
-        Self(Arc::new(Mutex::new(data)))
-    }
     fn __add__<'py>(
         slf: Bound<'py, Self>,
         other: &Bound<'py, PyAny>,
@@ -97,16 +94,11 @@ impl BaseSortedList for SortedList {
         } else {
             data.inner().concat(py, other)?
         };
-        ListsData::from_vec(py, out).map(Self::new)?.into_bound(py)
+        ListsData::from_vec(py, out)?.conv::<Self>().into_bound(py)
     }
-
-    // @recursive_repr()
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let cls_name = Self::type_object(py).name()?;
-        self.try_lock()
-            .inner()
-            .as_pylist(py)?
-            .repr()
-            .map(|repr| format!("{cls_name}({repr})"))
+}
+impl From<ListsData> for SortedList {
+    fn from(data: ListsData) -> Self {
+        Self(Arc::new(Mutex::new(data)))
     }
 }

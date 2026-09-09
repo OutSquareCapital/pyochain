@@ -203,25 +203,11 @@ impl KeyedSortedCollection for sorted::SortedKeySet {}
 impl KeyedSortedCollection for sorted::SortedKeyDict {}
 
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
-pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet + IntoInit {
-    #[skip]
-    fn new(data: Self::T) -> Self;
+pub(super) trait BaseSortedList:
+    ListGetter + BaseSortedListSet + IntoInit + From<Self::T>
+{
     fn __add__<'py>(slf: Bound<'py, Self>, other: &Bound<'py, PyAny>)
     -> PyResult<Bound<'py, Self>>;
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
-    #[pyo3(name = "update")]
-    fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
-        let py = iterable.py();
-        let values = iterable
-            .try_iter()?
-            .map(|x| x?.unbind().pipe(Ok))
-            .collect::<PyResult<Vec<_>>>()?;
-        self.try_lock().update(py, values)
-    }
-    #[pyo3(signature = (index = -1))]
-    fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        self.try_lock().pop(py, index)
-    }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
     }
@@ -276,7 +262,9 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet + IntoInit {
     ) -> PyResult<Bound<'py, Self>> {
         Self::__add__(slf, other)
     }
-
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        self.try_lock().repr(py, Self::type_object(py).name()?)
+    }
     fn __rmul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
         self.__mul__(py, num)
     }
@@ -287,12 +275,12 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet + IntoInit {
     }
 
     fn __iadd__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.py_update(&other)
+        self.update(&other)
     }
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
         self.try_lock()
-            .repeat(py, num)
-            .map(Self::new)?
+            .repeat(py, num)?
+            .conv::<Self>()
             .into_bound(py)
     }
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
@@ -317,9 +305,21 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet + IntoInit {
         let msg = "use ``sl.add(value)`` instead";
         Err(PyNotImplementedError::new_err(msg))
     }
+    #[pyo3(signature = (index = -1))]
+    fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
+        self.try_lock().pop(py, index)
+    }
     fn reverse(&self) -> PyResult<()> {
         let msg = "use ``reversed(sl)`` instead";
         Err(PyNotImplementedError::new_err(msg))
+    }
+    fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = iterable.py();
+        let values = iterable
+            .try_iter()?
+            .map(|x| x?.unbind().pipe(Ok))
+            .collect::<PyResult<Vec<_>>>()?;
+        self.try_lock().update(py, values)
     }
 }
 #[py_abc(sorted::SortedSet, sorted::SortedKeySet)]

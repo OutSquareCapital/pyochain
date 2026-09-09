@@ -5,7 +5,7 @@ use either::Either;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PySlice, PySliceIndices},
+    types::{PySlice, PySliceIndices, PyString},
 };
 pub type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
 pub(super) trait NestedVec<T> {
@@ -64,6 +64,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
     ) -> PyResult<usize>;
     fn repeat(&self, py: Python<'_>, num: usize) -> PyResult<Self>;
+    fn repr(&self, py: Python<'_>, name: Bound<'_, PyString>) -> PyResult<String>;
     fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.bisect(value, Bisect::bisect_left)
     }
