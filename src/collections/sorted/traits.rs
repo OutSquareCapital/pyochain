@@ -1,13 +1,8 @@
 use crate::{
     abc,
-    collections::{
-        SortedKeyList, SortedList,
-        sorted::{
-            dict::{SortedDict, SortedKeyDict},
-            iter::{self, PySortedIter},
-            set::{SortedKeySet, SortedSet},
-            views::BaseSortedView,
-        },
+    collections::sorted::{
+        self,
+        iter::{self, PySortedIter},
     },
     core::{PyoVec, iterators},
     traits::IntoInit,
@@ -18,7 +13,7 @@ use pyo3::{
     call::PyCallArgs,
     exceptions::{PyKeyError, PyNotImplementedError},
     prelude::*,
-    types::{PyBool, PyDict, PyList, PyMapping, PyNotImplemented, PySet, PyTuple, PyType},
+    types::{PyBool, PyDict, PyList, PyMapping, PyNotImplemented, PySet, PySlice, PyTuple, PyType},
 };
 use pyo3_ext::{
     prelude::*,
@@ -36,12 +31,12 @@ pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>>;
 
 #[py_abc(
-    SortedList,
-    SortedKeyList,
-    SortedSet,
-    SortedKeySet,
-    SortedDict,
-    SortedKeyDict
+    sorted::SortedList,
+    sorted::SortedKeyList,
+    sorted::SortedSet,
+    sorted::SortedKeySet,
+    sorted::SortedDict,
+    sorted::SortedKeyDict
 )]
 pub(super) trait SortedCollection:
     Sized + ListGetter + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
@@ -103,7 +98,7 @@ pub(super) trait SortedCollection:
     fn clear(&self, py: Python<'_>);
 }
 
-#[py_abc(SortedKeyList, SortedKeySet, SortedKeyDict)]
+#[py_abc(sorted::SortedKeyList, sorted::SortedKeySet, sorted::SortedKeyDict)]
 pub(super) trait KeyedSortedCollection:
     SortedCollection + ListGetter<T = KeysListsData>
 {
@@ -122,7 +117,12 @@ pub(super) trait KeyedSortedCollection:
     }
 }
 
-#[py_abc(SortedList, SortedKeyList, SortedSet, SortedKeySet)]
+#[py_abc(
+    sorted::SortedList,
+    sorted::SortedKeyList,
+    sorted::SortedSet,
+    sorted::SortedKeySet
+)]
 pub(super) trait BaseSortedListSet: SortedCollection {
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
@@ -187,7 +187,7 @@ impl_list_getter!(
     iter::PyBoundedRev,
     iter::PyFull,
     iter::PyFullRev,
-    for [SortedList, SortedSet, SortedDict]
+    for [sorted::SortedList, sorted::SortedSet, sorted::SortedDict]
 );
 impl_list_getter!(
     KeysListsData,
@@ -195,14 +195,14 @@ impl_list_getter!(
     iter::PyBoundedKeyRev,
     iter::PyFullKey,
     iter::PyFullKeyRev,
-    for [SortedKeyList, SortedKeySet, SortedKeyDict]
+    for [sorted::SortedKeyList, sorted::SortedKeySet, sorted::SortedKeyDict]
 );
 
-impl KeyedSortedCollection for SortedKeyList {}
-impl KeyedSortedCollection for SortedKeySet {}
-impl KeyedSortedCollection for SortedKeyDict {}
+impl KeyedSortedCollection for sorted::SortedKeyList {}
+impl KeyedSortedCollection for sorted::SortedKeySet {}
+impl KeyedSortedCollection for sorted::SortedKeyDict {}
 
-#[py_abc(SortedList, SortedKeyList)]
+#[py_abc(sorted::SortedList, sorted::SortedKeyList)]
 pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
 
@@ -316,7 +316,7 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
         Err(PyNotImplementedError::new_err(msg))
     }
 }
-#[py_abc(SortedSet, SortedKeySet)]
+#[py_abc(sorted::SortedSet, sorted::SortedKeySet)]
 pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     #[inline(always)]
     #[skip]
@@ -758,9 +758,51 @@ macro_rules! impl_sorted_collection_for_set {
         }
     };
 }
-impl_sorted_collection_for_set!(SortedSet, SortedList);
-impl_sorted_collection_for_set!(SortedKeySet, SortedKeyList);
-#[py_abc(SortedDict, SortedKeyDict)]
+impl_sorted_collection_for_set!(sorted::SortedSet, sorted::SortedList);
+impl_sorted_collection_for_set!(sorted::SortedKeySet, sorted::SortedKeyList);
+
+#[py_abc(
+    sorted::SortedItemsView,
+    sorted::SortedKeysView,
+    sorted::SortedValuesView,
+    sorted::SortedByKeyItemsView,
+    sorted::SortedByKeyKeysView,
+    sorted::SortedByKeyValuesView
+)]
+pub trait BaseSortedView:
+    Sized + PyClass<BaseType = abc::PyoSequence> + abc::traits::MappingView + Send + Sync
+where
+    Self::M: BaseSortedDict + PyClass,
+{
+    #[skip]
+    fn new(mapping: Bound<'_, Self::M>) -> Self;
+    fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
+    fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = index.py();
+        let mapping = self.mapping().get();
+        let dict = mapping.get_dict().bind(py);
+        try_cast_into! {
+            match index {
+                Case::PySlice(slice) => {
+                    let mut data = mapping.try_lock();
+                    let keys = data.inner_mut().get_slice(py, &slice)?;
+                    data.del_slice(py, slice)?;
+                    for key in keys {
+                        dict.del_item(key)?;
+                    }
+                    Ok(())
+                },
+                int => {
+                    let key = mapping.try_lock().pop(py, int.extract::<isize>()?)?;
+                    dict.del_item(key)?;
+                    Ok(())
+                }
+            }
+        }
+    }
+}
+
+#[py_abc(sorted::SortedDict, sorted::SortedKeyDict)]
 pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
     type KView: BaseSortedView<M = Self>;
     type VView: BaseSortedView<M = Self>;
@@ -829,13 +871,13 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         cls: Bound<'py, PyType>,
         iterable: Bound<'py, PyAny>,
         value: Option<Bound<'py, PyAny>>,
-    ) -> PyResult<Bound<'py, SortedDict>> {
+    ) -> PyResult<Bound<'py, sorted::SortedDict>> {
         let py = cls.py();
         let value = value.unwrap_or_else(|| py.None().into_bound(py));
         iterable
             .try_iter()?
             .map(|key| Ok((key?, value.clone())))
-            .pipe(|v| SortedDict::try_from_iter(py, v))?
+            .pipe(|v| sorted::SortedDict::try_from_iter(py, v))?
             .into_bound(py)
     }
     #[pyo3(signature = (key, default=None))]

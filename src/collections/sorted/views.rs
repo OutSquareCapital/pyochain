@@ -1,62 +1,20 @@
 use either::Either;
 use pyo3::{
-    PyClass,
     prelude::*,
     types::{PyList, PySlice, PyType},
 };
 use pyo3_ext::prelude::*;
-use pyochain_macros::{py_abc, try_cast_into};
-use sorted_rs::{InnerGetter, ListsDataMethods};
+use pyochain_macros::try_cast_into;
+use sorted_rs::InnerGetter;
 
 use crate::{
     abc,
     collections::{
         SortedDict, SortedKeyDict, SortedSet,
-        sorted::traits::{BaseSortedDict, ListGetter, ObjOrVec},
+        sorted::traits::{BaseSortedDict, BaseSortedView, ListGetter, ObjOrVec},
     },
     traits::IntoInit,
 };
-#[py_abc(
-    SortedItemsView,
-    SortedKeysView,
-    SortedValuesView,
-    SortedByKeyItemsView,
-    SortedByKeyKeysView,
-    SortedByKeyValuesView
-)]
-pub trait BaseSortedView:
-    Sized + PyClass<BaseType = abc::PyoSequence> + abc::traits::MappingView + Send + Sync
-where
-    Self::M: BaseSortedDict + PyClass,
-{
-    #[skip]
-    fn new(mapping: Bound<'_, Self::M>) -> Self;
-    fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
-    fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
-        let py = index.py();
-        let mapping = self.mapping().get();
-        let dict = mapping.get_dict().bind(py);
-        try_cast_into! {
-            match index {
-                Case::PySlice(slice) => {
-                    let mut data = mapping.try_lock();
-                    let keys = data.inner_mut().get_slice(py, &slice)?;
-                    data.del_slice(py, slice)?;
-                    for key in keys {
-                        dict.del_item(key)?;
-                    }
-                    Ok(())
-                },
-                int => {
-                    let key = mapping.try_lock().pop(py, int.extract::<isize>()?)?;
-                    dict.del_item(key)?;
-                    Ok(())
-                }
-            }
-        }
-    }
-}
-
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedKeysView(Py<SortedDict>);
 
