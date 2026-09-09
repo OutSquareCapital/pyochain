@@ -12,12 +12,6 @@ use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedList(pub(super) Arc<Mutex<ListsData>>);
-impl SortedList {
-    #[inline]
-    pub(super) fn new(data: ListsData) -> Self {
-        Self(Arc::new(Mutex::new(data)))
-    }
-}
 #[pymethods]
 impl SortedList {
     #[new]
@@ -89,6 +83,9 @@ impl BaseSortedListSet for SortedList {
     }
 }
 impl BaseSortedList for SortedList {
+    fn new(data: ListsData) -> Self {
+        Self(Arc::new(Mutex::new(data)))
+    }
     fn __add__<'py>(
         slf: Bound<'py, Self>,
         other: &Bound<'py, PyAny>,
@@ -101,15 +98,6 @@ impl BaseSortedList for SortedList {
             data.inner().concat(py, other)?
         };
         ListsData::from_vec(py, out).map(Self::new)?.into_bound(py)
-    }
-
-    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        self.try_lock()
-            .inner()
-            .repeat(py, num)
-            .pipe(|out| ListsData::from_vec(py, out))
-            .map(Self::new)?
-            .into_bound(py)
     }
 
     // @recursive_repr()

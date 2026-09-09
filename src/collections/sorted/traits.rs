@@ -203,10 +203,11 @@ impl KeyedSortedCollection for sorted::SortedKeySet {}
 impl KeyedSortedCollection for sorted::SortedKeyDict {}
 
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
-pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
+pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet + IntoInit {
+    #[skip]
+    fn new(data: Self::T) -> Self;
     fn __add__<'py>(slf: Bound<'py, Self>, other: &Bound<'py, PyAny>)
     -> PyResult<Bound<'py, Self>>;
-    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>>;
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
     #[pyo3(name = "update")]
     fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
@@ -288,7 +289,12 @@ pub(super) trait BaseSortedList: ListGetter + BaseSortedListSet {
     fn __iadd__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
         self.py_update(&other)
     }
-
+    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
+        self.try_lock()
+            .repeat(py, num)
+            .map(Self::new)?
+            .into_bound(py)
+    }
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
         self.try_lock().imul(py, num)
     }

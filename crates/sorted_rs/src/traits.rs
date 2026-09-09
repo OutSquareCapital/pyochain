@@ -63,6 +63,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         value: &Bound<'_, PyAny>,
         func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
     ) -> PyResult<usize>;
+    fn repeat(&self, py: Python<'_>, num: usize) -> PyResult<Self>;
     fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.bisect(value, Bisect::bisect_left)
     }

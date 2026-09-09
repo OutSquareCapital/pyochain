@@ -12,11 +12,6 @@ use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedKeyList(pub(super) Arc<Mutex<KeysListsData>>);
-impl SortedKeyList {
-    pub(super) fn new(data: KeysListsData) -> Self {
-        Self(Arc::new(Mutex::new(data)))
-    }
-}
 #[pymethods]
 impl SortedKeyList {
     #[new]
@@ -98,6 +93,9 @@ impl BaseSortedListSet for SortedKeyList {
     }
 }
 impl BaseSortedList for SortedKeyList {
+    fn new(data: KeysListsData) -> Self {
+        Self(Arc::new(Mutex::new(data)))
+    }
     fn __add__<'py>(
         slf: Bound<'py, Self>,
         other: &Bound<'py, PyAny>,
@@ -110,13 +108,6 @@ impl BaseSortedList for SortedKeyList {
             data.inner().concat(py, other)?
         };
         KeysListsData::from_vec(py, out, data.2.clone_ref(py))
-            .map(Self::new)?
-            .into_bound(py)
-    }
-
-    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        let data = self.try_lock();
-        KeysListsData::from_vec(py, data.inner().repeat(py, num), data.2.clone_ref(py))
             .map(Self::new)?
             .into_bound(py)
     }

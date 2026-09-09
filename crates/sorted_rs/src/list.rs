@@ -192,6 +192,9 @@ impl ListsDataMethods for ListsData {
             }
         }
     }
+    fn repeat(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
+        Self::from_vec(py, self.inner().repeat(py, num))
+    }
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
         self.inner_mut().extend_lists(py, values);
         self.0
