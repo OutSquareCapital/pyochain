@@ -196,8 +196,18 @@ pub(super) trait BaseSortedList: ListGetter + IntoInit + From<Self::T> {
         let data = self.try_lock();
         let out = match other.cast_exact::<Self>().map(Bound::get) {
             Ok(slf) if Arc::ptr_eq(self.inner(), slf.inner()) => data.inner().repeat(py, 2),
-            Ok(list) => data.inner().concat(py, list.try_lock().inner()),
-            Err(_) => data.inner().try_concat(py, other)?,
+            Ok(list) => data
+                .inner()
+                .iter()
+                .chain(list.try_lock().inner().iter())
+                .map(|x| x.clone_ref(py))
+                .collect(),
+            Err(_) => data
+                .inner()
+                .iter()
+                .map(|x| x.clone_ref(py).pipe(Ok::<Py<PyAny>, PyErr>))
+                .chain(other.try_iter()?.map(|x| x?.unbind().pipe(Ok)))
+                .collect::<PyResult<Vec<Py<PyAny>>>>()?,
         };
         data.as_owned_from(py, out)?.conv::<Self>().into_bound(py)
     }

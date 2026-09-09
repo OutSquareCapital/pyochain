@@ -60,21 +60,6 @@ impl InnerData {
     pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         self.iter().collect_bound::<PyList>(py)
     }
-    #[inline]
-    pub fn try_concat(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<VecPy> {
-        self.iter()
-            .map(|x| x.clone_ref(py).pipe(Ok))
-            .chain(other.try_iter()?.map(|x| x?.unbind().pipe(Ok)))
-            .collect()
-    }
-    #[inline]
-    #[must_use]
-    pub fn concat(&self, py: Python<'_>, other: &Self) -> VecPy {
-        self.iter()
-            .chain(other.iter())
-            .map(|x| x.clone_ref(py))
-            .collect()
-    }
     pub fn check(&self, py: Python<'_>) -> PyResult<()> {
         check_list(self, py)
     }
