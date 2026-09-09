@@ -47,6 +47,10 @@ See below for the benchmark results, with the number of `args` in the left colum
 - **typing**: `PyoIterator::{map_windows, map_windows_star}` now correctly handle functions with varargs.
 - **typing**: `PyoIterator::for_each_star` now correctly handle functions with varargs and ParamSpec.
 
+### 🔄 Refactors
+
+- Many changes to the internal rust structure to improve readability and reduce code-gen (and by extension, compile time).
+
 ### 🛠️ Other improvements
 
 - **Website**: The return sections of the functions/methods docstrings is now correctly rendered thanks to @tecnolgd contribution in [#95](https://github.com/OutSquareCapital/pyochain/pull/95)
