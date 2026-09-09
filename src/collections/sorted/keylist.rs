@@ -3,10 +3,9 @@ use crate::{
     collections::sorted::traits::{
         BaseSortedList, BaseSortedListSet, ListGetter, Reduced, SortedCollection,
     },
-    core::PyoVec,
     traits::IntoInit,
 };
-use pyo3::{PyTypeInfo, prelude::*, types::PyList};
+use pyo3::{PyTypeInfo, prelude::*};
 use pyo3_ext::prelude::*;
 use sorted_rs::{InnerGetter, KeysListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
@@ -49,9 +48,7 @@ impl SortedCollection for SortedKeyList {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         let data = self.try_lock();
         data.inner()
-            .iter()
-            .collect_bound::<PyList>(py)?
-            .try_into_py::<PyoVec>()
+            .as_pylist(py)
             .and_then(|x| tuple!(x.as_any(), data.2.bind(py)))
             .map(|tup| (Self::type_object(py), tup))
     }
@@ -130,8 +127,7 @@ impl BaseSortedList for SortedKeyList {
         let key_repr = data.2.bind(py).repr()?;
 
         data.inner()
-            .iter()
-            .collect_bound::<PyList>(py)?
+            .as_pylist(py)?
             .repr()
             .map(|repr| format!("{type_name}({repr}, key={key_repr})"))
     }

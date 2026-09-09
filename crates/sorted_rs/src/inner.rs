@@ -5,7 +5,7 @@ use either::Either;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PyNotImplemented, PySequence, PySlice, PySliceIndices},
+    types::{PyList, PyNotImplemented, PySequence, PySlice, PySliceIndices},
 };
 use pyo3_ext::{
     prelude::*,
@@ -55,6 +55,10 @@ impl InnerData {
     #[inline(always)]
     pub fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
         self.lists.iter().flatten()
+    }
+
+    pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
+        self.iter().collect_bound::<PyList>(py)
     }
     #[inline]
     pub fn concat(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<VecPy> {
