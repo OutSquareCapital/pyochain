@@ -168,6 +168,8 @@ cargo fmt --all
 uv run sdsort . --stubs;
 uv run ruff check . --fix --unsafe-fixes;
 uv run ruff format . --preview;
+uv run tombi format;
+uv run tombi lint;
 uv run basedpyright .;
 uv run pydoclint pyochain/**/*.pyi
 cargo run --release -p pyochain-build

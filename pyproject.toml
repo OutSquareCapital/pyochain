@@ -24,6 +24,7 @@ dev = [
   "sdsort",
   "sortedcontainers>=2.4.0",
   "sortedcontainers-stubs>=2.4.3",
+  "tombi>=1.5.4",
 ]
 doc = ["mkdocstrings-python>=2.0.7", "zensical>=0.0.57"]
 
