@@ -1,6 +1,8 @@
 use crate::{
     abc,
-    collections::sorted::traits::{ListGetter, Reduced, SortedCollection, SortedListMethods},
+    collections::sorted::traits::{
+        ListGetter, Reduced, SortedCollectionsMethods, SortedListMethods,
+    },
     traits::IntoInit,
 };
 use pyo3::{PyTypeInfo, prelude::*};
@@ -23,7 +25,7 @@ impl SortedList {
         data.init().pipe(Ok)
     }
 }
-impl SortedCollection for SortedList {
+impl SortedCollectionsMethods for SortedList {
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.try_lock().contains(value)
     }

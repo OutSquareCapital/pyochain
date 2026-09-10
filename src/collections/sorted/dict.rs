@@ -2,7 +2,7 @@ use crate::{
     abc,
     collections::sorted::{
         SortedItemsView, SortedKeysView, SortedValuesView,
-        traits::{ListGetter, Reduced, SortedCollection, SortedDictMethods},
+        traits::{ListGetter, Reduced, SortedCollectionsMethods, SortedDictMethods},
         views::{SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView},
     },
     traits::IntoInit,
@@ -191,7 +191,7 @@ impl SortedDictMethods for SortedKeyDict {
         self.copy_from_iter(py, items)?.into_bound(py)
     }
 }
-impl SortedCollection for SortedDict {
+impl SortedCollectionsMethods for SortedDict {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         let items = self.get_dict().bind(py).copy().and_then(|x| tuple!(x))?;
         Ok((Self::type_object(py), items))
@@ -226,7 +226,7 @@ impl SortedCollection for SortedDict {
     }
 }
 
-impl SortedCollection for SortedKeyDict {
+impl SortedCollectionsMethods for SortedKeyDict {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         let items = self
             .get_dict()

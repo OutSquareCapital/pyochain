@@ -39,7 +39,7 @@ pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyAny>, Bound<'py, Py
     sorted::SortedDict,
     sorted::SortedKeyDict
 )]
-pub(super) trait SortedCollection:
+pub(super) trait SortedCollectionsMethods:
     Sized + ListGetter + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py>;
@@ -101,7 +101,7 @@ pub(super) trait SortedCollection:
 
 #[py_abc(sorted::SortedKeyList, sorted::SortedKeySet, sorted::SortedKeyDict)]
 pub(super) trait KeyedSortedCollection:
-    SortedCollection + ListGetter<T = KeysListsData>
+    SortedCollectionsMethods + ListGetter<T = KeysListsData>
 {
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(
@@ -693,7 +693,7 @@ pub(super) trait SortedSetMethods: ListGetter {
             .map(|()| slf)
     }
 }
-impl<T: SortedSetMethods> SortedCollection for T {
+impl<T: SortedSetMethods> SortedCollectionsMethods for T {
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.get_set(value.py()).contains(value)
     }
@@ -766,7 +766,7 @@ where
 }
 
 #[py_abc(sorted::SortedDict, sorted::SortedKeyDict)]
-pub(super) trait SortedDictMethods: ListGetter + SortedCollection {
+pub(super) trait SortedDictMethods: ListGetter + SortedCollectionsMethods {
     type KView: SortedViewMethods<M = Self>;
     type VView: SortedViewMethods<M = Self>;
     type IView: SortedViewMethods<M = Self>;
