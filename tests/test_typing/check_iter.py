@@ -23,6 +23,16 @@ def check_iter_covariance() -> None:
     _j: Iterator[Animal] = b
 
 
+def check_iter_constructor() -> None:
+    _ = assert_type(Iter[str](), Iter[str])
+    _ = assert_type(Iter(()), Iter[Never])
+    _ = assert_type(Iter(Range(3)), Iter[int])
+    _ = assert_type(Iter(Range(3).iter().map(str)), Iter[str])
+    _ = assert_type(Iter(1), Iter[int])
+    _ = assert_type(Iter(1, 2, 3), Iter[int])
+    _ = assert_type(Iter(dict[str, str]().items()), Iter[tuple[str, str]])
+
+
 def check_iter_flatten() -> Never:
     nested = (
         Range(3)

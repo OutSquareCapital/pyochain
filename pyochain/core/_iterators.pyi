@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Iterator
-from typing import Self, final, override
+from typing import Self, final, overload, override
 
 from pyochain import Option, Result
 from pyochain.abc import PyoIterator
@@ -44,7 +44,12 @@ class Iter[T](PyoIterator[T], ArgsWrapper[T]):
         assert iterator.collect(Seq) == Seq()
         ```
     """
-
+    @overload
+    def __new__(cls, data: Iterable[T], /, *more: T) -> Self: ...
+    @overload
+    def __new__(cls, data: T, /, *more: T) -> Self: ...
+    @overload
+    def __new__(cls, /) -> Self: ...
     def __new__(cls, data: Iterable[T] | T = (), /, *more: T) -> Self:
         """Create a new `Iter` instance.
 

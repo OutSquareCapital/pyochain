@@ -1,6 +1,8 @@
 # Contributing to pyochain
 
-Thank you for your interest in contributing to pyochain! This document outlines the repository structure, coding standards, and contribution workflow to help you get started.
+Thank you for your interest in contributing to pyochain!
+
+This document outlines the repository structure, coding standards, and contribution workflow to help you get started.
 
 ## Repository overview
 
