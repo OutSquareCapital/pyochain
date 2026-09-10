@@ -1,13 +1,19 @@
 use std::cmp::Ordering;
 
-use crate::{Bounds, InnerGetter, ListDataGetters, Loc, bisect::Bisect, errors, inner::VecPy};
+use crate::{
+    Bounds, InnerGetter, ListDataGetters, Loc,
+    bisect::Bisect,
+    errors,
+    types::{IntOrSlice, ListOrAny, VecPy},
+};
 use either::Either;
 use pyo3::{
+    call::PyCallArgs,
     exceptions::PyIndexError,
     prelude::*,
-    types::{PySlice, PySliceIndices, PyString},
+    types::{PyBool, PyList, PySet, PySlice, PySliceIndices, PyString, PyTuple},
 };
-pub type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
+use pyo3_ext::prelude::*;
 pub(super) trait NestedVec<T> {
     fn loc(&self, loc: &Loc) -> &T;
     fn loc_insert(&mut self, loc: &Loc, value: T);
@@ -185,7 +191,217 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         self.extend(py, values)
     }
 }
+pub trait SetDataMethods<T: ListsDataMethods>: InnerGetter {
+    fn get_list(&self) -> &T;
+    fn get_list_mut(&mut self) -> &mut T;
+    fn get_set(&self) -> &Py<PySet>;
+    fn update<'py>(&mut self, py: Python<'py>, other: IntoUpdate<'py>) -> PyResult<()> {
+        let set = self.get_set().clone_ref(py).into_bound(py);
 
+        let values = other.into_set(py)?;
+        if (4 * values.len()) > set.len() {
+            set.update((values,))?;
+            self.get_list_mut().clear();
+            self.get_list_mut()
+                .extend(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
+        } else {
+            for value in values.iter().map(Bound::unbind) {
+                self.add(py, value)?;
+            }
+        }
+        Ok(())
+    }
+    fn difference<'py, O: PyCallArgs<'py>>(
+        &self,
+        py: Python<'py>,
+        iterables: O,
+    ) -> PyResult<Bound<'py, PySet>> {
+        self.get_set().bind(py).difference(iterables)
+    }
+    fn intersection<'py, O: PyCallArgs<'py>>(
+        &self,
+        py: Python<'py>,
+        iterables: O,
+    ) -> PyResult<Bound<'py, PySet>> {
+        self.get_set().bind(py).intersection(iterables)
+    }
+    fn union<'py, O: PyCallArgs<'py>>(
+        &self,
+        py: Python<'py>,
+        iterables: O,
+    ) -> PyResult<Bound<'py, PySet>> {
+        self.get_set().bind(py).union(iterables)
+    }
+    fn difference_update(&mut self, py: Python<'_>, iterables: IntoUpdate<'_>) -> PyResult<()> {
+        let set = self.get_set().clone_ref(py).into_bound(py);
+        let values = iterables.into_set(py)?;
+        if (4 * values.len()) > set.len() {
+            set.difference_update((values,))?;
+            self.get_list_mut().clear();
+            self.get_list_mut()
+                .extend(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
+        } else {
+            for value in values {
+                self.discard(value)?;
+            }
+        }
+        Ok(())
+    }
+    fn intersection_update<'py, O: PyCallArgs<'py>>(
+        &mut self,
+        py: Python<'py>,
+        iterables: O,
+    ) -> PyResult<()> {
+        let set = self.get_set().clone_ref(py).into_bound(py);
+        set.intersection_update(iterables)?;
+        self.get_list_mut().clear();
+        self.get_list_mut()
+            .extend(py, set.iter().map(Bound::unbind).collect())
+    }
+    fn __getitem__<'py>(
+        &mut self,
+        py: Python<'py>,
+        index: IntOrSlice<'py>,
+    ) -> PyResult<ListOrAny<'py>> {
+        match index {
+            Either::Right(slice) => self
+                .inner_mut()
+                .get_slice(py, &slice)?
+                .iter()
+                .collect_bound::<PyList>(py)
+                .map(Either::Left),
+            Either::Left(index) => self.inner_mut().get_item(py, index).map(Either::Right),
+        }
+    }
+    fn __delitem__(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+        match index {
+            Either::Right(slice) => {
+                let values = self
+                    .get_list_mut()
+                    .inner_mut()
+                    .get_slice(py, &slice)?
+                    .iter()
+                    .collect_bound::<PySet>(py)?;
+                self.get_set().bind(py).difference_update((values,))?;
+                self.get_list_mut().del_slice(py, slice)?;
+            }
+            Either::Left(int) => {
+                let value = self.get_list_mut().inner_mut().get_item(py, int)?;
+                self.get_set().bind(py).remove(&value)?;
+                self.get_list_mut().del_item(py, int)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self.get_set().bind(py).len()
+    }
+    fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
+        let set = self.get_set().bind(py);
+        if !set.contains(&value)? {
+            set.add(&value)?;
+            self.get_list_mut().add(py, value)?;
+        }
+        Ok(())
+    }
+    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let set = self.get_set().bind(value.py());
+        if set.contains(&value)? {
+            set.remove(&value)?;
+            self.get_list_mut().remove(&value)?;
+        }
+        Ok(())
+    }
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PySet>> {
+        PySet::new(py, self.get_set().bind(py).iter())
+    }
+    fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self.get_set().bind(other.py()).isdisjoint(other)
+    }
+
+    fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self.get_set().bind(other.py()).issubset(other)
+    }
+
+    fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self.get_set().bind(other.py()).issuperset(other)
+    }
+
+    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+        if self.get_set().bind(value.py()).contains(value)? {
+            Ok(1)
+        } else {
+            Ok(0)
+        }
+    }
+
+    fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
+        let value = self.get_list_mut().pop(py, index)?;
+        self.get_set().bind(py).remove(&value)?;
+        Ok(value)
+    }
+    fn py_difference_update(&mut self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
+        let py = iterables.py();
+        let set = self.get_set().clone_ref(py).into_bound(py);
+        let values = iterables
+            .iter()
+            .flat_map(|x| x.try_iter().unwrap())
+            .try_collect_bound::<PySet>(py)?;
+        if (4 * values.len()) > set.len() {
+            set.difference_update((values,))?;
+            self.get_list_mut().clear();
+            self.get_list_mut()
+                .extend(py, set.iter().map(Bound::unbind).collect())
+        } else {
+            for value in values {
+                self.discard(value)?;
+            }
+            Ok(())
+        }
+    }
+    fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.get_set().bind(value.py()).remove(value)?;
+        self.get_list_mut().remove(value)
+    }
+    fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PySet>> {
+        self.get_set().bind(other.py()).symmetric_difference(other)
+    }
+    fn symmetric_difference_update(&mut self, other: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = other.py();
+        let set = self.get_set().clone_ref(py).into_bound(py);
+        set.symmetric_difference_update(other)?;
+        self.get_list_mut().clear();
+        self.get_list_mut()
+            .extend(py, set.iter().map(Bound::unbind).collect())
+    }
+}
+pub enum IntoUpdate<'py> {
+    Set(Bound<'py, PySet>),
+    Tuple(Bound<'py, PyTuple>),
+    Any(Bound<'py, PyAny>),
+}
+impl<'py> IntoUpdate<'py> {
+    pub fn into_set(self, py: Python<'py>) -> PyResult<Bound<'py, PySet>> {
+        match self {
+            IntoUpdate::Tuple(tup) => tup
+                .iter()
+                .flat_map(|x| x.try_iter().unwrap())
+                .try_collect_bound::<PySet>(py),
+            IntoUpdate::Set(pyset) => Ok(pyset),
+            IntoUpdate::Any(any) => any.try_iter()?.try_collect_bound::<PySet>(py),
+        }
+    }
+}
+impl<'py> From<Bound<'py, PyAny>> for IntoUpdate<'py> {
+    fn from(other: Bound<'py, PyAny>) -> Self {
+        if other.is_exact_instance_of::<PySet>() {
+            Self::Set(unsafe { other.cast_into_unchecked::<PySet>() })
+        } else {
+            Self::Any(other)
+        }
+    }
+}
 pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) -> Ordering>(
     list: &mut T,
     py: Python<'_>,

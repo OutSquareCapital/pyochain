@@ -21,7 +21,7 @@ use pyo3_ext::{
 };
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
 use sorted_rs::{
-    Bounds, InnerGetter, KeysListsData, ListDataGetters, ListsData, ListsDataMethods,
+    Bounds, InnerGetter, IntoUpdate, KeysListsData, ListDataGetters, ListsData, ListsDataMethods,
     iter as rsiter,
     types::{IntOrSlice, SeqOrAny},
 };
@@ -175,7 +175,7 @@ impl_list_getter!(
     iter::PyBoundedRev,
     iter::PyFull,
     iter::PyFullRev,
-    for [sorted::SortedList, sorted::SortedSet, sorted::SortedDict]
+    for [sorted::SortedList, sorted::SortedDict]
 );
 impl_list_getter!(
     KeysListsData,
@@ -183,7 +183,7 @@ impl_list_getter!(
     iter::PyBoundedKeyRev,
     iter::PyFullKey,
     iter::PyFullKeyRev,
-    for [sorted::SortedKeyList, sorted::SortedKeySet, sorted::SortedKeyDict]
+    for [sorted::SortedKeyList,  sorted::SortedKeyDict]
 );
 
 impl KeyedSortedCollection for sorted::SortedKeyList {}
@@ -336,12 +336,12 @@ pub(super) trait SortedSetMethods: ListGetter {
     #[skip]
     fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
     #[getter]
-    fn get_set(&self) -> &Py<PySet>;
+    fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet>;
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
 
     #[skip]
     fn update<'py>(&self, py: Python<'py>, other: IntoUpdate<'py>) -> PyResult<()> {
-        let set = self.get_set().bind(py);
+        let set = self.get_set(py);
 
         let values = other.into_set(py)?;
         if (4 * values.len()) > set.len() {
@@ -362,8 +362,7 @@ pub(super) trait SortedSetMethods: ListGetter {
         py: Python<'py>,
         iterables: O,
     ) -> PyResult<Bound<'py, Self>> {
-        self.get_set()
-            .bind(py)
+        self.get_set(py)
             .difference(iterables)
             .and_then(|diff| self.wrap(diff))
     }
@@ -373,8 +372,7 @@ pub(super) trait SortedSetMethods: ListGetter {
         py: Python<'py>,
         iterables: O,
     ) -> PyResult<Bound<'py, Self>> {
-        self.get_set()
-            .bind(py)
+        self.get_set(py)
             .intersection(iterables)
             .and_then(|intersect| self.wrap(intersect))
     }
@@ -384,14 +382,11 @@ pub(super) trait SortedSetMethods: ListGetter {
         py: Python<'py>,
         iterables: O,
     ) -> PyResult<Bound<'py, Self>> {
-        self.get_set()
-            .bind(py)
-            .union(iterables)
-            .and_then(|u| self.wrap(u))
+        self.get_set(py).union(iterables).and_then(|u| self.wrap(u))
     }
     #[skip]
     fn difference_update(&self, py: Python<'_>, iterables: IntoUpdate<'_>) -> PyResult<()> {
-        let set = self.get_set().bind(py);
+        let set = self.get_set(py);
         let values = iterables.into_set(py)?;
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
@@ -411,7 +406,7 @@ pub(super) trait SortedSetMethods: ListGetter {
         py: Python<'py>,
         iterables: O,
     ) -> PyResult<()> {
-        let set = self.get_set().bind(py);
+        let set = self.get_set(py);
         set.intersection_update(iterables)?;
         let mut data = self.try_lock();
         data.clear();
@@ -439,12 +434,12 @@ pub(super) trait SortedSetMethods: ListGetter {
                     .get_slice(py, &slice)?
                     .iter()
                     .collect_bound::<PySet>(py)?;
-                self.get_set().bind(py).difference_update((values,))?;
+                self.get_set(py).difference_update((values,))?;
                 self.try_lock().del_slice(py, slice)?;
             }
             Either::Left(int) => {
                 let value = self.try_lock().inner_mut().get_item(py, int)?;
-                self.get_set().bind(py).remove(&value)?;
+                self.get_set(py).remove(&value)?;
                 self.try_lock().del_item(py, int)?;
             }
         }
@@ -455,11 +450,10 @@ pub(super) trait SortedSetMethods: ListGetter {
         try_cast! {
             match other {
                 CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set()
-                    .bind(py)
-                    .eq(sorted.get().get_set().bind(py))
+                    .get_set(py)
+                    .eq(sorted.get().get_set(py))
                     .map(Either::Left),
-                Case::PySet(pyset) => self.get_set().bind(py).eq(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set(py).eq(pyset).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
             }
         }
@@ -469,11 +463,10 @@ pub(super) trait SortedSetMethods: ListGetter {
         try_cast! {
             match other {
                 CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set()
-                    .bind(py)
-                    .ne(sorted.get().get_set().bind(py))
+                    .get_set(py)
+                    .ne(sorted.get().get_set(py))
                     .map(Either::Left),
-                Case::PySet(pyset) => self.get_set().bind(py).ne(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set(py).ne(pyset).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
             }
         }
@@ -483,11 +476,10 @@ pub(super) trait SortedSetMethods: ListGetter {
         try_cast! {
             match other {
                 CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set()
-                    .bind(py)
-                    .lt(sorted.get().get_set().bind(py))
+                    .get_set(py)
+                    .lt(sorted.get().get_set(py))
                     .map(Either::Left),
-                Case::PySet(pyset) => self.get_set().bind(py).lt(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set(py).lt(pyset).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
             }
         }
@@ -497,11 +489,10 @@ pub(super) trait SortedSetMethods: ListGetter {
         try_cast! {
             match other {
                 CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set()
-                    .bind(py)
-                    .gt(sorted.get().get_set().bind(py))
+                    .get_set(py)
+                    .gt(sorted.get().get_set(py))
                     .map(Either::Left),
-                Case::PySet(pyset) => self.get_set().bind(py).gt(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set(py).gt(pyset).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
             }
         }
@@ -511,11 +502,10 @@ pub(super) trait SortedSetMethods: ListGetter {
         try_cast! {
             match other {
                 CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set()
-                    .bind(py)
-                    .le(sorted.get().get_set().bind(py))
+                    .get_set(py)
+                    .le(sorted.get().get_set(py))
                     .map(Either::Left),
-                Case::PySet(pyset) => self.get_set().bind(py).le(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set(py).le(pyset).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
             }
         }
@@ -525,18 +515,17 @@ pub(super) trait SortedSetMethods: ListGetter {
         try_cast! {
             match other {
                 CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set()
-                    .bind(py)
-                    .ge(sorted.get().get_set().bind(py))
+                    .get_set(py)
+                    .ge(sorted.get().get_set(py))
                     .map(Either::Left),
-                Case::PySet(pyset) => self.get_set().bind(py).ge(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set(py).ge(pyset).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
             }
         }
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.get_set().bind(py).len()
+        self.get_set(py).len()
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
@@ -545,8 +534,7 @@ pub(super) trait SortedSetMethods: ListGetter {
         self.difference(other.py(), (other,))
     }
     fn __isub__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<()> {
-        slf.get()
-            .difference_update(slf.py(), IntoUpdate::from_any(other))?;
+        slf.get().difference_update(slf.py(), other.into())?;
         Ok(())
     }
 
@@ -562,7 +550,7 @@ pub(super) trait SortedSetMethods: ListGetter {
     }
 
     fn __ior__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<()> {
-        slf.get().update(slf.py(), IntoUpdate::from_any(other))
+        slf.get().update(slf.py(), other.into())
     }
     fn __or__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.union(other.py(), (other,))
@@ -580,7 +568,7 @@ pub(super) trait SortedSetMethods: ListGetter {
         Self::symmetric_difference_update(slf, other).map(|_| ())
     }
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        let set = self.get_set().bind(py);
+        let set = self.get_set(py);
         if !set.contains(&value)? {
             set.add(&value)?;
             self.try_lock().add(py, value)?;
@@ -588,7 +576,7 @@ pub(super) trait SortedSetMethods: ListGetter {
         Ok(())
     }
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let set = self.get_set().bind(value.py());
+        let set = self.get_set(value.py());
         if set.contains(&value)? {
             set.remove(&value)?;
             self.try_lock().remove(&value)?;
@@ -596,22 +584,22 @@ pub(super) trait SortedSetMethods: ListGetter {
         Ok(())
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        PySet::new(py, self.get_set().bind(py).iter()).and_then(|x| self.wrap(x))
+        PySet::new(py, self.get_set(py).iter()).and_then(|x| self.wrap(x))
     }
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.get_set().bind(other.py()).isdisjoint(other)
+        self.get_set(other.py()).isdisjoint(other)
     }
 
     fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.get_set().bind(other.py()).issubset(other)
+        self.get_set(other.py()).issubset(other)
     }
 
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.get_set().bind(other.py()).issuperset(other)
+        self.get_set(other.py()).issuperset(other)
     }
 
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        if self.get_set().bind(value.py()).contains(value)? {
+        if self.get_set(value.py()).contains(value)? {
             Ok(1)
         } else {
             Ok(0)
@@ -621,7 +609,7 @@ pub(super) trait SortedSetMethods: ListGetter {
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let value = self.try_lock().pop(py, index)?;
-        self.get_set().bind(py).remove(&value)?;
+        self.get_set(py).remove(&value)?;
         Ok(value)
     }
     #[pyo3(name ="difference", signature = (*iterables))]
@@ -636,7 +624,7 @@ pub(super) trait SortedSetMethods: ListGetter {
     ) -> PyResult<Bound<'py, Self>> {
         let slf_ref = slf.get();
         let py = iterables.py();
-        let set = slf_ref.get_set().bind(py);
+        let set = slf_ref.get_set(py);
         let values = iterables
             .iter()
             .flat_map(|x| x.try_iter().unwrap())
@@ -669,12 +657,11 @@ pub(super) trait SortedSetMethods: ListGetter {
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_set().bind(value.py()).remove(value)?;
+        self.get_set(value.py()).remove(value)?;
         self.try_lock().remove(value)
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.get_set()
-            .bind(other.py())
+        self.get_set(other.py())
             .symmetric_difference(other)
             .and_then(|diff| self.wrap(diff))
     }
@@ -684,7 +671,7 @@ pub(super) trait SortedSetMethods: ListGetter {
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let slf_clone = slf.get();
-        let set = slf_clone.get_set().bind(other.py());
+        let set = slf_clone.get_set(other.py());
         let mut data = slf_clone.try_lock();
         set.symmetric_difference_update(other)?;
         data.clear();
@@ -706,36 +693,12 @@ pub(super) trait SortedSetMethods: ListGetter {
             .map(|()| slf)
     }
 }
-pub(super) enum IntoUpdate<'py> {
-    Set(Bound<'py, PySet>),
-    Tuple(Bound<'py, PyTuple>),
-    Any(Bound<'py, PyAny>),
-}
-impl<'py> IntoUpdate<'py> {
-    pub(super) fn from_any(other: Bound<'py, PyAny>) -> Self {
-        if other.is_exact_instance_of::<PySet>() {
-            Self::Set(unsafe { other.cast_into_unchecked::<PySet>() })
-        } else {
-            Self::Any(other)
-        }
-    }
-    fn into_set(self, py: Python<'py>) -> PyResult<Bound<'py, PySet>> {
-        match self {
-            IntoUpdate::Tuple(tup) => tup
-                .iter()
-                .flat_map(|x| x.try_iter().unwrap())
-                .try_collect_bound::<PySet>(py),
-            IntoUpdate::Set(pyset) => Ok(pyset),
-            IntoUpdate::Any(any) => any.try_iter()?.try_collect_bound::<PySet>(py),
-        }
-    }
-}
 impl<T: SortedSetMethods> SortedCollection for T {
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.get_set().bind(value.py()).contains(value)
+        self.get_set(value.py()).contains(value)
     }
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        PyTuple::new(py, [self.get_set().clone_ref(py)]).map(|tup| (Self::type_object(py), tup))
+        PyTuple::new(py, [self.get_set(py).clone()]).map(|tup| (Self::type_object(py), tup))
     }
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
@@ -757,7 +720,7 @@ impl<T: SortedSetMethods> SortedCollection for T {
         self.try_lock().reset(py, load)
     }
     fn clear(&self, py: Python<'_>) {
-        self.get_set().bind(py).clear();
+        self.get_set(py).clear();
         self.try_lock().clear();
     }
 }

@@ -42,7 +42,7 @@ pub fn check_sorted_set(
 }
 
 fn check_set_len<T: SortedSetMethods>(checked: &T, py: Python<'_>) -> PyResult<()> {
-    let set = checked.get_set().clone_ref(py).into_bound(py);
+    let set = checked.get_set(py);
     let data = checked.try_lock();
     pyassert!(set.len() == data.length());
     data.inner().check(py)?;
