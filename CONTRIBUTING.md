@@ -51,7 +51,7 @@ The code in the `examples` section will be automatically part of the test suite.
 
 We use code blocks instead of doctests, so write them just like you would in a classic pytest file, i.e assertions.
 
-```python
+````python
 def my_function(param1: int, param2: str) -> bool:
     """One liner description of what the function does.
 
@@ -96,6 +96,24 @@ After cloning the repo, set up the development environment (the project uses `uv
 ```bash
 uv sync --dev
 uv sync --all-groups
+```
+
+If your IDE struggles with the venv environnement, you surely need to add the `PYO3_PYTHON` environment variable to your IDE's settings.
+
+Example of my current Zed setup:
+
+```json
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "cargo": {
+          "extraEnv": {
+            "PYO3_PYTHON": "C:\\Users\\stett\\Documents\\python\\pyochain\\.venv\\Scripts\\python.exe",
+          },
+        },
+      },
+    },
+  },
 ```
 
 ### Building the Rust extension
