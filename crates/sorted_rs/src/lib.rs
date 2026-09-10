@@ -17,5 +17,5 @@ pub use getters::{InnerGetter, ListDataGetters};
 pub use inner::InnerData;
 pub use keylist::KeysListsData;
 pub use list::ListsData;
-pub use set::{KeySetData, SetData};
+pub use set::SetData;
 pub use traits::{IntoUpdate, ListsDataMethods, SetDataMethods};

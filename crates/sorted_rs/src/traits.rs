@@ -194,9 +194,10 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
 pub trait SetDataMethods<T: ListsDataMethods>: InnerGetter {
     fn get_list(&self) -> &T;
     fn get_list_mut(&mut self) -> &mut T;
-    fn get_set(&self) -> &Py<PySet>;
+    fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet>;
+    fn get_set_ref<'py>(&self, py: Python<'py>) -> &Bound<'py, PySet>;
     fn update<'py>(&mut self, py: Python<'py>, other: IntoUpdate<'py>) -> PyResult<()> {
-        let set = self.get_set().clone_ref(py).into_bound(py);
+        let set = self.get_set(py);
 
         let values = other.into_set(py)?;
         if (4 * values.len()) > set.len() {
@@ -216,24 +217,24 @@ pub trait SetDataMethods<T: ListsDataMethods>: InnerGetter {
         py: Python<'py>,
         iterables: O,
     ) -> PyResult<Bound<'py, PySet>> {
-        self.get_set().bind(py).difference(iterables)
+        self.get_set_ref(py).difference(iterables)
     }
     fn intersection<'py, O: PyCallArgs<'py>>(
         &self,
         py: Python<'py>,
         iterables: O,
     ) -> PyResult<Bound<'py, PySet>> {
-        self.get_set().bind(py).intersection(iterables)
+        self.get_set_ref(py).intersection(iterables)
     }
     fn union<'py, O: PyCallArgs<'py>>(
         &self,
         py: Python<'py>,
         iterables: O,
     ) -> PyResult<Bound<'py, PySet>> {
-        self.get_set().bind(py).union(iterables)
+        self.get_set_ref(py).union(iterables)
     }
     fn difference_update(&mut self, py: Python<'_>, iterables: IntoUpdate<'_>) -> PyResult<()> {
-        let set = self.get_set().clone_ref(py).into_bound(py);
+        let set = self.get_set(py);
         let values = iterables.into_set(py)?;
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
@@ -252,7 +253,7 @@ pub trait SetDataMethods<T: ListsDataMethods>: InnerGetter {
         py: Python<'py>,
         iterables: O,
     ) -> PyResult<()> {
-        let set = self.get_set().clone_ref(py).into_bound(py);
+        let set = self.get_set(py);
         set.intersection_update(iterables)?;
         self.get_list_mut().clear();
         self.get_list_mut()
@@ -282,12 +283,12 @@ pub trait SetDataMethods<T: ListsDataMethods>: InnerGetter {
                     .get_slice(py, &slice)?
                     .iter()
                     .collect_bound::<PySet>(py)?;
-                self.get_set().bind(py).difference_update((values,))?;
+                self.get_set_ref(py).difference_update((values,))?;
                 self.get_list_mut().del_slice(py, slice)?;
             }
             Either::Left(int) => {
                 let value = self.get_list_mut().inner_mut().get_item(py, int)?;
-                self.get_set().bind(py).remove(&value)?;
+                self.get_set_ref(py).remove(&value)?;
                 self.get_list_mut().del_item(py, int)?;
             }
         }
@@ -295,10 +296,10 @@ pub trait SetDataMethods<T: ListsDataMethods>: InnerGetter {
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.get_set().bind(py).len()
+        self.get_set_ref(py).len()
     }
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        let set = self.get_set().bind(py);
+        let set = self.get_set_ref(py);
         if !set.contains(&value)? {
             set.add(&value)?;
             self.get_list_mut().add(py, value)?;
@@ -306,7 +307,7 @@ pub trait SetDataMethods<T: ListsDataMethods>: InnerGetter {
         Ok(())
     }
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let set = self.get_set().bind(value.py());
+        let set = self.get_set_ref(value.py());
         if set.contains(&value)? {
             set.remove(&value)?;
             self.get_list_mut().remove(&value)?;
@@ -314,22 +315,22 @@ pub trait SetDataMethods<T: ListsDataMethods>: InnerGetter {
         Ok(())
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PySet>> {
-        PySet::new(py, self.get_set().bind(py).iter())
+        PySet::new(py, self.get_set_ref(py).iter())
     }
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.get_set().bind(other.py()).isdisjoint(other)
+        self.get_set_ref(other.py()).isdisjoint(other)
     }
 
     fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.get_set().bind(other.py()).issubset(other)
+        self.get_set_ref(other.py()).issubset(other)
     }
 
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.get_set().bind(other.py()).issuperset(other)
+        self.get_set_ref(other.py()).issuperset(other)
     }
 
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        if self.get_set().bind(value.py()).contains(value)? {
+        if self.get_set_ref(value.py()).contains(value)? {
             Ok(1)
         } else {
             Ok(0)
@@ -338,12 +339,12 @@ pub trait SetDataMethods<T: ListsDataMethods>: InnerGetter {
 
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let value = self.get_list_mut().pop(py, index)?;
-        self.get_set().bind(py).remove(&value)?;
+        self.get_set_ref(py).remove(&value)?;
         Ok(value)
     }
     fn py_difference_update(&mut self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
         let py = iterables.py();
-        let set = self.get_set().clone_ref(py).into_bound(py);
+        let set = self.get_set(py);
         let values = iterables
             .iter()
             .flat_map(|x| x.try_iter().unwrap())
@@ -361,15 +362,15 @@ pub trait SetDataMethods<T: ListsDataMethods>: InnerGetter {
         }
     }
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_set().bind(value.py()).remove(value)?;
+        self.get_set_ref(value.py()).remove(value)?;
         self.get_list_mut().remove(value)
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PySet>> {
-        self.get_set().bind(other.py()).symmetric_difference(other)
+        self.get_set_ref(other.py()).symmetric_difference(other)
     }
     fn symmetric_difference_update(&mut self, other: Bound<'_, PyAny>) -> PyResult<()> {
         let py = other.py();
-        let set = self.get_set().clone_ref(py).into_bound(py);
+        let set = self.get_set(py);
         set.symmetric_difference_update(other)?;
         self.get_list_mut().clear();
         self.get_list_mut()

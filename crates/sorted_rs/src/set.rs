@@ -1,10 +1,7 @@
-use crate::{InnerData, InnerGetter, KeysListsData, ListsData, SetDataMethods};
+use crate::{InnerData, InnerGetter, ListsDataMethods, SetDataMethods};
 use pyo3::{prelude::*, types::PySet};
-pub struct SetData(pub ListsData, pub Py<PySet>);
-impl SetData {}
-pub struct KeySetData(KeysListsData, Py<PySet>);
-impl KeySetData {}
-impl InnerGetter for SetData {
+pub struct SetData<T: ListsDataMethods>(pub T, pub Py<PySet>);
+impl<T: ListsDataMethods> InnerGetter for SetData<T> {
     fn inner(&self) -> &InnerData {
         self.0.inner()
     }
@@ -12,33 +9,17 @@ impl InnerGetter for SetData {
         self.0.inner_mut()
     }
 }
-impl SetDataMethods<ListsData> for SetData {
-    fn get_list(&self) -> &ListsData {
+impl<T: ListsDataMethods> SetDataMethods<T> for SetData<T> {
+    fn get_list(&self) -> &T {
         &self.0
     }
-    fn get_list_mut(&mut self) -> &mut ListsData {
+    fn get_list_mut(&mut self) -> &mut T {
         &mut self.0
     }
-    fn get_set(&self) -> &Py<PySet> {
-        &self.1
+    fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
+        self.1.clone_ref(py).into_bound(py)
     }
-}
-impl InnerGetter for KeySetData {
-    fn inner(&self) -> &InnerData {
-        self.0.inner()
-    }
-    fn inner_mut(&mut self) -> &mut InnerData {
-        self.0.inner_mut()
-    }
-}
-impl SetDataMethods<KeysListsData> for KeySetData {
-    fn get_list(&self) -> &KeysListsData {
-        &self.0
-    }
-    fn get_list_mut(&mut self) -> &mut KeysListsData {
-        &mut self.0
-    }
-    fn get_set(&self) -> &Py<PySet> {
-        &self.1
+    fn get_set_ref<'py>(&self, py: Python<'py>) -> &Bound<'py, PySet> {
+        self.1.bind(py)
     }
 }
