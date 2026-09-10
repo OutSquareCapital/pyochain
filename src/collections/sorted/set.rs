@@ -1,6 +1,6 @@
 use pyo3::{PyTypeInfo, prelude::*, types::PySet};
 
-use sorted_rs::{InnerGetter, KeysListsData, ListsData, ListsDataMethods, SetData, SetDataMethods};
+use sorted_rs::{InnerGetter, KeysListsData, ListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::Pipe;
 
@@ -14,9 +14,9 @@ use crate::{
 };
 
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedSet(pub(super) Arc<Mutex<SetData>>);
+pub struct SortedSet(pub(super) Arc<Mutex<ListsData>>, Py<PySet>);
 impl ListGetter for SortedSet {
-    type T = SetData;
+    type T = ListsData;
     type I = iter::PyBounded;
     type IRev = iter::PyBoundedRev;
     type IFull = iter::PyFull;
@@ -27,8 +27,8 @@ impl ListGetter for SortedSet {
 }
 impl SortedSet {
     fn new(set: Bound<'_, PySet>, list: ListsData) -> Self {
-        let list = SetData(list, set.into()).pipe(Mutex::new).pipe(Arc::new);
-        Self(list)
+        let list = list.pipe(Mutex::new).pipe(Arc::new);
+        Self(list, set.into())
     }
 
     pub fn from_iterable(iterable: Bound<'_, PyAny>) -> PyResult<Self> {
@@ -55,14 +55,13 @@ impl SortedSet {
 }
 impl SortedSetMethods for SortedSet {
     fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
-        self.0.try_lock().unwrap().1.clone_ref(py).into_bound(py)
+        self.1.clone_ref(py).into_bound(py)
     }
     #[inline(always)]
     fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
         let py = values.py();
         let list = self
             .try_lock()
-            .get_list()
             .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
         Self::new(values, list).into_bound(py)
     }
