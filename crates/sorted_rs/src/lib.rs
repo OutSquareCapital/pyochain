@@ -12,7 +12,6 @@ mod ops;
 mod set;
 mod traits;
 pub mod types;
-pub mod types;
 pub use bounds::{Bounds, Loc};
 pub use getters::{InnerGetter, ListDataGetters};
 pub use inner::InnerData;
