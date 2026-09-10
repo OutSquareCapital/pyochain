@@ -85,7 +85,7 @@ def my_function(param1: int, param2: str) -> bool:
         ```
     """
     return True
-```
+````
 
 ## Setup
 
