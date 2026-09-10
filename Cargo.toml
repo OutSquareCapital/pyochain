@@ -1,55 +1,59 @@
+[package]
+name = "pyochain"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
 [workspace]
 members = [
-    ".",
-    "./crates/pyochain_build",
-    "./crates/pyochain_macros",
-    "./crates/pyo3_ext",
-    "./crates/sorted_rs",
-    "./crates/std_tools",
+  ".",
+  "./crates/pyo3_ext",
+  "./crates/pyochain_build",
+  "./crates/pyochain_macros",
+  "./crates/sorted_rs",
+  "./crates/std_tools",
 ]
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
 inline_always = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
-wildcard_imports = "allow"
+pedantic = { level = "warn", priority = -1 }
 similar_names = "allow"
-
-[lints]
-workspace = true
-[package]
-edition = "2024"
-license = "MIT"
-name = "pyochain"
-version = "0.1.0"
+wildcard_imports = "allow"
 
 [lib]
 crate-type = ["cdylib"]
 name = "pyochain"
 
-[features]
-build-docs = []
-
 [dependencies]
 color-eyre = "0.6.5"
 either = "1.16.0"
 pyderive = "0.9"
-pyo3 = { version = ">=0.29", features = [
+pyo3 = {
+  version = ">=0.29",
+  features = [
     "either",
     "extension-module",
     "multiple-pymethods",
     "smallvec",
-] }
+  ]
+}
 pyo3_ext = { path = "crates/pyo3_ext" }
 pyochain_macros = { path = "crates/pyochain_macros" }
+smallvec = "1.15.2"
 sorted_rs = { path = "crates/sorted_rs" }
 std_tools = { path = "crates/std_tools" }
-smallvec = "1.15.2"
 tap = "1.0.1"
 
+[features]
+build-docs = []
+
+[lints]
+workspace = true
+
 [profile.release]
-codegen-units = 1
-lto = true
 opt-level = 3
+lto = true
+codegen-units = 1

@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 use std::cmp::Ordering;
 
-///TODO: We should find a way to avoid `expect` here, whilst keeping in-place sorting behavior.
+//TODO: We should find a way to avoid `expect` here, whilst keeping in-place sorting behavior.
 const MSG: &str = "Unexpected error during comparison";
 #[inline(always)]
 pub fn py_cmp(py: Python<'_>, a: &Py<PyAny>, b: &Py<PyAny>) -> Ordering {
