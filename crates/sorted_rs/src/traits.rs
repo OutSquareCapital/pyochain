@@ -1,13 +1,17 @@
 use std::cmp::Ordering;
 
-use crate::{Bounds, InnerGetter, ListDataGetters, Loc, bisect::Bisect, errors, inner::VecPy};
+use crate::{
+    Bounds, InnerGetter, ListDataGetters, Loc,
+    bisect::Bisect,
+    errors,
+    types::{IntOrSlice, VecPy},
+};
 use either::Either;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
     types::{PySlice, PySliceIndices, PyString},
 };
-pub type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
 pub(super) trait NestedVec<T> {
     fn loc(&self, loc: &Loc) -> &T;
     fn loc_insert(&mut self, loc: &Loc, value: T);
