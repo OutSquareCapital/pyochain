@@ -34,7 +34,7 @@
 - **Fluent API** design for chaining method calls, to read your code just like a book => from top to bottom, left to right.
 - **First class static typing support**: Generics, overloads, and pattern matching for `Option` and `Result` types.
 
-That's why it's called `pyochain`: it allows you to build *chains* of operations on your data, with code compiled in Rust thanks to [*Pyo3*](https://pyo3.rs/).
+That's why it's called `pyochain`: it allows you to build _chains_ of operations on your data, with code compiled in Rust thanks to [_Pyo3_](https://pyo3.rs/).
 
 ## Installation
 
@@ -100,7 +100,7 @@ Pyochain has various `Iterator` types with a fluent API, whose functionnalities 
 - `itertools` module (fully covered) **=>** `chain`, `combinations`, ...
 - Rust `std::iter::Iterator` **=>** `try_collect`, `partition`, ...
 - `more-itertools` library **=>** `all_unique`, `arg_max`, `tail`, ...
-- `toolz`  library **=>** `map_juxt`, `count`, `first`, ...
+- `toolz` library **=>** `map_juxt`, `count`, `first`, ...
 
 They can be used to build complex pipelines of transformations, filters, and aggregations in a readable way (no nested loops or comprehensions), without creating intermediate collections (lazy execution), thus improving performance and memory usage.
 
@@ -140,7 +140,7 @@ assert pyochain_res == py_res == wanted
 
 ### Collections
 
-Each python built-in collection type (list, tuple, range, dict, set, etc...) has a corresponding pyochain type, with  additional collections like `SliceView` (no copy view of a slice), or `StableSet` (a mutable set that preserves insertion order), and more planned for the future.
+Each python built-in collection type (list, tuple, range, dict, set, etc...) has a corresponding pyochain type, with additional collections like `SliceView` (no copy view of a slice), or `StableSet` (a mutable set that preserves insertion order), and more planned for the future.
 
 Many methods are designed to interoperate with the rest of the library: `Dict::get_item` or `Seq::get` return an `Option`, `Vec::drain` a `PyoIterator`, and so on.
 
