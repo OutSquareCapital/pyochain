@@ -38,7 +38,7 @@ impl_into_py_iterator_for_iterable!(
 
 /// Trait for types that can be converted from another type via their class constructors.\
 /// The default implementation of `try_from_py` calls the type's constructor with the object as an argument, and casts the result into the target type.\
-pub trait TryFromPy<T: PyTypeInfo = types::PyAny>: Sized + PyTypeInfo {
+pub trait TryFromPy<T: PyTypeInfo = types::PyAny>: PyTypeInfo {
     #[inline(always)]
     fn try_from_py(obj: Bound<'_, T>) -> PyResult<Bound<'_, Self>> {
         Self::type_object(obj.py())
@@ -50,7 +50,7 @@ pub trait TryFromPy<T: PyTypeInfo = types::PyAny>: Sized + PyTypeInfo {
 pub trait TryIntoPy<'py, T: PyTypeInfo> {
     fn try_into_py<I: TryFromPy<T>>(self) -> PyResult<Bound<'py, I>>;
 }
-impl<'py, T: Sized + PyTypeInfo> TryIntoPy<'py, T> for Bound<'py, T> {
+impl<'py, T: PyTypeInfo> TryIntoPy<'py, T> for Bound<'py, T> {
     #[inline(always)]
     fn try_into_py<I: TryFromPy<T>>(self) -> PyResult<Bound<'py, I>> {
         I::try_from_py(self)
