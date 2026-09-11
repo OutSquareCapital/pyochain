@@ -257,7 +257,7 @@ pub(super) trait SortedListMethods: ListGetter + IntoInit + From<Self::T> {
         }
     }
     fn __len__(&self) -> usize {
-        self.try_lock().length()
+        self.try_lock().len()
     }
 
     fn __radd__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -984,7 +984,7 @@ impl<'a, 'py, D: SortedDictMethods> SortedDictIter<'a, 'py, D> {
     fn new(owner: &'a D, py: Python<'py>) -> Self {
         let mapping = owner.get_dict().clone_ref(py).into_bound(py).into_any();
         let mapping_list = owner.try_lock();
-        let range = 0..mapping_list.length().cast_signed();
+        let range = 0..mapping_list.len().cast_signed();
         Self {
             py,
             mapping,

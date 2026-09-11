@@ -90,7 +90,7 @@ pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
     let key_fn = data.2.bind(py);
     pyassert!(data.load() >= 4);
     pyassert!(data.maxes().len() == data.lists().len() && data.lists().len() == data.1.len());
-    pyassert!(data.length() == data.lists().iter().map(Vec::len).sum::<usize>());
+    pyassert!(data.len() == data.lists().iter().map(Vec::len).sum::<usize>());
 
     // Check all sublists are sorted.
 
@@ -147,7 +147,7 @@ pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
     }
 
     if !data.idx().is_empty() {
-        pyassert!(data.length() == data.idx()[0]);
+        pyassert!(data.len() == data.idx()[0]);
         pyassert!(data.idx().len() == data.offset() + data.lists().len());
 
         // Check index leaf nodes equal length of sublists.

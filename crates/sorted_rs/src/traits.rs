@@ -95,7 +95,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         }
     }
     fn del_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
-        let length = self.length().cast_signed();
+        let length = self.len().cast_signed();
         let mut loc = Loc::default();
         let PySliceIndices {
             start, stop, step, ..
@@ -150,7 +150,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut bounds = Loc::default();
-        if self.length() == 0 {
+        if self.len() == 0 {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));
         }
@@ -412,7 +412,7 @@ pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) 
     values.sort_by(&func);
     if list.maxes().is_empty() {
         list.finalize_update(py, &values)
-    } else if values.len() * 4 >= list.length() {
+    } else if values.len() * 4 >= list.len() {
         list.lists_mut().push(values);
         values = list.inner().collapse(py);
         values.sort_by(func);

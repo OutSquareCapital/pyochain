@@ -66,7 +66,7 @@ impl ListsDataMethods for ListsData {
             let mut loc = Loc::new(0, 0);
             loc.pos = func(self.maxes(), value)?;
             if loc.pos == self.maxes().len() {
-                Ok(self.length())
+                Ok(self.len())
             } else {
                 loc.idx = func(&self.lists()[loc.pos], value)?;
                 Ok(self.inner_mut().loc(&loc))
@@ -88,7 +88,7 @@ impl ListsDataMethods for ListsData {
 
                 if right.pos == self.maxes().len() {
                     let left_loc = self.inner_mut().loc(&left);
-                    Ok(self.length() - left_loc)
+                    Ok(self.len() - left_loc)
                 } else {
                     right.idx = self.lists()[right.pos].bisect_right(value)?;
 

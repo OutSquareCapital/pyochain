@@ -13,7 +13,10 @@ pub trait ListDataGetters: Sized {
     fn maxes_mut(&mut self) -> &mut VecPy;
     fn idx(&self) -> &[usize];
     fn idx_mut(&mut self) -> &mut Vec<usize>;
-    fn length(&self) -> usize;
+    fn len(&self) -> usize;
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
     fn increment_len(&mut self);
     fn decrement_len(&mut self);
     fn set_len(&mut self, len: usize);
@@ -23,10 +26,7 @@ pub trait ListDataGetters: Sized {
     fn set_load(&mut self, load: usize);
 }
 
-impl<T> ListDataGetters for T
-where
-    T: InnerGetter,
-{
+impl<T: InnerGetter> ListDataGetters for T {
     fn lists(&self) -> &[VecPy] {
         &self.inner().lists
     }
@@ -45,7 +45,7 @@ where
     fn idx_mut(&mut self) -> &mut Vec<usize> {
         &mut self.inner_mut().idx
     }
-    fn length(&self) -> usize {
+    fn len(&self) -> usize {
         self.inner().len
     }
     fn set_len(&mut self, len: usize) {

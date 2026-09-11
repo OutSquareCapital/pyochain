@@ -22,7 +22,7 @@ fn check_dict(x: &impl SortedDictMethods, py: Python<'_>) -> PyResult<()> {
     let data = x.try_lock();
     data.inner().check(py)?;
 
-    pyassert!(x.len(py) == data.length());
+    pyassert!(x.len(py) == data.len());
     pyassert!(data.inner().iter().all(|item| {
         x.contains(item.bind(py))
             .expect("Failed to check dict membership")
@@ -44,7 +44,7 @@ pub fn check_sorted_set(
 fn check_set_len<T: SortedSetMethods>(checked: &T, py: Python<'_>) -> PyResult<()> {
     let set = checked.get_set(py);
     let data = checked.try_lock();
-    pyassert!(set.len() == data.length());
+    pyassert!(set.len() == data.len());
     data.inner().check(py)?;
     pyassert!(
         data.inner()
