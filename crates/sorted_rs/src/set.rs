@@ -1,5 +1,6 @@
 use crate::{
     InnerData, InnerGetter, ListsDataMethods,
+    getters::ListDataOwner,
     types::{IntOrSlice, ListOrAny},
 };
 use either::Either;
@@ -9,8 +10,8 @@ use pyo3::{
     types::{PyBool, PyList, PySet, PyTuple},
 };
 use pyo3_ext::prelude::*;
-pub struct SetData<T: ListsDataMethods>(T, Py<PySet>);
-impl<T: ListsDataMethods> InnerGetter for SetData<T> {
+pub struct SetData<T>(T, Py<PySet>);
+impl<T: InnerGetter> InnerGetter for SetData<T> {
     fn inner(&self) -> &InnerData {
         self.0.inner()
     }
@@ -18,10 +19,32 @@ impl<T: ListsDataMethods> InnerGetter for SetData<T> {
         self.0.inner_mut()
     }
 }
+
+impl<T: ListsDataMethods> ListDataOwner for SetData<T> {
+    type List = T;
+
+    fn list(&self) -> &Self::List {
+        &self.0
+    }
+
+    fn list_mut(&mut self) -> &mut Self::List {
+        &mut self.0
+    }
+}
 #[allow(unused)]
 impl<T: ListsDataMethods> SetData<T> {
     pub fn new(list: T, set: Py<PySet>) -> Self {
         Self(list, set)
+    }
+    pub fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
+        self.1.clone_ref(py).into_bound(py)
+    }
+    pub fn clear(&mut self, py: Python<'_>) {
+        self.0.clear();
+        self.1.bind(py).clear();
+    }
+    pub fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
+        self.0.reset(py, load)
     }
     pub fn update<'py>(&mut self, py: Python<'py>, other: IntoUpdate<'py>) -> PyResult<()> {
         let set = self.1.bind(py);
@@ -84,7 +107,8 @@ impl<T: ListsDataMethods> SetData<T> {
         self.0.clear();
         self.0.extend(py, set.iter().map(Bound::unbind).collect())
     }
-    fn __getitem__<'py>(
+
+    pub fn __getitem__<'py>(
         &mut self,
         py: Python<'py>,
         index: IntOrSlice<'py>,
@@ -99,7 +123,12 @@ impl<T: ListsDataMethods> SetData<T> {
             Either::Left(index) => self.inner_mut().get_item(py, index).map(Either::Right),
         }
     }
-    fn __delitem__(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+
+    pub fn del_item_or_slice<'py>(
+        &mut self,
+        py: Python<'py>,
+        index: IntOrSlice<'py>,
+    ) -> PyResult<()> {
         match index {
             Either::Right(slice) => {
                 let values = self
@@ -119,7 +148,7 @@ impl<T: ListsDataMethods> SetData<T> {
         }
     }
 
-    fn __len__(&self, py: Python<'_>) -> usize {
+    pub fn __len__(&self, py: Python<'_>) -> usize {
         self.1.bind(py).len()
     }
     pub fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
@@ -130,7 +159,7 @@ impl<T: ListsDataMethods> SetData<T> {
         }
         Ok(())
     }
-    fn discard(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn discard(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let set = self.1.bind(value.py());
         if set.contains(value)? {
             set.remove(value)?;
@@ -145,7 +174,7 @@ impl<T: ListsDataMethods> SetData<T> {
         self.1.bind(other.py()).isdisjoint(other)
     }
 
-    fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+    pub fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
         self.1.bind(other.py()).issubset(other)
     }
 

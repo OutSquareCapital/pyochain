@@ -1,9 +1,27 @@
-use crate::{inner::InnerData, types::VecPy};
+use crate::{ListsDataMethods, inner::InnerData, types::VecPy};
 use pyo3::prelude::*;
 
 pub trait InnerGetter: Sized {
     fn inner(&self) -> &InnerData;
     fn inner_mut(&mut self) -> &mut InnerData;
+}
+
+pub trait ListDataOwner {
+    type List: ListsDataMethods;
+
+    fn list(&self) -> &Self::List;
+    fn list_mut(&mut self) -> &mut Self::List;
+}
+impl<T: ListsDataMethods> ListDataOwner for T {
+    type List = T;
+    #[inline(always)]
+    fn list(&self) -> &Self::List {
+        self
+    }
+    #[inline(always)]
+    fn list_mut(&mut self) -> &mut Self::List {
+        self
+    }
 }
 
 pub trait ListDataGetters: Sized {

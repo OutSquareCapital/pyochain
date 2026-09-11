@@ -7,7 +7,7 @@ use crate::{
 };
 use pyo3::{PyTypeInfo, prelude::*};
 use pyo3_ext::prelude::*;
-use sorted_rs::{InnerGetter, ListsData, ListsDataMethods};
+use sorted_rs::{InnerGetter, ListDataOwner, ListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -38,15 +38,15 @@ impl SortedCollectionsMethods for SortedList {
             .map(|tup| (Self::type_object(py), tup))
     }
     fn clear(&self, _py: Python<'_>) {
-        self.try_lock().clear();
+        self.try_lock().list_mut().clear();
     }
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().bisect_left(value)
+        self.try_lock().list_mut().bisect_left(value)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().bisect_right(value)
+        self.try_lock().list_mut().bisect_right(value)
     }
 
     fn index(
@@ -55,10 +55,10 @@ impl SortedCollectionsMethods for SortedList {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<usize> {
-        self.try_lock().index(&value, start, stop)
+        self.try_lock().list_mut().index(&value, start, stop)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.try_lock().reset(py, load)
+        self.try_lock().list_mut().reset(py, load)
     }
 }
 impl From<ListsData> for SortedList {

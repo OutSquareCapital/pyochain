@@ -5,13 +5,13 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::try_cast_into;
-use sorted_rs::InnerGetter;
+use sorted_rs::{InnerGetter, ListDataOwner};
 
 use crate::{
     abc,
     collections::{
         SortedDict, SortedKeyDict, SortedSet,
-        sorted::traits::{SortedDictMethods, ListGetter, ObjOrVec, SortedViewMethods},
+        sorted::traits::{ListGetter, ObjOrVec, SortedDictMethods, SortedViewMethods},
     },
     traits::IntoInit,
 };
@@ -135,6 +135,7 @@ fn get_item_for_items_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
     try_cast_into! {
         match index {
             Case::PySlice(slice) => mapping_list
+                .list_mut()
                 .inner_mut()
                 .get_slice(py, &slice)?
                 .iter()
@@ -144,6 +145,7 @@ fn get_item_for_items_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
                 .map(Either::Right),
             int => {
                 let key = mapping_list
+                    .list_mut()
                     .inner_mut()
                     .get_item(py, int.extract::<isize>()?)?;
                 let value = dict.get_item(&key)?;
@@ -165,6 +167,7 @@ fn get_item_for_values_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
     try_cast_into! {
         match index {
             Case::PySlice(slice) => mapping_list
+                .list_mut()
                 .inner_mut()
                 .get_slice(py, &slice)?
                 .iter()
@@ -173,7 +176,12 @@ fn get_item_for_values_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
                 .try_into_py()
                 .map(Either::Right),
             int => dict
-                .get_item(mapping_list.inner_mut().get_item(py, int.extract::<isize>()?)?)
+                .get_item(
+                    mapping_list
+                        .list_mut()
+                        .inner_mut()
+                        .get_item(py, int.extract::<isize>()?)?,
+                )
                 .map(Either::Left),
         }
     }
@@ -189,6 +197,7 @@ fn get_item_for_key_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
     try_cast_into! {
         match index {
             Case::PySlice(slice) => mapping_list
+                .list_mut()
                 .inner_mut()
                 .get_slice(py, &slice)?
                 .iter()
@@ -196,6 +205,7 @@ fn get_item_for_key_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
                 .try_into_py()
                 .map(Either::Right),
             int => mapping_list
+                .list_mut()
                 .inner_mut()
                 .get_item(py, int.extract::<isize>()?)
                 .map(Either::Left),

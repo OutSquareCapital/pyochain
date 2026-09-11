@@ -7,7 +7,7 @@ use crate::{
 };
 use pyo3::{PyTypeInfo, prelude::*};
 use pyo3_ext::prelude::*;
-use sorted_rs::{InnerGetter, KeysListsData, ListsDataMethods};
+use sorted_rs::{InnerGetter, KeysListsData, ListDataOwner, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -29,10 +29,10 @@ impl SortedKeyList {
     }
 
     pub(super) fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().bisect_left(key)
+        self.try_lock().list_mut().bisect_left(key)
     }
     pub(super) fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().bisect_right(key)
+        self.try_lock().list_mut().bisect_right(key)
     }
 }
 impl SortedCollectionsMethods for SortedKeyList {
@@ -48,17 +48,17 @@ impl SortedCollectionsMethods for SortedKeyList {
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let mut data = self.try_lock();
-        let key = data.2.bind(value.py()).call1((value,))?;
-        data.bisect_left(&key)
+        let key = data.list_mut().2.bind(value.py()).call1((value,))?;
+        data.list_mut().bisect_left(&key)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let mut data = self.try_lock();
-        let key = data.2.bind(value.py()).call1((value,))?;
-        data.bisect_right(&key)
+        let key = data.list_mut().2.bind(value.py()).call1((value,))?;
+        data.list_mut().bisect_right(&key)
     }
     fn clear(&self, _py: Python<'_>) {
-        self.try_lock().clear();
+        self.try_lock().list_mut().clear();
     }
     fn index(
         &self,
@@ -66,10 +66,10 @@ impl SortedCollectionsMethods for SortedKeyList {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<usize> {
-        self.try_lock().index(&value, start, stop)
+        self.try_lock().list_mut().index(&value, start, stop)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.try_lock().reset(py, load)
+        self.try_lock().list_mut().reset(py, load)
     }
 }
 impl From<KeysListsData> for SortedKeyList {

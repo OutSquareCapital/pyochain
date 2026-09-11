@@ -13,7 +13,7 @@ mod set;
 mod traits;
 pub mod types;
 pub use bounds::{Bounds, Loc};
-pub use getters::{InnerGetter, ListDataGetters};
+pub use getters::{InnerGetter, ListDataGetters, ListDataOwner};
 pub use inner::InnerData;
 pub use keylist::KeysListsData;
 pub use list::ListsData;
