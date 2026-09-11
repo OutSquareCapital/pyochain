@@ -40,7 +40,7 @@ pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyAny>, Bound<'py, Py
     sorted::SortedKeyDict
 )]
 pub(super) trait SortedCollectionsMethods:
-    Sized + ListGetter + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
+    ListGetter + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py>;
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
@@ -118,7 +118,7 @@ pub(super) trait KeyedSortedCollection:
     }
 }
 pub(super) trait ListGetter:
-    Sized + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
+    PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     type T: ListDataGetters + ListsDataMethods;
     type I: PySortedIter + From<rsiter::Bounded<Self::T>>;
@@ -733,7 +733,7 @@ impl<T: SortedSetMethods> SortedCollectionsMethods for T {
     sorted::SortedByKeyValuesView
 )]
 pub trait SortedViewMethods:
-    Sized + PyClass<BaseType = abc::PyoSequence> + abc::traits::MappingView + Send + Sync
+    PyClass<BaseType = abc::PyoSequence> + abc::traits::MappingView + Send + Sync
 where
     Self::M: SortedDictMethods + PyClass,
 {

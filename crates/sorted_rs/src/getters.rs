@@ -25,7 +25,7 @@ pub trait ListDataGetters: Sized {
 
 impl<T> ListDataGetters for T
 where
-    T: Sized + InnerGetter,
+    T: InnerGetter,
 {
     fn lists(&self) -> &[VecPy] {
         &self.inner().lists

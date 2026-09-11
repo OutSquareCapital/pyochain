@@ -54,7 +54,7 @@ impl IntoHeap<'_> {
     }
 }
 #[py_abc(HeapMin, HeapMax)]
-trait HeapType: Sized + PyWrapper<Wrapped = PyList> {
+trait HeapType: PyWrapper<Wrapped = PyList> {
     #[new]
     fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>>;
 

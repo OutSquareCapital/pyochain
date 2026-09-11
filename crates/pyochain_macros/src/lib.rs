@@ -52,7 +52,7 @@ pub fn derive_bound_from_any(input: TokenStream) -> TokenStream {
 /// ## Example
 /// ```rust
 /// #[py_abc(HeapMin, HeapMax)]
-/// trait HeapType: Sized + PyWrapper<PyList> {
+/// trait HeapType: PyWrapper<PyList> {
 ///   #[new]
 /// fn new(data: Bound<'_, PyList>) -> PyResult<PyClassInitializer<Self>>;
 /// #[skip]

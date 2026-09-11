@@ -7,7 +7,7 @@ use pyo3::{
 
 static PFORMAT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
-pub fn pformat<'py, T: Sized + IntoPyObject<'py>>(
+pub fn pformat<'py, T: IntoPyObject<'py>>(
     py: Python<'py>,
     obj: T,
     sort_dicts: bool,
@@ -20,7 +20,7 @@ pub fn pformat<'py, T: Sized + IntoPyObject<'py>>(
         .map(|x| unsafe { x.cast_into_unchecked::<PyString>() })
 }
 
-pub fn get_repr<'py, T: Sized + PyTypeInfo + DerefToPyAny>(
+pub fn get_repr<'py, T: PyTypeInfo + DerefToPyAny>(
     obj: &Bound<'py, T>,
 ) -> PyResult<Bound<'py, PyString>> {
     let py = obj.py();

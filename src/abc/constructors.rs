@@ -40,7 +40,7 @@ pub trait FromPyIter: Sized {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>>;
 }
 #[py_abc(Seq, PyoVec, Set, SetMut, collections::StableSet, iterators::Iter)]
-pub trait FromPyArgs: Sized + PyClass + FromPyIter {
+pub trait FromPyArgs: PyClass + FromPyIter {
     #[pyo3(signature = (*elements))]
     #[new]
     fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>>;
@@ -49,7 +49,7 @@ pub trait FromPyArgs: Sized + PyClass + FromPyIter {
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>>;
 }
 #[py_abc(Dict)]
-pub trait FromPyKwargs: Sized + PyClass + FromPyIter {
+pub trait FromPyKwargs: PyClass + FromPyIter {
     #[pyo3(signature = (iterable = None,/, **kwargs))]
     #[new]
     fn new(

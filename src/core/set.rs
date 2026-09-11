@@ -36,7 +36,7 @@ trait SetCmpMethods<
     T: PyTypeInfo
         + DerefToPyAny
         + TryFromBoundIterator<'py, Bound<'py, PyIterator>, Item = Bound<'py, PyAny>>,
->: Sized + PyWrapper + PyTypeInfo
+>: PyWrapper + PyTypeInfo
 {
     #[inline(always)]
     fn handle_pyabstract_set(pyset: Bound<'py, PyAny>) -> PyResult<Bound<'py, T>> {
