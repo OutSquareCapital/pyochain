@@ -2,6 +2,7 @@ use crate::{
     abc,
     collections::sorted::{
         self,
+        dict::DictItem,
         iter::{self, PySortedIter},
     },
     core::{PyoVec, iterators},
@@ -14,10 +15,8 @@ use pyo3::{
     prelude::*,
     types::{PyBool, PyDict, PyList, PyMapping, PyNotImplemented, PySet, PySlice, PyTuple, PyType},
 };
-use pyo3_ext::{
-    prelude::*,
-    types::{FromCmp, PyCmpOut},
-};
+use pyo3_ext::prelude::*;
+use pyo3_ext::types::{FromCmp, PyCmpOut};
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
 use sorted_rs::{
     Bounds, InnerGetter, IntoUpdate, KeysListsData, ListDataGetters, ListDataOwner, ListsData,
@@ -26,7 +25,6 @@ use sorted_rs::{
 };
 use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
 use tap::prelude::*;
-
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>>;
 
@@ -664,12 +662,21 @@ where
 }
 
 #[py_abc(sorted::SortedDict, sorted::SortedKeyDict)]
-pub(super) trait SortedDictMethods: ListGetter + SortedCollectionsMethods {
+pub(super) trait SortedDictMethods:
+    ListGetter + SortedCollectionsMethods + IntoInit
+{
     type KView: SortedViewMethods<M = Self>;
     type VView: SortedViewMethods<M = Self>;
     type IView: SortedViewMethods<M = Self>;
     #[getter]
     fn get_dict(&self) -> &Py<PyDict>;
+    #[skip]
+    fn copy_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
+        &self,
+        py: Python<'py>,
+        v: I,
+    ) -> PyResult<Self>;
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
     fn keys(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::KView>> {
         let py = slf.py();
         Self::KView::new(slf).into_bound(py)
@@ -682,10 +689,11 @@ pub(super) trait SortedDictMethods: ListGetter + SortedCollectionsMethods {
         let py = slf.py();
         Self::VView::new(slf).into_bound(py)
     }
-    fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>>;
-    fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>>;
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
-    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.iter(py)
+            .pipe(|v| self.copy_from_iter(py, v))?
+            .into_bound(py)
+    }
     #[skip]
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.__contains__(value)
@@ -717,13 +725,22 @@ pub(super) trait SortedDictMethods: ListGetter + SortedCollectionsMethods {
         }
         self.get_dict().bind(py).set_item(key, value)
     }
-
+    fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
+        let py = value.py();
+        let items = self.iter(py).chain(value.pipe(iter_mapping)?);
+        self.copy_from_iter(py, items)?.into_bound(py)
+    }
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
         self.update(other.py(), Some(other), None)
     }
 
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
+    }
+    fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
+        let py = value.py();
+        let items = value.pipe(iter_mapping)?.chain(self.iter(py));
+        self.copy_from_iter(py, items)?.into_bound(py)
     }
 
     #[classmethod]
@@ -861,12 +878,11 @@ pub(super) trait SortedDictMethods: ListGetter + SortedCollectionsMethods {
                     .pipe(|v| list.list_mut().extend(py, v))?;
                 Ok(())
             } else {
-                for key in pairs.keys_view().iter_py() {
+                pairs.keys_view().iter_py().try_for_each(|key| {
                     let k = key?;
                     let new = pairs.as_any().get_item(&k)?;
-                    self.__setitem__(k, new)?;
-                }
-                Ok(())
+                    self.__setitem__(k, new)
+                })
             }
         }
     }
@@ -912,4 +928,13 @@ impl<'py, D: SortedDictMethods> Iterator for SortedDictIter<'_, 'py, D> {
             Err(e) => Some(Err(e)),
         }
     }
+}
+fn iter_mapping<'py>(
+    mapping: &Bound<'py, PyMapping>,
+) -> PyResult<impl Iterator<Item = PyResult<DictItem<'py>>>> {
+    mapping
+        .call_method0("items")?
+        .try_iter()?
+        .map(|iter| iter?.extract::<DictItem>())
+        .pipe(Ok)
 }
