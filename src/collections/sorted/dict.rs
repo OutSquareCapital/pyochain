@@ -166,18 +166,6 @@ impl SortedCollectionsMethods for SortedDict {
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().list_mut().bisect_right(value)
     }
-    fn index(
-        &self,
-        value: Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<usize> {
-        self.try_lock().list_mut().index(&value, start, stop)
-    }
-
-    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.try_lock().list_mut().reset(py, load)
-    }
 
     fn clear(&self, py: Python<'_>) {
         self.get_dict().bind(py).clear();
@@ -210,18 +198,6 @@ impl SortedCollectionsMethods for SortedKeyDict {
         let mut data = self.try_lock();
         let key = data.2.bind(py).call1((value,))?;
         data.list_mut().bisect_right(&key)
-    }
-    fn index(
-        &self,
-        value: Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<usize> {
-        self.try_lock().list_mut().index(&value, start, stop)
-    }
-
-    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.try_lock().list_mut().reset(py, load)
     }
 
     fn clear(&self, py: Python<'_>) {

@@ -48,18 +48,6 @@ impl SortedCollectionsMethods for SortedList {
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().list_mut().bisect_right(value)
     }
-
-    fn index(
-        &self,
-        value: Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<usize> {
-        self.try_lock().list_mut().index(&value, start, stop)
-    }
-    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.try_lock().list_mut().reset(py, load)
-    }
 }
 impl From<ListsData> for SortedList {
     fn from(data: ListsData) -> Self {

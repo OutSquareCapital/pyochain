@@ -43,6 +43,30 @@ pub(super) trait SortedCollectionsMethods:
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
+    fn clear(&self, py: Python<'_>);
+    fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        self.inner()
+            .clone()
+            .pipe(rsiter::Full::new)
+            .conv::<Self::IFull>()
+            .into_pyiterator(py)
+    }
+    fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        self.inner()
+            .clone()
+            .pipe(rsiter::FullRev::new)
+            .conv::<Self::IFullRev>()
+            .into_pyiterator(py)
+    }
+    #[pyo3(signature = (value, start = None, stop = None))]
+    fn index(
+        &self,
+        value: Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<usize> {
+        self.try_lock().list_mut().index(&value, start, stop)
+    }
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
         &self,
@@ -73,29 +97,9 @@ pub(super) trait SortedCollectionsMethods:
             .get_islice_specs(py, start, stop)?;
         self.iter_bounds(py, bounds, reverse)
     }
-    fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.inner()
-            .clone()
-            .pipe(rsiter::Full::new)
-            .conv::<Self::IFull>()
-            .into_pyiterator(py)
+    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
+        self.try_lock().list_mut().reset(py, load)
     }
-    fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.inner()
-            .clone()
-            .pipe(rsiter::FullRev::new)
-            .conv::<Self::IFullRev>()
-            .into_pyiterator(py)
-    }
-    #[pyo3(signature = (value, start = None, stop = None))]
-    fn index(
-        &self,
-        value: Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<usize>;
-    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()>;
-    fn clear(&self, py: Python<'_>);
 }
 
 #[py_abc(sorted::SortedKeyList, sorted::SortedKeySet, sorted::SortedKeyDict)]
@@ -604,14 +608,6 @@ impl<T: SortedSetMethods> SortedCollectionsMethods for T {
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().list_mut().bisect_right(value)
-    }
-    fn index(
-        &self,
-        value: Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<usize> {
-        self.try_lock().list_mut().index(&value, start, stop)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.try_lock().reset(py, load)
