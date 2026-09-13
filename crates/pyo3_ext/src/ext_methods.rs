@@ -2,6 +2,7 @@
 use pyo3::{
     PyTypeInfo,
     call::PyCallArgs,
+    exceptions::PyTypeError,
     ffi, intern,
     prelude::*,
     types::{
@@ -10,7 +11,7 @@ use pyo3::{
     },
 };
 
-use crate::types;
+use crate::types::{self, PyItemsView, PyKeysView, PyValuesView};
 
 /// Create a new Python list from the given arguments.\
 #[macro_export]
@@ -335,5 +336,28 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
             // Return code is -1 here, hence error
             _ => Err(PyErr::fetch(seq.py())),
         }
+    }
+}
+pub trait PyMappingExtMethods<'py>: Sized {
+    fn items_view(&self) -> PyResult<Bound<'py, PyItemsView>>;
+    fn keys_view(&self) -> PyResult<Bound<'py, PyKeysView>>;
+    fn values_view(&self) -> PyResult<Bound<'py, PyValuesView>>;
+}
+
+impl<'py> PyMappingExtMethods<'py> for Bound<'py, PyMapping> {
+    fn items_view(&self) -> PyResult<Bound<'py, PyItemsView>> {
+        self.call_method0(intern!(self.py(), "items"))?
+            .cast_into::<PyItemsView>()
+            .map_err(|_| PyTypeError::new_err("expected a mapping view for items"))
+    }
+    fn keys_view(&self) -> PyResult<Bound<'py, PyKeysView>> {
+        self.call_method0(intern!(self.py(), "keys"))?
+            .cast_into::<PyKeysView>()
+            .map_err(|_| PyTypeError::new_err("expected a mapping view for keys"))
+    }
+    fn values_view(&self) -> PyResult<Bound<'py, PyValuesView>> {
+        self.call_method0(intern!(self.py(), "values"))?
+            .cast_into::<PyValuesView>()
+            .map_err(|_| PyTypeError::new_err("expected a mapping view for values"))
     }
 }

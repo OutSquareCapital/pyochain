@@ -143,7 +143,18 @@ unsafe impl PyTypeInfo for PyKeysView {
                 .unwrap_or_else(|err| false_and_write(err, object))
     }
 }
-
+/// Key-value pair type from a Python `Mapping`
+pub type DictItem<'py> = (Bound<'py, PyAny>, Bound<'py, PyAny>);
+pub trait ItemsViewMethods<'py> {
+    fn iter(&self) -> impl Iterator<Item = PyResult<DictItem<'py>>>;
+}
+impl<'py> ItemsViewMethods<'py> for Bound<'py, PyItemsView> {
+    fn iter(&self) -> impl Iterator<Item = PyResult<DictItem<'py>>> {
+        self.try_iter()
+            .expect("an ItemsView should always be iterable")
+            .map(|iter| iter?.extract::<DictItem>())
+    }
+}
 #[repr(transparent)]
 pub struct PyValuesView(PyAny);
 pyobject_native_type_named!(PyValuesView);

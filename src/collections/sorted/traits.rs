@@ -583,8 +583,8 @@ pub(super) trait SortedSetMethods: ListGetter<T = SetData<Self::L>> {
         let union = self.try_lock().union(iterables.py(), iterables)?;
         self.wrap(union)
     }
-    #[pyo3(name ="update", signature = (*iterables))]
-    fn py_update<'py>(
+    #[pyo3(signature = (*iterables))]
+    fn update<'py>(
         slf: Bound<'py, Self>,
         iterables: Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
@@ -723,8 +723,10 @@ pub(super) trait SortedDictMethods:
     }
     fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        let items = self.iter(py).chain(value.pipe(iter_mapping)?);
-        self.copy_from_iter(py, items)?.into_bound(py)
+        self.iter(py)
+            .chain(value.items_view()?.iter())
+            .pipe(|x| self.copy_from_iter(py, x))?
+            .into_bound(py)
     }
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
         self.update(other.py(), Some(other), None)
@@ -735,18 +737,21 @@ pub(super) trait SortedDictMethods:
     }
     fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        let items = value.pipe(iter_mapping)?.chain(self.iter(py));
-        self.copy_from_iter(py, items)?.into_bound(py)
+        value
+            .items_view()?
+            .iter()
+            .chain(self.iter(py))
+            .pipe(|x| self.copy_from_iter(py, x))?
+            .into_bound(py)
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(signature = (iterable, value = None, /))]
     fn from_keys<'py>(
-        cls: Bound<'py, PyType>,
         iterable: Bound<'py, PyAny>,
         value: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, sorted::SortedDict>> {
-        let py = cls.py();
+        let py = iterable.py();
         let value = value.unwrap_or_else(|| py.None().into_bound(py));
         iterable
             .try_iter()?
@@ -924,13 +929,4 @@ impl<'py, D: SortedDictMethods> Iterator for SortedDictIter<'_, 'py, D> {
             Err(e) => Some(Err(e)),
         }
     }
-}
-fn iter_mapping<'py>(
-    mapping: &Bound<'py, PyMapping>,
-) -> PyResult<impl Iterator<Item = PyResult<DictItem<'py>>>> {
-    mapping
-        .call_method0("items")?
-        .try_iter()?
-        .map(|iter| iter?.extract::<DictItem>())
-        .pipe(Ok)
 }
