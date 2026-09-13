@@ -93,7 +93,7 @@ impl ListsDataMethods for KeysListsData {
         }
     }
     #[inline]
-    fn clear(&mut self) {
+    fn clear(&mut self, _py: Python<'_>) {
         self.0.clear();
         self.1.clear();
     }

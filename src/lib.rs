@@ -143,7 +143,13 @@ fn register_all(py: Python<'_>) -> PyResult<()> {
     PyValuesView::register::<abc::PyoValuesView>(py)?;
     PyItemsView::register::<abc::PyoItemsView>(py)?;
     PyMapping::register::<abc::PyoMapping>(py)?;
-    PyMutableMapping::register::<abc::PyoMutableMapping>(py)
+    PyMutableMapping::register::<abc::PyoMutableMapping>(py)?;
+    PyKeysView::register::<collections::sorted::SortedKeysView>(py)?;
+    PyValuesView::register::<collections::sorted::SortedValuesView>(py)?;
+    PyItemsView::register::<collections::sorted::SortedItemsView>(py)?;
+    PyKeysView::register::<collections::sorted::SortedByKeyKeysView>(py)?;
+    PyValuesView::register::<collections::sorted::SortedByKeyValuesView>(py)?;
+    PyItemsView::register::<collections::sorted::SortedByKeyItemsView>(py)
 }
 #[cfg(debug_assertions)]
 fn debug_backtrace() {

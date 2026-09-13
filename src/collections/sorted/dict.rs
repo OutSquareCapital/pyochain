@@ -1,26 +1,39 @@
 use crate::{
     abc,
     collections::sorted::{
-        SortedItemsView, SortedKeysView, SortedValuesView,
+        SortedItemsView, SortedKeysView, SortedValuesView, iter,
         traits::{ListGetter, Reduced, SortedCollectionsMethods, SortedDictMethods},
         views::{SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView},
     },
     traits::IntoInit,
 };
-use pyo3::{PyTypeInfo, ffi, prelude::*, types::PyDict};
+use pyo3::{PyTypeInfo, prelude::*, types::PyDict};
 use pyo3_ext::prelude::*;
-use sorted_rs::{InnerGetter, KeysListsData, ListDataOwner, ListsData, ListsDataMethods};
+use sorted_rs::{DictData, InnerGetter, KeysListsData, ListDataOwner, ListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
-/// Key-value pair type from a Python `Mapping`
-pub type DictItem<'py> = (Bound<'py, PyAny>, Bound<'py, PyAny>);
+
+impl From<DictData<ListsData>> for SortedDict {
+    fn from(data: DictData<ListsData>) -> Self {
+        Self(Arc::new(Mutex::new(data)))
+    }
+}
+impl From<DictData<KeysListsData>> for SortedKeyDict {
+    fn from(data: DictData<KeysListsData>) -> Self {
+        Self(Arc::new(Mutex::new(data)))
+    }
+}
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends= abc::PyoMutableMapping, mapping)]
-pub struct SortedDict(pub(super) Arc<Mutex<ListsData>>, Py<PyDict>);
-impl SortedDict {
-    pub fn empty(py: Python<'_>) -> Self {
-        let inner = PyDict::new(py);
-        let list = ListsData::default().pipe(Mutex::new).pipe(Arc::new);
-        Self(list, inner.unbind())
+pub struct SortedDict(pub(super) Arc<Mutex<DictData<ListsData>>>);
+
+impl ListGetter for SortedDict {
+    type T = DictData<ListsData>;
+    type I = iter::PyDictBounded;
+    type IRev = iter::PyDictBoundedRev;
+    type IFull = iter::PyDictFull;
+    type IFullRev = iter::PyDictFullRev;
+    fn inner(&self) -> &Arc<Mutex<Self::T>> {
+        &self.0
     }
 }
 #[pymethods]
@@ -32,46 +45,29 @@ impl SortedDict {
         iterable: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let slf = Self(
-            ListsData::default().pipe(Mutex::new).pipe(Arc::new),
-            PyDict::new(py).unbind(),
-        );
+        let slf = DictData::<ListsData>::empty(py).conv::<Self>();
         slf.update(py, iterable, kwargs)?;
         slf.init().pipe(Ok)
     }
 }
 impl SortedDictMethods for SortedDict {
+    type L = ListsData;
     type IView = SortedItemsView;
     type KView = SortedKeysView;
     type VView = SortedValuesView;
-    fn get_dict(&self) -> &Py<PyDict> {
-        &self.1
-    }
-    fn copy_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
-        &self,
-        py: Python<'py>,
-        v: I,
-    ) -> PyResult<Self> {
-        let inner = PyDict::new(py);
-        let unbounded = v
-            .into_iter()
-            .map(|x| x.and_then(|(key, value)| fill_dict(&inner, py, key, value)))
-            .map(|res| res.map(|(key, _)| key.unbind()))
-            .collect::<PyResult<Vec<_>>>()?;
-
-        let list = self
-            .try_lock()
-            .as_owned_from(py, unbounded)
-            .map(Mutex::new)
-            .map(Arc::new)?;
-        Ok(Self(list, inner.unbind()))
-    }
     // @recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let type_name = Self::type_object(py).name()?;
+        let dict = self.get_dict(py).into_any();
         let items = self
-            .iter(py)
-            .map(|x| x.and_then(|(k, v)| Ok(format!("{}: {}", k.repr()?, v.repr()?))))
+            .try_lock()
+            .inner()
+            .iter()
+            .map(|x| x.bind(py))
+            .map(|key| {
+                dict.get_item(key)
+                    .and_then(|value| Ok(format!("{}: {}", key.repr()?, value.repr()?)))
+            })
             .collect::<PyResult<Vec<_>>>()?
             .join(", ");
         Ok(format!("{type_name}({{{items}}})"))
@@ -79,7 +75,17 @@ impl SortedDictMethods for SortedDict {
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableMapping, mapping)]
 
-pub struct SortedKeyDict(pub(super) Arc<Mutex<KeysListsData>>, Py<PyDict>);
+pub struct SortedKeyDict(pub(super) Arc<Mutex<DictData<KeysListsData>>>);
+impl ListGetter for SortedKeyDict {
+    type T = DictData<KeysListsData>;
+    type I = iter::PyDictBoundedKey;
+    type IRev = iter::PyDictBoundedKeyRev;
+    type IFull = iter::PyDictFullKey;
+    type IFullRev = iter::PyDictFullKeyRev;
+    fn inner(&self) -> &Arc<Mutex<Self::T>> {
+        &self.0
+    }
+}
 #[pymethods]
 impl SortedKeyDict {
     #[new]
@@ -90,15 +96,15 @@ impl SortedKeyDict {
         iterable: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let list = KeysListsData::new(key).pipe(Mutex::new).pipe(Arc::new);
-        let slf = Self(list, PyDict::new(py).unbind());
+        let list = KeysListsData::new(key);
+        let slf = DictData::new(list, PyDict::new(py).unbind()).conv::<Self>();
         slf.update(py, iterable, kwargs)?;
         slf.init().pipe(Ok)
     }
 
     #[getter]
     fn get_key(&self, py: Python<'_>) -> Py<PyAny> {
-        self.try_lock().2.clone_ref(py)
+        self.try_lock().list().2.clone_ref(py)
     }
 
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
@@ -110,36 +116,16 @@ impl SortedKeyDict {
     }
 }
 impl SortedDictMethods for SortedKeyDict {
+    type L = KeysListsData;
     type IView = SortedByKeyItemsView;
     type KView = SortedByKeyKeysView;
     type VView = SortedByKeyValuesView;
-    fn get_dict(&self) -> &Py<PyDict> {
-        &self.1
-    }
-    fn copy_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
-        &self,
-        py: Python<'py>,
-        v: I,
-    ) -> PyResult<Self> {
-        let inner = PyDict::new(py);
-        let unbounded = v
-            .into_iter()
-            .map(|res| res.and_then(|(key, value)| fill_dict(&inner, py, key, value)))
-            .map(|x| x.map(|(k, _)| k.unbind()))
-            .collect::<PyResult<Vec<_>>>()?;
-        let list = self
-            .try_lock()
-            .as_owned_from(py, unbounded)
-            .map(Mutex::new)
-            .map(Arc::new)?;
-        Ok(Self(list, inner.unbind()))
-    }
     // @recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let inner = self.try_lock();
         let type_name = Self::type_object(py).name()?;
-        let key_arg = format!("{}, ", inner.2.bind(py).repr()?);
-        let dict = self.get_dict().bind(py).as_any();
+        let key_arg = format!("{}, ", inner.list().2.bind(py).repr()?);
+        let dict = self.get_dict(py).into_any();
         let items = self
             .try_lock()
             .inner()
@@ -152,11 +138,11 @@ impl SortedDictMethods for SortedKeyDict {
 }
 impl SortedCollectionsMethods for SortedDict {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        let items = self.get_dict().bind(py).copy().and_then(|x| tuple!(x))?;
+        let items = self.get_dict(py).copy().and_then(|x| tuple!(x))?;
         Ok((Self::type_object(py), items))
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.get_dict().bind(value.py()).contains(value)
+        self.try_lock().contains(value)
     }
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
@@ -166,53 +152,37 @@ impl SortedCollectionsMethods for SortedDict {
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().list_mut().bisect_right(value)
     }
-
     fn clear(&self, py: Python<'_>) {
-        self.get_dict().bind(py).clear();
-        self.try_lock().clear();
+        self.try_lock().clear(py);
     }
 }
 
 impl SortedCollectionsMethods for SortedKeyDict {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         let items = self
-            .get_dict()
-            .bind(py)
+            .get_dict(py)
             .copy()
-            .and_then(|x| tuple!(x.as_any(), self.try_lock().2.bind(py)))?;
+            .and_then(|x| tuple!(x.as_any(), self.try_lock().list().2.bind(py)))?;
         Ok((Self::type_object(py), items))
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.get_dict().bind(value.py()).contains(value)
+        self.try_lock().contains(value)
     }
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
         let mut data = self.try_lock();
-        let key = data.2.bind(py).call1((value,))?;
+        let key = data.list().2.bind(py).call1((value,))?;
         data.list_mut().bisect_left(&key)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
         let mut data = self.try_lock();
-        let key = data.2.bind(py).call1((value,))?;
+        let key = data.list().2.bind(py).call1((value,))?;
         data.list_mut().bisect_right(&key)
     }
-
     fn clear(&self, py: Python<'_>) {
-        self.get_dict().bind(py).clear();
-        self.try_lock().list_mut().clear();
-    }
-}
-fn fill_dict<'py>(
-    inner: &Bound<'py, PyDict>,
-    py: Python<'py>,
-    key: Bound<'py, PyAny>,
-    value: Bound<'py, PyAny>,
-) -> PyResult<DictItem<'py>> {
-    match unsafe { ffi::PyDict_SetItem(inner.as_ptr(), key.as_ptr(), value.as_ptr()) } {
-        -1 => Err(PyErr::fetch(py)),
-        _ => Ok((key, value)),
+        self.try_lock().clear(py);
     }
 }

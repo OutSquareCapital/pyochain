@@ -136,7 +136,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     def from_keys[OT: SupportsHashableAndRichComparison, S](
         cls, iterable: Iterable[OT], value: S | None = None, /
     ) -> SortedDict[OT, S | Any | None]:
-        """Return a new `BaseSortedDict` initialized from *iterable* and *value*.
+        """Return a new `SortedDict` initialized from *iterable* and *value*.
 
         Items in the sorted dict have keys from *iterable* and values equal to *value*.
 

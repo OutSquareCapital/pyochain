@@ -1059,6 +1059,7 @@ dependencies = [
  "either",
  "pyo3",
  "pyo3_ext",
+ "pyochain_macros",
  "std_tools",
  "tap",
 ]

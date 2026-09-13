@@ -42,7 +42,7 @@ macro_rules! impl_mapping_view_for_sorted_view {
                     &self.0
                 }
                 fn __len__(&self, py: Python<'_>) -> usize {
-                    self.mapping().get().len(py)
+                    self.mapping().get().__len__(py)
                 }
             }
         )*
@@ -110,7 +110,7 @@ macro_rules! impl_from_iterable {
                 cls: Bound<'py, PyType>,
                 it: Bound<'py, PyAny>,
             ) -> PyResult<Bound<'py, SortedSet>> {
-                SortedSet::from_iterable(it)?.into_bound(cls.py())
+                SortedSet::try_from(it)?.into_bound(cls.py())
             }
         }
         )*
@@ -129,7 +129,7 @@ fn get_item_for_items_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
 ) -> ObjOrVec<'py> {
     let py = index.py();
     let mapping = slf.mapping().get();
-    let dict = mapping.get_dict().bind(index.py()).as_any();
+    let dict = mapping.get_dict(py).into_any();
     let mut mapping_list = mapping.try_lock();
 
     try_cast_into! {
@@ -142,14 +142,14 @@ fn get_item_for_items_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
                 .map(|key| tuple!(key.bind(py), &dict.get_item(key)?).map(Bound::into_any))
                 .try_collect_bound::<PyList>(py)?
                 .try_into_py()
-                .map(Either::Right),
+                .map(Either::Left),
             int => {
                 let key = mapping_list
                     .list_mut()
                     .inner_mut()
                     .get_item(py, int.extract::<isize>()?)?;
                 let value = dict.get_item(&key)?;
-                tuple!(key, value).map(Bound::into_any).map(Either::Left)
+                tuple!(key, value).map(Bound::into_any).map(Either::Right)
             }
         }
     }
@@ -161,7 +161,7 @@ fn get_item_for_values_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
 ) -> ObjOrVec<'py> {
     let py = index.py();
     let mapping = slf.mapping().get();
-    let dict = mapping.get_dict().bind(py).as_any();
+    let dict = mapping.get_dict(py).into_any();
     let mut mapping_list = mapping.try_lock();
 
     try_cast_into! {
@@ -174,7 +174,7 @@ fn get_item_for_values_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
                 .map(|key| dict.get_item(key))
                 .try_collect_bound::<PyList>(py)?
                 .try_into_py()
-                .map(Either::Right),
+                .map(Either::Left),
             int => dict
                 .get_item(
                     mapping_list
@@ -182,7 +182,7 @@ fn get_item_for_values_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
                         .inner_mut()
                         .get_item(py, int.extract::<isize>()?)?,
                 )
-                .map(Either::Left),
+                .map(Either::Right),
         }
     }
 }
@@ -203,12 +203,12 @@ fn get_item_for_key_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
                 .iter()
                 .collect_bound::<PyList>(py)?
                 .try_into_py()
-                .map(Either::Right),
+                .map(Either::Left),
             int => mapping_list
                 .list_mut()
                 .inner_mut()
                 .get_item(py, int.extract::<isize>()?)
-                .map(Either::Left),
+                .map(Either::Right),
         }
     }
 }

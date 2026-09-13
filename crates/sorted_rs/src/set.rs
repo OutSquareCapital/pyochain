@@ -40,18 +40,19 @@ impl<T: ListsDataMethods> SetData<T> {
         self.1.clone_ref(py).into_bound(py)
     }
     pub fn clear(&mut self, py: Python<'_>) {
-        self.0.clear();
+        self.0.clear(py);
         self.1.bind(py).clear();
     }
     pub fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.0.reset(py, load)
     }
-    pub fn update<'py>(&mut self, py: Python<'py>, other: IntoUpdate<'py>) -> PyResult<()> {
+    pub fn update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
+        let py = other.py();
         let set = self.1.bind(py);
-        let values = other.into_set(py)?;
+        let values = other.into_set()?;
         if (4 * values.len()) > set.len() {
             set.update((values,))?;
-            self.0.clear();
+            self.0.clear(py);
             self.0
                 .extend(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
         } else {
@@ -82,12 +83,13 @@ impl<T: ListsDataMethods> SetData<T> {
     ) -> PyResult<Bound<'py, PySet>> {
         self.1.bind(py).union(iterables)
     }
-    pub fn difference_update(&mut self, py: Python<'_>, iterables: IntoUpdate<'_>) -> PyResult<()> {
+    pub fn difference_update(&mut self, iterables: IntoUpdate<'_>) -> PyResult<()> {
+        let py = iterables.py();
         let set = self.1.bind(py);
-        let values = iterables.into_set(py)?;
+        let values = iterables.into_set()?;
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
-            self.0.clear();
+            self.0.clear(py);
             self.0
                 .extend(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
         } else {
@@ -104,11 +106,11 @@ impl<T: ListsDataMethods> SetData<T> {
     ) -> PyResult<()> {
         let set = self.1.bind(py);
         set.intersection_update(iterables)?;
-        self.0.clear();
+        self.0.clear(py);
         self.0.extend(py, set.iter().map(Bound::unbind).collect())
     }
 
-    pub fn __getitem__<'py>(
+    pub fn get_item_or_slice<'py>(
         &mut self,
         py: Python<'py>,
         index: IntOrSlice<'py>,
@@ -204,7 +206,7 @@ impl<T: ListsDataMethods> SetData<T> {
             .try_collect_bound::<PySet>(py)?;
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
-            self.0.clear();
+            self.0.clear(py);
             self.0.extend(py, set.iter().map(Bound::unbind).collect())
         } else {
             for value in values {
@@ -227,7 +229,7 @@ impl<T: ListsDataMethods> SetData<T> {
         let py = other.py();
         let set = self.1.bind(py);
         set.symmetric_difference_update(other)?;
-        self.0.clear();
+        self.0.clear(py);
         self.0.extend(py, set.iter().map(Bound::unbind).collect())
     }
 }
@@ -238,14 +240,23 @@ pub enum IntoUpdate<'py> {
     Any(Bound<'py, PyAny>),
 }
 impl<'py> IntoUpdate<'py> {
-    pub fn into_set(self, py: Python<'py>) -> PyResult<Bound<'py, PySet>> {
+    #[must_use]
+    pub fn py(&self) -> Python<'py> {
         match self {
-            IntoUpdate::Tuple(tup) => tup
+            Self::Set(pyset) => pyset.py(),
+            Self::Tuple(tup) => tup.py(),
+            Self::Any(any) => any.py(),
+        }
+    }
+    pub fn into_set(self) -> PyResult<Bound<'py, PySet>> {
+        let py = self.py();
+        match self {
+            Self::Tuple(tup) => tup
                 .iter()
                 .flat_map(|x| x.try_iter().unwrap())
                 .try_collect_bound::<PySet>(py),
-            IntoUpdate::Set(pyset) => Ok(pyset),
-            IntoUpdate::Any(any) => any.try_iter()?.try_collect_bound::<PySet>(py),
+            Self::Set(pyset) => Ok(pyset),
+            Self::Any(any) => any.try_iter()?.try_collect_bound::<PySet>(py),
         }
     }
 }

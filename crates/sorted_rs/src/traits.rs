@@ -4,14 +4,15 @@ use crate::{
     Bounds, InnerGetter, ListDataGetters, Loc,
     bisect::Bisect,
     errors,
-    types::{IntOrSlice, VecPy},
+    types::{IntOrSlice, ListOrAny, VecPy},
 };
 use either::Either;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PySlice, PySliceIndices, PyString},
+    types::{PyList, PySlice, PySliceIndices, PyString},
 };
+use pyo3_ext::prelude::CollectBoundIterator;
 pub(super) trait NestedVec<T> {
     fn loc(&self, loc: &Loc) -> &T;
     fn loc_insert(&mut self, loc: &Loc, value: T);
@@ -51,7 +52,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
-    fn clear(&mut self);
+    fn clear(&mut self, py: Python<'_>);
     fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()>;
@@ -81,6 +82,21 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         self.as_owned_from(py, self.inner().collapse(py))
     }
+    fn get_item_or_slice<'py>(
+        &mut self,
+        py: Python<'py>,
+        index: IntOrSlice<'py>,
+    ) -> PyResult<ListOrAny<'py>> {
+        match index {
+            Either::Right(slice) => self
+                .inner_mut()
+                .get_slice(py, &slice)?
+                .iter()
+                .collect_bound::<PyList>(py)
+                .map(Either::Left),
+            Either::Left(index) => self.inner_mut().get_item(py, index).map(Either::Right),
+        }
+    }
     fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
         let mut bounds = Loc::default();
         self.inner_mut().set_pos(index, &mut bounds)?;
@@ -100,7 +116,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         } = slice.indices(length)?;
         match (step, start.cmp(&stop)) {
             (1, Ordering::Less) if start == 0 && stop == length => {
-                self.clear();
+                self.clear(py);
                 Ok(())
             }
             (1, Ordering::Less) if length <= 8 * (stop - start) => {
@@ -113,7 +129,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
                         .get_slice(py, &PySlice::new(py, stop, length, 1))?;
                     values.extend(new_slice);
                 }
-                self.clear();
+                self.clear(py);
                 self.extend(py, values)?;
                 Ok(())
             }
@@ -143,7 +159,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     }
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
         let values = self.inner().repeat(py, num);
-        self.clear();
+        self.clear(py);
         self.extend(py, values)
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
@@ -184,7 +200,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
     }
     fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
         let values = self.inner().collapse(py);
-        self.clear();
+        self.clear(py);
         self.set_load(load);
         self.extend(py, values)
     }
@@ -202,7 +218,7 @@ pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) 
         list.lists_mut().push(values);
         values = list.inner().collapse(py);
         values.sort_by(func);
-        list.clear();
+        list.clear(py);
         list.finalize_update(py, &values)
     } else {
         for val in values {

@@ -1,7 +1,8 @@
 use crate::{
     abc,
-    collections::sorted::traits::{
-        ListGetter, Reduced, SortedCollectionsMethods, SortedListMethods,
+    collections::sorted::{
+        iter,
+        traits::{ListGetter, Reduced, SortedCollectionsMethods, SortedListMethods},
     },
     traits::IntoInit,
 };
@@ -13,6 +14,16 @@ use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedKeyList(pub(super) Arc<Mutex<KeysListsData>>);
 impl SortedListMethods for SortedKeyList {}
+impl ListGetter for SortedKeyList {
+    type T = KeysListsData;
+    type I = iter::PyBoundedKey;
+    type IRev = iter::PyBoundedKeyRev;
+    type IFull = iter::PyFullKey;
+    type IFullRev = iter::PyFullKeyRev;
+    fn inner(&self) -> &Arc<Mutex<Self::T>> {
+        &self.0
+    }
+}
 #[pymethods]
 impl SortedKeyList {
     #[new]
@@ -57,8 +68,8 @@ impl SortedCollectionsMethods for SortedKeyList {
         let key = data.list_mut().2.bind(value.py()).call1((value,))?;
         data.list_mut().bisect_right(&key)
     }
-    fn clear(&self, _py: Python<'_>) {
-        self.try_lock().list_mut().clear();
+    fn clear(&self, py: Python<'_>) {
+        self.try_lock().clear(py);
     }
 }
 impl From<KeysListsData> for SortedKeyList {

@@ -4,7 +4,7 @@ use crate::abc;
 use crate::traits::IntoInit;
 use pyo3::{PyClass, prelude::*};
 use sorted_rs::iter::{Bounded, BoundedRev, Full, FullRev, ListDataIteratorMethods};
-use sorted_rs::{KeysListsData, ListsData, SetData};
+use sorted_rs::{DictData, KeysListsData, ListsData, SetData};
 pub trait PySortedIter: PyClass<BaseType = abc::PyoIterator> + IntoInit {
     fn into_pyiterator(self, py: Python<'_>) -> PyResult<Bound<'_, abc::PyoIterator>> {
         self.into_bound(py).map(Bound::into_super)
@@ -56,5 +56,17 @@ impl_sorted_iter! {
         BoundedRev => PySetBoundedKeyRev,
         Full => PySetFullKey,
         FullRev => PySetFullKeyRev,
+    },
+    DictData<ListsData> => {
+        Bounded => PyDictBounded,
+        BoundedRev => PyDictBoundedRev,
+        Full => PyDictFull,
+        FullRev => PyDictFullRev,
+    },
+    DictData<KeysListsData> => {
+        Bounded => PyDictBoundedKey,
+        BoundedRev => PyDictBoundedKeyRev,
+        Full => PyDictFullKey,
+        FullRev => PyDictFullKeyRev,
     },
 }

@@ -74,7 +74,7 @@ impl ListsDataMethods for ListsData {
         }
     }
     #[inline]
-    fn clear(&mut self) {
+    fn clear(&mut self, _py: Python<'_>) {
         self.0.clear();
     }
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {

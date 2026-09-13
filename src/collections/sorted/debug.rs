@@ -2,29 +2,34 @@ use crate::collections::{
     SortedDict, SortedKeyDict, SortedKeyList, SortedList,
     sorted::{
         set::{SortedKeySet, SortedSet},
-        traits::{ListGetter, SortedDictMethods, SortedSetMethods},
+        traits::{ListGetter, SortedSetMethods},
     },
 };
 use either::Either;
 use pyo3::prelude::*;
-use sorted_rs::{InnerGetter, ListDataGetters, ListDataOwner, debug::check_key_list, pyassert};
+use sorted_rs::{
+    DictData, InnerGetter, ListDataGetters, ListDataOwner, ListsDataMethods, debug::check_key_list,
+    pyassert,
+};
 
 #[pyfunction]
 pub fn check_sorted_dict(
     py: Python<'_>,
     data: Either<Py<SortedDict>, Py<SortedKeyDict>>,
 ) -> PyResult<()> {
-    data.map_either(|x| check_dict(x.get(), py), |x| check_dict(x.get(), py))
-        .into_inner()
+    data.map_either(
+        |x| check_dict(&x.get().try_lock(), py),
+        |x| check_dict(&x.get().try_lock(), py),
+    )
+    .into_inner()
 }
 
-fn check_dict(x: &impl SortedDictMethods, py: Python<'_>) -> PyResult<()> {
-    let data = x.try_lock();
+fn check_dict<T: ListsDataMethods>(data: &DictData<T>, py: Python<'_>) -> PyResult<()> {
     data.list().inner().check(py)?;
-
-    pyassert!(x.len(py) == data.len());
+    let dict = data.get_dict().bind(py);
+    pyassert!(dict.len() == data.len());
     pyassert!(data.list().inner().iter().all(|item| {
-        x.contains(item.bind(py))
+        dict.contains(item.bind(py))
             .expect("Failed to check dict membership")
     }));
     Ok(())
