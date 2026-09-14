@@ -8,7 +8,7 @@ use crate::{
 };
 use pyo3::{PyTypeInfo, prelude::*};
 use pyo3_ext::prelude::*;
-use sorted_rs::{InnerGetter, KeysListsData, ListDataOwner, ListsDataMethods};
+use sorted_rs::{InnerGetter, KeysListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -22,6 +22,9 @@ impl ListGetter for SortedKeyList {
     fn inner(&self) -> &Arc<Mutex<Self::T>> {
         &self.0
     }
+}
+impl SortedListMethods for SortedKeyList {
+    type L = KeysListsData;
 }
 #[pymethods]
 impl SortedKeyList {
@@ -48,14 +51,14 @@ impl SortedCollectionsMethods for SortedKeyList {
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let mut data = self.try_lock();
-        let key = data.list_mut().2.bind(value.py()).call1((value,))?;
-        data.list_mut().bisect_left(&key)
+        let key = data.2.bind(value.py()).call1((value,))?;
+        data.bisect_left(&key)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let mut data = self.try_lock();
-        let key = data.list_mut().2.bind(value.py()).call1((value,))?;
-        data.list_mut().bisect_right(&key)
+        let key = data.2.bind(value.py()).call1((value,))?;
+        data.bisect_right(&key)
     }
 }
 impl From<KeysListsData> for SortedKeyList {

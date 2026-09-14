@@ -25,8 +25,8 @@ impl<T: ListsDataMethods> ListDataOwner for T {
 }
 
 pub trait ListDataGetters: Sized {
-    fn lists(&self) -> &[VecPy];
-    fn lists_mut(&mut self) -> &mut Vec<VecPy>;
+    fn values(&self) -> &[VecPy];
+    fn values_mut(&mut self) -> &mut Vec<VecPy>;
     fn maxes(&self) -> &[Py<PyAny>];
     fn maxes_mut(&mut self) -> &mut VecPy;
     fn idx(&self) -> &[usize];
@@ -45,10 +45,10 @@ pub trait ListDataGetters: Sized {
 }
 
 impl<T: InnerGetter> ListDataGetters for T {
-    fn lists(&self) -> &[VecPy] {
+    fn values(&self) -> &[VecPy] {
         &self.inner().lists
     }
-    fn lists_mut(&mut self) -> &mut Vec<VecPy> {
+    fn values_mut(&mut self) -> &mut Vec<VecPy> {
         &mut self.inner_mut().lists
     }
     fn maxes(&self) -> &[Py<PyAny>] {

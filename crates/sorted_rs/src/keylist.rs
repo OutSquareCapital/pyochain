@@ -60,7 +60,7 @@ impl ListsDataMethods for KeysListsData {
         match ops::Maxes::right(self.maxes(), &key) {
             ops::Maxes::BisectErr(err) => return Err(err),
             ops::Maxes::Empty => {
-                self.lists_mut().push(vec![value.unbind()]);
+                self.values_mut().push(vec![value.unbind()]);
                 let v = key.unbind();
                 self.1.push(vec![v.clone_ref(py)]);
                 self.maxes_mut().push(v);
@@ -68,7 +68,7 @@ impl ListsDataMethods for KeysListsData {
             ops::Maxes::LenEQPos(mut loc) => {
                 loc.pos -= 1;
                 let v = key.unbind();
-                self.lists_mut().loc_push(&loc, value.unbind());
+                self.values_mut().loc_push(&loc, value.unbind());
                 self.1.loc_push(&loc, v.clone_ref(py));
                 self.maxes_mut()[loc.pos] = v;
                 self.expand(py, loc.pos);
@@ -76,7 +76,7 @@ impl ListsDataMethods for KeysListsData {
             ops::Maxes::LenNEPos(mut loc) => {
                 let v = &self.1[loc.pos];
                 loc.idx = v.bisect_right(&key)?;
-                self.lists_mut().loc_insert(&loc, value.unbind());
+                self.values_mut().loc_insert(&loc, value.unbind());
                 self.1.loc_insert(&loc, key.unbind());
                 self.expand(py, loc.pos);
             }
@@ -124,7 +124,7 @@ impl ListsDataMethods for KeysListsData {
                     if self.1.loc(&loc).bind(py).ne(&key)? {
                         return Ok(total);
                     }
-                    if self.lists().loc(&loc).bind(py).eq(value)? {
+                    if self.values().loc(&loc).bind(py).eq(value)? {
                         total += 1;
                     }
                     loc.idx += 1;
@@ -143,7 +143,7 @@ impl ListsDataMethods for KeysListsData {
 
     fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()> {
         self.1.loc_remove(loc);
-        self.lists_mut().loc_remove(loc);
+        self.values_mut().loc_remove(loc);
         self.decrement_len();
         match ops::Delete::new(&self.1, self.load(), loc) {
             ops::Delete::PosSupToLoad => {
@@ -214,7 +214,7 @@ impl ListsDataMethods for KeysListsData {
             if self.1.loc(&loc).bind(py).ne(&key)? {
                 return Err(errors::not_in_list(&value.repr()?));
             }
-            if self.lists().loc(&loc).bind(py).eq(value)? {
+            if self.values().loc(&loc).bind(py).eq(value)? {
                 let loc = self.inner_mut().loc(&loc);
                 if start <= loc && loc <= stop {
                     return Ok(loc);
@@ -247,7 +247,7 @@ impl ListsDataMethods for KeysListsData {
                     if self.1.loc(&loc).bind(py).ne(&key)? {
                         return Ok(None);
                     }
-                    if self.lists().loc(&loc).bind(py).eq(value)? {
+                    if self.values().loc(&loc).bind(py).eq(value)? {
                         return Ok(Some(loc));
                     }
                     loc.idx += 1;
@@ -266,7 +266,7 @@ impl ListsDataMethods for KeysListsData {
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
         self.inner_mut().extend_lists(py, values);
         let key_fn = self.2.bind(py);
-        self.lists()
+        self.values()
             .iter()
             .map(|list| {
                 list.iter()

@@ -168,24 +168,24 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));
         }
-        let len_last = self.lists().last().unwrap().len().cast_signed();
+        let len_last = self.values().last().unwrap().len().cast_signed();
         match index {
             -1 => {
-                bounds.pos = self.lists().len() - 1;
-                bounds.idx = self.lists().loc_len(&bounds) - 1_usize;
+                bounds.pos = self.values().len() - 1;
+                bounds.idx = self.values().loc_len(&bounds) - 1_usize;
             }
-            _ if 0 <= index && index < self.lists()[0].len().cast_signed() => {
+            _ if 0 <= index && index < self.values()[0].len().cast_signed() => {
                 bounds.idx = index.cast_unsigned();
             }
             _ if -len_last < index && index < 0 => {
-                bounds.pos = self.lists().len() - 1;
+                bounds.pos = self.values().len() - 1;
                 bounds.idx = (len_last + index).cast_unsigned();
             }
             _ => {
                 self.inner_mut().set_pos(index, &mut bounds)?;
             }
         }
-        let val = self.lists().loc(&bounds).clone_ref(py);
+        let val = self.values().loc(&bounds).clone_ref(py);
         self.delete(py, &mut bounds)?;
         Ok(val.into_bound(py))
     }
@@ -215,7 +215,7 @@ pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) 
     if list.maxes().is_empty() {
         list.finalize_update(py, &values)
     } else if values.len() * 4 >= list.len() {
-        list.lists_mut().push(values);
+        list.values_mut().push(values);
         values = list.inner().collapse(py);
         values.sort_by(func);
         list.clear(py);

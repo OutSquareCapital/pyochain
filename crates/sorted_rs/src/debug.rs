@@ -120,8 +120,8 @@ pub fn check_list(py: Python<'_>, slf: &InnerData) -> PyResult<()> {
 pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
     let key_fn = data.2.bind(py);
     pyassert!(data.load() >= 4);
-    pyassert!(data.maxes().len() == data.lists().len() && data.lists().len() == data.1.len());
-    pyassert!(data.len() == data.lists().iter().map(Vec::len).sum::<usize>());
+    pyassert!(data.maxes().len() == data.values().len() && data.values().len() == data.1.len());
+    pyassert!(data.len() == data.values().iter().map(Vec::len).sum::<usize>());
 
     // Check all sublists are sorted.
 
@@ -145,7 +145,7 @@ pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
 
     // Check _keys matches _key mapped to _lists.
 
-    for (val_sublist, key_sublist) in data.lists().iter().zip(data.1.iter()) {
+    for (val_sublist, key_sublist) in data.values().iter().zip(data.1.iter()) {
         pyassert!(val_sublist.len() == key_sublist.len());
         for (val, key) in val_sublist.iter().zip(key_sublist.iter()) {
             {
@@ -167,25 +167,25 @@ pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
     // Check sublist lengths are less than double load-factor.
 
     let double = data.load() << 1;
-    pyassert!(data.lists().iter().all(|sublist| sublist.len() <= double));
+    pyassert!(data.values().iter().all(|sublist| sublist.len() <= double));
 
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
 
     let half = data.load() >> 1;
-    for pos in 0..data.lists().len().saturating_sub(1) {
-        pyassert!(data.lists()[pos].len() >= half);
+    for pos in 0..data.values().len().saturating_sub(1) {
+        pyassert!(data.values()[pos].len() >= half);
     }
 
     if !data.idx().is_empty() {
         pyassert!(data.len() == data.idx()[0]);
-        pyassert!(data.idx().len() == data.offset() + data.lists().len());
+        pyassert!(data.idx().len() == data.offset() + data.values().len());
 
         // Check index leaf nodes equal length of sublists.
 
-        for pos in 0..data.lists().len() {
+        for pos in 0..data.values().len() {
             let leaf = data.idx()[data.offset() + pos];
-            pyassert!(leaf == data.lists()[pos].len());
+            pyassert!(leaf == data.values()[pos].len());
         }
 
         // Check index branch nodes are the sum of their children.

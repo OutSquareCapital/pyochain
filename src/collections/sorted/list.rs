@@ -24,6 +24,9 @@ impl ListGetter for SortedList {
         &self.0
     }
 }
+impl SortedListMethods for SortedList {
+    type L = ListsData;
+}
 #[pymethods]
 impl SortedList {
     #[new]
