@@ -23,7 +23,7 @@ use sorted_rs::{
 };
 
 use std::sync::{Arc, Mutex, MutexGuard};
-use std_tools::prelude::MutexExtMethods;
+use std_tools::prelude::*;
 use tap::prelude::*;
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyoVec>, Bound<'py, PyAny>>>;
@@ -214,10 +214,10 @@ pub(super) trait SortedListMethods:
     }
 
     fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
-        match self.try_lock().list_mut().get_item_or_slice(index)? {
-            Either::Left(list) => list.try_into_py().map(Either::Left),
-            Either::Right(index) => Ok(Either::Right(index)),
-        }
+        self.try_lock()
+            .list_mut()
+            .get_item_or_slice(index)
+            .and_then_left(Bound::try_into_py)
     }
     fn __len__(&self) -> usize {
         self.try_lock().len()
@@ -329,10 +329,9 @@ pub(super) trait SortedSetMethods:
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
 
     fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
-        match self.try_lock().get_item_or_slice(index)? {
-            Either::Left(list) => list.try_into_py().map(Either::Left),
-            Either::Right(index) => Ok(Either::Right(index)),
-        }
+        self.try_lock()
+            .get_item_or_slice(index)
+            .and_then_left(Bound::try_into_py)
     }
     fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
         self.try_lock().del_item_or_slice(index)

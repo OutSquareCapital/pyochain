@@ -37,10 +37,7 @@ macro_rules! impl_base_sorted_view {
                         }
 
                         fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                            match $getitem(&mut self.mapping(), index)? {
-                                Either::Left(x) => x.try_into_py().map(Either::Left),
-                                Either::Right(x) => Ok(Either::Right(x)),
-                            }
+                            $getitem(&mut self.mapping(), index)?.and_then_left(|x|x.try_into_py())
                         }
                 }
             )*
