@@ -25,7 +25,7 @@ impl TryFrom<Bound<'_, PyAny>> for SortedSet {
     fn try_from(iterable: Bound<'_, PyAny>) -> PyResult<Self> {
         let py = iterable.py();
         let mut init = SetData::new(ListsData::default(), PySet::empty(py)?.unbind());
-        init.update(iterable.into())?;
+        init.update(iterable.try_into()?)?;
         Ok(init.into())
     }
 }
@@ -49,7 +49,7 @@ impl SortedSet {
     ) -> PyResult<PyClassInitializer<Self>> {
         let mut inner = SetData::new(ListsData::default(), PySet::empty(py).unwrap().unbind());
         if let Some(iterable) = iterable {
-            inner.update(iterable.into())?;
+            inner.update(iterable.try_into()?)?;
         }
         inner.conv::<Self>().init().pipe(Ok)
     }
@@ -85,7 +85,7 @@ impl SortedKeySet {
         let mut inner = SetData::new(list, PySet::empty(py).unwrap().unbind());
 
         if let Some(iterable) = iterable {
-            inner.update(iterable.into())?;
+            inner.update(iterable.try_into()?)?;
         }
         inner.conv::<Self>().init().pipe(Ok)
     }

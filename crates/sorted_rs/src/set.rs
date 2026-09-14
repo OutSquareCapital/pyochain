@@ -7,10 +7,11 @@ use either::Either;
 use pyo3::{
     call::PyCallArgs,
     prelude::*,
-    types::{PyBool, PyList, PySet, PyTuple},
+    types::{PyBool, PyIterator, PyList, PySet, PyTuple},
 };
 use pyo3_ext::prelude::*;
 use tap::Pipe;
+
 pub struct SetData<T>(T, Py<PySet>);
 impl<T: InnerGetter> InnerGetter for SetData<T> {
     fn inner(&self) -> &InnerData {
@@ -53,19 +54,6 @@ impl<T: ListsDataMethods> SetData<T> {
     pub fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.0.reset(py, load)
     }
-    pub fn update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
-        let py = other.py();
-        let set = self.1.bind(py);
-        let values = other.into_set()?;
-        if (4 * values.len()) > set.len() {
-            set.update((values,))?;
-            self.0.clear(py);
-            self.0
-                .extend(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
-        } else {
-            values.iter().try_for_each(|value| self.add(value))
-        }
-    }
     pub fn difference<'py, O: PyCallArgs<'py>>(
         &self,
         py: Python<'py>,
@@ -96,13 +84,21 @@ impl<T: ListsDataMethods> SetData<T> {
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
             self.0.clear(py);
-            self.0
-                .extend(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
+            self.0.extend(py, set.iter().map(Bound::unbind).collect())
         } else {
-            for value in values {
-                self.discard(&value)?;
-            }
-            Ok(())
+            values.iter().try_for_each(|value| self.discard(&value))
+        }
+    }
+    pub fn update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
+        let py = other.py();
+        let set = self.1.bind(py);
+        let values = other.into_set()?;
+        if (4 * values.len()) > set.len() {
+            set.update((values,))?;
+            self.0.clear(py);
+            self.0.extend(py, set.iter().map(Bound::unbind).collect())
+        } else {
+            values.iter().try_for_each(|value| self.add(value))
         }
     }
     pub fn intersection_update<'py, O: PyCallArgs<'py>>(
@@ -202,24 +198,6 @@ impl<T: ListsDataMethods> SetData<T> {
         self.1.bind(py).remove(&value)?;
         Ok(value)
     }
-    pub fn py_difference_update(&mut self, iterables: &Bound<'_, PyTuple>) -> PyResult<()> {
-        let py = iterables.py();
-        let set = self.1.bind(py);
-        let values = iterables
-            .iter()
-            .flat_map(|x| x.try_iter().unwrap())
-            .try_collect_bound::<PySet>(py)?;
-        if (4 * values.len()) > set.len() {
-            set.difference_update((values,))?;
-            self.0.clear(py);
-            self.0.extend(py, set.iter().map(Bound::unbind).collect())
-        } else {
-            for value in values {
-                self.discard(&value)?;
-            }
-            Ok(())
-        }
-    }
     pub fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         self.1.bind(value.py()).remove(value)?;
         self.0.remove(value)
@@ -242,7 +220,7 @@ impl<T: ListsDataMethods> SetData<T> {
 pub enum IntoUpdate<'py> {
     Set(Bound<'py, PySet>),
     Tuple(Bound<'py, PyTuple>),
-    Any(Bound<'py, PyAny>),
+    Iterable(Bound<'py, PyIterator>),
 }
 impl<'py> IntoUpdate<'py> {
     #[must_use]
@@ -250,7 +228,7 @@ impl<'py> IntoUpdate<'py> {
         match self {
             Self::Set(pyset) => pyset.py(),
             Self::Tuple(tup) => tup.py(),
-            Self::Any(any) => any.py(),
+            Self::Iterable(any) => any.py(),
         }
     }
     pub fn into_set(self) -> PyResult<Bound<'py, PySet>> {
@@ -261,16 +239,22 @@ impl<'py> IntoUpdate<'py> {
                 .flat_map(|x| x.try_iter().unwrap())
                 .try_collect_bound(py),
             Self::Set(pyset) => Ok(pyset),
-            Self::Any(any) => any.try_iter()?.try_collect_bound(py),
+            Self::Iterable(any) => any.try_collect_bound(py),
         }
     }
 }
-impl<'py> From<Bound<'py, PyAny>> for IntoUpdate<'py> {
-    fn from(other: Bound<'py, PyAny>) -> Self {
+impl<'py> TryFrom<Bound<'py, PyAny>> for IntoUpdate<'py> {
+    type Error = PyErr;
+    fn try_from(other: Bound<'py, PyAny>) -> PyResult<Self> {
         if other.is_exact_instance_of::<PySet>() {
-            Self::Set(unsafe { other.cast_into_unchecked() })
+            Self::Set(unsafe { other.cast_into_unchecked() }).pipe(Ok)
         } else {
-            Self::Any(other)
+            other.try_iter().map(Self::Iterable)
         }
+    }
+}
+impl<'py> From<Bound<'py, PyTuple>> for IntoUpdate<'py> {
+    fn from(other: Bound<'py, PyTuple>) -> Self {
+        Self::Tuple(other)
     }
 }

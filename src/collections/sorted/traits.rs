@@ -15,8 +15,8 @@ use pyo3_ext::prelude::*;
 use pyo3_ext::types::{FromCmp, PyCmpOut};
 use pyochain_macros::{py_abc, try_cast};
 use sorted_rs::{
-    Bounds, DictData, InnerGetter, IntoUpdate, KeysListsData, ListDataGetters, ListDataOwner,
-    ListsData, ListsDataMethods, PyRepr, SetData, iter as rsiter,
+    Bounds, DictData, InnerGetter, KeysListsData, ListDataGetters, ListDataOwner, ListsData,
+    ListsDataMethods, PyRepr, SetData, iter as rsiter,
     types::{DictDataRef, IntOrSlice, SeqOrAny},
     views,
 };
@@ -410,7 +410,7 @@ pub(super) trait SortedSetMethods:
             .into_bound(py)
     }
     fn __isub__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().difference_update(other.into())
+        self.try_lock().difference_update(other.try_into()?)
     }
 
     fn __and__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -429,7 +429,7 @@ pub(super) trait SortedSetMethods:
     }
 
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().update(other.into())
+        self.try_lock().update(other.try_into()?)
     }
     fn __or__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
@@ -493,7 +493,7 @@ pub(super) trait SortedSetMethods:
         slf: Bound<'py, Self>,
         iterables: Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.get().try_lock().py_difference_update(&iterables)?;
+        slf.get().try_lock().difference_update(iterables.into())?;
         Ok(slf)
     }
     #[pyo3(signature = (*iterables))]
@@ -547,7 +547,7 @@ pub(super) trait SortedSetMethods:
         slf: Bound<'py, Self>,
         iterables: Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.get().try_lock().update(IntoUpdate::Tuple(iterables))?;
+        slf.get().try_lock().update(iterables.into())?;
         Ok(slf)
     }
 }
