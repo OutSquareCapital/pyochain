@@ -16,8 +16,8 @@ use pyo3_ext::prelude::*;
 use pyo3_ext::types::PyCmpOut;
 use pyochain_macros::{py_abc, try_cast_into};
 use sorted_rs::{
-    Bounds, DictData, InnerGetter, KeysListsData, ListDataGetters, ListDataOwner, ListsData,
-    ListsDataMethods, PyRepr, SetComp, SetData, iter as rsiter,
+    Bounds, DictData, InnerGetter, KeysListsData, ListAdd, ListDataGetters, ListDataOwner,
+    ListsData, ListsDataMethods, PyRepr, SetComp, SetData, iter as rsiter,
     types::{DictDataRef, IntOrSlice, SeqOrAny},
     views,
 };
@@ -40,6 +40,9 @@ pub(super) trait ListGetter:
     #[inline(always)]
     fn try_lock(&self) -> MutexGuard<'_, Self::T> {
         self.inner().try_into_inner()
+    }
+    fn is(&self, other: &Self) -> bool {
+        Arc::ptr_eq(self.inner(), other.inner())
     }
     fn iter_bounds<'py>(
         &self,
@@ -163,23 +166,15 @@ pub(super) trait SortedListMethods:
     type L: ListsDataMethods;
     fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let data = self.try_lock();
         let out = match other.cast_exact::<Self>().map(Bound::get) {
-            Ok(slf) if Arc::ptr_eq(self.inner(), slf.inner()) => data.inner().repeat(py, 2),
-            Ok(list) => data
-                .inner()
-                .iter()
-                .chain(list.try_lock().list().inner().iter())
-                .map(|x| x.clone_ref(py))
-                .collect(),
-            Err(_) => data
-                .inner()
-                .iter()
-                .map(|x| x.clone_ref(py).pipe(Ok::<Py<PyAny>, PyErr>))
-                .chain(other.try_iter()?.map(|x| x?.unbind().pipe(Ok)))
-                .collect::<PyResult<_>>()?,
+            Ok(slf) if self.is(slf) => ListAdd::Identity,
+            Ok(list) => list.try_lock().pipe(ListAdd::Sorted),
+            Err(_) => other.try_iter().map(ListAdd::Iterator)?,
         };
-        data.as_owned_from(py, out)?.conv::<Self>().into_bound(py)
+        self.try_lock()
+            .concat(py, out)?
+            .conv::<Self>()
+            .into_bound(py)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
@@ -316,9 +311,7 @@ pub(super) trait SortedSetMethods:
         let py = value.py();
         try_cast_into! {
             match value {
-                CaseExact::Self(sorted) if Arc::ptr_eq(self.inner(), sorted.get().inner()) => {
-                    SetComp::Identity
-                }
+                CaseExact::Self(sorted) if self.is(sorted.get()) => SetComp::Identity,
                 CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => {
                     SetComp::Comparable(self.get_set(py), sorted.get().get_set(py))
                 }

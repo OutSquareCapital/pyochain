@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, sync::MutexGuard};
 
 use crate::{
     Bounds, InnerGetter, ListDataGetters, Loc,
@@ -10,9 +10,10 @@ use either::Either;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PyList, PySlice, PySliceIndices, PyString},
+    types::{PyIterator, PyList, PySlice, PySliceIndices, PyString},
 };
 use pyo3_ext::prelude::CollectBoundIterator;
+use tap::prelude::*;
 pub(super) trait NestedVec<T> {
     fn loc(&self, loc: &Loc) -> &T;
     fn loc_insert(&mut self, loc: &Loc, value: T);
@@ -44,7 +45,29 @@ impl<T> NestedVec<T> for [Vec<T>] {
 pub trait PyRepr {
     fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String>;
 }
+pub enum ListAdd<'py, T> {
+    Identity,
+    Sorted(MutexGuard<'py, T>),
+    Iterator(Bound<'py, PyIterator>),
+}
 pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
+    fn concat(&self, py: Python<'_>, other: ListAdd<'_, Self>) -> PyResult<Self> {
+        let inner = self.inner();
+        let out = match other {
+            ListAdd::Identity => inner.repeat(py, 2),
+            ListAdd::Sorted(list) => inner
+                .iter()
+                .chain(list.inner().iter())
+                .map(|x| x.clone_ref(py))
+                .collect(),
+            ListAdd::Iterator(it) => inner
+                .iter()
+                .map(|x| x.clone_ref(py).pipe(Ok::<Py<PyAny>, PyErr>))
+                .chain(it.map(|x| x?.unbind().pipe(Ok)))
+                .collect::<PyResult<_>>()?,
+        };
+        self.as_owned_from(py, out)
+    }
     fn irange_specs<'py>(
         &self,
         py: Python<'py>,
@@ -214,7 +237,7 @@ pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) 
     values.sort_by(&func);
     if list.maxes().is_empty() {
         list.finalize_update(py, &values)
-    } else if values.len() * 4 >= list.len() {
+    } else if 4 * values.len() >= list.len() {
         list.values_mut().push(values);
         values = list.inner().collapse(py);
         values.sort_by(func);
