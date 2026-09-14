@@ -173,7 +173,7 @@ pub(super) trait SortedListMethods:
                 .iter()
                 .map(|x| x.clone_ref(py).pipe(Ok::<Py<PyAny>, PyErr>))
                 .chain(other.try_iter()?.map(|x| x?.unbind().pipe(Ok)))
-                .collect::<PyResult<Vec<Py<PyAny>>>>()?,
+                .collect::<PyResult<_>>()?,
         };
         data.list()
             .as_owned_from(py, out)?
