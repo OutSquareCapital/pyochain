@@ -14,7 +14,7 @@ use pyo3_ext::{
     prelude::*,
     types::{FromCmp, PyCmpOut},
 };
-use tap::Pipe;
+use tap::prelude::*;
 
 pub struct SetData<T>(T, Py<PySet>);
 impl<T: InnerGetter> InnerGetter for SetData<T> {
@@ -253,10 +253,15 @@ impl<'py> IntoUpdate<'py> {
     pub fn into_set(self) -> PyResult<Bound<'py, PySet>> {
         let py = self.py();
         match self {
+            // TODO: Should detect if the contained value(s) are/is the same object as the set being updated
+            // Until then, we can't handle Mutex reetrancy
             Self::Tuple(tup) => tup
                 .iter()
-                .flat_map(|x| x.try_iter().unwrap())
-                .try_collect_bound(py),
+                .map(|x| x.try_conv::<IntoUpdate>()?.into_set())
+                .collect::<PyResult<Vec<_>>>()?
+                .into_iter()
+                .flatten()
+                .collect_bound(py),
             Self::Set(pyset) => Ok(pyset),
             Self::Iterable(any) => any.try_collect_bound(py),
         }

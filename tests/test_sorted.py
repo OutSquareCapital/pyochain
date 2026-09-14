@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-@pytest.mark.skip("temp")
 @pytest.mark.parametrize(
     "fn", (SortedSet[int].update, SortedSet[int].difference_update)
 )
