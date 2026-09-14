@@ -521,13 +521,6 @@ class SortedKeyDict[
     @override
     # pyrefly: ignore [bad-override]
     def __reduce__(self) -> tuple[partial[Self], tuple[Dict[K, V]]]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
-    @property
-    def key(self) -> KeyFunc[K, OT]:
-        """Function used to extract comparison key from keys.
-
-        Sorted dict compares keys directly when the key function is `None`.
-        """
-
     @override
     def copy(self) -> Self: ...
     def irange_key(

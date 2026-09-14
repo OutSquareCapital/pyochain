@@ -1,6 +1,6 @@
 use pyo3::{PyTypeInfo, prelude::*, types::PySet};
 
-use sorted_rs::{InnerGetter, KeysListsData, ListDataOwner, ListsData, ListsDataMethods, SetData};
+use sorted_rs::{InnerGetter, KeysListsData, ListDataOwner, ListsData, SetData};
 use std::sync::{Arc, Mutex};
 use tap::{Conv, Pipe};
 
@@ -88,17 +88,6 @@ impl SortedKeySet {
             inner.update(iterable.try_into()?)?;
         }
         inner.conv::<Self>().init().pipe(Ok)
-    }
-    #[getter]
-    fn get_key(&self, py: Python<'_>) -> Py<PyAny> {
-        self.try_lock().list().2.clone_ref(py)
-    }
-    fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_left(key)
-    }
-
-    fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_right(key)
     }
 }
 impl ListGetter for SortedKeySet {

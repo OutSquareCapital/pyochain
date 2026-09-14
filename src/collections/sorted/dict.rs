@@ -84,19 +84,6 @@ impl SortedKeyDict {
         slf.update(py, iterable, kwargs)?;
         slf.init().pipe(Ok)
     }
-
-    #[getter]
-    fn get_key(&self, py: Python<'_>) -> Py<PyAny> {
-        self.try_lock().list().2.clone_ref(py)
-    }
-
-    fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_left(key)
-    }
-
-    fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_right(key)
-    }
 }
 impl SortedDictMethods for SortedKeyDict {
     type L = KeysListsData;

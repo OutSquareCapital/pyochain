@@ -8,7 +8,6 @@ use crate::{
     },
     traits::IntoInit,
 };
-use either::Either;
 use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
@@ -37,7 +36,7 @@ macro_rules! impl_base_sorted_view {
                         }
 
                         fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                            $getitem(&mut self.mapping(), index)?.and_then_left(|x|x.try_into_py())
+                            $getitem(&mut self.mapping(), index).and_then_left(|x|x.try_into_py())
                         }
                 }
             )*

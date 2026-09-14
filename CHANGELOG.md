@@ -4,6 +4,8 @@
 
 ### 💥 Breaking changes
 
+- `SortedKeySet` and `SortedKeyDict` don't expose anymore their `key` attribute, as this is an implementation detail.
+
 #### `SortedKeyList` and `SortedList` `update` methods replaced by `extend`
 
 This is just a naming change, fixed from the original `sortedcontainers` library who incorrectly raise error at runtime when `extend` is called, suggesting to use `update` instead.

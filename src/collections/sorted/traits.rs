@@ -121,6 +121,12 @@ where
         let bounds = Bounds::from_sorted(&list.1, list.maxes(), min_key, max_key, inclusive)?;
         self.iter_bounds(py, bounds, reverse)
     }
+    fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.try_lock().list_mut().bisect_left(key)
+    }
+    fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.try_lock().list_mut().bisect_right(key)
+    }
 }
 pub(super) trait ListGetter:
     PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync

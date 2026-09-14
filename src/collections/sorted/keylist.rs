@@ -37,13 +37,6 @@ impl SortedKeyList {
         }
         slf.init().pipe(Ok)
     }
-
-    pub(super) fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().bisect_left(key)
-    }
-    pub(super) fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().bisect_right(key)
-    }
 }
 impl SortedCollectionsMethods for SortedKeyList {
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {

@@ -52,23 +52,17 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
     def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         self,
     ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]: ...
-    @property
-    def key(self) -> SetKeyFunc[T, OT]:
-        """Function used to extract comparison key from values.
-
-        Sorted set compares values directly when the key function is none.
-
-        """
-
-    def irange_key(
-        self,
-        min_key: OT | None = None,
-        max_key: OT | None = None,
+    def irange_key[T1, OT1: SupportsHashableAndRichComparison](
+        self: SortedKeySet[T1, OT1],
+        min_key: OT1 | None = None,
+        max_key: OT1 | None = None,
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> PyoIterator[T]: ...
+    ) -> PyoIterator[T1]: ...
     def bisect_key_left(self, key: OT) -> int: ...
     def bisect_key_right(self, key: OT) -> int: ...
     @override
-    def union(self, *iterables: Iterable[T]) -> Self: ...
+    def union[T1, OT1: SupportsHashableAndRichComparison](
+        self: SortedKeySet[T1, OT1], *iterables: Iterable[T1]
+    ) -> SortedKeySet[T1, OT]: ...
