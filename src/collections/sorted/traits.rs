@@ -28,6 +28,37 @@ use tap::prelude::*;
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyoVec>, Bound<'py, PyAny>>>;
 
+pub(super) trait ListGetter:
+    PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
+{
+    type T: ListDataGetters + ListDataOwner;
+    type I: PySortedIter + From<rsiter::Bounded<Self::T>>;
+    type IRev: PySortedIter + From<rsiter::BoundedRev<Self::T>>;
+    type IFull: PySortedIter + From<rsiter::Full<Self::T>>;
+    type IFullRev: PySortedIter + From<rsiter::FullRev<Self::T>>;
+    fn inner(&self) -> &Arc<Mutex<Self::T>>;
+    #[inline(always)]
+    fn try_lock(&self) -> MutexGuard<'_, Self::T> {
+        self.inner().try_into_inner()
+    }
+    fn iter_bounds<'py>(
+        &self,
+        py: Python<'py>,
+        bounds: Option<Bounds>,
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        match (bounds, reverse) {
+            (None, _) => iterators::Iter::empty(py).map(Bound::into_super),
+            (Some(bounds), true) => rsiter::BoundedRev::new(self.inner().clone(), bounds)
+                .conv::<Self::IRev>()
+                .into_pyiterator(py),
+            (Some(bounds), false) => rsiter::Bounded::new(self.inner().clone(), bounds)
+                .conv::<Self::I>()
+                .into_pyiterator(py),
+        }
+    }
+}
+
 #[py_abc(
     sorted::SortedList,
     sorted::SortedKeyList,
@@ -36,8 +67,9 @@ pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyoVec>, Bound<'py, P
     sorted::SortedDict,
     sorted::SortedKeyDict
 )]
-pub(super) trait SortedCollectionsMethods:
-    ListGetter + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
+pub(super) trait SortedCollectionsMethods: ListGetter
+where
+    Self::T: ListDataOwner,
 {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py>;
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
@@ -103,7 +135,7 @@ pub(super) trait SortedCollectionsMethods:
 }
 
 #[py_abc(sorted::SortedKeyList, sorted::SortedKeySet, sorted::SortedKeyDict)]
-pub(super) trait KeyedSortedCollection: SortedCollectionsMethods + ListGetter
+pub(super) trait KeyedSortedCollection: SortedCollectionsMethods
 where
     Self::T: ListDataOwner<List = KeysListsData>,
 {
@@ -128,40 +160,10 @@ where
         self.try_lock().list_mut().bisect_right(key)
     }
 }
-pub(super) trait ListGetter:
-    PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
-{
-    type T: ListDataGetters + ListDataOwner;
-    type I: PySortedIter + From<rsiter::Bounded<Self::T>>;
-    type IRev: PySortedIter + From<rsiter::BoundedRev<Self::T>>;
-    type IFull: PySortedIter + From<rsiter::Full<Self::T>>;
-    type IFullRev: PySortedIter + From<rsiter::FullRev<Self::T>>;
-    fn inner(&self) -> &Arc<Mutex<Self::T>>;
-    #[inline(always)]
-    fn try_lock(&self) -> MutexGuard<'_, Self::T> {
-        self.inner().try_into_inner()
-    }
-    fn iter_bounds<'py>(
-        &self,
-        py: Python<'py>,
-        bounds: Option<Bounds>,
-        reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        match (bounds, reverse) {
-            (None, _) => iterators::Iter::empty(py).map(Bound::into_super),
-            (Some(bounds), true) => rsiter::BoundedRev::new(self.inner().clone(), bounds)
-                .conv::<Self::IRev>()
-                .into_pyiterator(py),
-            (Some(bounds), false) => rsiter::Bounded::new(self.inner().clone(), bounds)
-                .conv::<Self::I>()
-                .into_pyiterator(py),
-        }
-    }
-}
 
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
 pub(super) trait SortedListMethods:
-    ListGetter + IntoInit + From<<Self::T as ListDataOwner>::List>
+    SortedCollectionsMethods + IntoInit + From<<Self::T as ListDataOwner>::List>
 {
     fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
@@ -306,7 +308,11 @@ pub(super) trait SortedListMethods:
 }
 #[py_abc(sorted::SortedSet, sorted::SortedKeySet)]
 pub(super) trait SortedSetMethods:
-    ListGetter<T = SetData<Self::L>> + IntoInit + From<SetData<Self::L>> + PyTypeInfo
+    SortedCollectionsMethods
+    + ListGetter<T = SetData<Self::L>>
+    + IntoInit
+    + From<SetData<Self::L>>
+    + PyTypeInfo
 {
     type L: ListsDataMethods;
     #[getter]
