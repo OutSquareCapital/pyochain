@@ -20,5 +20,5 @@ pub use getters::{InnerGetter, ListDataGetters, ListDataOwner};
 pub use inner::InnerData;
 pub use keylist::KeysListsData;
 pub use list::ListsData;
-pub use set::{IntoUpdate, SetData};
+pub use set::{IntoUpdate, SetComp, SetData};
 pub use traits::{ListsDataMethods, PyRepr};

@@ -1,13 +1,14 @@
 //! Traits extending the functionality of various pre-existing Pyo3 types
 use pyo3::{
     PyTypeInfo,
+    basic::CompareOp,
     call::PyCallArgs,
     exceptions::PyTypeError,
     ffi, intern,
     prelude::*,
     types::{
-        PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator,
-        PyList, PyMapping, PyRange, PySet, PyTuple,
+        DerefToPyAny, PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt,
+        PyIterator, PyList, PyMapping, PyRange, PySet, PyTuple,
     },
 };
 
@@ -361,3 +362,51 @@ impl<'py> PyMappingExtMethods<'py> for Bound<'py, PyMapping> {
             .map_err(|_| PyTypeError::new_err("expected a mapping view for values"))
     }
 }
+
+pub trait CompareOpExtMethods<T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> {
+    fn as_default(&self) -> bool;
+    fn apply(self, a: &Bound<'_, T>, b: &Bound<'_, U>) -> PyResult<bool>;
+}
+impl<T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> CompareOpExtMethods<T, U>
+    for CompareOp
+{
+    #[inline]
+    fn as_default(&self) -> bool {
+        match self {
+            Self::Eq | Self::Le | Self::Ge => true,
+            Self::Ne | Self::Lt | Self::Gt => false,
+        }
+    }
+    #[inline(always)]
+    fn apply(self, a: &Bound<'_, T>, b: &Bound<'_, U>) -> PyResult<bool> {
+        match self {
+            Self::Eq => OpEq::apply(a, b),
+            Self::Ne => OpNe::apply(a, b),
+            Self::Lt => OpLt::apply(a, b),
+            Self::Le => OpLe::apply(a, b),
+            Self::Gt => OpGt::apply(a, b),
+            Self::Ge => OpGe::apply(a, b),
+        }
+    }
+}
+pub trait SetOp<T: DerefToPyAny, U: DerefToPyAny> {
+    fn apply(a: &Bound<'_, T>, b: &Bound<'_, U>) -> PyResult<bool>;
+}
+
+macro_rules! impl_set_op {
+    ($op:ident, $method:ident) => {
+        pub struct $op;
+        impl<T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> SetOp<T, U> for $op {
+            #[inline(always)]
+            fn apply(a: &Bound<'_, T>, b: &Bound<'_, U>) -> PyResult<bool> {
+                a.$method(b)
+            }
+        }
+    };
+}
+impl_set_op!(OpEq, eq);
+impl_set_op!(OpNe, ne);
+impl_set_op!(OpLt, lt);
+impl_set_op!(OpLe, le);
+impl_set_op!(OpGt, gt);
+impl_set_op!(OpGe, ge);

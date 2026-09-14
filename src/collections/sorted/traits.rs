@@ -6,20 +6,22 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    PyClass,
+    PyClass, PyTypeInfo,
     exceptions::PyNotImplementedError,
     prelude::*,
-    types::{PyBool, PyDict, PyMapping, PyNotImplemented, PySet, PyString, PyTuple, PyType},
+    pyclass::CompareOp,
+    types::{PyBool, PyDict, PyMapping, PySet, PyString, PyTuple, PyType},
 };
 use pyo3_ext::prelude::*;
-use pyo3_ext::types::{FromCmp, PyCmpOut};
-use pyochain_macros::{py_abc, try_cast};
+use pyo3_ext::types::PyCmpOut;
+use pyochain_macros::{py_abc, try_cast_into};
 use sorted_rs::{
     Bounds, DictData, InnerGetter, KeysListsData, ListDataGetters, ListDataOwner, ListsData,
-    ListsDataMethods, PyRepr, SetData, iter as rsiter,
+    ListsDataMethods, PyRepr, SetComp, SetData, iter as rsiter,
     types::{DictDataRef, IntOrSlice, SeqOrAny},
     views,
 };
+
 use std::sync::{Arc, Mutex, MutexGuard};
 use std_tools::prelude::MutexExtMethods;
 use tap::prelude::*;
@@ -298,13 +300,31 @@ pub(super) trait SortedListMethods:
 }
 #[py_abc(sorted::SortedSet, sorted::SortedKeySet)]
 pub(super) trait SortedSetMethods:
-    ListGetter<T = SetData<Self::L>> + IntoInit + From<SetData<Self::L>>
+    ListGetter<T = SetData<Self::L>> + IntoInit + From<SetData<Self::L>> + PyTypeInfo
 {
     type L: ListsDataMethods;
     #[getter]
     #[inline(always)]
     fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
         self.try_lock().get_set(py)
+    }
+    #[skip]
+    #[inline]
+    fn comp<'py>(&self, value: Bound<'py, PyAny>, op: CompareOp) -> PyCmpOut<bool, 'py> {
+        let py = value.py();
+        try_cast_into! {
+            match value {
+                CaseExact::Self(sorted) if Arc::ptr_eq(self.inner(), sorted.get().inner()) => {
+                    SetComp::Identity
+                }
+                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => {
+                    SetComp::Comparable(self.get_set(py), sorted.get().get_set(py))
+                }
+                Case::PySet(pyset) => SetComp::Comparable(self.get_set(py), pyset),
+                _ => SetComp::NotImplemented(py),
+            }
+        }
+        .comp(op)
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
 
@@ -318,82 +338,28 @@ pub(super) trait SortedSetMethods:
         self.try_lock().del_item_or_slice(index)
     }
 
-    fn __eq__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        try_cast! {
-            match other {
-                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set(py)
-                    .eq(sorted.get().get_set(py))
-                    .map(Either::Left),
-                Case::PySet(pyset) => self.get_set(py).eq(pyset).map(Either::Left),
-                _ => PyNotImplemented::from_cmp(py),
-            }
-        }
+    fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
+        self.comp(other, CompareOp::Eq)
     }
 
-    fn __ne__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        try_cast! {
-            match other {
-                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set(py)
-                    .ne(sorted.get().get_set(py))
-                    .map(Either::Left),
-                Case::PySet(pyset) => self.get_set(py).ne(pyset).map(Either::Left),
-                _ => PyNotImplemented::from_cmp(py),
-            }
-        }
+    fn __ne__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
+        self.comp(other, CompareOp::Ne)
     }
 
-    fn __lt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        try_cast! {
-            match other {
-                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set(py)
-                    .lt(sorted.get().get_set(py))
-                    .map(Either::Left),
-                Case::PySet(pyset) => self.get_set(py).lt(pyset).map(Either::Left),
-                _ => PyNotImplemented::from_cmp(py),
-            }
-        }
+    fn __lt__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
+        self.comp(other, CompareOp::Lt)
     }
 
-    fn __gt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        try_cast! {
-            match other {
-                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set(py)
-                    .gt(sorted.get().get_set(py))
-                    .map(Either::Left),
-                Case::PySet(pyset) => self.get_set(py).gt(pyset).map(Either::Left),
-                _ => PyNotImplemented::from_cmp(py),
-            }
-        }
+    fn __gt__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
+        self.comp(other, CompareOp::Gt)
     }
 
-    fn __le__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        try_cast! {
-            match other {
-                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set(py)
-                    .le(sorted.get().get_set(py))
-                    .map(Either::Left),
-                Case::PySet(pyset) => self.get_set(py).le(pyset).map(Either::Left),
-                _ => PyNotImplemented::from_cmp(py),
-            }
-        }
+    fn __le__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
+        self.comp(other, CompareOp::Le)
     }
 
-    fn __ge__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        try_cast! {
-            match other {
-                CaseExact::sorted::SortedSet(sorted) | CaseExact::sorted::SortedKeySet(sorted) => self
-                    .get_set(py)
-                    .ge(sorted.get().get_set(py))
-                    .map(Either::Left),
-                Case::PySet(pyset) => self.get_set(py).ge(pyset).map(Either::Left),
-                _ => PyNotImplemented::from_cmp(py),
-            }
-        }
+    fn __ge__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
+        self.comp(other, CompareOp::Ge)
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {

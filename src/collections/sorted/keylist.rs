@@ -39,10 +39,10 @@ impl SortedKeyList {
     }
 
     pub(super) fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_left(key)
+        self.try_lock().bisect_left(key)
     }
     pub(super) fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_right(key)
+        self.try_lock().bisect_right(key)
     }
 }
 impl SortedCollectionsMethods for SortedKeyList {

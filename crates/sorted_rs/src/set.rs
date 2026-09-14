@@ -5,11 +5,15 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
+    PyTypeInfo,
     call::PyCallArgs,
     prelude::*,
-    types::{PyBool, PyIterator, PyList, PySet, PyTuple},
+    types::{DerefToPyAny, PyBool, PyIterator, PyList, PyNotImplemented, PySet, PyTuple},
 };
-use pyo3_ext::prelude::*;
+use pyo3_ext::{
+    prelude::*,
+    types::{FromCmp, PyCmpOut},
+};
 use tap::Pipe;
 
 pub struct SetData<T>(T, Py<PySet>);
@@ -216,7 +220,22 @@ impl<T: ListsDataMethods> SetData<T> {
         self.0.extend(py, set.iter().map(Bound::unbind).collect())
     }
 }
-
+pub enum SetComp<'py, T, U> {
+    /// If both operands are the same object, return true for equality and false for inequality.
+    Identity,
+    Comparable(Bound<'py, T>, Bound<'py, U>),
+    NotImplemented(Python<'py>),
+}
+impl<'py, T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> SetComp<'py, T, U> {
+    #[inline]
+    pub fn comp(self, op: impl CompareOpExtMethods<T, U>) -> PyCmpOut<'py, bool> {
+        match self {
+            Self::Identity => op.as_default().pipe(Either::Left).pipe(Ok),
+            Self::NotImplemented(py) => PyNotImplemented::from_cmp(py),
+            Self::Comparable(a, b) => op.apply(&a, &b).map(Either::Left),
+        }
+    }
+}
 pub enum IntoUpdate<'py> {
     Set(Bound<'py, PySet>),
     Tuple(Bound<'py, PyTuple>),
