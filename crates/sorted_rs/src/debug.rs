@@ -1,6 +1,8 @@
-use crate::{InnerGetter, KeysListsData, ListDataGetters, inner::InnerData};
+use crate::{
+    DictData, InnerGetter, KeysListsData, ListDataGetters, ListDataOwner, ListsDataMethods,
+    SetData, inner::InnerData,
+};
 use pyo3::prelude::*;
-#[macro_export]
 macro_rules! pyassert {
     ($cond:expr) => {
         if !$cond {
@@ -8,8 +10,37 @@ macro_rules! pyassert {
         }
     };
 }
+pub fn check_empty(slf: &InnerData) -> PyResult<()> {
+    pyassert!(slf.len == 0);
+    pyassert!(slf.maxes.is_empty());
+    pyassert!(slf.lists.is_empty());
+    Ok(())
+}
+pub fn check_dict<T: ListsDataMethods>(data: &DictData<T>, py: Python<'_>) -> PyResult<()> {
+    check_list(py, data.list().inner())?;
+    let dict = data.get_dict().bind(py);
+    pyassert!(dict.len() == data.len());
+    pyassert!(data.list().inner().iter().all(|item| {
+        dict.contains(item.bind(py))
+            .expect("Failed to check dict membership")
+    }));
+    Ok(())
+}
 
-pub(super) fn check_list(slf: &InnerData, py: Python<'_>) -> PyResult<()> {
+pub fn check_set_len<T: ListsDataMethods>(checked: &SetData<T>, py: Python<'_>) -> PyResult<()> {
+    let set = checked.get_set(py);
+    pyassert!(set.len() == checked.len());
+    check_list(py, checked.list().inner())?;
+    pyassert!(
+        checked
+            .list()
+            .inner()
+            .iter()
+            .all(|x| set.contains(x).expect("Failed to check set membership"))
+    );
+    Ok(())
+}
+pub fn check_list(py: Python<'_>, slf: &InnerData) -> PyResult<()> {
     pyassert!(slf.load >= 4);
     pyassert!(slf.maxes.len() == slf.lists.len());
     pyassert!(slf.len == slf.lists.iter().map(Vec::len).sum::<usize>());

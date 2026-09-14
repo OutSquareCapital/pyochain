@@ -1,9 +1,7 @@
 use std::cmp::Ordering;
 
 use crate::{
-    Bounds, Loc,
-    debug::check_list,
-    errors, pyassert,
+    Bounds, Loc, errors,
     traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
@@ -63,9 +61,6 @@ impl InnerData {
     pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         self.iter().collect_bound::<PyList>(py)
     }
-    pub fn check(&self, py: Python<'_>) -> PyResult<()> {
-        check_list(self, py)
-    }
     pub fn loc(&mut self, loc: &Loc) -> usize {
         if loc.pos == 0 {
             loc.idx
@@ -95,13 +90,6 @@ impl InnerData {
 
             total + loc.idx
         }
-    }
-
-    pub fn check_empty(&self) -> PyResult<()> {
-        pyassert!(self.len == 0);
-        pyassert!(self.maxes.is_empty());
-        pyassert!(self.lists.is_empty());
-        Ok(())
     }
     #[inline]
     #[must_use]
