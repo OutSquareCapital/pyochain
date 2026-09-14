@@ -9,13 +9,21 @@ use crate::{
     errors, impl_inner_getter,
     inner::InnerData,
     ops,
-    traits::{ListsDataMethods, NestedVec, update_list_by},
+    traits::{ListsDataMethods, NestedVec, PyRepr, update_list_by},
     types::VecPy,
 };
 
 #[derive(Default)]
 pub struct ListsData(InnerData);
 impl_inner_getter!(ListsData);
+impl PyRepr for ListsData {
+    fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String> {
+        self.inner()
+            .as_pylist(name.py())?
+            .repr()
+            .map(|repr| format!("{name}({repr})"))
+    }
+}
 impl ListsDataMethods for ListsData {
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::default();
@@ -192,12 +200,6 @@ impl ListsDataMethods for ListsData {
                 }
             }
         }
-    }
-    fn repr(&self, py: Python<'_>, name: Bound<'_, PyString>) -> PyResult<String> {
-        self.inner()
-            .as_pylist(py)?
-            .repr()
-            .map(|repr| format!("{name}({repr})"))
     }
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
         self.inner_mut().extend_lists(py, values);

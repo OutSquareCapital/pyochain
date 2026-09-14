@@ -9,15 +9,17 @@ use pyo3::{
     PyClass,
     exceptions::PyNotImplementedError,
     prelude::*,
-    types::{PyBool, PyDict, PyMapping, PyNotImplemented, PySet, PySlice, PyTuple, PyType},
+    types::{
+        PyBool, PyDict, PyMapping, PyNotImplemented, PySet, PySlice, PyString, PyTuple, PyType,
+    },
 };
 use pyo3_ext::prelude::*;
 use pyo3_ext::types::{FromCmp, PyCmpOut};
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
 use sorted_rs::{
     Bounds, DictData, InnerGetter, IntoUpdate, KeysListsData, ListDataGetters, ListDataOwner,
-    ListsData, ListsDataMethods, SetData, iter as rsiter,
-    types::{IntOrSlice, SeqOrAny},
+    ListsData, ListsDataMethods, PyRepr, SetData, iter as rsiter,
+    types::{DictDataRef, IntOrSlice, SeqOrAny},
 };
 use std::sync::{Arc, Mutex, MutexGuard};
 use std_tools::prelude::MutexExtMethods;
@@ -150,10 +152,6 @@ pub(super) trait ListGetter:
     }
 }
 
-impl KeyedSortedCollection for sorted::SortedKeyList {}
-impl KeyedSortedCollection for sorted::SortedKeySet {}
-impl KeyedSortedCollection for sorted::SortedKeyDict {}
-
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
 pub(super) trait SortedListMethods:
     ListGetter + IntoInit + From<<Self::T as ListDataOwner>::List>
@@ -228,9 +226,7 @@ pub(super) trait SortedListMethods:
         self.__add__(other)
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        self.try_lock()
-            .list()
-            .repr(py, Self::type_object(py).name()?)
+        self.try_lock().list().repr(&Self::type_object(py).name()?)
     }
     fn __rmul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
         self.__mul__(py, num)
@@ -568,22 +564,31 @@ impl<T: SortedSetMethods> SortedCollectionsMethods for T {
     sorted::SortedByKeyValuesView
 )]
 pub trait SortedViewMethods:
-    PyClass<BaseType = abc::PyoSequence> + abc::traits::MappingView + Send + Sync
+    PyClass<BaseType = abc::PyoSequence> + From<DictDataRef<Self::M>>
 where
-    Self::M: SortedDictMethods + PyClass,
+    DictData<Self::M>: PyRepr,
 {
+    type M: ListsDataMethods;
+    const REF_NAME: &'static str;
     #[skip]
-    fn new(mapping: Bound<'_, Self::M>) -> Self;
+    fn mapping(&self) -> MutexGuard<'_, DictData<Self::M>>;
     fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self.mapping().__len__(py)
+    }
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
+        let values = self.mapping().repr(&PyString::new(py, Self::REF_NAME))?;
+        Ok(format!("{name}({values})"))
+    }
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
         let py = index.py();
-        let mapping = self.mapping().get();
-        let dict = mapping.get_dict(py);
+        let mut data = self.mapping();
+        let dict = data.get_dict().clone_ref(py).into_bound(py);
         try_cast_into! {
             match index {
                 Case::PySlice(slice) => {
-                    let mut data = mapping.try_lock();
-                    let keys = data.list_mut().inner_mut().get_slice(py, &slice)?;
+                    let keys = data.list_mut().inner_mut().get_slice(&slice)?;
                     data.list_mut().del_slice(py, slice)?;
                     for key in keys {
                         dict.del_item(key)?;
@@ -591,7 +596,7 @@ where
                     Ok(())
                 },
                 int => {
-                    let key = mapping.try_lock().list_mut().pop(py, int.extract::<isize>()?)?;
+                    let key = data.list_mut().pop(py, int.extract::<isize>()?)?;
                     dict.del_item(key)?;
                     Ok(())
                 }
@@ -603,27 +608,30 @@ where
 #[py_abc(sorted::SortedDict, sorted::SortedKeyDict)]
 pub(super) trait SortedDictMethods:
     SortedCollectionsMethods + ListGetter<T = DictData<Self::L>> + IntoInit + From<DictData<Self::L>>
+where
+    DictData<Self::L>: PyRepr,
 {
     type L: ListsDataMethods;
-    type KView: SortedViewMethods<M = Self>;
-    type VView: SortedViewMethods<M = Self>;
-    type IView: SortedViewMethods<M = Self>;
+    type KView: SortedViewMethods<M = Self::L>;
+    type VView: SortedViewMethods<M = Self::L>;
+    type IView: SortedViewMethods<M = Self::L>;
+    // @recursive_repr()
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
+        self.try_lock().repr(&name)
+    }
     #[getter]
     fn get_dict<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
         self.try_lock().get_dict().clone_ref(py).into_bound(py)
     }
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
-    fn keys(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::KView>> {
-        let py = slf.py();
-        Self::KView::new(slf).into_bound(py)
+    fn keys<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::KView>> {
+        self.inner().clone().conv::<Self::KView>().into_bound(py)
     }
-    fn items(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::IView>> {
-        let py = slf.py();
-        Self::IView::new(slf).into_bound(py)
+    fn items<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::IView>> {
+        self.inner().clone().conv::<Self::IView>().into_bound(py)
     }
-    fn values(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::VView>> {
-        let py = slf.py();
-        Self::VView::new(slf).into_bound(py)
+    fn values<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::VView>> {
+        self.inner().clone().conv::<Self::VView>().into_bound(py)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.try_lock().copy(py)?.conv::<Self>().into_bound(py)

@@ -8,7 +8,7 @@ use crate::{
     impl_inner_getter,
     inner::InnerData,
     ops,
-    traits::{ListsDataMethods, NestedVec, update_list_by},
+    traits::{ListsDataMethods, NestedVec, PyRepr, update_list_by},
     types::VecPy,
 };
 use pyo3::{prelude::*, types::PyString};
@@ -25,6 +25,16 @@ impl KeysListsData {
     }
 }
 impl_inner_getter!(KeysListsData);
+impl PyRepr for KeysListsData {
+    fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String> {
+        let py = name.py();
+        let key_repr = self.2.bind(py).repr()?;
+        self.inner()
+            .as_pylist(py)?
+            .repr()
+            .map(|repr| format!("{name}({repr}, key={key_repr})"))
+    }
+}
 impl ListsDataMethods for KeysListsData {
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::new(self.2.clone_ref(py));
@@ -271,13 +281,6 @@ impl ListsDataMethods for KeysListsData {
         self.set_len(values.len());
         self.idx_mut().clear();
         Ok(())
-    }
-    fn repr(&self, py: Python<'_>, name: Bound<'_, PyString>) -> PyResult<String> {
-        let key_repr = self.2.bind(py).repr()?;
-        self.inner()
-            .as_pylist(py)?
-            .repr()
-            .map(|repr| format!("{name}({repr}, key={key_repr})"))
     }
     fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);

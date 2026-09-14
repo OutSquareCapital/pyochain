@@ -20,4 +20,4 @@ pub use inner::InnerData;
 pub use keylist::KeysListsData;
 pub use list::ListsData;
 pub use set::{IntoUpdate, SetData};
-pub use traits::ListsDataMethods;
+pub use traits::{ListsDataMethods, PyRepr};

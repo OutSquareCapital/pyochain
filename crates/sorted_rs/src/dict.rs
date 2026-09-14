@@ -1,13 +1,15 @@
 use pyo3::exceptions::PyKeyError;
 use pyo3::ffi;
-use pyo3::types::PyDict;
+use pyo3::types::{PyDict, PyString};
 use pyo3::{prelude::*, types::PyMapping};
 use pyo3_ext::prelude::*;
 use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::Pipe;
 
-use crate::{InnerData, InnerGetter, ListDataOwner, ListsData, ListsDataMethods};
+use crate::{
+    InnerData, InnerGetter, KeysListsData, ListDataOwner, ListsData, ListsDataMethods, PyRepr,
+};
 pub struct DictData<T: ListsDataMethods>(T, pub Py<PyDict>);
 
 impl<T: ListsDataMethods> InnerGetter for DictData<T> {
@@ -18,7 +20,6 @@ impl<T: ListsDataMethods> InnerGetter for DictData<T> {
         self.0.inner_mut()
     }
 }
-
 impl<T: ListsDataMethods> ListDataOwner for DictData<T> {
     type List = T;
 
@@ -28,6 +29,20 @@ impl<T: ListsDataMethods> ListDataOwner for DictData<T> {
 
     fn list_mut(&mut self) -> &mut Self::List {
         &mut self.0
+    }
+}
+impl PyRepr for DictData<ListsData> {
+    fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String> {
+        let items = self.values_to_str(name.py())?;
+        Ok(format!("{name}({{{items}}})"))
+    }
+}
+impl PyRepr for DictData<KeysListsData> {
+    fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String> {
+        let py = name.py();
+        let key_arg = self.list().2.bind(py).repr()?;
+        let items = self.values_to_str(py)?;
+        Ok(format!("{name}({key_arg}, {{{items}}})"))
     }
 }
 impl DictData<ListsData> {
@@ -57,6 +72,25 @@ impl<T: ListsDataMethods> DictData<T> {
     pub fn __len__(&self, py: Python<'_>) -> usize {
         self.1.bind(py).len()
     }
+    pub fn values_to_str(&self, py: Python<'_>) -> PyResult<String> {
+        let dict = self.1.bind(py).as_any();
+        self.inner()
+            .iter()
+            .map(|x| x.bind(py))
+            .map(|key| {
+                dict.get_item(key)
+                    .and_then(|value| Ok(format!("{}: {}", key.repr()?, value.repr()?)))
+            })
+            .collect::<PyResult<Vec<_>>>()
+            .map(|v| v.join(", "))
+    }
+
+    pub fn extract_index<'py>(&mut self, int: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        self.list_mut()
+            .inner_mut()
+            .get_item(int.py(), int.extract::<isize>()?)
+    }
+
     pub fn or(&mut self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
         let py = value.py();
         let dict = self.1.bind(py).as_any();

@@ -1,153 +1,99 @@
-use either::Either;
-use pyo3::{
-    prelude::*,
-    types::{PyList, PySlice, PyType},
-};
-use pyo3_ext::prelude::*;
-use pyochain_macros::try_cast_into;
-use sorted_rs::{InnerGetter, ListDataOwner};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::{
-    abc,
+    abc::PyoSequence,
     collections::{
-        SortedDict, SortedKeyDict, SortedSet,
-        sorted::traits::{ListGetter, ObjOrVec, SortedDictMethods, SortedViewMethods},
+        SortedSet,
+        sorted::traits::{ObjOrVec, SortedViewMethods},
     },
     traits::IntoInit,
 };
-#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
-pub struct SortedKeysView(Py<SortedDict>);
+use either::Either;
+use pyo3::{
+    prelude::*,
+    types::{PyList, PySlice},
+};
+use pyo3_ext::prelude::*;
+use pyochain_macros::{py_abc, try_cast, try_cast_into};
+use sorted_rs::{DictData, KeysListsData, ListDataOwner, ListsData, ListsDataMethods};
+use std_tools::prelude::*;
+type DictRef<T> = Arc<Mutex<DictData<T>>>;
 
-#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
-pub struct SortedByKeyKeysView(Py<SortedKeyDict>);
-
-#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
-pub struct SortedValuesView(Py<SortedDict>);
-
-#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
-pub struct SortedByKeyValuesView(Py<SortedKeyDict>);
-
-#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
-pub struct SortedItemsView(Py<SortedDict>);
-
-#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
-pub struct SortedByKeyItemsView(Py<SortedKeyDict>);
-
-macro_rules! impl_mapping_view_for_sorted_view {
-    ($($t:ty => $i:ty),*) => {
+macro_rules! impl_base_sorted_view {
+    ($($m:ty:$name:ty => [$($getitem:ident => $t:ident),* $(,)?] );* $(;)?) => {
         $(
-            impl abc::traits::MappingView for $t {
-                type M = $i;
-                fn mapping(&self) -> &Py<Self::M> {
-                    &self.0
+            $(
+                #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = PyoSequence, sequence)]
+                pub struct $t(DictRef<$m>);
+
+                impl From<Arc<Mutex<DictData<$m>>>> for $t {
+                fn from(mapping: Arc<Mutex<DictData<$m>>>) -> Self {
+                    Self(mapping)
+                    }
                 }
-                fn __len__(&self, py: Python<'_>) -> usize {
-                    self.mapping().get().__len__(py)
+
+                impl SortedViewMethods for $t {
+                        type M = $m;
+                        const REF_NAME: &'static str = stringify!($name);
+                        fn mapping(&self) -> MutexGuard<'_, DictData<Self::M>> {
+                            self.0.try_into_inner()
+                        }
+
+                        fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
+                            $getitem(&mut self.mapping(), index)
+                        }
                 }
-            }
+            )*
         )*
     };
 }
-macro_rules! impl_base_sorted_view_for_items {
-    ($($t:ty),*) => {
-        $(
-            impl SortedViewMethods for $t {
-                fn new(mapping: Bound<'_, Self::M>) -> Self {
-                    Self(mapping.unbind())
-                }
-                fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                    get_item_for_items_view(self, index)
-                }
-            }
-        )*
-    };
-}
-macro_rules! impl_base_sorted_view_for_values {
-    ($($t:ty),*) => {
-        $(
-            impl SortedViewMethods for $t {
-                fn new(mapping: Bound<'_, Self::M>) -> Self {
-                    Self(mapping.unbind())
-                }
-            fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                get_item_for_values_view(self, index)
-            }
-            }
-        )*
-    };
-}
-macro_rules! impl_base_sorted_view_for_keys {
-    ($($t:ty),*) => {
-        $(
-            impl SortedViewMethods for $t {
-                fn new(mapping: Bound<'_, Self::M>) -> Self {
-                    Self(mapping.unbind())
-                }
-                fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                    get_item_for_key_view(self, index)
-            }}
-        )*
-    };
-}
-impl_mapping_view_for_sorted_view!(
-    SortedItemsView => SortedDict,
-    SortedKeysView => SortedDict,
-    SortedValuesView => SortedDict,
-    SortedByKeyItemsView => SortedKeyDict,
-    SortedByKeyKeysView => SortedKeyDict,
-    SortedByKeyValuesView => SortedKeyDict
+impl_base_sorted_view!(
+    ListsData: SortedDict => [
+        get_item_for_items => SortedItemsView,
+        get_item_for_values => SortedValuesView,
+        get_item_for_keys => SortedKeysView,
+    ];
+    KeysListsData: SortedKeyDict => [
+        get_item_for_items => SortedByKeyItemsView,
+        get_item_for_values => SortedByKeyValuesView,
+        get_item_for_keys => SortedByKeyKeysView,
+    ];
 );
-impl_base_sorted_view_for_items!(SortedItemsView, SortedByKeyItemsView);
-impl_base_sorted_view_for_values!(SortedValuesView, SortedByKeyValuesView);
-impl_base_sorted_view_for_keys!(SortedKeysView, SortedByKeyKeysView);
-macro_rules! impl_from_iterable {
-    ($($t:ty),*) => {
-        $(
-        #[pymethods]
-        impl $t {
-            #[classmethod]
-            fn _from_iterable<'py>(
-                cls: Bound<'py, PyType>,
-                it: Bound<'py, PyAny>,
-            ) -> PyResult<Bound<'py, SortedSet>> {
-                SortedSet::try_from(it)?.into_bound(cls.py())
-            }
-        }
-        )*
-    };
-}
-impl_from_iterable!(
+#[py_abc(
     SortedItemsView,
     SortedKeysView,
     SortedByKeyItemsView,
     SortedByKeyKeysView
-);
+)]
+trait FromIterable {
+    #[staticmethod]
+    #[pyo3(name = "_from_iterable")]
+    fn from_iterable(it: Bound<'_, PyAny>) -> PyResult<Bound<'_, SortedSet>> {
+        let py = it.py();
+        SortedSet::try_from(it)?.into_bound(py)
+    }
+}
+
 #[inline(always)]
-fn get_item_for_items_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
-    slf: &T,
+fn get_item_for_items<'py, T: ListsDataMethods>(
+    mapping: &mut DictData<T>,
     index: Bound<'py, PyAny>,
 ) -> ObjOrVec<'py> {
     let py = index.py();
-    let mapping = slf.mapping().get();
-    let dict = mapping.get_dict(py).into_any();
-    let mut mapping_list = mapping.try_lock();
-
+    let dict = mapping.get_dict().clone_ref(py).into_bound(py).into_any();
     try_cast_into! {
         match index {
-            Case::PySlice(slice) => mapping_list
+            Case::PySlice(slice) => mapping
                 .list_mut()
                 .inner_mut()
-                .get_slice(py, &slice)?
+                .get_slice(&slice)?
                 .iter()
                 .map(|key| tuple!(key.bind(py), &dict.get_item(key)?).map(Bound::into_any))
                 .try_collect_bound::<PyList>(py)?
                 .try_into_py()
                 .map(Either::Left),
             int => {
-                let key = mapping_list
-                    .list_mut()
-                    .inner_mut()
-                    .get_item(py, int.extract::<isize>()?)?;
+                let key = mapping.extract_index(&int)?;
                 let value = dict.get_item(&key)?;
                 tuple!(key, value).map(Bound::into_any).map(Either::Right)
             }
@@ -155,60 +101,46 @@ fn get_item_for_items_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
     }
 }
 #[inline(always)]
-fn get_item_for_values_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
-    slf: &T,
+fn get_item_for_values<'py, T: ListsDataMethods>(
+    mapping: &mut DictData<T>,
     index: Bound<'py, PyAny>,
 ) -> ObjOrVec<'py> {
     let py = index.py();
-    let mapping = slf.mapping().get();
-    let dict = mapping.get_dict(py).into_any();
-    let mut mapping_list = mapping.try_lock();
-
+    let dict = mapping.get_dict().clone_ref(py).into_bound(py).into_any();
     try_cast_into! {
         match index {
-            Case::PySlice(slice) => mapping_list
+            Case::PySlice(slice) => mapping
                 .list_mut()
                 .inner_mut()
-                .get_slice(py, &slice)?
+                .get_slice(&slice)?
                 .iter()
                 .map(|key| dict.get_item(key))
                 .try_collect_bound::<PyList>(py)?
                 .try_into_py()
                 .map(Either::Left),
             int => dict
-                .get_item(
-                    mapping_list
-                        .list_mut()
-                        .inner_mut()
-                        .get_item(py, int.extract::<isize>()?)?,
-                )
+                .get_item(mapping.extract_index(&int)?)
                 .map(Either::Right),
         }
     }
 }
 #[inline(always)]
-fn get_item_for_key_view<'py, T: SortedViewMethods<M: SortedDictMethods>>(
-    slf: &T,
+fn get_item_for_keys<'py, T: ListsDataMethods>(
+    mapping: &mut DictData<T>,
     index: Bound<'py, PyAny>,
 ) -> ObjOrVec<'py> {
     let py = index.py();
-    let mut mapping_list = slf.mapping().get().try_lock();
-
-    try_cast_into! {
+    try_cast! {
         match index {
-            Case::PySlice(slice) => mapping_list
+            Case::PySlice(slice) => mapping
                 .list_mut()
                 .inner_mut()
-                .get_slice(py, &slice)?
+                .get_slice(slice)?
                 .iter()
                 .collect_bound::<PyList>(py)?
                 .try_into_py()
                 .map(Either::Left),
-            int => mapping_list
-                .list_mut()
-                .inner_mut()
-                .get_item(py, int.extract::<isize>()?)
-                .map(Either::Right),
+            int => mapping.extract_index(&int).map(Either::Right),
         }
     }
 }

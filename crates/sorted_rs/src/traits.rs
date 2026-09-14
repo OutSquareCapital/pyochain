@@ -41,7 +41,10 @@ impl<T> NestedVec<T> for [Vec<T>] {
         self[loc.pos].len()
     }
 }
-pub trait ListsDataMethods: InnerGetter + ListDataGetters {
+pub trait PyRepr {
+    fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String>;
+}
+pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
     fn irange_specs<'py>(
         &self,
         py: Python<'py>,
@@ -69,7 +72,6 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         value: &Bound<'_, PyAny>,
         func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
     ) -> PyResult<usize>;
-    fn repr(&self, py: Python<'_>, name: Bound<'_, PyString>) -> PyResult<String>;
     fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.bisect(value, Bisect::bisect_left)
     }
@@ -90,7 +92,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
         match index {
             Either::Right(slice) => self
                 .inner_mut()
-                .get_slice(py, &slice)?
+                .get_slice(&slice)?
                 .iter()
                 .collect_bound::<PyList>(py)
                 .map(Either::Left),
@@ -120,13 +122,11 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters {
                 Ok(())
             }
             (1, Ordering::Less) if length <= 8 * (stop - start) => {
-                let mut values = self
-                    .inner_mut()
-                    .get_slice(py, &PySlice::new(py, 0, start, 1))?;
+                let mut values = self.inner_mut().get_slice(&PySlice::new(py, 0, start, 1))?;
                 if stop < length {
                     let new_slice = self
                         .inner_mut()
-                        .get_slice(py, &PySlice::new(py, stop, length, 1))?;
+                        .get_slice(&PySlice::new(py, stop, length, 1))?;
                     values.extend(new_slice);
                 }
                 self.clear(py);
