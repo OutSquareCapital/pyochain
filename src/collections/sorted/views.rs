@@ -9,18 +9,15 @@ use crate::{
     traits::IntoInit,
 };
 use either::Either;
-use pyo3::{
-    prelude::*,
-    types::{PyList, PySlice},
-};
+use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
-use pyochain_macros::{py_abc, try_cast, try_cast_into};
-use sorted_rs::{DictData, KeysListsData, ListDataOwner, ListsData, ListsDataMethods};
+use pyochain_macros::py_abc;
+use sorted_rs::{DictData, KeysListsData, ListsData, views};
 use std_tools::prelude::*;
 type DictRef<T> = Arc<Mutex<DictData<T>>>;
 
 macro_rules! impl_base_sorted_view {
-    ($($m:ty:$name:ty => [$($getitem:ident => $t:ident),* $(,)?] );* $(;)?) => {
+    ($($m:ty:$name:ty => [$($getitem:path => $t:ident),* $(,)?] );* $(;)?) => {
         $(
             $(
                 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = PyoSequence, sequence)]
@@ -40,7 +37,10 @@ macro_rules! impl_base_sorted_view {
                         }
 
                         fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                            $getitem(&mut self.mapping(), index)
+                            match $getitem(&mut self.mapping(), index)? {
+                                Either::Left(x) => x.try_into_py().map(Either::Left),
+                                Either::Right(x) => Ok(Either::Right(x)),
+                            }
                         }
                 }
             )*
@@ -49,14 +49,14 @@ macro_rules! impl_base_sorted_view {
 }
 impl_base_sorted_view!(
     ListsData: SortedDict => [
-        get_item_for_items => SortedItemsView,
-        get_item_for_values => SortedValuesView,
-        get_item_for_keys => SortedKeysView,
+        views::get_item_for_items => SortedItemsView,
+        views::get_item_for_values => SortedValuesView,
+        views::get_item_for_keys => SortedKeysView,
     ];
     KeysListsData: SortedKeyDict => [
-        get_item_for_items => SortedByKeyItemsView,
-        get_item_for_values => SortedByKeyValuesView,
-        get_item_for_keys => SortedByKeyKeysView,
+        views::get_item_for_items => SortedByKeyItemsView,
+        views::get_item_for_values => SortedByKeyValuesView,
+        views::get_item_for_keys => SortedByKeyKeysView,
     ];
 );
 #[py_abc(
@@ -71,76 +71,5 @@ trait FromIterable {
     fn from_iterable(it: Bound<'_, PyAny>) -> PyResult<Bound<'_, SortedSet>> {
         let py = it.py();
         SortedSet::try_from(it)?.into_bound(py)
-    }
-}
-
-#[inline(always)]
-fn get_item_for_items<'py, T: ListsDataMethods>(
-    mapping: &mut DictData<T>,
-    index: Bound<'py, PyAny>,
-) -> ObjOrVec<'py> {
-    let py = index.py();
-    let dict = mapping.get_dict().clone_ref(py).into_bound(py).into_any();
-    try_cast_into! {
-        match index {
-            Case::PySlice(slice) => mapping
-                .list_mut()
-                .inner_mut()
-                .get_slice(&slice)?
-                .iter()
-                .map(|key| tuple!(key.bind(py), &dict.get_item(key)?).map(Bound::into_any))
-                .try_collect_bound::<PyList>(py)?
-                .try_into_py()
-                .map(Either::Left),
-            int => {
-                let key = mapping.extract_index(&int)?;
-                let value = dict.get_item(&key)?;
-                tuple!(key, value).map(Bound::into_any).map(Either::Right)
-            }
-        }
-    }
-}
-#[inline(always)]
-fn get_item_for_values<'py, T: ListsDataMethods>(
-    mapping: &mut DictData<T>,
-    index: Bound<'py, PyAny>,
-) -> ObjOrVec<'py> {
-    let py = index.py();
-    let dict = mapping.get_dict().clone_ref(py).into_bound(py).into_any();
-    try_cast_into! {
-        match index {
-            Case::PySlice(slice) => mapping
-                .list_mut()
-                .inner_mut()
-                .get_slice(&slice)?
-                .iter()
-                .map(|key| dict.get_item(key))
-                .try_collect_bound::<PyList>(py)?
-                .try_into_py()
-                .map(Either::Left),
-            int => dict
-                .get_item(mapping.extract_index(&int)?)
-                .map(Either::Right),
-        }
-    }
-}
-#[inline(always)]
-fn get_item_for_keys<'py, T: ListsDataMethods>(
-    mapping: &mut DictData<T>,
-    index: Bound<'py, PyAny>,
-) -> ObjOrVec<'py> {
-    let py = index.py();
-    try_cast! {
-        match index {
-            Case::PySlice(slice) => mapping
-                .list_mut()
-                .inner_mut()
-                .get_slice(slice)?
-                .iter()
-                .collect_bound::<PyList>(py)?
-                .try_into_py()
-                .map(Either::Left),
-            int => mapping.extract_index(&int).map(Either::Right),
-        }
     }
 }

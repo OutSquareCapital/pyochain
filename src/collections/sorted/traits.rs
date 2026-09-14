@@ -9,17 +9,16 @@ use pyo3::{
     PyClass,
     exceptions::PyNotImplementedError,
     prelude::*,
-    types::{
-        PyBool, PyDict, PyMapping, PyNotImplemented, PySet, PySlice, PyString, PyTuple, PyType,
-    },
+    types::{PyBool, PyDict, PyMapping, PyNotImplemented, PySet, PyString, PyTuple, PyType},
 };
 use pyo3_ext::prelude::*;
 use pyo3_ext::types::{FromCmp, PyCmpOut};
-use pyochain_macros::{py_abc, try_cast, try_cast_into};
+use pyochain_macros::{py_abc, try_cast};
 use sorted_rs::{
     Bounds, DictData, InnerGetter, IntoUpdate, KeysListsData, ListDataGetters, ListDataOwner,
     ListsData, ListsDataMethods, PyRepr, SetData, iter as rsiter,
     types::{DictDataRef, IntOrSlice, SeqOrAny},
+    views,
 };
 use std::sync::{Arc, Mutex, MutexGuard};
 use std_tools::prelude::MutexExtMethods;
@@ -208,12 +207,12 @@ pub(super) trait SortedListMethods:
         self.try_lock().list().inner().ge(other)
     }
 
-    fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
-        self.try_lock().list_mut().del_item_or_slice(py, index)
+    fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
+        self.try_lock().list_mut().del_item_or_slice(index)
     }
 
-    fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
-        match self.try_lock().list_mut().get_item_or_slice(py, index)? {
+    fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
+        match self.try_lock().list_mut().get_item_or_slice(index)? {
             Either::Left(list) => list.try_into_py().map(Either::Left),
             Either::Right(index) => Ok(Either::Right(index)),
         }
@@ -256,8 +255,8 @@ pub(super) trait SortedListMethods:
         let msg = "use ``sl.add(value)`` instead";
         Err(PyNotImplementedError::new_err(msg))
     }
-    fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        self.try_lock().list_mut().add(py, value)
+    fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.try_lock().list_mut().add(value)
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().list_mut().count(&value)
@@ -310,14 +309,14 @@ pub(super) trait SortedSetMethods: ListGetter<T = SetData<Self::L>> {
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
 
-    fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
-        match self.try_lock().get_item_or_slice(py, index)? {
+    fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
+        match self.try_lock().get_item_or_slice(index)? {
             Either::Left(list) => list.try_into_py().map(Either::Left),
             Either::Right(index) => Ok(Either::Right(index)),
         }
     }
-    fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
-        self.try_lock().del_item_or_slice(py, index)
+    fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
+        self.try_lock().del_item_or_slice(index)
     }
 
     fn __eq__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
@@ -443,8 +442,8 @@ pub(super) trait SortedSetMethods: ListGetter<T = SetData<Self::L>> {
     fn __ixor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
         Self::symmetric_difference_update(slf, other).map(|_| ())
     }
-    fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        self.try_lock().add(py, value)
+    fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.try_lock().add(value)
     }
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.try_lock().discard(&value)
@@ -582,26 +581,7 @@ where
         Ok(format!("{name}({values})"))
     }
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
-        let py = index.py();
-        let mut data = self.mapping();
-        let dict = data.get_dict().clone_ref(py).into_bound(py);
-        try_cast_into! {
-            match index {
-                Case::PySlice(slice) => {
-                    let keys = data.list_mut().inner_mut().get_slice(&slice)?;
-                    data.list_mut().del_slice(py, slice)?;
-                    for key in keys {
-                        dict.del_item(key)?;
-                    }
-                    Ok(())
-                },
-                int => {
-                    let key = data.list_mut().pop(py, int.extract::<isize>()?)?;
-                    dict.del_item(key)?;
-                    Ok(())
-                }
-            }
-        }
+        views::delitem(&mut self.mapping(), index)
     }
 }
 

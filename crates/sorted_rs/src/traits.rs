@@ -52,7 +52,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
     ) -> PyResult<Option<Bounds>>;
-    fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
+    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
     fn clear(&mut self, py: Python<'_>);
@@ -84,19 +84,18 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
     fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         self.as_owned_from(py, self.inner().collapse(py))
     }
-    fn get_item_or_slice<'py>(
-        &mut self,
-        py: Python<'py>,
-        index: IntOrSlice<'py>,
-    ) -> PyResult<ListOrAny<'py>> {
+    fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         match index {
             Either::Right(slice) => self
                 .inner_mut()
                 .get_slice(&slice)?
                 .iter()
-                .collect_bound::<PyList>(py)
+                .collect_bound::<PyList>(slice.py())
                 .map(Either::Left),
-            Either::Left(index) => self.inner_mut().get_item(py, index).map(Either::Right),
+            Either::Left(index) => self
+                .inner_mut()
+                .get_item(index.py(), index.extract()?)
+                .map(Either::Right),
         }
     }
     fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
@@ -104,13 +103,14 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
         self.inner_mut().set_pos(index, &mut bounds)?;
         self.delete(py, &mut bounds)
     }
-    fn del_item_or_slice(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+    fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
-            Either::Right(slice) => self.del_slice(py, slice),
-            Either::Left(index) => self.del_item(py, index),
+            Either::Right(slice) => self.del_slice(&slice),
+            Either::Left(index) => self.del_item(index.py(), index.extract()?),
         }
     }
-    fn del_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
+    fn del_slice(&mut self, slice: &Bound<'_, PySlice>) -> PyResult<()> {
+        let py = slice.py();
         let length = self.len().cast_signed();
         let mut loc = Loc::default();
         let PySliceIndices {
@@ -221,9 +221,9 @@ pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) 
         list.clear(py);
         list.finalize_update(py, &values)
     } else {
-        for val in values {
-            list.add(py, val)?;
-        }
-        Ok(())
+        values
+            .iter()
+            .map(|x| x.clone_ref(py).into_bound(py))
+            .try_for_each(|val| list.add(val))
     }
 }

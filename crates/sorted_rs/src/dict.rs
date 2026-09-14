@@ -134,7 +134,7 @@ impl<T: ListsDataMethods> DictData<T> {
         let py = key.py();
         let dict = self.1.bind(py);
         if !dict.contains(&key)? {
-            self.0.list_mut().add(py, key.clone().unbind())?;
+            self.0.list_mut().add(key.clone())?;
         }
         dict.set_item(key, value)
     }
@@ -157,7 +157,7 @@ impl<T: ListsDataMethods> DictData<T> {
             dict.as_any().get_item(&key).map(Some)
         } else {
             dict.set_item(&key, &default)?;
-            self.0.list_mut().add(py, key.unbind())?;
+            self.0.list_mut().add(key)?;
             Ok(default)
         }
     }

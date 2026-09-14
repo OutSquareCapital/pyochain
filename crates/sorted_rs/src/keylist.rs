@@ -54,12 +54,13 @@ impl ListsDataMethods for KeysListsData {
         Bounds::from_sorted(&self.1, self.maxes(), minimum, maximum, inclusive)
     }
 
-    fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        let key = self.extract_key(value.bind(py))?;
+    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let key = self.extract_key(&value)?;
+        let py = value.py();
         match ops::Maxes::right(self.maxes(), &key) {
             ops::Maxes::BisectErr(err) => return Err(err),
             ops::Maxes::Empty => {
-                self.lists_mut().push(vec![value]);
+                self.lists_mut().push(vec![value.unbind()]);
                 let v = key.unbind();
                 self.1.push(vec![v.clone_ref(py)]);
                 self.maxes_mut().push(v);
@@ -67,7 +68,7 @@ impl ListsDataMethods for KeysListsData {
             ops::Maxes::LenEQPos(mut loc) => {
                 loc.pos -= 1;
                 let v = key.unbind();
-                self.lists_mut().loc_push(&loc, value);
+                self.lists_mut().loc_push(&loc, value.unbind());
                 self.1.loc_push(&loc, v.clone_ref(py));
                 self.maxes_mut()[loc.pos] = v;
                 self.expand(py, loc.pos);
@@ -75,7 +76,7 @@ impl ListsDataMethods for KeysListsData {
             ops::Maxes::LenNEPos(mut loc) => {
                 let v = &self.1[loc.pos];
                 loc.idx = v.bisect_right(&key)?;
-                self.lists_mut().loc_insert(&loc, value);
+                self.lists_mut().loc_insert(&loc, value.unbind());
                 self.1.loc_insert(&loc, key.unbind());
                 self.expand(py, loc.pos);
             }

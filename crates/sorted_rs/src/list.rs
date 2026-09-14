@@ -40,22 +40,25 @@ impl ListsDataMethods for ListsData {
         Bounds::from_sorted(self.lists(), self.maxes(), minimum, maximum, inclusive)
     }
 
-    fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        match ops::Maxes::right(&self.0.maxes, value.bind(py)) {
+    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        match ops::Maxes::right(&self.0.maxes, &value) {
             ops::Maxes::BisectErr(err) => return Err(err),
             ops::Maxes::Empty => {
-                self.0.lists.push(vec![value.clone_ref(py)]);
-                self.0.maxes.push(value);
+                let unbounded = value.unbind();
+                self.0.lists.push(vec![unbounded.clone_ref(py)]);
+                self.0.maxes.push(unbounded);
             }
             ops::Maxes::LenEQPos(mut loc) => {
                 loc.pos -= 1;
-                self.0.lists.loc_push(&loc, value.clone_ref(py));
-                self.0.maxes[loc.pos] = value;
+                let unbounded = value.unbind();
+                self.0.lists.loc_push(&loc, unbounded.clone_ref(py));
+                self.0.maxes[loc.pos] = unbounded;
                 self.expand(py, loc.pos);
             }
             ops::Maxes::LenNEPos(loc) => {
-                let res = self.0.lists[loc.pos].bisect_right(value.bind(py))?;
-                self.0.lists[loc.pos].insert(res, value.clone_ref(py));
+                let res = self.0.lists[loc.pos].bisect_right(&value)?;
+                self.0.lists[loc.pos].insert(res, value.unbind());
                 self.expand(py, loc.pos);
             }
         }

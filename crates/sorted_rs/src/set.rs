@@ -56,10 +56,7 @@ impl<T: ListsDataMethods> SetData<T> {
             self.0
                 .extend(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
         } else {
-            values
-                .iter()
-                .map(Bound::unbind)
-                .try_for_each(|value| self.add(py, value))
+            values.iter().try_for_each(|value| self.add(value))
         }
     }
     pub fn difference<'py, O: PyCallArgs<'py>>(
@@ -110,11 +107,8 @@ impl<T: ListsDataMethods> SetData<T> {
         self.0.extend(py, set.iter().map(Bound::unbind).collect())
     }
 
-    pub fn get_item_or_slice<'py>(
-        &mut self,
-        py: Python<'py>,
-        index: IntOrSlice<'py>,
-    ) -> PyResult<ListOrAny<'py>> {
+    pub fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
+        let py = index.py();
         match index {
             Either::Right(slice) => self
                 .inner_mut()
@@ -122,15 +116,15 @@ impl<T: ListsDataMethods> SetData<T> {
                 .iter()
                 .collect_bound::<PyList>(py)
                 .map(Either::Left),
-            Either::Left(index) => self.inner_mut().get_item(py, index).map(Either::Right),
+            Either::Left(index) => self
+                .inner_mut()
+                .get_item(py, index.extract()?)
+                .map(Either::Right),
         }
     }
 
-    pub fn del_item_or_slice<'py>(
-        &mut self,
-        py: Python<'py>,
-        index: IntOrSlice<'py>,
-    ) -> PyResult<()> {
+    pub fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
+        let py = index.py();
         match index {
             Either::Right(slice) => {
                 let values = self
@@ -140,12 +134,13 @@ impl<T: ListsDataMethods> SetData<T> {
                     .iter()
                     .collect_bound::<PySet>(py)?;
                 self.1.bind(py).difference_update((values,))?;
-                self.0.del_slice(py, slice)
+                self.0.del_slice(&slice)
             }
             Either::Left(int) => {
-                let value = self.0.inner_mut().get_item(py, int)?;
+                let idx = int.extract::<isize>()?;
+                let value = self.0.inner_mut().get_item(py, idx)?;
                 self.1.bind(py).remove(&value)?;
-                self.0.del_item(py, int)
+                self.0.del_item(py, idx)
             }
         }
     }
@@ -153,11 +148,12 @@ impl<T: ListsDataMethods> SetData<T> {
     pub fn __len__(&self, py: Python<'_>) -> usize {
         self.1.bind(py).len()
     }
-    pub fn add(&mut self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
+    pub fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = value.py();
         let set = self.1.bind(py);
         if !set.contains(&value)? {
             set.add(&value)?;
-            self.0.add(py, value)?;
+            self.0.add(value)?;
         }
         Ok(())
     }
@@ -254,16 +250,16 @@ impl<'py> IntoUpdate<'py> {
             Self::Tuple(tup) => tup
                 .iter()
                 .flat_map(|x| x.try_iter().unwrap())
-                .try_collect_bound::<PySet>(py),
+                .try_collect_bound(py),
             Self::Set(pyset) => Ok(pyset),
-            Self::Any(any) => any.try_iter()?.try_collect_bound::<PySet>(py),
+            Self::Any(any) => any.try_iter()?.try_collect_bound(py),
         }
     }
 }
 impl<'py> From<Bound<'py, PyAny>> for IntoUpdate<'py> {
     fn from(other: Bound<'py, PyAny>) -> Self {
         if other.is_exact_instance_of::<PySet>() {
-            Self::Set(unsafe { other.cast_into_unchecked::<PySet>() })
+            Self::Set(unsafe { other.cast_into_unchecked() })
         } else {
             Self::Any(other)
         }

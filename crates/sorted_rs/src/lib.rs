@@ -13,6 +13,7 @@ mod ops;
 mod set;
 mod traits;
 pub mod types;
+pub mod views;
 pub use bounds::{Bounds, Loc};
 pub use dict::DictData;
 pub use getters::{InnerGetter, ListDataGetters, ListDataOwner};
