@@ -690,7 +690,7 @@ mod position {
     const LAST: &str = "last";
     const ONLY: &str = "only";
     #[inline(always)]
-    pub fn get(did_iter: bool, has_next: bool, py: Python<'_>) -> &Bound<'_, PyString> {
+    pub fn get(py: Python<'_>, did_iter: bool, has_next: bool) -> &Bound<'_, PyString> {
         match (did_iter, has_next) {
             (false, true) => intern!(py, FIRST),
             (false, false) => intern!(py, ONLY),
@@ -737,7 +737,7 @@ impl WithPosition {
             }
             None => false,
         };
-        let position = position::get(slf.did_iter, has_next, py);
+        let position = position::get(py, slf.did_iter, has_next);
         slf.did_iter = true;
 
         Ok(Some((position, current)))

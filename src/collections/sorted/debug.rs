@@ -67,10 +67,10 @@ pub fn assert_sorted_list_empty(lst: Either<Py<SortedList>, Py<SortedKeyList>>) 
     }
 }
 #[pyfunction]
-pub fn check_sorted_list(py: Python<'_>, data: &Bound<'_, SortedList>) -> PyResult<()> {
-    data.get().try_lock().inner().check(py)
+pub fn check_sorted_list(data: &Bound<'_, SortedList>) -> PyResult<()> {
+    data.get().try_lock().inner().check(data.py())
 }
 #[pyfunction]
-pub fn check_sorted_key_list(py: Python<'_>, data: &Bound<'_, SortedKeyList>) -> PyResult<()> {
-    check_key_list(py, &data.get().try_lock())
+pub fn check_sorted_key_list(data: &Bound<'_, SortedKeyList>) -> PyResult<()> {
+    check_key_list(data.py(), &data.get().try_lock())
 }

@@ -118,7 +118,7 @@ impl<T: ListsDataMethods> SetData<T> {
         match index {
             Either::Right(slice) => self
                 .inner_mut()
-                .get_slice(py, &slice)?
+                .get_slice(&slice)?
                 .iter()
                 .collect_bound::<PyList>(py)
                 .map(Either::Left),
@@ -136,7 +136,7 @@ impl<T: ListsDataMethods> SetData<T> {
                 let values = self
                     .0
                     .inner_mut()
-                    .get_slice(py, &slice)?
+                    .get_slice(&slice)?
                     .iter()
                     .collect_bound::<PySet>(py)?;
                 self.1.bind(py).difference_update((values,))?;

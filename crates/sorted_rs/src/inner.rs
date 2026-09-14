@@ -156,11 +156,8 @@ impl InnerData {
             }
         }
     }
-    pub fn get_slice<'py>(
-        &mut self,
-        py: Python<'py>,
-        slice: &Bound<'py, PySlice>,
-    ) -> PyResult<VecPy> {
+    pub fn get_slice(&mut self, slice: &Bound<'_, PySlice>) -> PyResult<VecPy> {
+        let py = slice.py();
         let PySliceIndices {
             start, stop, step, ..
         } = slice.indices(self.len.cast_signed())?;
@@ -199,7 +196,7 @@ impl InnerData {
                 }
             }
             (-1, Ordering::Greater) => {
-                let mut result = self.get_slice(py, &PySlice::new(py, stop + 1, start + 1, 1))?;
+                let mut result = self.get_slice(&PySlice::new(py, stop + 1, start + 1, 1))?;
                 result.reverse();
                 Ok(result)
             }

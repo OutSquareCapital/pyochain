@@ -319,8 +319,8 @@ impl PyoErr {
         )))
     }
 
-    fn expect_err(&self, _msg: String, py: Python<'_>) -> Py<PyAny> {
-        self.error.clone_ref(py)
+    fn expect_err(&self, msg: &Bound<'_, PyAny>) -> Py<PyAny> {
+        self.error.clone_ref(msg.py())
     }
     #[allow(clippy::unused_self)]
     fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {
