@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use pyo3::prelude::*;
+use std_tools::prelude::*;
 
 use crate::{Bounds, ListDataGetters, Loc, traits::NestedVec};
 struct ListDataIterInner<T: ListDataGetters> {
@@ -44,7 +45,7 @@ impl<T: ListDataGetters> Full<T> {
 
 impl<T: ListDataGetters> FullRev<T> {
     pub fn new(data: Arc<Mutex<T>>) -> Self {
-        let data_ref = data.lock().expect("poisoned");
+        let data_ref = data.try_into_inner();
         let loc = Loc::new(
             data_ref.values().len().saturating_sub(1),
             data_ref.values().last().map_or(0, Vec::len),
@@ -56,7 +57,7 @@ impl<T: ListDataGetters> FullRev<T> {
 
 impl<T: ListDataGetters> ListDataIteratorMethods<T> for Full<T> {
     fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let data = self.0.data.lock().expect("poisoned");
+        let data = self.0.data.try_into_inner();
         let loc = &mut self.0.loc;
         if loc.pos == data.values().len() {
             None
@@ -75,7 +76,7 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for Full<T> {
 
 impl<T: ListDataGetters> ListDataIteratorMethods<T> for FullRev<T> {
     fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let data = self.0.data.lock().expect("poisoned");
+        let data = self.0.data.try_into_inner();
         let loc = &mut self.0.loc;
         if loc.pos == 0 && loc.idx == 0 {
             None
@@ -95,7 +96,7 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for Bounded<T> {
         if self.0.bounds.min == self.0.bounds.max {
             None
         } else {
-            let data = self.0.data.lock().expect("poisoned");
+            let data = self.0.data.try_into_inner();
             let item = data.values().loc(&self.0.bounds.min).clone_ref(py);
             let loc = &mut self.0.bounds.min;
             if loc.pos + 1 < data.values().len() && loc.idx + 1 >= data.values().loc_len(loc) {
@@ -114,7 +115,7 @@ impl<T: ListDataGetters> ListDataIteratorMethods<T> for BoundedRev<T> {
         if self.0.bounds.min == self.0.bounds.max {
             None
         } else {
-            let data = self.0.data.lock().expect("poisoned");
+            let data = self.0.data.try_into_inner();
             let loc = &mut self.0.bounds.max;
 
             if loc.idx > 0 {
