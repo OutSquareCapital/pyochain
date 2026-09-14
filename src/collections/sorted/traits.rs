@@ -38,7 +38,7 @@ pub(super) trait ListGetter:
     type IFullRev: PySortedIter + From<rsiter::FullRev<Self::T>>;
     fn inner(&self) -> &Arc<Mutex<Self::T>>;
     #[inline(always)]
-    fn try_lock(&self) -> MutexGuard<'_, Self::T> {
+    fn lock(&self) -> MutexGuard<'_, Self::T> {
         self.inner().try_into_inner()
     }
     fn is(&self, other: &Self) -> bool {
@@ -95,7 +95,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<usize> {
-        self.try_lock().list_mut().index(&value, start, stop)
+        self.lock().list_mut().index(&value, start, stop)
     }
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
@@ -107,7 +107,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         let bounds = self
-            .try_lock()
+            .lock()
             .list_mut()
             .irange_specs(py, minimum, maximum, inclusive)?;
         self.iter_bounds(py, bounds, reverse)
@@ -121,14 +121,14 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         let bounds = self
-            .try_lock()
+            .lock()
             .list_mut()
             .inner_mut()
             .get_islice_specs(py, start, stop)?;
         self.iter_bounds(py, bounds, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.try_lock().list_mut().reset(py, load)
+        self.lock().list_mut().reset(py, load)
     }
 }
 
@@ -146,16 +146,16 @@ where
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let data = self.try_lock();
+        let data = self.lock();
         let list = data.list();
         let bounds = Bounds::from_sorted(&list.1, list.maxes(), min_key, max_key, inclusive)?;
         self.iter_bounds(py, bounds, reverse)
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_left(key)
+        self.lock().list_mut().bisect_left(key)
     }
     fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_right(key)
+        self.lock().list_mut().bisect_right(key)
     }
 }
 
@@ -168,59 +168,56 @@ pub(super) trait SortedListMethods:
         let py = other.py();
         let out = match other.cast_exact::<Self>().map(Bound::get) {
             Ok(slf) if self.is(slf) => ListAdd::Identity,
-            Ok(list) => list.try_lock().pipe(ListAdd::Sorted),
+            Ok(list) => list.lock().pipe(ListAdd::Sorted),
             Err(_) => other.try_iter().map(ListAdd::Iterator)?,
         };
-        self.try_lock()
-            .concat(py, out)?
-            .conv::<Self>()
-            .into_bound(py)
+        self.lock().concat(py, out)?.conv::<Self>().into_bound(py)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
     }
     fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().inner().eq(other)
+        self.lock().inner().eq(other)
     }
 
     fn __ne__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().inner().ne(other)
+        self.lock().inner().ne(other)
     }
 
     fn __lt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().inner().lt(other)
+        self.lock().inner().lt(other)
     }
 
     fn __gt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().inner().gt(other)
+        self.lock().inner().gt(other)
     }
 
     fn __le__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().inner().le(other)
+        self.lock().inner().le(other)
     }
 
     fn __ge__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.try_lock().inner().ge(other)
+        self.lock().inner().ge(other)
     }
 
     fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
-        self.try_lock().del_item_or_slice(index)
+        self.lock().del_item_or_slice(index)
     }
 
     fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
-        self.try_lock()
+        self.lock()
             .get_item_or_slice(index)
             .and_then_left(Bound::try_into_py)
     }
     fn __len__(&self) -> usize {
-        self.try_lock().len()
+        self.lock().len()
     }
 
     fn __radd__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__add__(other)
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        self.try_lock().repr(&Self::type_object(py).name()?)
+        self.lock().repr(&Self::type_object(py).name()?)
     }
     fn __rmul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
         self.__mul__(py, num)
@@ -235,16 +232,13 @@ pub(super) trait SortedListMethods:
         self.extend(&other)
     }
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        self.try_lock()
-            .repeat(py, num)?
-            .conv::<Self>()
-            .into_bound(py)
+        self.lock().repeat(py, num)?.conv::<Self>().into_bound(py)
     }
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
-        self.try_lock().imul(py, num)
+        self.lock().imul(py, num)
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.try_lock().contains(value)
+        self.lock().contains(value)
     }
     #[allow(unused_variables)]
     fn append(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
@@ -252,19 +246,19 @@ pub(super) trait SortedListMethods:
         Err(PyNotImplementedError::new_err(msg))
     }
     fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().add(value)
+        self.lock().add(value)
     }
     fn clear(&self, py: Python<'_>) {
-        self.try_lock().clear(py);
+        self.lock().clear(py);
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().count(&value)
+        self.lock().count(&value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.try_lock().copy(py)?.conv::<Self>().into_bound(py)
+        self.lock().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().discard(value)
+        self.lock().discard(value)
     }
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
@@ -272,7 +266,7 @@ pub(super) trait SortedListMethods:
             .try_iter()?
             .map(|x| x?.unbind().pipe(Ok))
             .collect::<PyResult<Vec<_>>>()?;
-        self.try_lock().extend(py, values)
+        self.lock().extend(py, values)
     }
     #[allow(unused_variables)]
     fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
@@ -281,10 +275,10 @@ pub(super) trait SortedListMethods:
     }
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        self.try_lock().pop(py, index)
+        self.lock().pop(py, index)
     }
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().remove(value)
+        self.lock().remove(value)
     }
     fn reverse(&self) -> PyResult<()> {
         let msg = "use ``sl.rev()`` instead";
@@ -303,7 +297,7 @@ pub(super) trait SortedSetMethods:
     #[getter]
     #[inline(always)]
     fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
-        self.try_lock().get_set(py)
+        self.lock().get_set(py)
     }
     #[skip]
     #[inline]
@@ -326,12 +320,12 @@ pub(super) trait SortedSetMethods:
         self.get_set(value.py()).contains(value)
     }
     fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
-        self.try_lock()
+        self.lock()
             .get_item_or_slice(index)
             .and_then_left(Bound::try_into_py)
     }
     fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
-        self.try_lock().del_item_or_slice(index)
+        self.lock().del_item_or_slice(index)
     }
 
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
@@ -359,25 +353,25 @@ pub(super) trait SortedSetMethods:
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.try_lock().__len__(py)
+        self.lock().__len__(py)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
     }
     fn __sub__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        self.try_lock()
+        self.lock()
             .difference(py, (other,))?
             .conv::<Self>()
             .into_bound(py)
     }
     fn __isub__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().difference_update(other.try_into()?)
+        self.lock().difference_update(other.try_into()?)
     }
 
     fn __and__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        self.try_lock()
+        self.lock()
             .intersection(py, (other,))?
             .conv::<Self>()
             .into_bound(py)
@@ -387,15 +381,15 @@ pub(super) trait SortedSetMethods:
     }
 
     fn __iand__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().intersection_update(other.py(), (other,))
+        self.lock().intersection_update(other.py(), (other,))
     }
 
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().update(other.try_into()?)
+        self.lock().update(other.try_into()?)
     }
     fn __or__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        self.try_lock()
+        self.lock()
             .union(py, (other,))?
             .conv::<Self>()
             .into_bound(py)
@@ -413,40 +407,40 @@ pub(super) trait SortedSetMethods:
         Self::symmetric_difference_update(slf, other).map(|_| ())
     }
     fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().add(value)
+        self.lock().add(value)
     }
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().discard(&value)
+        self.lock().discard(&value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.try_lock().copy(py)?.conv::<Self>().into_bound(py)
+        self.lock().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.try_lock().is_disjoint(other)
+        self.lock().is_disjoint(other)
     }
 
     fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.try_lock().is_subset(other)
+        self.lock().is_subset(other)
     }
 
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.try_lock().is_superset(other)
+        self.lock().is_superset(other)
     }
     fn clear(&self, py: Python<'_>) {
-        self.try_lock().clear(py);
+        self.lock().clear(py);
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.try_lock().count(value)
+        self.lock().count(value)
     }
 
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        self.try_lock().pop(py, index)
+        self.lock().pop(py, index)
     }
     #[pyo3(signature = (*iterables))]
     fn difference<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         let py = iterables.py();
-        self.try_lock()
+        self.lock()
             .difference(py, iterables)?
             .conv::<Self>()
             .into_bound(py)
@@ -457,13 +451,13 @@ pub(super) trait SortedSetMethods:
         slf: Bound<'py, Self>,
         iterables: Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.get().try_lock().difference_update(iterables.into())?;
+        slf.get().lock().difference_update(iterables.into())?;
         Ok(slf)
     }
     #[pyo3(signature = (*iterables))]
     fn intersection<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         let py = iterables.py();
-        self.try_lock()
+        self.lock()
             .intersection(py, iterables)?
             .conv::<Self>()
             .into_bound(py)
@@ -474,18 +468,16 @@ pub(super) trait SortedSetMethods:
         slf: Bound<'py, Self>,
         iterables: Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.get()
-            .try_lock()
-            .intersection_update(slf.py(), iterables)?;
+        slf.get().lock().intersection_update(slf.py(), iterables)?;
         Ok(slf)
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().remove(value)
+        self.lock().remove(value)
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        self.try_lock()
+        self.lock()
             .symmetric_difference(other)?
             .conv::<Self>()
             .into_bound(py)
@@ -494,14 +486,14 @@ pub(super) trait SortedSetMethods:
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.get().try_lock().symmetric_difference_update(other)?;
+        slf.get().lock().symmetric_difference_update(other)?;
         // NOTE: the clone here is cheap (just an incref) and necessary to return `Self`
         Ok(slf.clone())
     }
     #[pyo3(signature= (*iterables))]
     fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         let py = iterables.py();
-        self.try_lock()
+        self.lock()
             .union(py, iterables)?
             .conv::<Self>()
             .into_bound(py)
@@ -511,7 +503,7 @@ pub(super) trait SortedSetMethods:
         slf: Bound<'py, Self>,
         iterables: Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.get().try_lock().update(iterables.into())?;
+        slf.get().lock().update(iterables.into())?;
         Ok(slf)
     }
 }
@@ -521,14 +513,14 @@ impl<T: SortedSetMethods> SortedCollectionsMethods for T {
     }
 
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_left(value)
+        self.lock().list_mut().bisect_left(value)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_right(value)
+        self.lock().list_mut().bisect_right(value)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.try_lock().reset(py, load)
+        self.lock().reset(py, load)
     }
 }
 #[py_abc(
@@ -575,14 +567,14 @@ where
     // @recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
-        self.try_lock().repr(&name)
+        self.lock().repr(&name)
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.try_lock().contains(value)
+        self.lock().contains(value)
     }
     #[getter]
     fn get_dict<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
-        self.try_lock().get_dict().clone_ref(py).into_bound(py)
+        self.lock().get_dict().clone_ref(py).into_bound(py)
     }
     fn keys<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::KView>> {
         self.inner().clone().conv::<Self::KView>().into_bound(py)
@@ -594,21 +586,21 @@ where
         self.inner().clone().conv::<Self::VView>().into_bound(py)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.try_lock().copy(py)?.conv::<Self>().into_bound(py)
+        self.lock().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.try_lock().__len__(py)
+        self.lock().__len__(py)
     }
 
     fn __getitem__<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        self.try_lock().get_item(key)
+        self.lock().get_item(key)
     }
 
     fn __delitem__(&self, key: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().del_item(key)
+        self.lock().del_item(key)
     }
     fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.try_lock().set_item(key, value)
+        self.lock().set_item(key, value)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
@@ -617,20 +609,15 @@ where
         self.update(other.py(), Some(other), None)
     }
     fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
-        self.try_lock()
-            .or(value)?
-            .conv::<Self>()
-            .into_bound(value.py())
+        self.lock().or(value)?.conv::<Self>().into_bound(value.py())
     }
 
     fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
-        self.try_lock()
-            .ror(value)?
-            .conv::<Self>()
-            .into_bound(value.py())
+        let py = value.py();
+        self.lock().ror(value)?.conv::<Self>().into_bound(py)
     }
     fn clear(&self, py: Python<'_>) {
-        self.try_lock().clear(py);
+        self.lock().clear(py);
     }
     #[staticmethod]
     #[pyo3(signature = (iterable, value = None, /))]
@@ -648,7 +635,7 @@ where
         key: &Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        self.try_lock().pop(key, default)
+        self.lock().pop(key, default)
     }
 
     #[pyo3(signature = (index = -1))]
@@ -657,7 +644,7 @@ where
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        self.try_lock().popitem(py, index)
+        self.lock().popitem(py, index)
     }
     #[pyo3(signature = (index = -1))]
     fn peekitem<'py>(
@@ -665,7 +652,7 @@ where
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        self.try_lock().peekitem(py, index)
+        self.lock().peekitem(py, index)
     }
     #[pyo3(signature = (key, default = None, /))]
     fn setdefault<'py>(
@@ -673,7 +660,7 @@ where
         key: Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Option<Bound<'py, PyAny>>> {
-        self.try_lock().setdefault(key, default)
+        self.lock().setdefault(key, default)
     }
     #[pyo3(signature = (m = None, /, **kwargs))]
     fn update(
@@ -682,6 +669,6 @@ where
         m: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        self.try_lock().update(py, m, kwargs)
+        self.lock().update(py, m, kwargs)
     }
 }

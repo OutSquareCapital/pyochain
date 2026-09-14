@@ -97,11 +97,11 @@ impl SortedCollectionsMethods for SortedDict {
         Ok((Self::type_object(py), items))
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_left(value)
+        self.lock().list_mut().bisect_left(value)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().list_mut().bisect_right(value)
+        self.lock().list_mut().bisect_right(value)
     }
 }
 
@@ -110,19 +110,19 @@ impl SortedCollectionsMethods for SortedKeyDict {
         let items = self
             .get_dict(py)
             .copy()
-            .and_then(|x| tuple!(x.as_any(), self.try_lock().list().2.bind(py)))?;
+            .and_then(|x| tuple!(x.as_any(), self.lock().list().2.bind(py)))?;
         Ok((Self::type_object(py), items))
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
-        let mut data = self.try_lock();
+        let mut data = self.lock();
         let key = data.list().2.bind(py).call1((value,))?;
         data.list_mut().bisect_left(&key)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
-        let mut data = self.try_lock();
+        let mut data = self.lock();
         let key = data.list().2.bind(py).call1((value,))?;
         data.list_mut().bisect_right(&key)
     }

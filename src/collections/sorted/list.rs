@@ -41,18 +41,18 @@ impl SortedList {
 }
 impl SortedCollectionsMethods for SortedList {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        self.try_lock()
+        self.lock()
             .inner()
             .as_pylist(py)
             .and_then(|x| tuple!(x))
             .map(|tup| (Self::type_object(py), tup))
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().bisect_left(value)
+        self.lock().bisect_left(value)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().bisect_right(value)
+        self.lock().bisect_right(value)
     }
 }
 impl From<ListsData> for SortedList {

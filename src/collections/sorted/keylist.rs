@@ -43,20 +43,20 @@ impl SortedKeyList {
 }
 impl SortedCollectionsMethods for SortedKeyList {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        let data = self.try_lock();
+        let data = self.lock();
         data.inner()
             .as_pylist(py)
             .and_then(|x| tuple!(x.as_any(), data.2.bind(py)))
             .map(|tup| (Self::type_object(py), tup))
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let mut data = self.try_lock();
+        let mut data = self.lock();
         let key = data.2.bind(value.py()).call1((value,))?;
         data.bisect_left(&key)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let mut data = self.try_lock();
+        let mut data = self.lock();
         let key = data.2.bind(value.py()).call1((value,))?;
         data.bisect_right(&key)
     }

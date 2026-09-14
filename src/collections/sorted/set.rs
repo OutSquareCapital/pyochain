@@ -60,7 +60,7 @@ impl SortedSetMethods for SortedSet {
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let type_name = Self::type_object(py).name()?;
-        let self_repr = self.try_lock().inner().as_pylist(py)?.repr()?;
+        let self_repr = self.lock().inner().as_pylist(py)?.repr()?;
         Ok(format!("{type_name}({self_repr})"))
     }
 }
@@ -105,7 +105,7 @@ impl SortedSetMethods for SortedKeySet {
 
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let inner = self.try_lock();
+        let inner = self.lock();
         let key = format!(", key={}", inner.list().2.bind(py).repr()?);
         let type_name = Self::type_object(py).name()?;
         let list_repr = inner.inner().as_pylist(py)?.repr()?;

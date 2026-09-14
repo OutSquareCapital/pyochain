@@ -15,8 +15,8 @@ use tap::Pipe;
 pub fn check_sorted_dict(data: BoundedEither<'_, SortedDict, SortedKeyDict>) -> PyResult<()> {
     let py = data.py();
     data.map_either(
-        |x| debug::check_dict(&x.get().try_lock(), py),
-        |x| debug::check_dict(&x.get().try_lock(), py),
+        |x| debug::check_dict(&x.get().lock(), py),
+        |x| debug::check_dict(&x.get().lock(), py),
     )
     .into_inner()
 }
@@ -25,8 +25,8 @@ pub fn check_sorted_dict(data: BoundedEither<'_, SortedDict, SortedKeyDict>) -> 
 pub fn check_sorted_set(data: BoundedEither<'_, SortedSet, SortedKeySet>) -> PyResult<()> {
     let py = data.py();
     data.map_either(
-        |x| debug::check_set_len(&x.get().try_lock(), py),
-        |x| debug::check_set_len(&x.get().try_lock(), py),
+        |x| debug::check_set_len(&x.get().lock(), py),
+        |x| debug::check_set_len(&x.get().lock(), py),
     )
     .into_inner()
 }
@@ -34,18 +34,18 @@ pub fn check_sorted_set(data: BoundedEither<'_, SortedSet, SortedKeySet>) -> PyR
 #[pyfunction]
 pub fn assert_sorted_list_empty(lst: BoundedEither<'_, SortedList, SortedKeyList>) -> PyResult<()> {
     match lst {
-        Either::Left(x) => x.get().try_lock().inner().pipe(debug::check_empty),
-        Either::Right(x) => x.get().try_lock().inner().pipe(debug::check_empty),
+        Either::Left(x) => x.get().lock().inner().pipe(debug::check_empty),
+        Either::Right(x) => x.get().lock().inner().pipe(debug::check_empty),
     }
 }
 #[pyfunction]
 pub fn check_sorted_list(data: &Bound<'_, SortedList>) -> PyResult<()> {
     data.get()
-        .try_lock()
+        .lock()
         .inner()
         .pipe(|x| debug::check_list(data.py(), x))
 }
 #[pyfunction]
 pub fn check_sorted_key_list(data: &Bound<'_, SortedKeyList>) -> PyResult<()> {
-    debug::check_key_list(data.py(), &data.get().try_lock())
+    debug::check_key_list(data.py(), &data.get().lock())
 }
