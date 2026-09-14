@@ -39,9 +39,6 @@ impl SortedKeyList {
     }
 }
 impl SortedCollectionsMethods for SortedKeyList {
-    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.try_lock().contains(value)
-    }
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         let data = self.try_lock();
         data.inner()
@@ -59,9 +56,6 @@ impl SortedCollectionsMethods for SortedKeyList {
         let mut data = self.try_lock();
         let key = data.list_mut().2.bind(value.py()).call1((value,))?;
         data.list_mut().bisect_right(&key)
-    }
-    fn clear(&self, py: Python<'_>) {
-        self.try_lock().clear(py);
     }
 }
 impl From<KeysListsData> for SortedKeyList {

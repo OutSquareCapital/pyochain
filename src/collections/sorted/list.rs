@@ -37,10 +37,6 @@ impl SortedList {
     }
 }
 impl SortedCollectionsMethods for SortedList {
-    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.try_lock().contains(value)
-    }
-
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         self.try_lock()
             .inner()
@@ -54,9 +50,6 @@ impl SortedCollectionsMethods for SortedList {
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().bisect_right(value)
-    }
-    fn clear(&self, py: Python<'_>) {
-        self.try_lock().clear(py);
     }
 }
 impl From<ListsData> for SortedList {

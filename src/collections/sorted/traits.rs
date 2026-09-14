@@ -72,10 +72,8 @@ where
     Self::T: ListDataOwner,
 {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py>;
-    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn clear(&self, py: Python<'_>);
     fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
         self.inner()
             .clone()
@@ -259,7 +257,9 @@ pub(super) trait SortedListMethods:
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
         self.try_lock().list_mut().imul(py, num)
     }
-
+    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+        self.try_lock().list().contains(value)
+    }
     #[allow(unused_variables)]
     fn append(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let msg = "use ``sl.add(value)`` instead";
@@ -267,6 +267,9 @@ pub(super) trait SortedListMethods:
     }
     fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.try_lock().list_mut().add(value)
+    }
+    fn clear(&self, py: Python<'_>) {
+        self.try_lock().list_mut().clear(py);
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         self.try_lock().list_mut().count(&value)
@@ -339,7 +342,9 @@ pub(super) trait SortedSetMethods:
         .comp(op)
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
-
+    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+        self.get_set(value.py()).contains(value)
+    }
     fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
         self.try_lock()
             .get_item_or_slice(index)
@@ -447,7 +452,9 @@ pub(super) trait SortedSetMethods:
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
         self.try_lock().is_superset(other)
     }
-
+    fn clear(&self, py: Python<'_>) {
+        self.try_lock().clear(py);
+    }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
         self.try_lock().count(value)
     }
@@ -529,9 +536,6 @@ pub(super) trait SortedSetMethods:
     }
 }
 impl<T: SortedSetMethods> SortedCollectionsMethods for T {
-    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.get_set(value.py()).contains(value)
-    }
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         PyTuple::new(py, [self.get_set(py).clone()]).map(|tup| (Self::type_object(py), tup))
     }
@@ -545,9 +549,6 @@ impl<T: SortedSetMethods> SortedCollectionsMethods for T {
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.try_lock().reset(py, load)
-    }
-    fn clear(&self, py: Python<'_>) {
-        self.try_lock().clear(py);
     }
 }
 #[py_abc(
@@ -595,6 +596,9 @@ where
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
         self.try_lock().repr(&name)
+    }
+    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+        self.try_lock().contains(value)
     }
     #[getter]
     fn get_dict<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
@@ -645,7 +649,9 @@ where
             .conv::<Self>()
             .into_bound(value.py())
     }
-
+    fn clear(&self, py: Python<'_>) {
+        self.try_lock().clear(py);
+    }
     #[staticmethod]
     #[pyo3(signature = (iterable, value = None, /))]
     fn from_keys<'py>(
