@@ -63,35 +63,6 @@ pub trait ImplPyoIterator: Sized {
         slf
     }
 }
-impl ImplPyoIterator for SliceViewIterator {}
-impl ImplPyoIterator for SliceViewReverseIterator {}
-impl ImplPyoIterator for iterators::OnceWith {}
-impl ImplPyoIterator for iterators::Tail {}
-impl ImplPyoIterator for iterators::SequenceIterator {}
-impl ImplPyoIterator for iterators::SequenceReverseIterator {}
-impl ImplPyoIterator for iterators::ValuesViewIterator {}
-impl ImplPyoIterator for iterators::ItemsViewIterator {}
-impl ImplPyoIterator for iterators::MapJuxt {}
-impl ImplPyoIterator for iterators::UniqueIdentity {}
-impl ImplPyoIterator for iterators::UniqueKey {}
-impl ImplPyoIterator for iterators::Intersperse {}
-impl ImplPyoIterator for iterators::MapWindow {}
-impl ImplPyoIterator for iterators::MapWindowStar {}
-impl ImplPyoIterator for iterators::FilterMap {}
-impl ImplPyoIterator for iterators::FilterMapStar {}
-impl ImplPyoIterator for iterators::Scan {}
-impl ImplPyoIterator for iterators::MapWhile {}
-impl ImplPyoIterator for iterators::FromFn {}
-impl ImplPyoIterator for iterators::Drain {}
-impl ImplPyoIterator for iterators::ExtractIf {}
-impl ImplPyoIterator for iterators::Successors {}
-impl ImplPyoIterator for iterators::FilterStar {}
-impl ImplPyoIterator for iterators::WithPosition {}
-impl ImplPyoIterator for iterators::ZipLongest {}
-impl ImplPyoIterator for iterators::Unzip {}
-impl ImplPyoIterator for iterators::GroupBy {}
-impl ImplPyoIterator for abc::PyoIterator {}
-
 #[py_abc(
     PySome,
     PyNull,
@@ -115,9 +86,6 @@ trait PipeMethod: PyTypeInfo {
             .pipe(Ok)
     }
 }
-impl TapMethod for abc::Fluent {}
-impl TapMethod for abc::PyoTap {}
-impl TapMethod for abc::PyoIterable {}
 #[py_abc(abc::Fluent, abc::PyoTap, abc::PyoIterable)]
 trait TapMethod: PyTypeInfo {
     #[pyo3(signature = (f, *args, **kwargs))]
@@ -131,26 +99,12 @@ trait TapMethod: PyTypeInfo {
         Ok(slf)
     }
 }
-impl PipeMethod for PySome {}
-impl PipeMethod for PyNull {}
-impl PipeMethod for PyoOk {}
-impl PipeMethod for PyoErr {}
-impl PipeMethod for abc::Fluent {}
-impl PipeMethod for abc::PyoPipe {}
-impl PipeMethod for abc::PyoIterable {}
-impl PipeMethod for abc::PyoIterator {}
 
 #[py_abc(
     abc::PyoMappingView,
     abc::PyoKeysView,
     abc::PyoValuesView,
-    abc::PyoItemsView,
-    collections::sorted::SortedItemsView,
-    collections::sorted::SortedKeysView,
-    collections::sorted::SortedValuesView,
-    collections::sorted::SortedByKeyItemsView,
-    collections::sorted::SortedByKeyKeysView,
-    collections::sorted::SortedByKeyValuesView
+    abc::PyoItemsView
 )]
 pub trait MappingView:
     Sized

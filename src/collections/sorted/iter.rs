@@ -16,7 +16,6 @@ macro_rules! impl_sorted_iter {
             #[pyclass(module = "pyochain._iterators", frozen, generic, extends=abc::PyoIterator)]
             pub struct $name(Mutex<$iter<$t>>);
             impl PySortedIter for $name {}
-            impl abc::traits::ImplPyoIterator for $name {}
             impl From<$iter<$t>> for $name {
                 fn from(inner: $iter<$t>) -> Self {
                     Self(Mutex::new(inner))

@@ -263,11 +263,6 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
 }
-impl PyoSetMethods for PyoSet {}
-impl PyoSetMethods for sorted::SortedKeysView {}
-impl PyoSetMethods for sorted::SortedByKeyKeysView {}
-impl PyoSetMethods for sorted::SortedItemsView {}
-impl PyoSetMethods for sorted::SortedByKeyItemsView {}
 
 #[allow(unused)]
 #[derive(BoundFromAny)]
