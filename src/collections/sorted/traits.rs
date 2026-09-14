@@ -560,14 +560,14 @@ impl<T: SortedSetMethods> SortedCollectionsMethods for T {
     sorted::SortedByKeyValuesView
 )]
 pub trait SortedViewMethods:
-    PyClass<BaseType = abc::PyoSequence> + From<DictDataRef<Self::M>>
+    PyClass<BaseType = abc::PyoSequence> + From<DictDataRef<Self::L>>
 where
-    DictData<Self::M>: PyRepr,
+    DictData<Self::L>: PyRepr,
 {
-    type M: ListsDataMethods;
+    type L: ListsDataMethods;
     const REF_NAME: &'static str;
     #[skip]
-    fn mapping(&self) -> MutexGuard<'_, DictData<Self::M>>;
+    fn mapping(&self) -> MutexGuard<'_, DictData<Self::L>>;
     fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
     fn __len__(&self, py: Python<'_>) -> usize {
         self.mapping().__len__(py)
@@ -589,9 +589,9 @@ where
     DictData<Self::L>: PyRepr,
 {
     type L: ListsDataMethods;
-    type KView: SortedViewMethods<M = Self::L>;
-    type VView: SortedViewMethods<M = Self::L>;
-    type IView: SortedViewMethods<M = Self::L>;
+    type KView: SortedViewMethods<L = Self::L>;
+    type VView: SortedViewMethods<L = Self::L>;
+    type IView: SortedViewMethods<L = Self::L>;
     // @recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;

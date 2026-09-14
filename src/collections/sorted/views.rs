@@ -16,22 +16,22 @@ use std_tools::prelude::*;
 type DictRef<T> = Arc<Mutex<DictData<T>>>;
 
 macro_rules! impl_base_sorted_view {
-    ($($m:ty:$name:ty => [$($getitem:path => $t:ident),* $(,)?] );* $(;)?) => {
+    ($($l:ty:$name:ty => [$($getitem:path => $t:ident),* $(,)?] );* $(;)?) => {
         $(
             $(
                 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = PyoSequence, sequence)]
-                pub struct $t(DictRef<$m>);
+                pub struct $t(DictRef<$l>);
 
-                impl From<Arc<Mutex<DictData<$m>>>> for $t {
-                fn from(mapping: Arc<Mutex<DictData<$m>>>) -> Self {
+                impl From<Arc<Mutex<DictData<$l>>>> for $t {
+                fn from(mapping: Arc<Mutex<DictData<$l>>>) -> Self {
                     Self(mapping)
                     }
                 }
 
                 impl SortedViewMethods for $t {
-                        type M = $m;
+                        type L = $l;
                         const REF_NAME: &'static str = stringify!($name);
-                        fn mapping(&self) -> MutexGuard<'_, DictData<Self::M>> {
+                        fn mapping(&self) -> MutexGuard<'_, DictData<Self::L>> {
                             self.0.try_into_inner()
                         }
 
