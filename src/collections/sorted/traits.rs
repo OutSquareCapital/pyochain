@@ -297,11 +297,10 @@ pub(super) trait SortedListMethods:
     }
 }
 #[py_abc(sorted::SortedSet, sorted::SortedKeySet)]
-pub(super) trait SortedSetMethods: ListGetter<T = SetData<Self::L>> {
+pub(super) trait SortedSetMethods:
+    ListGetter<T = SetData<Self::L>> + IntoInit + From<SetData<Self::L>>
+{
     type L: ListsDataMethods;
-    #[inline(always)]
-    #[skip]
-    fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
     #[getter]
     #[inline(always)]
     fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
@@ -404,31 +403,40 @@ pub(super) trait SortedSetMethods: ListGetter<T = SetData<Self::L>> {
         self.copy(py)
     }
     fn __sub__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        let diff = self.try_lock().difference(other.py(), (other,))?;
-        self.wrap(diff)
+        let py = other.py();
+        self.try_lock()
+            .difference(py, (other,))?
+            .conv::<Self>()
+            .into_bound(py)
     }
-    fn __isub__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<()> {
-        slf.get().try_lock().difference_update(other.into())
+    fn __isub__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
+        self.try_lock().difference_update(other.into())
     }
 
     fn __and__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        let intersect = self.try_lock().intersection(other.py(), (other,))?;
-        self.wrap(intersect)
+        let py = other.py();
+        self.try_lock()
+            .intersection(py, (other,))?
+            .conv::<Self>()
+            .into_bound(py)
     }
     fn __rand__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__and__(other)
     }
 
-    fn __iand__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
-        slf.get().try_lock().intersection_update(slf.py(), (other,))
+    fn __iand__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
+        self.try_lock().intersection_update(other.py(), (other,))
     }
 
-    fn __ior__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<()> {
-        slf.get().try_lock().update(other.into())
+    fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
+        self.try_lock().update(other.into())
     }
     fn __or__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        let union = self.try_lock().union(other.py(), (other,))?;
-        self.wrap(union)
+        let py = other.py();
+        self.try_lock()
+            .union(py, (other,))?
+            .conv::<Self>()
+            .into_bound(py)
     }
     fn __ror__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__or__(other)
@@ -449,8 +457,7 @@ pub(super) trait SortedSetMethods: ListGetter<T = SetData<Self::L>> {
         self.try_lock().discard(&value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        let values = self.try_lock().copy(py)?;
-        self.wrap(values)
+        self.try_lock().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
         self.try_lock().is_disjoint(other)
@@ -474,8 +481,11 @@ pub(super) trait SortedSetMethods: ListGetter<T = SetData<Self::L>> {
     }
     #[pyo3(signature = (*iterables))]
     fn difference<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        let diff = self.try_lock().difference(iterables.py(), iterables)?;
-        self.wrap(diff)
+        let py = iterables.py();
+        self.try_lock()
+            .difference(py, iterables)?
+            .conv::<Self>()
+            .into_bound(py)
     }
 
     #[pyo3(name = "difference_update", signature = (*iterables))]
@@ -488,8 +498,11 @@ pub(super) trait SortedSetMethods: ListGetter<T = SetData<Self::L>> {
     }
     #[pyo3(signature = (*iterables))]
     fn intersection<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        let intersect = self.try_lock().intersection(iterables.py(), iterables)?;
-        self.wrap(intersect)
+        let py = iterables.py();
+        self.try_lock()
+            .intersection(py, iterables)?
+            .conv::<Self>()
+            .into_bound(py)
     }
 
     #[pyo3(signature = (*iterables))]
@@ -507,8 +520,11 @@ pub(super) trait SortedSetMethods: ListGetter<T = SetData<Self::L>> {
         self.try_lock().remove(value)
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        let diff = self.try_lock().symmetric_difference(other)?;
-        self.wrap(diff)
+        let py = other.py();
+        self.try_lock()
+            .symmetric_difference(other)?
+            .conv::<Self>()
+            .into_bound(py)
     }
     fn symmetric_difference_update<'py>(
         slf: Bound<'py, Self>,
@@ -520,8 +536,11 @@ pub(super) trait SortedSetMethods: ListGetter<T = SetData<Self::L>> {
     }
     #[pyo3(signature= (*iterables))]
     fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        let union = self.try_lock().union(iterables.py(), iterables)?;
-        self.wrap(union)
+        let py = iterables.py();
+        self.try_lock()
+            .union(py, iterables)?
+            .conv::<Self>()
+            .into_bound(py)
     }
     #[pyo3(signature = (*iterables))]
     fn update<'py>(

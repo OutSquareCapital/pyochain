@@ -10,6 +10,7 @@ use pyo3::{
     types::{PyBool, PyList, PySet, PyTuple},
 };
 use pyo3_ext::prelude::*;
+use tap::Pipe;
 pub struct SetData<T>(T, Py<PySet>);
 impl<T: InnerGetter> InnerGetter for SetData<T> {
     fn inner(&self) -> &InnerData {
@@ -31,13 +32,19 @@ impl<T: ListsDataMethods> ListDataOwner for SetData<T> {
         &mut self.0
     }
 }
-#[allow(unused)]
 impl<T: ListsDataMethods> SetData<T> {
     pub fn new(list: T, set: Py<PySet>) -> Self {
         Self(list, set)
     }
     pub fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
         self.1.clone_ref(py).into_bound(py)
+    }
+    fn wrap(&self, values: Bound<'_, PySet>) -> PyResult<Self> {
+        let py = values.py();
+        let list = self
+            .list()
+            .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
+        Self::new(list, values.unbind()).pipe(Ok)
     }
     pub fn clear(&mut self, py: Python<'_>) {
         self.0.clear(py);
@@ -63,22 +70,24 @@ impl<T: ListsDataMethods> SetData<T> {
         &self,
         py: Python<'py>,
         iterables: O,
-    ) -> PyResult<Bound<'py, PySet>> {
-        self.1.bind(py).difference(iterables)
+    ) -> PyResult<Self> {
+        self.1
+            .bind(py)
+            .difference(iterables)
+            .and_then(|x| self.wrap(x))
     }
     pub fn intersection<'py, O: PyCallArgs<'py>>(
         &self,
         py: Python<'py>,
         iterables: O,
-    ) -> PyResult<Bound<'py, PySet>> {
-        self.1.bind(py).intersection(iterables)
+    ) -> PyResult<Self> {
+        self.1
+            .bind(py)
+            .intersection(iterables)
+            .and_then(|x| self.wrap(x))
     }
-    pub fn union<'py, O: PyCallArgs<'py>>(
-        &self,
-        py: Python<'py>,
-        iterables: O,
-    ) -> PyResult<Bound<'py, PySet>> {
-        self.1.bind(py).union(iterables)
+    pub fn union<'py, O: PyCallArgs<'py>>(&self, py: Python<'py>, iterables: O) -> PyResult<Self> {
+        self.1.bind(py).union(iterables).and_then(|x| self.wrap(x))
     }
     pub fn difference_update(&mut self, iterables: IntoUpdate<'_>) -> PyResult<()> {
         let py = iterables.py();
@@ -165,8 +174,8 @@ impl<T: ListsDataMethods> SetData<T> {
         }
         Ok(())
     }
-    pub fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PySet>> {
-        PySet::new(py, self.1.bind(py).iter())
+    pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
+        PySet::new(py, self.1.bind(py).iter()).and_then(|x| self.wrap(x))
     }
     pub fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
         self.1.bind(other.py()).isdisjoint(other)
@@ -215,11 +224,11 @@ impl<T: ListsDataMethods> SetData<T> {
         self.1.bind(value.py()).remove(value)?;
         self.0.remove(value)
     }
-    pub fn symmetric_difference<'py>(
-        &self,
-        other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PySet>> {
-        self.1.bind(other.py()).symmetric_difference(other)
+    pub fn symmetric_difference(&self, other: Bound<'_, PyAny>) -> PyResult<Self> {
+        self.1
+            .bind(other.py())
+            .symmetric_difference(other)
+            .and_then(|x| self.wrap(x))
     }
     pub fn symmetric_difference_update(&mut self, other: Bound<'_, PyAny>) -> PyResult<()> {
         let py = other.py();

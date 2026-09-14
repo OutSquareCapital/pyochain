@@ -57,17 +57,6 @@ impl SortedSet {
 impl SortedSetMethods for SortedSet {
     type L = ListsData;
 
-    #[inline(always)]
-    fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
-        let py = values.py();
-        let list = self
-            .try_lock()
-            .list()
-            .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
-        SetData::new(list, values.unbind())
-            .conv::<Self>()
-            .into_bound(py)
-    }
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let type_name = Self::type_object(py).name()?;
@@ -125,16 +114,6 @@ impl ListGetter for SortedKeySet {
 impl SortedSetMethods for SortedKeySet {
     type L = KeysListsData;
 
-    fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
-        let py = values.py();
-        let list = self
-            .try_lock()
-            .list()
-            .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
-        SetData::new(list, values.unbind())
-            .conv::<Self>()
-            .into_bound(py)
-    }
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let inner = self.try_lock();
