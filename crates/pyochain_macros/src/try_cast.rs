@@ -96,21 +96,24 @@ fn generate_rewritten_arm(
             #guard
         })
     });
-    let checks = cases.iter().map(|case| {
-        let binding = &case.binding;
-        let ty = &case.ty;
-        if case.exact {
-            quote!(#binding.is_exact_instance_of::<#ty>())
-        } else {
-            quote!(#binding.is_instance_of::<#ty>())
-        }
-    });
+    let mut checks = cases
+        .iter()
+        .map(|case| {
+            let binding = &case.binding;
+            let ty = &case.ty;
+            if case.exact {
+                quote!(#binding.is_exact_instance_of::<#ty>())
+            } else {
+                quote!(#binding.is_instance_of::<#ty>())
+            }
+        })
+        .peekable();
 
-    match (checks.len(), guard) {
-        (0, None) => Ok(quote!(#pattern => #body,)),
-        (0, Some(guard)) => Ok(quote!(#pattern if #guard => #body,)),
-        (_, None) => Ok(quote!(#pattern if #(#checks)&&* => { #(#casts)* #body },)),
-        (_, Some(guard)) => Ok(quote!(
+    match (checks.peek().is_some(), guard) {
+        (false, None) => Ok(quote!(#pattern => #body,)),
+        (false, Some(guard)) => Ok(quote!(#pattern if #guard => #body,)),
+        (true, None) => Ok(quote!(#pattern if #(#checks)&&* => { #(#casts)* #body },)),
+        (true, Some(guard)) => Ok(quote!(
             #pattern if #(#checks)&&* && #guard => {
                 #(#casts)*
                 #body
