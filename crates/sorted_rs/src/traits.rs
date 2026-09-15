@@ -91,7 +91,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
         stop: Option<isize>,
     ) -> PyResult<usize>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn bisect<F: Fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
+    fn bisect<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
         &mut self,
         value: &Bound<'_, PyAny>,
         func: F,
