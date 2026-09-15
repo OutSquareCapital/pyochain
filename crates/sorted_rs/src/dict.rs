@@ -193,7 +193,7 @@ impl<T: ListsDataMethods> DictData<T> {
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
         let dict = self.1.bind(py);
-        if dict.len() == 0 {
+        if dict.is_empty() {
             let msg = "popitem(): dictionary is empty";
             Err(PyKeyError::new_err(msg))
         } else {
@@ -223,7 +223,7 @@ impl<T: ListsDataMethods> DictData<T> {
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let inner = self.1.bind(py);
-        if inner.len() == 0 {
+        if inner.is_empty() {
             if let Some(it) = m {
                 try_cast! {
                     match it {

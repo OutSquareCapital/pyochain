@@ -5,6 +5,7 @@ pub mod debug;
 mod dict;
 mod errors;
 mod getters;
+mod indexing;
 mod inner;
 pub mod iter;
 mod keylist;

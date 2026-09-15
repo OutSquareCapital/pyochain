@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 
 use crate::{
     Bounds, Loc, errors,
+    indexing::Nb,
     traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
@@ -16,8 +17,7 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use std_tools::prelude::*;
-use tap::Pipe;
-
+use tap::{Conv, Pipe};
 pub struct InnerData {
     pub lists: Vec<VecPy>,
     pub maxes: VecPy,
@@ -109,9 +109,11 @@ impl InnerData {
             .ok_or(PyIndexError::new_err("list index out of range"))?
             .len()
             .cast_signed();
-        match (index, self.len != 0) {
-            (0, true) => self.lists[0][0].clone_ref(py).into_bound(py).pipe(Ok),
-            (-1, true) => self
+        match (index.conv::<Nb>(), self.len.cmp(&0)) {
+            (Nb::Zero, Ordering::Greater | Ordering::Less) => {
+                self.lists[0][0].clone_ref(py).into_bound(py).pipe(Ok)
+            }
+            (Nb::NegOne, Ordering::Greater | Ordering::Less) => self
                 .lists
                 .last()
                 .unwrap()
@@ -120,20 +122,24 @@ impl InnerData {
                 .clone_ref(py)
                 .into_bound(py)
                 .pipe(Ok),
-            (_, false) => {
+            (_, Ordering::Equal) => {
                 let msg = "list index out of range";
                 Err(PyIndexError::new_err(msg))
             }
-            (_, true) if 0 <= index && index < self.lists[0].len().cast_signed() => self.lists[0]
-                [index.cast_unsigned()]
-            .clone_ref(py)
-            .into_bound(py)
-            .pipe(Ok),
-            (_, true) if -len_last < index && index < 0 => self.lists.last().unwrap()
-                [(len_last + index).cast_unsigned()]
-            .clone_ref(py)
-            .into_bound(py)
-            .pipe(Ok),
+            (Nb::One | Nb::Pos, Ordering::Greater | Ordering::Less)
+                if index < self.lists[0].len().cast_signed() =>
+            {
+                self.lists[0][index.cast_unsigned()]
+                    .clone_ref(py)
+                    .into_bound(py)
+                    .pipe(Ok)
+            }
+            (Nb::Neg, Ordering::Greater | Ordering::Less) if -len_last < index => {
+                self.lists.last().unwrap()[(len_last + index).cast_unsigned()]
+                    .clone_ref(py)
+                    .into_bound(py)
+                    .pipe(Ok)
+            }
             _ => {
                 self.set_pos(index, &mut bounds.min)?;
                 self.lists
@@ -149,24 +155,30 @@ impl InnerData {
         let PySliceIndices {
             start, stop, step, ..
         } = slice.indices(self.len.cast_signed())?;
-        let stop_eq_len = stop == self.len.cast_signed();
+        let stop_eq_len = stop.cmp(&self.len.cast_signed());
         let mut bounds = Bounds::default();
-        match (step, start.cmp(&stop)) {
+        match (step.conv::<Nb>(), start.cmp(&stop)) {
             // Whole slice optimization: start to stop slices the whole sorted list.
-            (1, Ordering::Less) if start == 0 && stop_eq_len => self.collapse(py).pipe(Ok),
-            (1, Ordering::Less) => {
+            (Nb::One, Ordering::Less)
+                if start == 0
+                    && let Ordering::Equal = stop_eq_len =>
+            {
+                self.collapse(py).pipe(Ok)
+            }
+            (Nb::One, Ordering::Less) => {
                 self.set_pos(start, &mut bounds.min)?;
                 let start_list = &self.lists[bounds.min.pos];
                 bounds.max.idx = bounds.min.idx + (stop - start).cast_unsigned();
-                match (start_list.len() >= bounds.max.idx, stop_eq_len) {
+                match (start_list.len().cmp(&bounds.max.idx), stop_eq_len) {
                     // Small slice optimization: start index and stop index are
                     // within the start list.
-                    (true, _) => start_list[bounds.min.idx..bounds.max.idx]
+                    (Ordering::Equal | Ordering::Greater, _) => start_list
+                        [bounds.min.idx..bounds.max.idx]
                         .iter()
                         .map(|x| x.clone_ref(py))
                         .collect::<Vec<_>>()
                         .pipe(Ok),
-                    (false, true) => {
+                    (Ordering::Less, Ordering::Equal) => {
                         bounds.max.pos = self.lists.len() - 1;
                         bounds.max.idx = self.lists.loc_len(&bounds.max);
                         get_slice(&self.lists, &bounds)
@@ -174,7 +186,7 @@ impl InnerData {
                             .collect::<Vec<_>>()
                             .pipe(Ok)
                     }
-                    (false, false) => {
+                    (Ordering::Less, Ordering::Greater | Ordering::Less) => {
                         self.set_pos(stop, &mut bounds.max)?;
                         get_slice(&self.lists, &bounds)
                             .map(|x| x.clone_ref(py))
@@ -183,14 +195,14 @@ impl InnerData {
                     }
                 }
             }
-            (-1, Ordering::Greater) => {
+            (Nb::NegOne, Ordering::Greater) => {
                 let mut result = self.get_slice(&PySlice::new(py, stop + 1, start + 1, 1))?;
                 result.reverse();
                 Ok(result)
             }
             // Return a list because a negative step could reverse the order
             // of the items and this could be the desired behavior.
-            _ if step > 0 => (start..stop)
+            (Nb::One | Nb::Pos, _) => (start..stop)
                 .step_by(step.cast_unsigned())
                 .map(|i| self.get_item(py, i).map(Bound::unbind))
                 .collect(),
@@ -206,24 +218,6 @@ impl InnerData {
         }
     }
 
-    /// Build a positional index for indexing the sorted list.
-    /// Indexes are represented as binary trees in a dense array notation similar to a binary heap.
-    /// For example, given a lists representation storing integers:\
-    ///     0: [1, 2, 3]
-    ///     1: [4, 5]
-    ///     2: [6, 7, 8, 9]
-    ///     3: [10, 11, 12, 13, 14]
-    /// The first transformation maps the sub-lists by their length.\
-    /// The first row of the index is the length of the `sub-lists::`
-    ///     0: [3, 2, 4, 5]
-    /// Each row after that is the sum of consecutive pairs of the previous row:
-    ///     1: [5, 9]
-    ///     2: [14]
-    /// Finally, the index is built by concatenating these lists together:
-    ///     _index = [14, 5, 9, 3, 2, 4, 5]
-    /// An offset storing the start of the first row is also stored:
-    ///     _offset = 3
-    /// When built, the index can be used for efficient indexing into the list.
     fn build_index(&mut self) {
         let row0 = self.lists.iter().map(Vec::len).collect::<Vec<usize>>();
 

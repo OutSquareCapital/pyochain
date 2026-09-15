@@ -4,6 +4,7 @@ use crate::{
     Bounds, InnerGetter, ListDataGetters, Loc,
     bisect::Bisect,
     errors,
+    indexing::Nb,
     types::{IntOrSlice, ListOrAny, VecPy},
 };
 use either::Either;
@@ -139,12 +140,12 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
         let PySliceIndices {
             start, stop, step, ..
         } = slice.indices(length)?;
-        match (step, start.cmp(&stop)) {
-            (1, Ordering::Less) if start == 0 && stop == length => {
+        match (step.conv::<Nb>(), start.cmp(&stop)) {
+            (Nb::One, Ordering::Less) if start == 0 && stop == length => {
                 self.clear(py);
                 Ok(())
             }
-            (1, Ordering::Less) if length <= 8 * (stop - start) => {
+            (Nb::One, Ordering::Less) if length <= 8 * (stop - start) => {
                 let mut values = self.inner_mut().get_slice(&PySlice::new(py, 0, start, 1))?;
                 if stop < length {
                     let new_slice = self
@@ -156,7 +157,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
                 self.extend(py, values)?;
                 Ok(())
             }
-            _ if step > 0 => (start..stop)
+            (Nb::Pos | Nb::One, _) => (start..stop)
                 .step_by(step.cast_unsigned())
                 .rev()
                 .try_for_each(|idx| {
@@ -187,20 +188,20 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut bounds = Loc::default();
-        if self.len() == 0 {
+        if self.is_empty() {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));
         }
         let len_last = self.values().last().unwrap().len().cast_signed();
-        match index {
-            -1 => {
+        match index.conv::<Nb>() {
+            Nb::NegOne => {
                 bounds.pos = self.values().len() - 1;
                 bounds.idx = self.values().loc_len(&bounds) - 1_usize;
             }
-            _ if 0 <= index && index < self.values()[0].len().cast_signed() => {
+            Nb::Zero | Nb::One | Nb::Pos if index < self.values()[0].len().cast_signed() => {
                 bounds.idx = index.cast_unsigned();
             }
-            _ if -len_last < index && index < 0 => {
+            Nb::Neg if -len_last < index => {
                 bounds.pos = self.values().len() - 1;
                 bounds.idx = (len_last + index).cast_unsigned();
             }
