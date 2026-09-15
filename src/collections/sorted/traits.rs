@@ -514,22 +514,6 @@ pub(super) trait SortedSetMethods:
         Ok(slf)
     }
 }
-impl<T: SortedSetMethods> SortedCollectionsMethods for T {
-    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        PyTuple::new(py, [self.get_set(py).clone()]).map(|tup| (Self::type_object(py), tup))
-    }
-
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect_left(value)
-    }
-
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect_right(value)
-    }
-    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.lock().reset(py, load)
-    }
-}
 #[py_abc(
     sorted::SortedItemsView,
     sorted::SortedKeysView,

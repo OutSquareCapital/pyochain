@@ -1,6 +1,10 @@
-use pyo3::{PyTypeInfo, prelude::*, types::PySet};
+use pyo3::{
+    PyTypeInfo,
+    prelude::*,
+    types::{PySet, PyTuple},
+};
 
-use sorted_rs::{InnerGetter, KeysListsData, ListDataOwner, ListsData, SetData};
+use sorted_rs::{InnerGetter, KeysListsData, ListDataOwner, ListsData, ListsDataMethods, SetData};
 use std::sync::{Arc, Mutex};
 use tap::{Conv, Pipe};
 
@@ -8,11 +12,27 @@ use crate::{
     abc,
     collections::sorted::{
         iter,
-        traits::{ListGetter, SortedSetMethods},
+        traits::{ListGetter, Reduced, SortedCollectionsMethods, SortedSetMethods},
     },
     traits::IntoInit,
 };
 
+impl<T: SortedSetMethods> SortedCollectionsMethods for T {
+    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
+        PyTuple::new(py, [self.get_set(py).clone()]).map(|tup| (Self::type_object(py), tup))
+    }
+
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.lock().list_mut().bisect_left(value)
+    }
+
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.lock().list_mut().bisect_right(value)
+    }
+    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
+        self.lock().reset(py, load)
+    }
+}
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedSet(pub(super) Arc<Mutex<SetData<ListsData>>>);
 impl From<SetData<ListsData>> for SortedSet {
