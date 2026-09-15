@@ -66,10 +66,10 @@ impl ListsDataMethods for ListsData {
         Ok(())
     }
     #[inline]
-    fn bisect(
+    fn bisect<F: Fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
         &mut self,
         value: &Bound<'_, PyAny>,
-        func: fn(&[pyo3::Py<pyo3::PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>,
+        func: F,
     ) -> PyResult<usize> {
         if self.maxes().is_empty() {
             Ok(0)
