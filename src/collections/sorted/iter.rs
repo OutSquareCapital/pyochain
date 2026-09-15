@@ -1,23 +1,17 @@
 use std::sync::Mutex;
 
-use crate::{abc, traits::IntoInit};
-use pyo3::{PyClass, prelude::*};
+use crate::abc;
+use pyo3::prelude::*;
 use sorted_rs::{
     DictData, KeysListsData, ListsData, SetData,
     iter::{Bounded, BoundedRev, Full, FullRev, ListDataIteratorMethods},
 };
 use std_tools::prelude::*;
-pub trait PySortedIter: PyClass<BaseType = abc::PyoIterator> + IntoInit {
-    fn into_pyiterator(self, py: Python<'_>) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        self.into_bound(py).map(Bound::into_super)
-    }
-}
 macro_rules! impl_sorted_iter {
     ($($t:ty => { $($iter:ident => $name:ident),+ $(,)? }),+ $(,)?) => {
         $($(
             #[pyclass(module = "pyochain._iterators", frozen, generic, extends=abc::PyoIterator)]
             pub struct $name(Mutex<$iter<$t>>);
-            impl PySortedIter for $name {}
             impl From<$iter<$t>> for $name {
                 fn from(inner: $iter<$t>) -> Self {
                     Self(Mutex::new(inner))

@@ -1,6 +1,6 @@
 use crate::{
     abc,
-    collections::sorted::{self, iter::PySortedIter},
+    collections::sorted,
     core::{PyoVec, iterators},
     traits::IntoInit,
 };
@@ -33,10 +33,10 @@ pub(super) trait ListGetter:
     PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     type T: ListDataGetters + ListDataOwner + PyRepr;
-    type I: PySortedIter + From<rsiter::Bounded<Self::T>>;
-    type IRev: PySortedIter + From<rsiter::BoundedRev<Self::T>>;
-    type IFull: PySortedIter + From<rsiter::Full<Self::T>>;
-    type IFullRev: PySortedIter + From<rsiter::FullRev<Self::T>>;
+    type I: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
+    type IRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::BoundedRev<Self::T>>;
+    type IFull: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
+    type IFullRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::FullRev<Self::T>>;
     fn inner(&self) -> &Arc<Mutex<Self::T>>;
     #[inline(always)]
     fn lock(&self) -> MutexGuard<'_, Self::T> {
@@ -55,10 +55,12 @@ pub(super) trait ListGetter:
             (None, _) => iterators::Iter::empty(py).map(Bound::into_super),
             (Some(bounds), true) => rsiter::BoundedRev::new(self.inner().clone(), bounds)
                 .conv::<Self::IRev>()
-                .into_pyiterator(py),
+                .into_bound(py)
+                .map(Bound::into_super),
             (Some(bounds), false) => rsiter::Bounded::new(self.inner().clone(), bounds)
                 .conv::<Self::I>()
-                .into_pyiterator(py),
+                .into_bound(py)
+                .map(Bound::into_super),
         }
     }
 }
@@ -86,14 +88,16 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
             .clone()
             .pipe(rsiter::Full::new)
             .conv::<Self::IFull>()
-            .into_pyiterator(py)
+            .into_bound(py)
+            .map(Bound::into_super)
     }
     fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
         self.inner()
             .clone()
             .pipe(rsiter::FullRev::new)
             .conv::<Self::IFullRev>()
-            .into_pyiterator(py)
+            .into_bound(py)
+            .map(Bound::into_super)
     }
     #[pyo3(signature = (value, start = None, stop = None))]
     fn index(
@@ -580,11 +584,9 @@ where
     fn __len__(&self, py: Python<'_>) -> usize {
         self.lock().__len__(py)
     }
-
     fn __getitem__<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         self.lock().get_item(key)
     }
-
     fn __delitem__(&self, key: &Bound<'_, PyAny>) -> PyResult<()> {
         self.lock().del_item(key)
     }
@@ -600,7 +602,6 @@ where
     fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         self.lock().or(value)?.conv::<Self>().into_bound(value.py())
     }
-
     fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         self.lock().ror(value)?.conv::<Self>().into_bound(py)
@@ -626,7 +627,6 @@ where
     ) -> PyResult<Bound<'py, PyAny>> {
         self.lock().pop(key, default)
     }
-
     #[pyo3(signature = (index = -1))]
     fn popitem<'py>(
         &self,
