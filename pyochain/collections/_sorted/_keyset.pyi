@@ -1,9 +1,8 @@
 # Adapted from python-sortedcontainers (https://github.com/grantjenks/python-sortedcontainers)
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 
-from collections.abc import Callable, Iterable
-from collections.abc import Set as AbstractSet
-from typing import Any, Self, final, override
+from collections.abc import Iterable
+from typing import Self, final, override
 
 from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.abc import PyoIterator
@@ -47,11 +46,6 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
 
         """
 
-    @override
-    # pyrefly: ignore [bad-override]
-    def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
-        self,
-    ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]: ...
     def irange_key[T1, OT1: SupportsHashableAndRichComparison](
         self: SortedKeySet[T1, OT1],
         min_key: OT1 | None = None,

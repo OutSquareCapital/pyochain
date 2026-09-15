@@ -3,7 +3,6 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Hashable, Iterable, Mapping, MutableMapping
-from functools import partial
 from typing import Any, Self, final, overload, override
 
 from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
@@ -28,19 +27,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]: ...
     @abstractmethod
     def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]: ...
-    @override
-    @abstractmethod
-    def __reduce__(self) -> tuple[type[Self], tuple[Dict[K, V]]]:
-        """Support for pickle.
-
-        The tricks played with caching references in
-        :func:`SortedDict.__init__` confuse pickle so customize the reducer.
-
-        Returns:
-            tuple[type[Self], tuple[Dict[K, V]]]: class and arguments for reconstruction
-
-        """
-
     @override
     def __len__(self) -> int: ...
     @override
@@ -457,8 +443,6 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](BaseSortedDict[K, V]):
     @override
     def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]: ...
     @override
-    def __reduce__(self) -> tuple[type[Self], tuple[Dict[K, V]]]: ...
-    @override
     def copy(self) -> Self: ...
 
 @final
@@ -518,9 +502,6 @@ class SortedKeyDict[
     def __or__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         self, value: Mapping[K, T2], /
     ) -> SortedKeyDict[K, V | T2, OT]: ...
-    @override
-    # pyrefly: ignore [bad-override]
-    def __reduce__(self) -> tuple[partial[Self], tuple[Dict[K, V]]]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     def copy(self) -> Self: ...
     def irange_key(

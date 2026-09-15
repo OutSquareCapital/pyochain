@@ -10,7 +10,7 @@ use pyo3::{
     exceptions::PyNotImplementedError,
     prelude::*,
     pyclass::CompareOp,
-    types::{PyBool, PyDict, PyMapping, PySet, PyString, PyTuple, PyType},
+    types::{PyBool, PyDict, PyMapping, PySet, PyString, PyTuple},
 };
 use pyo3_ext::prelude::*;
 use pyo3_ext::types::PyCmpOut;
@@ -25,7 +25,6 @@ use sorted_rs::{
 use std::sync::{Arc, Mutex, MutexGuard};
 use std_tools::prelude::*;
 use tap::prelude::*;
-pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyoVec>, Bound<'py, PyAny>>>;
 
 pub(super) trait ListGetter:
@@ -71,7 +70,6 @@ pub(super) trait ListGetter:
     sorted::SortedKeyDict
 )]
 pub(super) trait SortedCollectionsMethods: ListGetter {
-    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py>;
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {

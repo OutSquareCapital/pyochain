@@ -2,13 +2,12 @@ use crate::{
     abc,
     collections::sorted::{
         SortedItemsView, SortedKeysView, SortedValuesView, iter,
-        traits::{ListGetter, Reduced, SortedCollectionsMethods, SortedDictMethods},
+        traits::{ListGetter, SortedCollectionsMethods, SortedDictMethods},
         views::{SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView},
     },
     traits::IntoInit,
 };
-use pyo3::{PyTypeInfo, prelude::*, types::PyDict};
-use pyo3_ext::prelude::*;
+use pyo3::{prelude::*, types::PyDict};
 use sorted_rs::{DictData, KeysListsData, ListDataOwner, ListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
@@ -92,10 +91,6 @@ impl SortedDictMethods for SortedKeyDict {
     type VView = SortedByKeyValuesView;
 }
 impl SortedCollectionsMethods for SortedDict {
-    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        let items = self.get_dict(py).copy().and_then(|x| tuple!(x))?;
-        Ok((Self::type_object(py), items))
-    }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.lock().list_mut().bisect_left(value)
     }
@@ -106,13 +101,6 @@ impl SortedCollectionsMethods for SortedDict {
 }
 
 impl SortedCollectionsMethods for SortedKeyDict {
-    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        let items = self
-            .get_dict(py)
-            .copy()
-            .and_then(|x| tuple!(x.as_any(), self.lock().list().2.bind(py)))?;
-        Ok((Self::type_object(py), items))
-    }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
         let mut data = self.lock();

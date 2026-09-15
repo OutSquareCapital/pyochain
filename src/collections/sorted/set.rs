@@ -1,8 +1,4 @@
-use pyo3::{
-    PyTypeInfo,
-    prelude::*,
-    types::{PySet, PyTuple},
-};
+use pyo3::{PyTypeInfo, prelude::*, types::PySet};
 
 use sorted_rs::{InnerGetter, KeysListsData, ListDataOwner, ListsData, ListsDataMethods, SetData};
 use std::sync::{Arc, Mutex};
@@ -12,25 +8,32 @@ use crate::{
     abc,
     collections::sorted::{
         iter,
-        traits::{ListGetter, Reduced, SortedCollectionsMethods, SortedSetMethods},
+        traits::{ListGetter, SortedCollectionsMethods, SortedSetMethods},
     },
     traits::IntoInit,
 };
 
-impl<T: SortedSetMethods> SortedCollectionsMethods for T {
-    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        PyTuple::new(py, [self.get_set(py).clone()]).map(|tup| (Self::type_object(py), tup))
-    }
-
+impl SortedCollectionsMethods for SortedSet {
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.lock().list_mut().bisect_left(value)
     }
-
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.lock().list_mut().bisect_right(value)
     }
-    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.lock().reset(py, load)
+}
+impl SortedCollectionsMethods for SortedKeySet {
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        let py = value.py();
+        let mut data = self.lock();
+        let key = data.list().2.bind(py).call1((value,))?;
+        data.list_mut().bisect_left(&key)
+    }
+
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        let py = value.py();
+        let mut data = self.lock();
+        let key = data.list().2.bind(py).call1((value,))?;
+        data.list_mut().bisect_right(&key)
     }
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]

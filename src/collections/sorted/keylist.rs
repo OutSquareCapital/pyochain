@@ -2,13 +2,12 @@ use crate::{
     abc,
     collections::sorted::{
         iter,
-        traits::{ListGetter, Reduced, SortedCollectionsMethods, SortedListMethods},
+        traits::{ListGetter, SortedCollectionsMethods, SortedListMethods},
     },
     traits::IntoInit,
 };
-use pyo3::{PyTypeInfo, prelude::*};
-use pyo3_ext::prelude::*;
-use sorted_rs::{InnerGetter, KeysListsData, ListsDataMethods};
+use pyo3::prelude::*;
+use sorted_rs::{KeysListsData, ListsDataMethods};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -42,13 +41,6 @@ impl SortedKeyList {
     }
 }
 impl SortedCollectionsMethods for SortedKeyList {
-    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        let data = self.lock();
-        data.inner()
-            .as_pylist(py)
-            .and_then(|x| tuple!(x.as_any(), data.2.bind(py)))
-            .map(|tup| (Self::type_object(py), tup))
-    }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let mut data = self.lock();
         let key = data.2.bind(value.py()).call1((value,))?;
