@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use pyo3::prelude::*;
 use std_tools::prelude::*;
 
-use crate::{Bounds, ListDataGetters, Loc, traits::NestedVec};
+use crate::{Bounds, Loc, prelude::*, traits::NestedVec};
 struct ListDataIterInner<T: ListDataGetters> {
     data: Arc<Mutex<T>>,
     bounds: Bounds,

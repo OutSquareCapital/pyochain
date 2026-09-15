@@ -1,4 +1,4 @@
-use crate::{ListsDataMethods, inner::InnerData, types::VecPy};
+use crate::{inner::InnerData, prelude::*, types::VecPy};
 use pyo3::prelude::*;
 
 pub trait InnerGetter: Sized {
