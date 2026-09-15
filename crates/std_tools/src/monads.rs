@@ -1,3 +1,5 @@
+use either::Either;
+
 #[allow(unused)]
 pub trait OptionExt<T, R, E> {
     fn map_transpose(self, func: impl FnOnce(T) -> R) -> Result<Option<R>, E>;
@@ -25,6 +27,46 @@ impl<T, R, E> OptionExt<T, R, E> for Option<Result<T, E>> {
             Some(Ok(item)) => func(item).map(Some),
             None => Ok(None),
             Some(Err(e)) => Err(e),
+        }
+    }
+}
+pub trait ResultExt<L, R, E> {
+    fn map_left<T>(self, func: impl FnOnce(L) -> T) -> Result<Either<T, R>, E>;
+    fn map_right<T>(self, func: impl FnOnce(R) -> T) -> Result<Either<L, T>, E>;
+    fn and_then_left<T>(self, func: impl FnOnce(L) -> Result<T, E>) -> Result<Either<T, R>, E>;
+    fn and_then_right<T>(self, func: impl FnOnce(R) -> Result<T, E>) -> Result<Either<L, T>, E>;
+}
+impl<L, R, E> ResultExt<L, R, E> for Result<Either<L, R>, E> {
+    #[inline]
+    fn map_left<T>(self, func: impl FnOnce(L) -> T) -> Result<Either<T, R>, E> {
+        match self {
+            Ok(Either::Left(l)) => Ok(Either::Left(func(l))),
+            Ok(Either::Right(r)) => Ok(Either::Right(r)),
+            Err(e) => Err(e),
+        }
+    }
+    #[inline]
+    fn map_right<T>(self, func: impl FnOnce(R) -> T) -> Result<Either<L, T>, E> {
+        match self {
+            Ok(Either::Left(l)) => Ok(Either::Left(l)),
+            Ok(Either::Right(r)) => Ok(Either::Right(func(r))),
+            Err(e) => Err(e),
+        }
+    }
+    #[inline]
+    fn and_then_left<T>(self, func: impl FnOnce(L) -> Result<T, E>) -> Result<Either<T, R>, E> {
+        match self {
+            Ok(Either::Left(l)) => func(l).map(Either::Left),
+            Ok(Either::Right(r)) => Ok(Either::Right(r)),
+            Err(e) => Err(e),
+        }
+    }
+    #[inline]
+    fn and_then_right<T>(self, func: impl FnOnce(R) -> Result<T, E>) -> Result<Either<L, T>, E> {
+        match self {
+            Ok(Either::Left(l)) => Ok(Either::Left(l)),
+            Ok(Either::Right(r)) => func(r).map(Either::Right),
+            Err(e) => Err(e),
         }
     }
 }

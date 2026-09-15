@@ -1,28 +1,41 @@
-use pyo3::{PyTypeInfo, prelude::*, types::PySet};
+use pyo3::{prelude::*, types::PySet};
 
-use sorted_rs::{InnerGetter, KeysListsData, ListsData, ListsDataMethods};
+use sorted_rs::{KeysListsData, ListsData, SetData};
 use std::sync::{Arc, Mutex};
-use tap::Pipe;
+use tap::{Conv, Pipe};
 
 use crate::{
     abc,
-    collections::sorted::traits::{IntoUpdate, ListGetter, SortedSetMethods},
+    collections::sorted::{
+        iter,
+        traits::{ListGetter, SortedSetMethods},
+    },
     traits::IntoInit,
 };
-
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedSet(pub(super) Arc<Mutex<ListsData>>, Py<PySet>);
-impl SortedSet {
-    fn new(set: Bound<'_, PySet>, list: ListsData) -> Self {
-        let list = list.pipe(Mutex::new).pipe(Arc::new);
-        Self(list, set.unbind())
+pub struct SortedSet(pub(super) Arc<Mutex<SetData<ListsData>>>);
+impl From<SetData<ListsData>> for SortedSet {
+    fn from(data: SetData<ListsData>) -> Self {
+        data.pipe(Mutex::new).pipe(Arc::new).pipe(Self)
     }
-
-    pub fn from_iterable(iterable: Bound<'_, PyAny>) -> PyResult<Self> {
+}
+impl TryFrom<Bound<'_, PyAny>> for SortedSet {
+    type Error = PyErr;
+    fn try_from(iterable: Bound<'_, PyAny>) -> PyResult<Self> {
         let py = iterable.py();
-        let init = Self::new(PySet::empty(py).unwrap(), ListsData::default());
-        init.update(py, IntoUpdate::from_any(iterable))?;
-        Ok(init)
+        let mut init = SetData::new(ListsData::default(), PySet::empty(py)?.unbind());
+        init.update(iterable.try_into()?)?;
+        Ok(init.into())
+    }
+}
+impl ListGetter for SortedSet {
+    type T = SetData<ListsData>;
+    type I = iter::PySetBounded;
+    type IRev = iter::PySetBoundedRev;
+    type IFull = iter::PySetFull;
+    type IFullRev = iter::PySetFullRev;
+    fn inner(&self) -> &Arc<Mutex<Self::T>> {
+        &self.0
     }
 }
 #[pymethods]
@@ -33,38 +46,21 @@ impl SortedSet {
         py: Python<'_>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let slf = Self::new(PySet::empty(py).unwrap(), ListsData::default());
+        let mut inner = SetData::new(ListsData::default(), PySet::empty(py).unwrap().unbind());
         if let Some(iterable) = iterable {
-            slf.update(py, IntoUpdate::from_any(iterable))?;
+            inner.update(iterable.try_into()?)?;
         }
-        slf.init().pipe(Ok)
+        inner.conv::<Self>().init().pipe(Ok)
     }
 }
 impl SortedSetMethods for SortedSet {
-    #[inline(always)]
-    fn get_set(&self) -> &Py<PySet> {
-        &self.1
-    }
-    fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
-        let py = values.py();
-        let list = self
-            .try_lock()
-            .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
-        Self::new(values, list).into_bound(py)
-    }
-    //@recursive_repr()
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let type_name = Self::type_object(py).name()?;
-        let self_repr = self.try_lock().inner().as_pylist(py)?.repr()?;
-        Ok(format!("{type_name}({self_repr})"))
-    }
+    type L = ListsData;
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedKeySet(pub(super) Arc<Mutex<KeysListsData>>, Py<PySet>);
-impl SortedKeySet {
-    fn new(set: Bound<'_, PySet>, list: KeysListsData) -> Self {
-        let list = list.pipe(Mutex::new).pipe(Arc::new);
-        Self(list, set.unbind())
+pub struct SortedKeySet(pub(super) Arc<Mutex<SetData<KeysListsData>>>);
+impl From<SetData<KeysListsData>> for SortedKeySet {
+    fn from(data: SetData<KeysListsData>) -> Self {
+        data.pipe(Mutex::new).pipe(Arc::new).pipe(Self)
     }
 }
 #[pymethods]
@@ -78,43 +74,24 @@ impl SortedKeySet {
         let py = key.py();
         let key_fn = key.unbind();
         let list = KeysListsData::new(key_fn.clone_ref(py));
-        let slf = Self::new(PySet::empty(py).unwrap(), list);
+        let mut inner = SetData::new(list, PySet::empty(py).unwrap().unbind());
 
         if let Some(iterable) = iterable {
-            slf.update(py, IntoUpdate::from_any(iterable))?;
+            inner.update(iterable.try_into()?)?;
         }
-        slf.init().pipe(Ok)
+        inner.conv::<Self>().init().pipe(Ok)
     }
-    #[getter]
-    fn get_key(&self, py: Python<'_>) -> Py<PyAny> {
-        self.try_lock().2.clone_ref(py)
-    }
-    fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().bisect_left(key)
-    }
-
-    fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.try_lock().bisect_right(key)
+}
+impl ListGetter for SortedKeySet {
+    type T = SetData<KeysListsData>;
+    type I = iter::PySetBoundedKey;
+    type IRev = iter::PySetBoundedKeyRev;
+    type IFull = iter::PySetFullKey;
+    type IFullRev = iter::PySetFullKeyRev;
+    fn inner(&self) -> &Arc<Mutex<Self::T>> {
+        &self.0
     }
 }
 impl SortedSetMethods for SortedKeySet {
-    #[inline(always)]
-    fn get_set(&self) -> &Py<PySet> {
-        &self.1
-    }
-    fn wrap<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
-        let py = values.py();
-        let list = self
-            .try_lock()
-            .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
-        Self::new(values, list).into_bound(py)
-    }
-    //@recursive_repr()
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let inner = self.try_lock();
-        let key = format!(", key={}", inner.2.bind(py).repr()?);
-        let type_name = Self::type_object(py).name()?;
-        let list_repr = inner.inner().as_pylist(py)?.repr()?;
-        Ok(format!("{type_name}({list_repr}{key})"))
-    }
+    type L = KeysListsData;
 }

@@ -125,19 +125,6 @@ impl SliceView {
     fn __iter__(&self, py: Python<'_>) -> PyResult<SliceViewIterator> {
         SliceViewIterator::new(self.current_range(py)?, self.inner().clone_ref(py))
     }
-    #[staticmethod]
-    fn _from_range(
-        py: Python<'_>,
-        inner: Py<PySequence>,
-        range: Py<PyRange>,
-    ) -> PyResult<Bound<'_, Self>> {
-        Self {
-            inner,
-            range: Mutex::new(Either::Left(range)),
-        }
-        .into_bound(py)
-    }
-
     fn __contains__(slf: &Bound<'_, Self>, item: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.try_iter().unwrap().try_any(|el| item.eq(el?))
     }

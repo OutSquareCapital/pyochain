@@ -16,19 +16,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
     PyoMutableSet[T], PyoSequence[T], BaseSortedListSet[T], ABC
 ):
     set: Final[SetMut[T]]
-    @override
-    @abstractmethod
-    def __reduce__(
-        self,
-    ) -> tuple[type[Self], tuple[AbstractSet[T]]]:
-        """Support for pickle.
-
-        The tricks played with exposing methods in `SortedSet.__init__` confuse pickle so customize the reducer.
-
-        Returns:
-            tuple[type[Self], tuple[AbstractSet[T]]]: tuple of class and arguments
-
-        """
 
     @override
     def __contains__(self, value: object) -> bool:
@@ -591,9 +578,5 @@ class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
     """
 
     def __init__(self, iterable: Iterable[T] | None = None) -> None: ...
-    @override
-    def __reduce__(
-        self,
-    ) -> tuple[type[Self], tuple[AbstractSet[T]]]: ...
     @override
     def union(self, *iterables: Iterable[T]) -> Self: ...

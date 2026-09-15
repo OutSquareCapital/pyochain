@@ -36,7 +36,7 @@ trait SetCmpMethods<
     T: PyTypeInfo
         + DerefToPyAny
         + TryFromBoundIterator<'py, Bound<'py, PyIterator>, Item = Bound<'py, PyAny>>,
->: Sized + PyWrapper + PyTypeInfo
+>: PyWrapper + PyTypeInfo
 {
     #[inline(always)]
     fn handle_pyabstract_set(pyset: Bound<'py, PyAny>) -> PyResult<Bound<'py, T>> {
@@ -284,8 +284,8 @@ impl SetMut {
         self.inner_bind(py).len()
     }
 
-    fn __contains__(&self, py: Python<'_>, item: Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner_bind(py).contains(item)
+    fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner_bind(item.py()).contains(item)
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {

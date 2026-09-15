@@ -1,7 +1,9 @@
 //! Traits extending the functionality of various pre-existing Pyo3 types
 use pyo3::{
     PyTypeInfo,
+    basic::CompareOp,
     call::PyCallArgs,
+    exceptions::PyTypeError,
     ffi, intern,
     prelude::*,
     types::{
@@ -10,7 +12,7 @@ use pyo3::{
     },
 };
 
-use crate::types;
+use crate::types::{self, PyItemsView, PyKeysView, PyValuesView};
 
 /// Create a new Python list from the given arguments.\
 #[macro_export]
@@ -334,6 +336,55 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
             0 => Ok(()),
             // Return code is -1 here, hence error
             _ => Err(PyErr::fetch(seq.py())),
+        }
+    }
+}
+pub trait PyMappingExtMethods<'py>: Sized {
+    fn items_view(&self) -> PyResult<Bound<'py, PyItemsView>>;
+    fn keys_view(&self) -> PyResult<Bound<'py, PyKeysView>>;
+    fn values_view(&self) -> PyResult<Bound<'py, PyValuesView>>;
+}
+
+impl<'py> PyMappingExtMethods<'py> for Bound<'py, PyMapping> {
+    fn items_view(&self) -> PyResult<Bound<'py, PyItemsView>> {
+        self.call_method0(intern!(self.py(), "items"))?
+            .cast_into::<PyItemsView>()
+            .map_err(|_| PyTypeError::new_err("expected a mapping view for items"))
+    }
+    fn keys_view(&self) -> PyResult<Bound<'py, PyKeysView>> {
+        self.call_method0(intern!(self.py(), "keys"))?
+            .cast_into::<PyKeysView>()
+            .map_err(|_| PyTypeError::new_err("expected a mapping view for keys"))
+    }
+    fn values_view(&self) -> PyResult<Bound<'py, PyValuesView>> {
+        self.call_method0(intern!(self.py(), "values"))?
+            .cast_into::<PyValuesView>()
+            .map_err(|_| PyTypeError::new_err("expected a mapping view for values"))
+    }
+}
+
+pub trait CompareOpExtMethods {
+    /// If two objects are the same, we know that they are equal.
+    /// Return `true` if the comparison operator is one of `Eq`, `Le`, or `Ge`.
+    fn on_identity(&self) -> bool;
+    /// Return the corresponding comparison function for the given `CompareOp`.\
+    /// Allow to handle both Rust and Python values with the same variant of `CompareOp`.
+    fn as_fn<T: PartialOrd + PartialEq>(&self) -> impl Fn(&T, &T) -> bool;
+}
+impl CompareOpExtMethods for CompareOp {
+    #[inline]
+    fn on_identity(&self) -> bool {
+        matches!(self, Self::Eq | Self::Le | Self::Ge)
+    }
+    #[inline]
+    fn as_fn<T: PartialOrd + PartialEq>(&self) -> impl Fn(&T, &T) -> bool {
+        match self {
+            Self::Lt => PartialOrd::lt,
+            Self::Le => PartialOrd::le,
+            Self::Gt => PartialOrd::gt,
+            Self::Ge => PartialOrd::ge,
+            Self::Eq => PartialEq::eq,
+            Self::Ne => PartialEq::ne,
         }
     }
 }

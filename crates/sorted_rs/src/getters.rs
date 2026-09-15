@@ -1,4 +1,4 @@
-use crate::{inner::InnerData, types::VecPy};
+use crate::{ListsDataMethods, inner::InnerData, types::VecPy};
 use pyo3::prelude::*;
 
 pub trait InnerGetter: Sized {
@@ -6,14 +6,35 @@ pub trait InnerGetter: Sized {
     fn inner_mut(&mut self) -> &mut InnerData;
 }
 
+pub trait ListDataOwner {
+    type List: ListsDataMethods;
+
+    fn list(&self) -> &Self::List;
+    fn list_mut(&mut self) -> &mut Self::List;
+}
+impl<T: ListsDataMethods> ListDataOwner for T {
+    type List = T;
+    #[inline(always)]
+    fn list(&self) -> &Self::List {
+        self
+    }
+    #[inline(always)]
+    fn list_mut(&mut self) -> &mut Self::List {
+        self
+    }
+}
+
 pub trait ListDataGetters: Sized {
-    fn lists(&self) -> &[VecPy];
-    fn lists_mut(&mut self) -> &mut Vec<VecPy>;
+    fn values(&self) -> &[VecPy];
+    fn values_mut(&mut self) -> &mut Vec<VecPy>;
     fn maxes(&self) -> &[Py<PyAny>];
     fn maxes_mut(&mut self) -> &mut VecPy;
     fn idx(&self) -> &[usize];
     fn idx_mut(&mut self) -> &mut Vec<usize>;
-    fn length(&self) -> usize;
+    fn len(&self) -> usize;
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
     fn increment_len(&mut self);
     fn decrement_len(&mut self);
     fn set_len(&mut self, len: usize);
@@ -23,15 +44,12 @@ pub trait ListDataGetters: Sized {
     fn set_load(&mut self, load: usize);
 }
 
-impl<T> ListDataGetters for T
-where
-    T: Sized + InnerGetter,
-{
-    fn lists(&self) -> &[VecPy] {
-        &self.inner().lists
+impl<T: InnerGetter> ListDataGetters for T {
+    fn values(&self) -> &[VecPy] {
+        &self.inner().values
     }
-    fn lists_mut(&mut self) -> &mut Vec<VecPy> {
-        &mut self.inner_mut().lists
+    fn values_mut(&mut self) -> &mut Vec<VecPy> {
+        &mut self.inner_mut().values
     }
     fn maxes(&self) -> &[Py<PyAny>] {
         &self.inner().maxes
@@ -45,7 +63,7 @@ where
     fn idx_mut(&mut self) -> &mut Vec<usize> {
         &mut self.inner_mut().idx
     }
-    fn length(&self) -> usize {
+    fn len(&self) -> usize {
         self.inner().len
     }
     fn set_len(&mut self, len: usize) {

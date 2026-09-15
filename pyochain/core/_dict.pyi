@@ -154,9 +154,11 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K], KwargsWrapper[K, V])
 
     @override
     @staticmethod
+    # pyrefly: ignore [bad-override]
     def from_iter(iterable: Iterable[tuple[K, V]], /) -> Dict[K, V]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     @staticmethod
+    # pyrefly: ignore [bad-override]
     def wrap[K1, V1](data: dict[K1, V1]) -> Dict[K1, V1]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     @staticmethod

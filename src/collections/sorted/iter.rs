@@ -1,10 +1,12 @@
 use std::sync::Mutex;
 
-use crate::abc;
-use crate::traits::IntoInit;
+use crate::{abc, traits::IntoInit};
 use pyo3::{PyClass, prelude::*};
-use sorted_rs::iter::{Bounded, BoundedRev, Full, FullRev, ListDataIteratorMethods};
-use sorted_rs::{KeysListsData, ListsData};
+use sorted_rs::{
+    DictData, KeysListsData, ListsData, SetData,
+    iter::{Bounded, BoundedRev, Full, FullRev, ListDataIteratorMethods},
+};
+use std_tools::prelude::*;
 pub trait PySortedIter: PyClass<BaseType = abc::PyoIterator> + IntoInit {
     fn into_pyiterator(self, py: Python<'_>) -> PyResult<Bound<'_, abc::PyoIterator>> {
         self.into_bound(py).map(Bound::into_super)
@@ -16,7 +18,6 @@ macro_rules! impl_sorted_iter {
             #[pyclass(module = "pyochain._iterators", frozen, generic, extends=abc::PyoIterator)]
             pub struct $name(Mutex<$iter<$t>>);
             impl PySortedIter for $name {}
-            impl abc::traits::ImplPyoIterator for $name {}
             impl From<$iter<$t>> for $name {
                 fn from(inner: $iter<$t>) -> Self {
                     Self(Mutex::new(inner))
@@ -25,7 +26,7 @@ macro_rules! impl_sorted_iter {
             #[pymethods]
             impl $name {
                 fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
-                    self.0.lock().expect("poisoned").next(py)
+                    self.0.try_into_inner().next(py)
                 }
             }
         )+)+
@@ -44,5 +45,29 @@ impl_sorted_iter! {
         BoundedRev => PyBoundedKeyRev,
         Full => PyFullKey,
         FullRev => PyFullKeyRev,
+    },
+    SetData<ListsData> => {
+        Bounded => PySetBounded,
+        BoundedRev => PySetBoundedRev,
+        Full => PySetFull,
+        FullRev => PySetFullRev,
+    },
+    SetData<KeysListsData> => {
+        Bounded => PySetBoundedKey,
+        BoundedRev => PySetBoundedKeyRev,
+        Full => PySetFullKey,
+        FullRev => PySetFullKeyRev,
+    },
+    DictData<ListsData> => {
+        Bounded => PyDictBounded,
+        BoundedRev => PyDictBoundedRev,
+        Full => PyDictFull,
+        FullRev => PyDictFullRev,
+    },
+    DictData<KeysListsData> => {
+        Bounded => PyDictBoundedKey,
+        BoundedRev => PyDictBoundedKeyRev,
+        Full => PyDictFullKey,
+        FullRev => PyDictFullKeyRev,
     },
 }
