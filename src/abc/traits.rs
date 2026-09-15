@@ -56,7 +56,23 @@ pub trait ImplPyoReversible {
     sorted::iter::PyFull,
     sorted::iter::PyFullRev,
     sorted::iter::PyFullKey,
-    sorted::iter::PyFullKeyRev
+    sorted::iter::PyFullKeyRev,
+    sorted::iter::PySetBounded,
+    sorted::iter::PySetBoundedRev,
+    sorted::iter::PySetBoundedKey,
+    sorted::iter::PySetBoundedKeyRev,
+    sorted::iter::PySetFull,
+    sorted::iter::PySetFullRev,
+    sorted::iter::PySetFullKey,
+    sorted::iter::PySetFullKeyRev,
+    sorted::iter::PyDictBounded,
+    sorted::iter::PyDictBoundedRev,
+    sorted::iter::PyDictFull,
+    sorted::iter::PyDictFullRev,
+    sorted::iter::PyDictFullKey,
+    sorted::iter::PyDictFullKeyRev,
+    sorted::iter::PyDictBoundedKey,
+    sorted::iter::PyDictBoundedKeyRev
 )]
 pub trait ImplPyoIterator: Sized {
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
