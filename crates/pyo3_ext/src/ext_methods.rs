@@ -7,8 +7,8 @@ use pyo3::{
     ffi, intern,
     prelude::*,
     types::{
-        DerefToPyAny, PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt,
-        PyIterator, PyList, PyMapping, PyRange, PySet, PyTuple,
+        PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator,
+        PyList, PyMapping, PyRange, PySet, PyTuple,
     },
 };
 
@@ -363,50 +363,28 @@ impl<'py> PyMappingExtMethods<'py> for Bound<'py, PyMapping> {
     }
 }
 
-pub trait CompareOpExtMethods<T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> {
-    fn as_default(&self) -> bool;
-    fn apply(self, a: &Bound<'_, T>, b: &Bound<'_, U>) -> PyResult<bool>;
+pub trait CompareOpExtMethods {
+    /// If two objects are the same, we know that they are equal.
+    /// Return `true` if the comparison operator is one of `Eq`, `Le`, or `Ge`.
+    fn on_identity(&self) -> bool;
+    /// Return the corresponding comparison function for the given `CompareOp`.\
+    /// Allow to handle both Rust and Python values with the same variant of `CompareOp`.
+    fn as_fn<T: PartialOrd + PartialEq>(&self) -> impl Fn(&T, &T) -> bool;
 }
-impl<T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> CompareOpExtMethods<T, U>
-    for CompareOp
-{
+impl CompareOpExtMethods for CompareOp {
     #[inline]
-    fn as_default(&self) -> bool {
-        match self {
-            Self::Eq | Self::Le | Self::Ge => true,
-            Self::Ne | Self::Lt | Self::Gt => false,
-        }
+    fn on_identity(&self) -> bool {
+        matches!(self, Self::Eq | Self::Le | Self::Ge)
     }
-    #[inline(always)]
-    fn apply(self, a: &Bound<'_, T>, b: &Bound<'_, U>) -> PyResult<bool> {
+    #[inline]
+    fn as_fn<T: PartialOrd + PartialEq>(&self) -> impl Fn(&T, &T) -> bool {
         match self {
-            Self::Eq => OpEq::apply(a, b),
-            Self::Ne => OpNe::apply(a, b),
-            Self::Lt => OpLt::apply(a, b),
-            Self::Le => OpLe::apply(a, b),
-            Self::Gt => OpGt::apply(a, b),
-            Self::Ge => OpGe::apply(a, b),
+            Self::Lt => PartialOrd::lt,
+            Self::Le => PartialOrd::le,
+            Self::Gt => PartialOrd::gt,
+            Self::Ge => PartialOrd::ge,
+            Self::Eq => PartialEq::eq,
+            Self::Ne => PartialEq::ne,
         }
     }
 }
-pub trait SetOp<T: DerefToPyAny, U: DerefToPyAny> {
-    fn apply(a: &Bound<'_, T>, b: &Bound<'_, U>) -> PyResult<bool>;
-}
-
-macro_rules! impl_set_op {
-    ($op:ident, $method:ident) => {
-        pub struct $op;
-        impl<T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> SetOp<T, U> for $op {
-            #[inline(always)]
-            fn apply(a: &Bound<'_, T>, b: &Bound<'_, U>) -> PyResult<bool> {
-                a.$method(b)
-            }
-        }
-    };
-}
-impl_set_op!(OpEq, eq);
-impl_set_op!(OpNe, ne);
-impl_set_op!(OpLt, lt);
-impl_set_op!(OpLe, le);
-impl_set_op!(OpGt, gt);
-impl_set_op!(OpGe, ge);

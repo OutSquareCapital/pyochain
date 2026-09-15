@@ -7,7 +7,7 @@ pub use super::ext_methods::{
     PySetExtMethodsMut,
 };
 pub use super::iter::{CollectBoundIterator, FromBoundIterator, TryFromBoundIterator};
-pub use super::pyany::PyAnyInPlaceMethods;
+pub use super::pyany::PyAnyExtMethods;
 pub use super::types::{
     ItemsViewMethods, PyDequeMethods, PyMutableSequenceMethods, PyMutableSetMethods,
     PySupportsIndexMethods, PySupportsItemsMethods,

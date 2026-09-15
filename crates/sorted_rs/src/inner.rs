@@ -8,7 +8,7 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    exceptions::PyIndexError,
+    basic::CompareOp,
     prelude::*,
     types::{PyList, PyNotImplemented, PySlice, PySliceIndices},
 };
@@ -102,44 +102,33 @@ impl InnerData {
     }
 
     pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let mut bounds = Bounds::default();
-        let len_last = self
-            .lists
-            .last()
-            .ok_or(PyIndexError::new_err("list index out of range"))?
-            .len()
-            .cast_signed();
+        let first_list = &self.lists[0];
+        let last_list = self.lists.last().unwrap();
+        let len_last = last_list.len().cast_signed();
         match (index.conv::<Nb>(), self.len.cmp(&0)) {
             (Nb::Zero, Ordering::Greater | Ordering::Less) => {
-                self.lists[0][0].clone_ref(py).into_bound(py).pipe(Ok)
+                first_list[0].clone_ref(py).into_bound(py).pipe(Ok)
             }
-            (Nb::NegOne, Ordering::Greater | Ordering::Less) => self
-                .lists
-                .last()
-                .unwrap()
+            (Nb::NegOne, Ordering::Greater | Ordering::Less) => last_list
                 .last()
                 .unwrap()
                 .clone_ref(py)
                 .into_bound(py)
                 .pipe(Ok),
-            (_, Ordering::Equal) => {
-                let msg = "list index out of range";
-                Err(PyIndexError::new_err(msg))
-            }
+            (_, Ordering::Equal) => Err(errors::out_of_range()),
             (Nb::One | Nb::Pos, Ordering::Greater | Ordering::Less)
-                if index < self.lists[0].len().cast_signed() =>
+                if index < first_list.len().cast_signed() =>
             {
-                self.lists[0][index.cast_unsigned()]
+                first_list[index.cast_unsigned()]
                     .clone_ref(py)
                     .into_bound(py)
                     .pipe(Ok)
             }
-            (Nb::Neg, Ordering::Greater | Ordering::Less) if -len_last < index => {
-                self.lists.last().unwrap()[(len_last + index).cast_unsigned()]
-                    .clone_ref(py)
-                    .into_bound(py)
-                    .pipe(Ok)
-            }
+            (Nb::Neg, Ordering::Greater | Ordering::Less) if -len_last < index => last_list
+                [(len_last + index).cast_unsigned()]
+            .clone_ref(py)
+            .into_bound(py)
+            .pipe(Ok),
             _ => {
                 let mut bounds = Bounds::default();
                 self.set_pos(index, &mut bounds.min)?;
@@ -160,10 +149,7 @@ impl InnerData {
         let mut bounds = Bounds::default();
         match (step.conv::<Nb>(), start.cmp(&stop)) {
             // Whole slice optimization: start to stop slices the whole sorted list.
-            (Nb::One, Ordering::Less)
-                if start == 0
-                    && let Ordering::Equal = stop_eq_len =>
-            {
+            (Nb::One, Ordering::Less) if start == 0 && stop_eq_len.is_eq() => {
                 self.collapse(py).pipe(Ok)
             }
             (Nb::One, Ordering::Less) => {
@@ -374,119 +360,27 @@ impl InnerData {
                 } else {
                     self.set_pos(indices.stop, &mut bounds.max)?;
                 }
-
                 Ok(Some(bounds))
             }
         }
     }
-
     pub fn eq<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                if self.len.ne(&seq.len()?) {
-                    Either::Left(false).pipe(Ok)
-                } else {
-                    let py = seq.py();
-                    self.iter()
-                        .zip(seq.iter_py())
-                        .try_all(|(a, b)| a.bind(py).eq(b?))
-                        .map(Either::Left)
-                }
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Eq)
     }
-
     pub fn ne<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                if self.len.ne(&seq.len()?) {
-                    Either::Left(true).pipe(Ok)
-                } else {
-                    let py = seq.py();
-                    self.iter()
-                        .zip(seq.iter_py())
-                        .try_any(|(a, b)| a.bind(py).ne(b?))
-                        .map(Either::Left)
-                }
-            }
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Ne)
     }
-
     pub fn lt<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
-                    let a = alpha.bind(py);
-                    let b = beta?;
-                    if a.ne(&b)? {
-                        return a.lt(&b).map(Either::Left);
-                    }
-                }
-
-                self.len.lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Lt)
     }
-
     pub fn gt<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
-                    let b = beta?;
-                    let a = alpha.bind(py);
-                    if a.ne(&b)? {
-                        return Either::Left(a.gt(&b)?).pipe(Ok);
-                    }
-                }
-                self.len.gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Gt)
     }
-
     pub fn le<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
-                    let b = beta?;
-                    let a = alpha.bind(py);
-                    if a.ne(&b)? {
-                        return a.le(b).map(Either::Left);
-                    }
-                }
-
-                self.len.le(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Le)
     }
-
     pub fn ge<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
-                    let b = beta?;
-                    let a = alpha.bind(py);
-                    if a.ne(&b)? {
-                        return a.ge(b).map(Either::Left);
-                    }
-                }
-
-                self.len.ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Ge)
     }
     pub(super) fn extend_lists(&mut self, py: Python<'_>, values: &[Py<PyAny>]) {
         let val_len = values.len();
@@ -507,4 +401,43 @@ fn get_slice<'a>(lists: &'a [VecPy], bounds: &Bounds) -> impl Iterator<Item = &'
         .iter()
         .chain(lists[bounds.min.pos + 1..bounds.max.pos].iter().flatten())
         .chain(lists[bounds.max.pos][0..bounds.max.idx].iter())
+}
+
+#[inline]
+fn inner_cmp<'py>(data: &InnerData, other: SeqOrAny<'py>, op: CompareOp) -> PyCmpOut<'py, bool> {
+    let py = other.py();
+    let it = data.iter().map(|a| a.bind(py));
+    match (other, op) {
+        (Either::Left(seq), CompareOp::Eq) => {
+            if data.len == seq.len()? {
+                it.zip(seq.iter_py())
+                    .try_all(|(a, b)| a.eq(b?))
+                    .map(Either::Left)
+            } else {
+                Ok(Either::Left(false))
+            }
+        }
+        (Either::Left(seq), CompareOp::Ne) => {
+            if data.len == seq.len()? {
+                it.zip(seq.iter_py())
+                    .try_any(|(a, b)| a.ne(b?))
+                    .map(Either::Left)
+            } else {
+                Ok(Either::Left(true))
+            }
+        }
+        (Either::Left(seq), op) => it
+            .zip(seq.iter_py())
+            .try_find_map(|(a, b)| {
+                let b = b?;
+                if a.ne(&b)? {
+                    a.rich_compare_bool(&b, op).map(Some)
+                } else {
+                    Ok(None)
+                }
+            })?
+            .map_or_else(|| Ok(op.as_fn::<usize>()(&data.len, &seq.len()?)), Ok)
+            .map(Either::Left),
+        (Either::Right(any), _) => PyNotImplemented::from_cmp(any.py()),
+    }
 }

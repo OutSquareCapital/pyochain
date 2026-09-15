@@ -6,6 +6,7 @@ use crate::{
 use either::Either;
 use pyo3::{
     PyTypeInfo,
+    basic::CompareOp,
     call::PyCallArgs,
     prelude::*,
     types::{DerefToPyAny, PyBool, PyIterator, PyList, PyNotImplemented, PySet, PyTuple},
@@ -228,11 +229,11 @@ pub enum SetComp<'py, T, U> {
 }
 impl<'py, T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> SetComp<'py, T, U> {
     #[inline]
-    pub fn comp(self, op: impl CompareOpExtMethods<T, U>) -> PyCmpOut<'py, bool> {
+    pub fn comp(self, op: CompareOp) -> PyCmpOut<'py, bool> {
         match self {
-            Self::Identity => op.as_default().pipe(Either::Left).pipe(Ok),
+            Self::Identity => op.on_identity().pipe(Either::Left).pipe(Ok),
             Self::NotImplemented(py) => PyNotImplemented::from_cmp(py),
-            Self::Comparable(a, b) => op.apply(&a, &b).map(Either::Left),
+            Self::Comparable(a, b) => a.rich_compare_bool(&b, op).map(Either::Left),
         }
     }
 }
