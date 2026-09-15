@@ -181,6 +181,14 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
         self.find(&value)?
             .map_or(Ok(()), |mut loc| self.delete(value.py(), &mut loc))
     }
+    fn extend_from_any(&mut self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = iterable.py();
+        let values = iterable
+            .try_iter()?
+            .map(|x| x?.unbind().pipe(Ok))
+            .collect::<PyResult<Vec<_>>>()?;
+        self.extend(py, values)
+    }
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
         let values = self.inner().repeat(py, num);
         self.clear(py);

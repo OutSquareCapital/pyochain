@@ -261,12 +261,7 @@ pub(super) trait SortedListMethods:
         self.lock().discard(value)
     }
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
-        let py = iterable.py();
-        let values = iterable
-            .try_iter()?
-            .map(|x| x?.unbind().pipe(Ok))
-            .collect::<PyResult<Vec<_>>>()?;
-        self.lock().extend(py, values)
+        self.lock().extend_from_any(iterable)
     }
     #[allow(unused_variables)]
     fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
