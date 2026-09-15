@@ -14,11 +14,6 @@ use crate::{
 };
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedSet(pub(super) Arc<Mutex<SetData<ListsData>>>);
-impl From<SetData<ListsData>> for SortedSet {
-    fn from(data: SetData<ListsData>) -> Self {
-        data.pipe(Mutex::new).pipe(Arc::new).pipe(Self)
-    }
-}
 impl TryFrom<Bound<'_, PyAny>> for SortedSet {
     type Error = PyErr;
     fn try_from(iterable: Bound<'_, PyAny>) -> PyResult<Self> {
@@ -58,11 +53,6 @@ impl SortedSetMethods for SortedSet {
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedKeySet(pub(super) Arc<Mutex<SetData<KeysListsData>>>);
-impl From<SetData<KeysListsData>> for SortedKeySet {
-    fn from(data: SetData<KeysListsData>) -> Self {
-        data.pipe(Mutex::new).pipe(Arc::new).pipe(Self)
-    }
-}
 #[pymethods]
 impl SortedKeySet {
     #[new]

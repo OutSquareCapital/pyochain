@@ -12,16 +12,6 @@ use sorted_rs::{DictData, KeysListsData, ListsData};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 
-impl From<DictData<ListsData>> for SortedDict {
-    fn from(data: DictData<ListsData>) -> Self {
-        Self(Arc::new(Mutex::new(data)))
-    }
-}
-impl From<DictData<KeysListsData>> for SortedKeyDict {
-    fn from(data: DictData<KeysListsData>) -> Self {
-        Self(Arc::new(Mutex::new(data)))
-    }
-}
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends= abc::PyoMutableMapping, mapping)]
 pub struct SortedDict(pub(super) Arc<Mutex<DictData<ListsData>>>);
 
