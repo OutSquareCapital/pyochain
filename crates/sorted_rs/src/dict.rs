@@ -8,7 +8,8 @@ use pyochain_macros::{try_cast, try_cast_into};
 use tap::Pipe;
 
 use crate::{
-    InnerData, InnerGetter, KeysListsData, ListDataOwner, ListsData, ListsDataMethods, PyRepr,
+    InnerGetter, KeysListsData, ListDataOwner, ListsData, ListsDataMethods, PyRepr,
+    inner::InnerData,
 };
 pub struct DictData<T: ListsDataMethods>(T, pub Py<PyDict>);
 

@@ -46,19 +46,19 @@ impl ListsDataMethods for ListsData {
             ops::Maxes::BisectErr(err) => return Err(err),
             ops::Maxes::Empty => {
                 let unbounded = value.unbind();
-                self.0.lists.push(vec![unbounded.clone_ref(py)]);
+                self.0.values.push(vec![unbounded.clone_ref(py)]);
                 self.0.maxes.push(unbounded);
             }
             ops::Maxes::LenEQPos(mut loc) => {
                 loc.pos -= 1;
                 let unbounded = value.unbind();
-                self.0.lists.loc_push(&loc, unbounded.clone_ref(py));
+                self.0.values.loc_push(&loc, unbounded.clone_ref(py));
                 self.0.maxes[loc.pos] = unbounded;
                 self.expand(py, loc.pos);
             }
             ops::Maxes::LenNEPos(loc) => {
-                let res = self.0.lists[loc.pos].bisect_right(&value)?;
-                self.0.lists[loc.pos].insert(res, value.unbind());
+                let res = self.0.values[loc.pos].bisect_right(&value)?;
+                self.0.values[loc.pos].insert(res, value.unbind());
                 self.expand(py, loc.pos);
             }
         }
@@ -145,9 +145,9 @@ impl ListsDataMethods for ListsData {
         Ok(())
     }
     fn expand(&mut self, py: Python<'_>, pos: usize) {
-        match ops::Expand::new(self.0.lists[pos].len(), self.0.load, &self.0.idx) {
+        match ops::Expand::new(self.0.values[pos].len(), self.0.load, &self.0.idx) {
             ops::Expand::PosLenGtLoad => {
-                let half = self.0.lists[pos].split_off(self.0.load);
+                let half = self.0.values[pos].split_off(self.0.load);
                 let new_max_at_pos = self.values()[pos].last().unwrap().clone_ref(py);
                 let last_max = half.last().unwrap().clone_ref(py);
                 self.inner_mut()
@@ -207,7 +207,7 @@ impl ListsDataMethods for ListsData {
     fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
         self.inner_mut().extend_lists(py, values);
         self.0
-            .lists
+            .values
             .iter()
             .map(|x| x.last().unwrap().clone_ref(py))
             .pipe(|it| self.0.maxes.extend(it));

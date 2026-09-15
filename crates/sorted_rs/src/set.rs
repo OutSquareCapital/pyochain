@@ -1,6 +1,7 @@
 use crate::{
-    InnerData, InnerGetter, ListsDataMethods,
+    InnerGetter, ListsDataMethods,
     getters::ListDataOwner,
+    inner::InnerData,
     types::{IntOrSlice, ListOrAny},
 };
 use either::Either;

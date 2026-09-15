@@ -13,7 +13,7 @@ macro_rules! pyassert {
 pub fn check_empty(slf: &InnerData) -> PyResult<()> {
     pyassert!(slf.len == 0);
     pyassert!(slf.maxes.is_empty());
-    pyassert!(slf.lists.is_empty());
+    pyassert!(slf.values.is_empty());
     Ok(())
 }
 pub fn check_dict<T: ListsDataMethods>(data: &DictData<T>, py: Python<'_>) -> PyResult<()> {
@@ -42,12 +42,12 @@ pub fn check_set_len<T: ListsDataMethods>(checked: &SetData<T>, py: Python<'_>) 
 }
 pub fn check_list(py: Python<'_>, slf: &InnerData) -> PyResult<()> {
     pyassert!(slf.load >= 4);
-    pyassert!(slf.maxes.len() == slf.lists.len());
-    pyassert!(slf.len == slf.lists.iter().map(Vec::len).sum::<usize>());
+    pyassert!(slf.maxes.len() == slf.values.len());
+    pyassert!(slf.len == slf.values.iter().map(Vec::len).sum::<usize>());
 
     // Check all sublists are sorted.
 
-    for sublist in &slf.lists {
+    for sublist in &slf.values {
         for pos in 1..sublist.len() {
             pyassert!(sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?);
         }
@@ -55,13 +55,13 @@ pub fn check_list(py: Python<'_>, slf: &InnerData) -> PyResult<()> {
 
     // Check beginning/end of sublists are sorted.
 
-    for pos in 1..slf.lists.len() {
+    for pos in 1..slf.values.len() {
         pyassert!(
-            slf.lists[pos - 1]
+            slf.values[pos - 1]
                 .last()
                 .unwrap()
                 .bind(py)
-                .le(slf.lists[pos][0].bind(py))?
+                .le(slf.values[pos][0].bind(py))?
         );
     }
 
@@ -71,32 +71,32 @@ pub fn check_list(py: Python<'_>, slf: &InnerData) -> PyResult<()> {
         pyassert!(
             slf.maxes[pos]
                 .bind(py)
-                .eq(slf.lists[pos].last().unwrap().bind(py))?
+                .eq(slf.values[pos].last().unwrap().bind(py))?
         );
     }
 
     // Check sublist lengths are less than double load-factor.
 
     let double = slf.load << 1;
-    pyassert!(slf.lists.iter().all(|sublist| sublist.len() <= double));
+    pyassert!(slf.values.iter().all(|sublist| sublist.len() <= double));
 
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
 
     let half = slf.load >> 1;
-    for pos in 0..slf.lists.len().saturating_sub(1) {
-        pyassert!(slf.lists[pos].len() >= half);
+    for pos in 0..slf.values.len().saturating_sub(1) {
+        pyassert!(slf.values[pos].len() >= half);
     }
 
     if !slf.idx.is_empty() {
         pyassert!(slf.len == slf.idx[0]);
-        pyassert!(slf.idx.len() == slf.offset + slf.lists.len());
+        pyassert!(slf.idx.len() == slf.offset + slf.values.len());
 
         // Check index leaf nodes equal length of sublists.
 
-        for pos in 0..slf.lists.len() {
+        for pos in 0..slf.values.len() {
             let leaf = slf.idx[slf.offset + pos];
-            pyassert!(leaf.eq(&slf.lists[pos].len()));
+            pyassert!(leaf.eq(&slf.values[pos].len()));
         }
 
         // Check index branch nodes are the sum of their children.
@@ -214,8 +214,8 @@ fn show_list(py: Python<'_>, err: &PyErr, data: &InnerData) {
         format!("index: {:?}", data.idx),
         format!("len_maxes: {}", data.maxes.len()),
         format!("maxes: {:?}", data.maxes),
-        format!("len_lists: {}", data.lists.len()),
-        format!("lists: {:?}", data.lists),
+        format!("len_lists: {}", data.values.len()),
+        format!("lists: {:?}", data.values),
     ]
     .join("\n");
 

@@ -19,18 +19,18 @@ use pyo3_ext::{
 use std_tools::prelude::*;
 use tap::{Conv, Pipe};
 pub struct InnerData {
-    pub lists: Vec<VecPy>,
-    pub maxes: VecPy,
-    pub idx: Vec<usize>,
-    pub len: usize,
-    pub offset: usize,
-    pub load: usize,
+    pub(super) values: Vec<VecPy>,
+    pub(super) maxes: VecPy,
+    pub(super) idx: Vec<usize>,
+    pub(super) len: usize,
+    pub(super) offset: usize,
+    pub(super) load: usize,
 }
 
 impl Default for InnerData {
     fn default() -> Self {
         Self {
-            lists: Vec::default(),
+            values: Vec::default(),
             maxes: Vec::default(),
             idx: Vec::default(),
             len: usize::default(),
@@ -42,7 +42,7 @@ impl Default for InnerData {
 impl InnerData {
     #[inline]
     pub fn clear(&mut self) {
-        self.lists.clear();
+        self.values.clear();
         self.maxes.clear();
         self.idx.clear();
         self.len = 0;
@@ -55,7 +55,7 @@ impl InnerData {
     }
     #[inline(always)]
     pub fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
-        self.lists.iter().flatten()
+        self.values.iter().flatten()
     }
 
     pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
@@ -102,8 +102,8 @@ impl InnerData {
     }
 
     pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let first_list = &self.lists[0];
-        let last_list = self.lists.last().unwrap();
+        let first_list = &self.values[0];
+        let last_list = self.values.last().unwrap();
         let len_last = last_list.len().cast_signed();
         match (index.conv::<Nb>(), self.len.cmp(&0)) {
             (Nb::Zero, Ordering::Greater | Ordering::Less) => {
@@ -132,7 +132,7 @@ impl InnerData {
             _ => {
                 let mut bounds = Bounds::default();
                 self.set_pos(index, &mut bounds.min)?;
-                self.lists
+                self.values
                     .loc(&bounds.min)
                     .clone_ref(py)
                     .into_bound(py)
@@ -154,7 +154,7 @@ impl InnerData {
             }
             (Nb::One, Ordering::Less) => {
                 self.set_pos(start, &mut bounds.min)?;
-                let start_list = &self.lists[bounds.min.pos];
+                let start_list = &self.values[bounds.min.pos];
                 bounds.max.idx = bounds.min.idx + (stop - start).cast_unsigned();
                 match (start_list.len().cmp(&bounds.max.idx), stop_eq_len) {
                     // Small slice optimization: start index and stop index are
@@ -166,16 +166,16 @@ impl InnerData {
                         .collect::<Vec<_>>()
                         .pipe(Ok),
                     (Ordering::Less, Ordering::Equal) => {
-                        bounds.max.pos = self.lists.len() - 1;
-                        bounds.max.idx = self.lists.loc_len(&bounds.max);
-                        get_slice(&self.lists, &bounds)
+                        bounds.max.pos = self.values.len() - 1;
+                        bounds.max.idx = self.values.loc_len(&bounds.max);
+                        get_slice(&self.values, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                             .pipe(Ok)
                     }
                     (Ordering::Less, Ordering::Greater | Ordering::Less) => {
                         self.set_pos(stop, &mut bounds.max)?;
-                        get_slice(&self.lists, &bounds)
+                        get_slice(&self.values, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                             .pipe(Ok)
@@ -206,7 +206,7 @@ impl InnerData {
     }
 
     fn build_index(&mut self) {
-        let row0 = self.lists.iter().map(Vec::len).collect::<Vec<usize>>();
+        let row0 = self.values.iter().map(Vec::len).collect::<Vec<usize>>();
 
         if row0.len() == 1 {
             self.idx.extend(&row0);
@@ -252,7 +252,7 @@ impl InnerData {
         self.idx[0] += 1;
     }
     pub(super) fn remove_pos(&mut self, loc: &Loc) {
-        self.lists.remove(loc.pos);
+        self.values.remove(loc.pos);
         self.maxes.remove(loc.pos);
         self.idx.clear();
     }
@@ -265,7 +265,7 @@ impl InnerData {
     ) {
         self.maxes[pos] = new_max_at_pos;
         self.maxes.insert(pos + 1, last_max);
-        self.lists.insert(pos + 1, half);
+        self.values.insert(pos + 1, half);
         self.idx.clear();
     }
 
@@ -284,9 +284,9 @@ impl InnerData {
 
     pub(super) fn set_pos(&mut self, mut idx: isize, loc: &mut Loc) -> PyResult<()> {
         if idx < 0 {
-            if idx >= -self.lists.last().unwrap().len().cast_signed() {
-                loc.pos = self.lists.len() - 1;
-                loc.idx = (self.lists.last().unwrap().len().cast_signed() + idx).cast_unsigned();
+            if idx >= -self.values.last().unwrap().len().cast_signed() {
+                loc.pos = self.values.len() - 1;
+                loc.idx = (self.values.last().unwrap().len().cast_signed() + idx).cast_unsigned();
                 return Ok(());
             }
 
@@ -299,7 +299,7 @@ impl InnerData {
             return Err(errors::out_of_range());
         }
 
-        if idx < self.lists[0].len().cast_signed() {
+        if idx < self.values[0].len().cast_signed() {
             loc.pos = 0;
             loc.idx = idx.cast_unsigned();
             return Ok(());
@@ -355,8 +355,8 @@ impl InnerData {
                 self.set_pos(indices.start, &mut bounds.min)?;
 
                 if indices.stop == length {
-                    bounds.max.pos = self.lists.len() - 1;
-                    bounds.max.idx = self.lists.last().unwrap().len();
+                    bounds.max.pos = self.values.len() - 1;
+                    bounds.max.idx = self.values.last().unwrap().len();
                 } else {
                     self.set_pos(indices.stop, &mut bounds.max)?;
                 }
@@ -392,7 +392,7 @@ impl InnerData {
                     .map(|x| x.clone_ref(py))
                     .collect::<Vec<_>>()
             })
-            .pipe(|it| self.lists.extend(it));
+            .pipe(|it| self.values.extend(it));
     }
 }
 

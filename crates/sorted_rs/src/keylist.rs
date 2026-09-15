@@ -158,11 +158,11 @@ impl ListsDataMethods for KeysListsData {
                 let (left, right) = self.1.split_at_mut(loc.pos);
                 left[prev].append(&mut right[0]);
 
-                let mut removed = self.0.lists[loc.pos]
+                let mut removed = self.0.values[loc.pos]
                     .iter()
                     .map(|x| x.clone_ref(py))
                     .collect::<Vec<_>>();
-                self.0.lists[prev].append(removed.as_mut());
+                self.0.values[prev].append(removed.as_mut());
                 self.0.remove_pos(loc);
                 self.maxes_mut()[prev] = left[prev].last().unwrap().clone_ref(py);
                 self.1.remove(loc.pos);
@@ -182,7 +182,7 @@ impl ListsDataMethods for KeysListsData {
         match ops::Expand::new((self.1[pos]).len(), self.load(), self.idx()) {
             ops::Expand::PosLenGtLoad => {
                 let half_keys = self.1[pos].split_off(self.0.load);
-                let half = self.0.lists[pos].split_off(self.0.load);
+                let half = self.0.values[pos].split_off(self.0.load);
                 let new_max_at_pos = self.1[pos].last().unwrap().clone_ref(py);
                 let last_max = half_keys.last().unwrap().clone_ref(py);
                 self.inner_mut()

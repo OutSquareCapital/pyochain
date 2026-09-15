@@ -46,10 +46,10 @@ pub trait ListDataGetters: Sized {
 
 impl<T: InnerGetter> ListDataGetters for T {
     fn values(&self) -> &[VecPy] {
-        &self.inner().lists
+        &self.inner().values
     }
     fn values_mut(&mut self) -> &mut Vec<VecPy> {
-        &mut self.inner_mut().lists
+        &mut self.inner_mut().values
     }
     fn maxes(&self) -> &[Py<PyAny>] {
         &self.inner().maxes
