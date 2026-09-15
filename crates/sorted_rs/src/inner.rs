@@ -9,6 +9,7 @@ use crate::{
 use either::Either;
 use pyo3::{
     basic::CompareOp,
+    exceptions::PyValueError,
     prelude::*,
     types::{PyList, PyNotImplemented, PySlice, PySliceIndices},
 };
@@ -102,41 +103,38 @@ impl InnerData {
     }
 
     pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let first_list = &self.values[0];
-        let last_list = self.values.last().unwrap();
-        let len_last = last_list.len().cast_signed();
-        match (index.conv::<Nb>(), self.len.cmp(&0)) {
-            (Nb::Zero, Ordering::Greater | Ordering::Less) => {
-                first_list[0].clone_ref(py).into_bound(py).pipe(Ok)
-            }
-            (Nb::NegOne, Ordering::Greater | Ordering::Less) => last_list
-                .last()
-                .unwrap()
+        if self.len == 0 {
+            Err(errors::out_of_range())
+        } else {
+            let first_list = &self.values[0];
+            let last_list = self.values.last().unwrap();
+            let len_last = last_list.len().cast_signed();
+            match index.conv::<Nb>() {
+                Nb::Zero => first_list[0].clone_ref(py).into_bound(py).pipe(Ok),
+                Nb::NegOne => last_list
+                    .last()
+                    .unwrap()
+                    .clone_ref(py)
+                    .into_bound(py)
+                    .pipe(Ok),
+                Nb::One | Nb::Pos if index < first_list.len().cast_signed() => first_list
+                    [index.cast_unsigned()]
                 .clone_ref(py)
                 .into_bound(py)
                 .pipe(Ok),
-            (_, Ordering::Equal) => Err(errors::out_of_range()),
-            (Nb::One | Nb::Pos, Ordering::Greater | Ordering::Less)
-                if index < first_list.len().cast_signed() =>
-            {
-                first_list[index.cast_unsigned()]
+                Nb::Neg if -len_last < index => last_list[(len_last + index).cast_unsigned()]
                     .clone_ref(py)
                     .into_bound(py)
-                    .pipe(Ok)
-            }
-            (Nb::Neg, Ordering::Greater | Ordering::Less) if -len_last < index => last_list
-                [(len_last + index).cast_unsigned()]
-            .clone_ref(py)
-            .into_bound(py)
-            .pipe(Ok),
-            _ => {
-                let mut bounds = Bounds::default();
-                self.set_pos(index, &mut bounds.min)?;
-                self.values
-                    .loc(&bounds.min)
-                    .clone_ref(py)
-                    .into_bound(py)
-                    .pipe(Ok)
+                    .pipe(Ok),
+                Nb::Neg | Nb::Pos | Nb::One => {
+                    let mut bounds = Bounds::default();
+                    self.set_pos(index, &mut bounds.min)?;
+                    self.values
+                        .loc(&bounds.min)
+                        .clone_ref(py)
+                        .into_bound(py)
+                        .pipe(Ok)
+                }
             }
         }
     }
@@ -147,12 +145,13 @@ impl InnerData {
         } = slice.indices(self.len.cast_signed())?;
         let stop_eq_len = stop.cmp(&self.len.cast_signed());
         let mut bounds = Bounds::default();
-        match (step.conv::<Nb>(), start.cmp(&stop)) {
+        match (start.cmp(&stop), step.conv::<Nb>()) {
+            (_, Nb::Zero) => Err(PyValueError::new_err("slice step cannot be zero")),
             // Whole slice optimization: start to stop slices the whole sorted list.
-            (Nb::One, Ordering::Less) if start == 0 && stop_eq_len.is_eq() => {
+            (Ordering::Less, Nb::One) if start == 0 && stop_eq_len.is_eq() => {
                 self.collapse(py).pipe(Ok)
             }
-            (Nb::One, Ordering::Less) => {
+            (Ordering::Less, Nb::One) => {
                 self.set_pos(start, &mut bounds.min)?;
                 let start_list = &self.values[bounds.min.pos];
                 bounds.max.idx = bounds.min.idx + (stop - start).cast_unsigned();
@@ -182,26 +181,25 @@ impl InnerData {
                     }
                 }
             }
-            (Nb::NegOne, Ordering::Greater) => {
+            (Ordering::Greater, Nb::NegOne) => {
                 let mut result = self.get_slice(&PySlice::new(py, stop + 1, start + 1, 1))?;
                 result.reverse();
                 Ok(result)
             }
-            // Return a list because a negative step could reverse the order
-            // of the items and this could be the desired behavior.
-            (Nb::One | Nb::Pos, _) => (start..stop)
-                .step_by(step.cast_unsigned())
-                .map(|i| self.get_item(py, i).map(Bound::unbind))
-                .collect(),
             // Negative step with nothing to iterate (mirrors Python's `range`,
             // which is empty when `start <= stop` for a negative step).
-            (_, Ordering::Less | Ordering::Equal) => Ok(Vec::new()),
-            _ => {
-                // Negative step, `start > stop` guaranteed by the arm above.
+            (Ordering::Less | Ordering::Equal, Nb::NegOne | Nb::Neg) => Ok(Vec::new()),
+            (Ordering::Greater, Nb::Neg) => {
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .map(|i| self.get_item(py, i).map(Bound::unbind))
                     .collect()
             }
+            // Return a list because a negative step could reverse the order
+            // of the items and this could be the desired behavior.
+            (_, Nb::One | Nb::Pos) => (start..stop)
+                .step_by(step.cast_unsigned())
+                .map(|i| self.get_item(py, i).map(Bound::unbind))
+                .collect(),
         }
     }
 
