@@ -141,6 +141,7 @@ impl InnerData {
                     .pipe(Ok)
             }
             _ => {
+                let mut bounds = Bounds::default();
                 self.set_pos(index, &mut bounds.min)?;
                 self.lists
                     .loc(&bounds.min)

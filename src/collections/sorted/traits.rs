@@ -158,7 +158,6 @@ where
         self.lock().list_mut().bisect_right(key)
     }
 }
-
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
 pub(super) trait SortedListMethods:
     SortedCollectionsMethods + IntoInit + From<Self::L> + ListGetter<T = Self::L>
@@ -166,11 +165,7 @@ pub(super) trait SortedListMethods:
     type L: ListsDataMethods;
     fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let out = match other.cast_exact::<Self>().map(Bound::get) {
-            Ok(slf) if self.is(slf) => ListAdd::Identity,
-            Ok(list) => list.lock().pipe(ListAdd::Sorted),
-            Err(_) => other.try_iter().map(ListAdd::Iterator)?,
-        };
+        let out = into_list_add(self, other)?;
         self.lock().concat(py, out)?.conv::<Self>().into_bound(py)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -261,7 +256,24 @@ pub(super) trait SortedListMethods:
         self.lock().discard(value)
     }
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.lock().extend_from_any(iterable)
+        let py = iterable.py();
+        let out = into_list_add(self, iterable)?;
+        match out {
+            ListAdd::Identity => {
+                let values = self.lock().inner().collapse(py);
+                self.lock().extend(py, values)
+            }
+            ListAdd::Sorted(list) => {
+                let values = list.inner().collapse(py);
+                self.lock().extend(py, values)
+            }
+            ListAdd::Iterator(it) => {
+                let values = it
+                    .map(|x| x?.unbind().pipe(Ok))
+                    .collect::<PyResult<Vec<_>>>()?;
+                self.lock().extend(py, values)
+            }
+        }
     }
     #[allow(unused_variables)]
     fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
@@ -665,5 +677,16 @@ where
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         self.lock().update(py, m, kwargs)
+    }
+}
+
+fn into_list_add<'py, T: SortedListMethods>(
+    left: &T,
+    right: &'py Bound<'py, PyAny>,
+) -> PyResult<ListAdd<'py, T::L>> {
+    match right.cast_exact::<T>().map(Bound::get) {
+        Ok(slf) if left.is(slf) => ListAdd::Identity.pipe(Ok),
+        Ok(list) => list.lock().pipe(ListAdd::Sorted).pipe(Ok),
+        Err(_) => right.try_iter().map(ListAdd::Iterator),
     }
 }
