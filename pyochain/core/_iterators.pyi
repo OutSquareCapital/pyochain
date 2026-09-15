@@ -107,6 +107,7 @@ class Iter[T](PyoIterator[T], ArgsWrapper[T]):
     def of[I](*elements: I) -> Iter[I]: ...
     @override
     @staticmethod
+    # pyrefly: ignore [bad-override]
     def wrap[W](wrapped: Iterator[W], /) -> Iter[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
 
 @final

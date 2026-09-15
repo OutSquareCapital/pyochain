@@ -252,6 +252,7 @@ class Set[T](PyoSet[T], ArgsWrapper[T]):
     def __hash__(self) -> int: ...
     @override
     @staticmethod
+    # pyrefly: ignore [bad-override]
     def wrap[W](iterable: frozenset[W]) -> Set[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     @staticmethod
@@ -562,6 +563,7 @@ class SetMut[T](PyoMutableSet[T], ArgsWrapper[T]):
 
     @override
     @staticmethod
+    # pyrefly: ignore [bad-override]
     def wrap[W](iterable: set[W]) -> SetMut[W]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     @staticmethod
