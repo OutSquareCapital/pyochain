@@ -1,5 +1,5 @@
 use crate::{
-    InnerGetter, ListsDataMethods,
+    InnerGetter, KeysListsData, ListsData, ListsDataMethods, PyRepr,
     getters::ListDataOwner,
     inner::InnerData,
     types::{IntOrSlice, ListOrAny},
@@ -28,6 +28,21 @@ impl<T: InnerGetter> InnerGetter for SetData<T> {
     }
 }
 
+impl PyRepr for SetData<ListsData> {
+    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
+        let name = T::type_object(py).name()?;
+        let self_repr = self.inner().as_pylist(py)?.repr()?;
+        Ok(format!("{name}({self_repr})"))
+    }
+}
+impl PyRepr for SetData<KeysListsData> {
+    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
+        let name = T::type_object(py).name()?;
+        let key = format!(", key={}", self.list().2.bind(py).repr()?);
+        let list_repr = self.inner().as_pylist(py)?.repr()?;
+        Ok(format!("{name}({list_repr}{key})"))
+    }
+}
 impl<T: ListsDataMethods> ListDataOwner for SetData<T> {
     type List = T;
 

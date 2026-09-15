@@ -2,12 +2,12 @@ use crate::{
     abc,
     collections::sorted::{
         iter,
-        traits::{ListGetter, SortedCollectionsMethods, SortedListMethods},
+        traits::{ListGetter, SortedListMethods},
     },
     traits::IntoInit,
 };
 use pyo3::prelude::*;
-use sorted_rs::{KeysListsData, ListsDataMethods};
+use sorted_rs::KeysListsData;
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -38,19 +38,6 @@ impl SortedKeyList {
             slf.extend(&iterable)?;
         }
         slf.init().pipe(Ok)
-    }
-}
-impl SortedCollectionsMethods for SortedKeyList {
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let mut data = self.lock();
-        let key = data.2.bind(value.py()).call1((value,))?;
-        data.bisect_left(&key)
-    }
-
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let mut data = self.lock();
-        let key = data.2.bind(value.py()).call1((value,))?;
-        data.bisect_right(&key)
     }
 }
 impl From<KeysListsData> for SortedKeyList {

@@ -1,6 +1,9 @@
-use pyo3::exceptions::PyKeyError;
-use pyo3::types::{PyDict, PyString};
-use pyo3::{prelude::*, types::PyMapping};
+use pyo3::{
+    PyTypeInfo,
+    exceptions::PyKeyError,
+    prelude::*,
+    types::{PyDict, PyMapping},
+};
 use pyo3_ext::prelude::*;
 use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
@@ -10,7 +13,7 @@ use crate::{
     InnerGetter, KeysListsData, ListDataOwner, ListsData, ListsDataMethods, PyRepr,
     inner::InnerData,
 };
-pub struct DictData<T: ListsDataMethods>(T, pub Py<PyDict>);
+pub struct DictData<T: ListsDataMethods>(T, pub(super) Py<PyDict>);
 
 impl<T: ListsDataMethods> InnerGetter for DictData<T> {
     fn inner(&self) -> &InnerData {
@@ -32,14 +35,15 @@ impl<T: ListsDataMethods> ListDataOwner for DictData<T> {
     }
 }
 impl PyRepr for DictData<ListsData> {
-    fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String> {
+    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
+        let name = T::type_object(py).name()?;
         let items = self.values_to_str(name.py())?;
         Ok(format!("{name}({{{items}}})"))
     }
 }
 impl PyRepr for DictData<KeysListsData> {
-    fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String> {
-        let py = name.py();
+    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
+        let name = T::type_object(py).name()?;
         let key_arg = self.list().2.bind(py).repr()?;
         let items = self.values_to_str(py)?;
         Ok(format!("{name}({key_arg}, {{{items}}})"))

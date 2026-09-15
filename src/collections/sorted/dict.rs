@@ -2,13 +2,13 @@ use crate::{
     abc,
     collections::sorted::{
         SortedItemsView, SortedKeysView, SortedValuesView, iter,
-        traits::{ListGetter, SortedCollectionsMethods, SortedDictMethods},
+        traits::{ListGetter, SortedDictMethods},
         views::{SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView},
     },
     traits::IntoInit,
 };
 use pyo3::{prelude::*, types::PyDict};
-use sorted_rs::{DictData, KeysListsData, ListDataOwner, ListsData, ListsDataMethods};
+use sorted_rs::{DictData, KeysListsData, ListsData};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 
@@ -89,29 +89,4 @@ impl SortedDictMethods for SortedKeyDict {
     type IView = SortedByKeyItemsView;
     type KView = SortedByKeyKeysView;
     type VView = SortedByKeyValuesView;
-}
-impl SortedCollectionsMethods for SortedDict {
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect_left(value)
-    }
-
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect_right(value)
-    }
-}
-
-impl SortedCollectionsMethods for SortedKeyDict {
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let py = value.py();
-        let mut data = self.lock();
-        let key = data.list().2.bind(py).call1((value,))?;
-        data.list_mut().bisect_left(&key)
-    }
-
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let py = value.py();
-        let mut data = self.lock();
-        let key = data.list().2.bind(py).call1((value,))?;
-        data.list_mut().bisect_right(&key)
-    }
 }

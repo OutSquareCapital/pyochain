@@ -1,6 +1,6 @@
 /// Module for bisect functions, adapted from the Python standard library's bisect module.\
 use pyo3::prelude::*;
-pub(super) trait Bisect {
+pub trait Bisect {
     fn bisect_left(&self, item: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_right(&self, item: &Bound<'_, PyAny>) -> PyResult<usize>;
 }

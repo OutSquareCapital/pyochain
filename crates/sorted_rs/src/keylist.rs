@@ -11,9 +11,9 @@ use crate::{
     traits::{ListsDataMethods, NestedVec, PyRepr, update_list_by},
     types::VecPy,
 };
-use pyo3::{prelude::*, types::PyString};
+use pyo3::{PyTypeInfo, prelude::*};
 use tap::prelude::*;
-pub struct KeysListsData(InnerData, pub Vec<VecPy>, pub Py<PyAny>);
+pub struct KeysListsData(InnerData, pub Vec<VecPy>, pub(super) Py<PyAny>);
 
 impl KeysListsData {
     #[must_use]
@@ -26,8 +26,8 @@ impl KeysListsData {
 }
 impl_inner_getter!(KeysListsData);
 impl PyRepr for KeysListsData {
-    fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String> {
-        let py = name.py();
+    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
+        let name = T::type_object(py).name()?;
         let key_repr = self.2.bind(py).repr()?;
         self.inner()
             .as_pylist(py)?
@@ -102,6 +102,14 @@ impl ListsDataMethods for KeysListsData {
                 Ok(self.inner_mut().loc(&loc))
             }
         }
+    }
+    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.extract_key(value)
+            .and_then(|x| self.bisect(&x, Bisect::bisect_left))
+    }
+    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.extract_key(value)
+            .and_then(|x| self.bisect(&x, Bisect::bisect_right))
     }
     #[inline]
     fn clear(&mut self, _py: Python<'_>) {

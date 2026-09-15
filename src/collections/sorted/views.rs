@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use crate::{
     abc::PyoSequence,
     collections::{
-        SortedSet,
+        SortedDict, SortedKeyDict, SortedSet,
         sorted::traits::{ObjOrVec, SortedViewMethods},
     },
     traits::IntoInit,
@@ -30,7 +30,7 @@ macro_rules! impl_base_sorted_view {
 
                 impl SortedViewMethods for $t {
                         type L = $l;
-                        const REF_NAME: &'static str = stringify!($name);
+                        type M = $name;
                         fn mapping(&self) -> MutexGuard<'_, DictData<Self::L>> {
                             self.0.try_into_inner()
                         }

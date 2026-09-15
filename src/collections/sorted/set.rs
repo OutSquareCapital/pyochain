@@ -1,6 +1,6 @@
-use pyo3::{PyTypeInfo, prelude::*, types::PySet};
+use pyo3::{prelude::*, types::PySet};
 
-use sorted_rs::{InnerGetter, KeysListsData, ListDataOwner, ListsData, ListsDataMethods, SetData};
+use sorted_rs::{KeysListsData, ListsData, SetData};
 use std::sync::{Arc, Mutex};
 use tap::{Conv, Pipe};
 
@@ -8,34 +8,10 @@ use crate::{
     abc,
     collections::sorted::{
         iter,
-        traits::{ListGetter, SortedCollectionsMethods, SortedSetMethods},
+        traits::{ListGetter, SortedSetMethods},
     },
     traits::IntoInit,
 };
-
-impl SortedCollectionsMethods for SortedSet {
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect_left(value)
-    }
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect_right(value)
-    }
-}
-impl SortedCollectionsMethods for SortedKeySet {
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let py = value.py();
-        let mut data = self.lock();
-        let key = data.list().2.bind(py).call1((value,))?;
-        data.list_mut().bisect_left(&key)
-    }
-
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let py = value.py();
-        let mut data = self.lock();
-        let key = data.list().2.bind(py).call1((value,))?;
-        data.list_mut().bisect_right(&key)
-    }
-}
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedSet(pub(super) Arc<Mutex<SetData<ListsData>>>);
 impl From<SetData<ListsData>> for SortedSet {
@@ -79,13 +55,6 @@ impl SortedSet {
 }
 impl SortedSetMethods for SortedSet {
     type L = ListsData;
-
-    //@recursive_repr()
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let type_name = Self::type_object(py).name()?;
-        let self_repr = self.lock().inner().as_pylist(py)?.repr()?;
-        Ok(format!("{type_name}({self_repr})"))
-    }
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedKeySet(pub(super) Arc<Mutex<SetData<KeysListsData>>>);
@@ -125,13 +94,4 @@ impl ListGetter for SortedKeySet {
 }
 impl SortedSetMethods for SortedKeySet {
     type L = KeysListsData;
-
-    //@recursive_repr()
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let inner = self.lock();
-        let key = format!(", key={}", inner.list().2.bind(py).repr()?);
-        let type_name = Self::type_object(py).name()?;
-        let list_repr = inner.inner().as_pylist(py)?.repr()?;
-        Ok(format!("{type_name}({list_repr}{key})"))
-    }
 }

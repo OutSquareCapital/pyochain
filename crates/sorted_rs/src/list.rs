@@ -1,4 +1,4 @@
-use pyo3::{prelude::*, types::PyString};
+use pyo3::{PyTypeInfo, prelude::*};
 use tap::Pipe;
 
 use crate::{
@@ -17,9 +17,10 @@ use crate::{
 pub struct ListsData(InnerData);
 impl_inner_getter!(ListsData);
 impl PyRepr for ListsData {
-    fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String> {
+    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
+        let name = T::type_object(py).name()?;
         self.inner()
-            .as_pylist(name.py())?
+            .as_pylist(py)?
             .repr()
             .map(|repr| format!("{name}({repr})"))
     }
@@ -83,6 +84,12 @@ impl ListsDataMethods for ListsData {
                 Ok(self.inner_mut().loc(&loc))
             }
         }
+    }
+    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.bisect(value, Bisect::bisect_left)
+    }
+    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.bisect(value, Bisect::bisect_right)
     }
     #[inline]
     fn clear(&mut self, _py: Python<'_>) {

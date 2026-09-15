@@ -1,17 +1,16 @@
 use std::{cmp::Ordering, sync::MutexGuard};
 
 use crate::{
-    Bounds, InnerGetter, ListDataGetters, Loc,
-    bisect::Bisect,
-    errors,
+    Bounds, InnerGetter, ListDataGetters, Loc, errors,
     indexing::Nb,
     types::{IntOrSlice, ListOrAny, VecPy},
 };
 use either::Either;
 use pyo3::{
+    PyTypeInfo,
     exceptions::PyIndexError,
     prelude::*,
-    types::{PyIterator, PyList, PySlice, PySliceIndices, PyString},
+    types::{PyIterator, PyList, PySlice, PySliceIndices},
 };
 use pyo3_ext::prelude::CollectBoundIterator;
 use tap::prelude::*;
@@ -44,7 +43,7 @@ impl<T> NestedVec<T> for [Vec<T>] {
     }
 }
 pub trait PyRepr {
-    fn repr(&self, name: &Bound<'_, PyString>) -> PyResult<String>;
+    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String>;
 }
 pub enum ListAdd<'py, T> {
     Identity,
@@ -96,12 +95,8 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
         value: &Bound<'_, PyAny>,
         func: F,
     ) -> PyResult<usize>;
-    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.bisect(value, Bisect::bisect_left)
-    }
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.bisect(value, Bisect::bisect_right)
-    }
+    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
+    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.find(value).map(|x| x.is_some())
     }

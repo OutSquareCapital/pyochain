@@ -10,14 +10,16 @@ use pyo3::{
     exceptions::PyNotImplementedError,
     prelude::*,
     pyclass::CompareOp,
-    types::{PyBool, PyDict, PyMapping, PySet, PyString, PyTuple},
+    types::{PyBool, PyDict, PyMapping, PySet, PyTuple},
 };
 use pyo3_ext::prelude::*;
 use pyo3_ext::types::PyCmpOut;
 use pyochain_macros::{py_abc, try_cast_into};
 use sorted_rs::{
     Bounds, DictData, InnerGetter, KeysListsData, ListAdd, ListDataGetters, ListDataOwner,
-    ListsData, ListsDataMethods, PyRepr, SetComp, SetData, iter as rsiter,
+    ListsData, ListsDataMethods, PyRepr, SetComp, SetData,
+    bisect::Bisect,
+    iter as rsiter,
     types::{DictDataRef, IntOrSlice, SeqOrAny},
     views,
 };
@@ -30,7 +32,7 @@ pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyoVec>, Bound<'py, P
 pub(super) trait ListGetter:
     PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
-    type T: ListDataGetters + ListDataOwner;
+    type T: ListDataGetters + ListDataOwner + PyRepr;
     type I: PySortedIter + From<rsiter::Bounded<Self::T>>;
     type IRev: PySortedIter + From<rsiter::BoundedRev<Self::T>>;
     type IFull: PySortedIter + From<rsiter::Full<Self::T>>;
@@ -70,8 +72,15 @@ pub(super) trait ListGetter:
     sorted::SortedKeyDict
 )]
 pub(super) trait SortedCollectionsMethods: ListGetter {
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        self.lock().repr::<Self>(py)
+    }
+    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.lock().list_mut().bisect_left(value)
+    }
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.lock().list_mut().bisect_right(value)
+    }
     fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
         self.inner()
             .clone()
@@ -150,10 +159,10 @@ where
         self.iter_bounds(py, bounds, reverse)
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect_left(key)
+        self.lock().list_mut().bisect(key, Bisect::bisect_left)
     }
     fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect_right(key)
+        self.lock().list_mut().bisect(key, Bisect::bisect_right)
     }
 }
 #[py_abc(sorted::SortedList, sorted::SortedKeyList)]
@@ -208,9 +217,6 @@ pub(super) trait SortedListMethods:
 
     fn __radd__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__add__(other)
-    }
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        self.lock().repr(&Self::type_object(py).name()?)
     }
     fn __rmul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
         self.__mul__(py, num)
@@ -320,7 +326,6 @@ pub(super) trait SortedSetMethods:
         }
         .comp(op)
     }
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.get_set(value.py()).contains(value)
     }
@@ -526,7 +531,7 @@ where
     DictData<Self::L>: PyRepr,
 {
     type L: ListsDataMethods;
-    const REF_NAME: &'static str;
+    type M: PyTypeInfo;
     #[skip]
     fn mapping(&self) -> MutexGuard<'_, DictData<Self::L>>;
     fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
@@ -535,7 +540,7 @@ where
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
-        let values = self.mapping().repr(&PyString::new(py, Self::REF_NAME))?;
+        let values = self.mapping().repr::<Self::M>(py)?;
         Ok(format!("{name}({values})"))
     }
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
@@ -553,11 +558,6 @@ where
     type KView: SortedViewMethods<L = Self::L>;
     type VView: SortedViewMethods<L = Self::L>;
     type IView: SortedViewMethods<L = Self::L>;
-    // @recursive_repr()
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name()?;
-        self.lock().repr(&name)
-    }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.lock().contains(value)
     }
