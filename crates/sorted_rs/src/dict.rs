@@ -1,5 +1,4 @@
 use pyo3::exceptions::PyKeyError;
-use pyo3::ffi;
 use pyo3::types::{PyDict, PyString};
 use pyo3::{prelude::*, types::PyMapping};
 use pyo3_ext::prelude::*;
@@ -177,8 +176,12 @@ impl<T: ListsDataMethods> DictData<T> {
         let inner = PyDict::new(py);
         let unbounded = v
             .into_iter()
-            .map(|res| res.and_then(|(key, value)| fill_dict(&inner, py, key, value)))
-            .map(|x| x.map(|(k, _)| k.unbind()))
+            .map(|res| {
+                res.and_then(|(key, value)| {
+                    inner.set_item(&key, &value)?;
+                    Ok(key.unbind())
+                })
+            })
             .collect::<PyResult<Vec<_>>>()?;
         let list = self.0.list().as_owned_from(py, unbounded)?;
         DictData::new(list, inner.unbind()).pipe(Ok)
@@ -288,17 +291,5 @@ impl<T: ListsDataMethods> DictData<T> {
                 })
             }
         }
-    }
-}
-
-fn fill_dict<'py>(
-    inner: &Bound<'py, PyDict>,
-    py: Python<'py>,
-    key: Bound<'py, PyAny>,
-    value: Bound<'py, PyAny>,
-) -> PyResult<DictItem<'py>> {
-    match unsafe { ffi::PyDict_SetItem(inner.as_ptr(), key.as_ptr(), value.as_ptr()) } {
-        -1 => Err(PyErr::fetch(py)),
-        _ => Ok((key, value)),
     }
 }
