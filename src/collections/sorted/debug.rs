@@ -1,13 +1,13 @@
 use crate::collections::{
     SortedDict, SortedKeyDict, SortedKeyList, SortedList,
     sorted::{
+        getters::ListGetter,
         set::{SortedKeySet, SortedSet},
-        traits::ListGetter,
     },
 };
 use pyo3::prelude::*;
 use pyo3_ext::types::BoundedEither;
-use sorted_rs::{InnerGetter, debug};
+use sorted_rs::{debug, prelude::*};
 use tap::Pipe;
 
 #[pyfunction]
