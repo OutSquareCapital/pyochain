@@ -19,7 +19,6 @@ pub mod builtins {
     use super::*;
 
     const BUILTINS: &str = "builtins";
-    static ID: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
@@ -35,12 +34,6 @@ pub mod builtins {
     #[inline(always)]
     pub fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
         OBJECT.import(py, BUILTINS, "object")?.call0()
-    }
-    #[inline(always)]
-    pub fn id<'py>(obj: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        ID.import(obj.py(), BUILTINS, "id")?
-            .call1((obj,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
     }
     #[inline(always)]
     pub fn all<'py>(iterator: &Bound<'py, PyIterator>) -> PyResult<Bound<'py, PyBool>> {
