@@ -22,7 +22,6 @@ pub mod builtins {
     static ID: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static ABS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static MAX: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static MIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
@@ -48,10 +47,6 @@ pub mod builtins {
         ALL.import(iterator.py(), BUILTINS, "all")?
             .call1((iterator,))
             .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
-    }
-    #[inline(always)]
-    pub fn abs<'py>(value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        ABS.import(value.py(), BUILTINS, "abs")?.call1((value,))
     }
     #[inline(always)]
     pub fn any<'py>(iterator: &Bound<'py, PyIterator>) -> PyResult<Bound<'py, PyBool>> {

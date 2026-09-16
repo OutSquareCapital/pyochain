@@ -335,12 +335,12 @@ impl PyoCounter {
         let o = other.get();
         let inner = self.inner_bind(py);
         for (elem, count) in inner.iter() {
-            let new_item = pylibs::builtins::abs(&count.sub(o.__getitem__(&elem)?)?)?;
+            let new_item = count.sub(o.__getitem__(&elem)?)?.abs()?;
             inner.set_item(elem, new_item)?;
         }
         for (elem, count) in other.get().inner_bind(py).iter() {
             if !inner.contains(&elem)? {
-                inner.set_item(elem, pylibs::builtins::abs(&count)?)?;
+                inner.set_item(elem, count.abs()?)?;
             }
         }
         keep_positive(inner)
@@ -428,14 +428,14 @@ impl PyoCounter {
         let o = other.get();
         let result = PyDict::new(py);
         for (elem, count) in inner.iter() {
-            let newcount = pylibs::builtins::abs(&count.sub(o.__getitem__(&elem)?)?)?;
+            let newcount = count.sub(o.__getitem__(&elem)?)?.abs()?;
             if newcount.is_truthy()? {
                 result.set_item(elem, newcount)?;
             }
         }
         for (elem, count) in other.get().inner_bind(py).iter() {
             if !inner.contains(&elem)? && count.is_truthy()? {
-                result.set_item(elem, pylibs::builtins::abs(&count)?)?;
+                result.set_item(elem, count.abs()?)?;
             }
         }
         Self::wrap(result)
