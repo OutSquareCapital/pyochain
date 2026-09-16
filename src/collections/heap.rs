@@ -60,7 +60,7 @@ trait HeapType: PyWrapper<Wrapped = PyList> {
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
-        let repr = self.inner_bind(py).repr()?.to_string();
+        let repr = self.inner_bind(py).repr()?;
         Ok(format!("{name}({repr})"))
     }
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
