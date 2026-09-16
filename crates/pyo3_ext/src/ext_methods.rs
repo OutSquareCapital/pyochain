@@ -8,11 +8,11 @@ use pyo3::{
     prelude::*,
     types::{
         PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator,
-        PyList, PyMapping, PyRange, PySet, PyTuple,
+        PyList, PyMapping, PyRange, PySet, PyString, PyTuple,
     },
 };
 
-use crate::types::{self, PyItemsView, PyKeysView, PyValuesView};
+use crate::types;
 
 /// Create a new Python list from the given arguments.\
 #[macro_export]
@@ -59,7 +59,6 @@ impl ABCMethods<'_> for types::PyValuesView {}
 impl ABCMethods<'_> for types::PyItemsView {}
 pub trait PySequenceExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
-
     fn index(
         &self,
         value: &Bound<'py, PyAny>,
@@ -95,11 +94,10 @@ macro_rules! impl_sequence_ext_methods {
     };
 }
 
-impl_sequence_ext_methods!(PyList, PyTuple, types::PyDeque);
+impl_sequence_ext_methods!(PyList, PyTuple, types::PyDeque, PyString);
 /// The `index` method is different on `range`, so we need to implement it separately.
 pub trait PyRangeExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
-
     fn index(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
 }
 impl<'py> PyRangeExtMethods<'py> for Bound<'py, PyRange> {
@@ -340,25 +338,25 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
     }
 }
 pub trait PyMappingExtMethods<'py>: Sized {
-    fn items_view(&self) -> PyResult<Bound<'py, PyItemsView>>;
-    fn keys_view(&self) -> PyResult<Bound<'py, PyKeysView>>;
-    fn values_view(&self) -> PyResult<Bound<'py, PyValuesView>>;
+    fn items_view(&self) -> PyResult<Bound<'py, types::PyItemsView>>;
+    fn keys_view(&self) -> PyResult<Bound<'py, types::PyKeysView>>;
+    fn values_view(&self) -> PyResult<Bound<'py, types::PyValuesView>>;
 }
 
 impl<'py> PyMappingExtMethods<'py> for Bound<'py, PyMapping> {
-    fn items_view(&self) -> PyResult<Bound<'py, PyItemsView>> {
+    fn items_view(&self) -> PyResult<Bound<'py, types::PyItemsView>> {
         self.call_method0(intern!(self.py(), "items"))?
-            .cast_into::<PyItemsView>()
+            .cast_into::<types::PyItemsView>()
             .map_err(|_| PyTypeError::new_err("expected a mapping view for items"))
     }
-    fn keys_view(&self) -> PyResult<Bound<'py, PyKeysView>> {
+    fn keys_view(&self) -> PyResult<Bound<'py, types::PyKeysView>> {
         self.call_method0(intern!(self.py(), "keys"))?
-            .cast_into::<PyKeysView>()
+            .cast_into::<types::PyKeysView>()
             .map_err(|_| PyTypeError::new_err("expected a mapping view for keys"))
     }
-    fn values_view(&self) -> PyResult<Bound<'py, PyValuesView>> {
+    fn values_view(&self) -> PyResult<Bound<'py, types::PyValuesView>> {
         self.call_method0(intern!(self.py(), "values"))?
-            .cast_into::<PyValuesView>()
+            .cast_into::<types::PyValuesView>()
             .map_err(|_| PyTypeError::new_err("expected a mapping view for values"))
     }
 }

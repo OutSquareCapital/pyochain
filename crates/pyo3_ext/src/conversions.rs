@@ -73,3 +73,24 @@ impl_default_try_from_py!(
     types::PyDict,
     types::PyString,
 );
+
+pub trait IntoSequence<'py> {
+    fn as_sequence(&self) -> &Bound<'py, types::PySequence>;
+    fn into_sequence(self) -> Bound<'py, types::PySequence>;
+}
+macro_rules! impl_into_sequence {
+    ($($t:ty),*) => {
+        $(
+            impl<'py> IntoSequence<'py> for Bound<'py, $t> {
+                fn as_sequence(&self) -> &Bound<'py, types::PySequence> {
+                    unsafe { self.cast_unchecked::<types::PySequence>() }
+                }
+                fn into_sequence(self) -> Bound<'py, types::PySequence> {
+                    unsafe { self.cast_into_unchecked::<types::PySequence>() }
+                }
+            }
+        )*
+    };
+}
+// NOTE: We don't implement it for `PyTuple` and `PyList` because equivalent methods already exist for them.
+impl_into_sequence!(PyDeque, types::PyString, types::PyRange);

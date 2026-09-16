@@ -8,7 +8,7 @@ use pyo3::{
     sync::PyOnceLock,
     types::{
         PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator, PyList,
-        PyNotImplemented, PySequence, PySet, PySlice, PyType,
+        PyNotImplemented, PySet, PySlice, PyType,
     },
 };
 use tap::prelude::*;
@@ -480,8 +480,6 @@ impl PyDeque {
     }
 }
 pub trait PyDequeMethods<'py> {
-    /// Returns `self` cast as a `PySequence`.
-    fn as_sequence(&self) -> &Bound<'py, PySequence>;
     fn append(&self, x: Bound<'_, PyAny>) -> PyResult<()>;
     fn append_left(&self, x: Bound<'_, PyAny>) -> PyResult<()>;
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
@@ -494,11 +492,6 @@ pub trait PyDequeMethods<'py> {
     fn reversed(&self) -> PyResult<Bound<'py, PyIterator>>;
 }
 impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
-    /// Returns `self` cast as a `PySequence`.
-    fn as_sequence(&self) -> &Bound<'py, PySequence> {
-        unsafe { self.cast_unchecked() }
-    }
-
     fn append(&self, x: Bound<'_, PyAny>) -> PyResult<()> {
         self.call_method1(intern!(self.py(), "append"), (x,))?;
         Ok(())

@@ -1,5 +1,5 @@
 pub use super::args::CallConcat;
-pub use super::conversions::{IntoPyIterator, TryFromPy, TryIntoPy};
+pub use super::conversions::{IntoPyIterator, IntoSequence, TryFromPy, TryIntoPy};
 pub use super::either::EitherExtMethods;
 pub use super::ext_methods::{
     ABCMethods, CompareOpExtMethods, PyDictExtConstructors, PyDictExtMethods, PyListExtMethods,

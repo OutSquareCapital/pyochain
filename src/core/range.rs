@@ -8,7 +8,7 @@ use pyo3::{
     exceptions::PyTypeError,
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyInt, PyIterator, PyRange, PyRangeMethods, PySequence, PySlice, PyTuple},
+    types::{PyInt, PyIterator, PyRange, PyRangeMethods, PySlice, PyTuple},
 };
 use pyo3_ext::{prelude::*, pylibs};
 use pyochain_macros::try_cast;
@@ -51,10 +51,7 @@ impl Range {
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.inner_bind(py)
-            .pipe(|x| unsafe { x.cast_unchecked::<PySequence>() })
-            .len()
-            .unwrap()
+        self.inner_bind(py).as_sequence().len().unwrap()
     }
 
     fn __getitem__<'py>(
@@ -90,7 +87,7 @@ impl Range {
         self.inner_bind(py).hash()
     }
     fn __contains__(&self, key: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner_bind(key.py()).contains(key)
+        self.inner_bind(key.py()).as_sequence().contains(key)
     }
     pub fn __reversed__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
         self.inner_bind(py).pipe_as_ref(pylibs::builtins::reversed)
