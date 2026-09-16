@@ -10,10 +10,9 @@ use pyo3::{
         DerefToPyAny, PyDict, PyFrozenSet, PyIterator, PyList, PyRange, PySequence, PySet, PyTuple,
     },
 };
-use pyo3_ext::prelude::TryFromPy;
 use pyo3_ext::{prelude::*, types::PyDeque};
 use pyochain_macros::py_abc;
-use tap::Pipe;
+use tap::{Pipe, Tap};
 pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync {
     type Wrapped: PyTypeInfo + DerefToPyAny;
     fn inner(&self) -> &Py<Self::Wrapped>;
@@ -43,6 +42,21 @@ pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Syn
                 let txt = format!("Input must be a '{wrapper}'' or a '{inner}', got '{incorrect}'");
                 PyTypeError::new_err(txt)
             })
+    }
+
+    fn get_repr(obj: &Bound<'_, PyAny>) -> PyResult<String> {
+        let name = Self::type_object(obj.py()).name()?;
+        match obj.len() {
+            Ok(0) => Ok(format!("{name}()")),
+            Ok(_) => {
+                let elements = obj.repr()?.to_string().tap_mut(|txt| {
+                    txt.pop();
+                    txt.remove(0);
+                });
+                Ok(format!("{name}({elements})"))
+            }
+            Err(err) => Err(err),
+        }
     }
 }
 /// Implement `PyWrapper` for pyochain types in one line.

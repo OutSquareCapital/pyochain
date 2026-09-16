@@ -24,6 +24,8 @@ Because, frankly, why would you create a `SortedKeyList` with an identity functi
 
 ### 🚀 Performance improvements
 
+- `pprint` was used internally in many `__repr__` implementations, which is no longer the case. The "raw" repr of inner objects (e.g `list`, `set`, etc...) is now used, which means we swap a Python call with a CPython one.
+
 #### args concatenation
 
 When you do`my_iter.for_each_star(f, *args)`, each element `T` of `my_iter` need to be passed first to `f` as the first argument, followed by the unpacked `args`.

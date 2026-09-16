@@ -915,9 +915,9 @@ impl Iter {
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name();
+        let name = Self::type_object(py).name()?;
         let inner_repr = self.inner_bind(py).repr()?;
-        Ok(format!("{name:?}({inner_repr:?})"))
+        Ok(format!("{name}({inner_repr})"))
     }
 }
 

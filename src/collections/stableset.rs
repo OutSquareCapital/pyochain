@@ -1,12 +1,10 @@
 use crate::{
     abc::{self},
     core::SetMut,
-    display::get_repr,
     traits::{FlexWrapper, PyWrapper},
 };
 use either::Either;
 use pyo3::{
-    PyTypeInfo,
     prelude::*,
     types::{PyDict, PyIterator, PyNone, PyNotImplemented, PySet},
 };
@@ -21,11 +19,9 @@ pub struct StableSet(pub Py<PyDict>);
 #[pymethods]
 impl StableSet {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name()?;
         self.inner_bind(py)
             .keys()
-            .pipe_ref(get_repr)
-            .map(|repr| format!("{name}({repr})"))
+            .pipe(|repr| Self::get_repr(&repr))
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
