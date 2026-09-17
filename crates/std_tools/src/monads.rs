@@ -70,38 +70,3 @@ impl<L, R, E> ResultExt<L, R, E> for Result<Either<L, R>, E> {
         }
     }
 }
-/// Trait for control flow with faillible operations.
-pub trait ResultBool<T, E> {
-    /// Returns a `Result` containing one of two values based on the boolean value contained in the `Result`.\
-    /// See `then_or_else` for a version that takes closures instead of values (lazy evaluation).
-    fn then_or<R>(self, if_true: R, if_false: R) -> Result<R, E>;
-    /// Executes one of two closures based on the boolean value contained in the `Result`.\
-    /// Useful for faillible control flow.
-    fn then_or_else<R>(
-        self,
-        if_true: impl FnOnce() -> R,
-        if_false: impl FnOnce() -> R,
-    ) -> Result<R, E>;
-}
-impl<E> ResultBool<bool, E> for Result<bool, E> {
-    #[inline]
-    fn then_or<R>(self, if_true: R, if_false: R) -> Result<R, E> {
-        match self {
-            Ok(true) => Ok(if_true),
-            Ok(false) => Ok(if_false),
-            Err(e) => Err(e),
-        }
-    }
-    #[inline]
-    fn then_or_else<R>(
-        self,
-        if_true: impl FnOnce() -> R,
-        if_false: impl FnOnce() -> R,
-    ) -> Result<R, E> {
-        match self {
-            Ok(true) => Ok(if_true()),
-            Ok(false) => Ok(if_false()),
-            Err(e) => Err(e),
-        }
-    }
-}
