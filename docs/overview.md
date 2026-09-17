@@ -3,7 +3,7 @@
 Below is a diagram showing the pyochain API, and the relationships between its core types.
 
 The colors represent the different categories:
-  
+
 - **Purple**: small mixins classes
 - **Green**: abstract collection protocols, mirroring `collections.abc`
 - **Blue**: concrete collection types, implementing the abstract protocols and mirroring python standard library collections
@@ -116,7 +116,7 @@ Since these types fully implement their corresponding interface, they can act as
 ### Concrete Collection Types
 
 | Type                | Underlying Structure | Ordered | Uniqueness | Mutability |
-|---------------------|----------------------|---------|------------|------------|
+| ------------------- | -------------------- | ------- | ---------- | ---------- |
 | `Iter[T]`           | `Iterator[T]`        | N/A     | N/A        | N/A        |
 | `Peekable[T]`       | `Iterator[T]`        | N/A     | N/A        | N/A        |
 | `Seq[T]`            | `tuple[T]`           | Yes     | No         | No         |

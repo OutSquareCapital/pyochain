@@ -51,7 +51,7 @@ The code in the `examples` section will be automatically part of the test suite.
 
 We use code blocks instead of doctests, so write them just like you would in a classic pytest file, i.e assertions.
 
-```python
+````python
 def my_function(param1: int, param2: str) -> bool:
     """One liner description of what the function does.
 
@@ -85,7 +85,7 @@ def my_function(param1: int, param2: str) -> bool:
         ```
     """
     return True
-```
+````
 
 ## Setup
 

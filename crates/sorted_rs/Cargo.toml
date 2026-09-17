@@ -1,20 +1,25 @@
 [package]
-edition = "2024"
 name = "sorted_rs"
 version = "0.1.0"
+edition = "2024"
+
 [lib]
 name = "sorted_rs"
 
 [dependencies]
-tap = "1.0.1"
-pyo3 = { version = ">=0.29", features = [
+either = "1.16.0"
+pyo3 = {
+  version = ">=0.29",
+  features = [
     "either",
     "extension-module",
     "multiple-pymethods",
     "smallvec",
-] }
-either = "1.16.0"
+  ]
+}
 pyo3_ext = { path = "../pyo3_ext" }
 std_tools = { path = "../std_tools" }
+tap = "1.0.1"
+
 [lints]
 workspace = true
