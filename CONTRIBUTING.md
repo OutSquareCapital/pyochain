@@ -1,6 +1,8 @@
 # Contributing to pyochain
 
-Thank you for your interest in contributing to pyochain! This document outlines the repository structure, coding standards, and contribution workflow to help you get started.
+Thank you for your interest in contributing to pyochain!
+
+This document outlines the repository structure, coding standards, and contribution workflow to help you get started.
 
 ## Repository overview
 
@@ -98,6 +100,24 @@ uv sync --dev
 uv sync --all-groups
 ```
 
+If your IDE struggles with the venv environnement, you surely need to add the `PYO3_PYTHON` environment variable to your IDE's settings.
+
+Example of my current Zed setup:
+
+```json
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "cargo": {
+          "extraEnv": {
+            "PYO3_PYTHON": "C:\\Users\\stett\\Documents\\python\\pyochain\\.venv\\Scripts\\python.exe",
+          },
+        },
+      },
+    },
+  },
+```
+
 ### Building the Rust extension
 
 For development mode (fast compile, no optimizations):
@@ -150,6 +170,8 @@ cargo fmt --all
 uv run sdsort . --stubs;
 uv run ruff check . --fix --unsafe-fixes;
 uv run ruff format . --preview;
+uv run tombi format;
+uv run tombi lint;
 uv run basedpyright .;
 uv run pydoclint pyochain/**/*.pyi
 cargo run --release -p pyochain-build

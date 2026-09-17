@@ -33,6 +33,7 @@ requires = ["maturin>=1.8,<2.0"]
 build-backend = "maturin"
 
 [tool.basedpyright]
+useLibraryCodeForTypes = false
 reportExplicitAny = false
 reportImportCycles = false
 reportMissingSuperCall = false

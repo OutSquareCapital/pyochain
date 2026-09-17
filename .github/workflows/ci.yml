@@ -52,6 +52,10 @@ jobs:
         run: uv run ruff check .
         if: matrix.check == 'ruff-lint'
 
+      - name: Check formatting with Ruff
+        run: uv run ruff format --check --preview .
+        if: matrix.check == 'ruff-format'
+
       - name: Check TOML formatting with Tombi
         run: uv run tombi format --check
         if: matrix.check == 'tombi-format'
@@ -59,10 +63,6 @@ jobs:
       - name: Check TOML linting with Tombi
         run: uv run tombi lint
         if: matrix.check == 'tombi-lint'
-
-      - name: Check formatting with Ruff
-        run: uv run ruff format --check --preview .
-        if: matrix.check == 'ruff-format'
 
       - name: Check stub ordering
         run: uv run sdsort . --stubs --check
