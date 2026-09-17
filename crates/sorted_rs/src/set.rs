@@ -240,7 +240,6 @@ impl<T: ListsDataMethods> SetData<T> {
     }
     pub fn symmetric_difference_update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
         match other {
-            IntoUpdate::None => Ok(()),
             IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) => {
                 self.try_update(pyset.py(), pyset, Bound::symmetric_difference_update)
             }
@@ -261,7 +260,6 @@ impl<T: ListsDataMethods> SetData<T> {
         slf_fn: F2,
     ) -> PyResult<()> {
         match other {
-            IntoUpdate::None => Ok(()),
             IntoUpdate::BigSet(pyset) => self.try_update(pyset.py(), pyset, set_fn),
             IntoUpdate::SmallSet(pyset) => pyset.iter().try_for_each(|value| slf_fn(self, value)),
             IntoUpdate::Any(any) => any.try_iter()?.try_for_each(|value| slf_fn(self, value?)),
@@ -298,8 +296,6 @@ impl<'py, T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> SetComp<'p
 }
 #[must_use]
 pub enum IntoUpdate<'py> {
-    /// Either the same object, or an empty iterable. No update is performed.
-    None,
     SmallSet(Bound<'py, PySet>),
     BigSet(Bound<'py, PySet>),
     Any(Bound<'py, PyAny>),

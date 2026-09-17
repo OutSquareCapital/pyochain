@@ -275,7 +275,6 @@ pub(super) trait SortedSetMethods:
                 .into_iter()
                 .map(|other| self.extract_set(other))
                 .try_fold(PySet::empty(py)?, |pyset, other| match other {
-                    IntoUpdate::None => Ok(pyset),
                     IntoUpdate::SmallSet(other) | IntoUpdate::BigSet(other) => {
                         pyset.update((other,))?;
                         Ok(pyset)
@@ -309,11 +308,12 @@ pub(super) trait SortedSetMethods:
         try_cast_into! {
             match other {
                 CaseExact::Self(other) => {
+                    let slf_set = self.get_set(py);
                     let other = other.get();
                     if self.is(other) {
-                        IntoUpdate::None
+                        IntoUpdate::SmallSet(slf_set)
                     } else {
-                        IntoUpdate::from_sets(&self.get_set(py), other.get_set(py))
+                        IntoUpdate::from_sets(&slf_set, other.get_set(py))
                     }
                 }
                 CaseExact::PySet(pyset) => IntoUpdate::from_sets(&self.get_set(py), pyset),
