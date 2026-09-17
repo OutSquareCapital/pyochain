@@ -12,34 +12,26 @@ use super::{
 use crate::{abc, traits::IntoInit};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::{py_abc, try_cast_into};
-use sorted_rs::{KeysListsData, ListsData, SetComp, SetData, prelude::*, types::IntOrSlice};
+use sorted_rs::{
+    IntoUpdate, KeysListsData, ListsData, SetComp, SetData, prelude::*, types::IntOrSlice,
+};
 use std::sync::{Arc, Mutex};
 use std_tools::prelude::ResultExt;
 use tap::{Conv, Pipe};
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedSet(pub(super) Arc<Mutex<SetData<ListsData>>>);
-impl TryFrom<Bound<'_, PyAny>> for SortedSet {
-    type Error = PyErr;
-    fn try_from(iterable: Bound<'_, PyAny>) -> PyResult<Self> {
-        let py = iterable.py();
-        let mut init = SetData::new(ListsData::default(), PySet::empty(py)?.unbind());
-        init.update(iterable.try_into()?)?;
-        Ok(init.into())
-    }
-}
 #[pymethods]
 impl SortedSet {
     #[new]
-    #[pyo3(signature = (iterable = None))]
+    #[pyo3(signature = (iterable = None, /))]
     pub fn py_new(
         py: Python<'_>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let mut inner = SetData::new(ListsData::default(), PySet::empty(py).unwrap().unbind());
-        if let Some(iterable) = iterable {
-            inner.update(iterable.try_into()?)?;
-        }
-        inner.conv::<Self>().init().pipe(Ok)
+        SetData::<ListsData>::build(py, iterable)?
+            .conv::<Self>()
+            .init()
+            .pipe(Ok)
     }
 }
 impl SortedSetMethods for SortedSet {
@@ -55,15 +47,10 @@ impl SortedKeySet {
         key: Bound<'_, PyAny>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let py = key.py();
-        let key_fn = key.unbind();
-        let list = KeysListsData::new(key_fn.clone_ref(py));
-        let mut inner = SetData::new(list, PySet::empty(py).unwrap().unbind());
-
-        if let Some(iterable) = iterable {
-            inner.update(iterable.try_into()?)?;
-        }
-        inner.conv::<Self>().init().pipe(Ok)
+        SetData::<KeysListsData>::build(key, iterable)?
+            .conv::<Self>()
+            .init()
+            .pipe(Ok)
     }
 }
 impl SortedSetMethods for SortedKeySet {
@@ -150,7 +137,7 @@ pub(super) trait SortedSetMethods:
             .into_bound(py)
     }
     fn __isub__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.lock().difference_update(other.try_into()?)
+        self.update_any(other, Self::T::difference_update)
     }
 
     fn __and__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -169,7 +156,7 @@ pub(super) trait SortedSetMethods:
     }
 
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.lock().update(other.try_into()?)
+        self.update_any(other, Self::T::update)
     }
     fn __or__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
@@ -187,8 +174,8 @@ pub(super) trait SortedSetMethods:
     fn __rxor__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.symmetric_difference(other)
     }
-    fn __ixor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
-        Self::symmetric_difference_update(slf, other).map(|_| ())
+    fn __ixor__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
+        self.symmetric_difference_update(other)
     }
     fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.lock().add(value)
@@ -230,13 +217,9 @@ pub(super) trait SortedSetMethods:
             .into_bound(py)
     }
 
-    #[pyo3(name = "difference_update", signature = (*iterables))]
-    fn difference_update<'py>(
-        slf: Bound<'py, Self>,
-        iterables: Bound<'py, PyTuple>,
-    ) -> PyResult<Bound<'py, Self>> {
-        slf.get().lock().difference_update(iterables.into())?;
-        Ok(slf)
+    #[pyo3(signature = (*iterables))]
+    fn difference_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
+        self.update_iter(iterables, Self::T::difference_update)
     }
     #[pyo3(signature = (*iterables))]
     fn intersection<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
@@ -248,12 +231,8 @@ pub(super) trait SortedSetMethods:
     }
 
     #[pyo3(signature = (*iterables))]
-    fn intersection_update<'py>(
-        slf: Bound<'py, Self>,
-        iterables: Bound<'py, PyTuple>,
-    ) -> PyResult<Bound<'py, Self>> {
-        slf.get().lock().intersection_update(slf.py(), iterables)?;
-        Ok(slf)
+    fn intersection_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
+        self.lock().intersection_update(iterables.py(), iterables)
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
@@ -266,13 +245,8 @@ pub(super) trait SortedSetMethods:
             .conv::<Self>()
             .into_bound(py)
     }
-    fn symmetric_difference_update<'py>(
-        slf: Bound<'py, Self>,
-        other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        slf.get().lock().symmetric_difference_update(other)?;
-        // NOTE: the clone here is cheap (just an incref) and necessary to return `Self`
-        Ok(slf.clone())
+    fn symmetric_difference_update(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
+        self.update_any(other, Self::T::symmetric_difference_update)
     }
     #[pyo3(signature= (*iterables))]
     fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
@@ -283,11 +257,68 @@ pub(super) trait SortedSetMethods:
             .into_bound(py)
     }
     #[pyo3(signature = (*iterables))]
-    fn update<'py>(
-        slf: Bound<'py, Self>,
-        iterables: Bound<'py, PyTuple>,
-    ) -> PyResult<Bound<'py, Self>> {
-        slf.get().lock().update(iterables.into())?;
-        Ok(slf)
+    fn update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
+        self.update_iter(iterables, Self::T::update)
+    }
+    #[skip]
+    #[inline]
+    fn update_iter<F: Fn(&mut Self::T, IntoUpdate<'_>) -> PyResult<()>>(
+        &self,
+        iterables: Bound<'_, PyTuple>,
+        func: F,
+    ) -> PyResult<()> {
+        let py = iterables.py();
+        match iterables.len() {
+            0 => Ok(()),
+            1 => self.update_any(unsafe { iterables.get_item_unchecked(0) }, func),
+            _ => iterables
+                .into_iter()
+                .map(|other| self.extract_set(other))
+                .try_fold(PySet::empty(py)?, |pyset, other| match other {
+                    IntoUpdate::None => Ok(pyset),
+                    IntoUpdate::SmallSet(other) | IntoUpdate::BigSet(other) => {
+                        pyset.update((other,))?;
+                        Ok(pyset)
+                    }
+                    IntoUpdate::Any(other) => {
+                        pyset.update((other,))?;
+                        Ok(pyset)
+                    }
+                })
+                .and_then(|pyset| {
+                    let mut locked = self.lock();
+                    let update_set = IntoUpdate::from_sets(&locked.get_set(py), pyset);
+                    func(&mut locked, update_set)
+                }),
+        }
+    }
+    #[skip]
+    #[inline]
+    fn update_any<F: Fn(&mut Self::T, IntoUpdate<'_>) -> PyResult<()>>(
+        &self,
+        other: Bound<'_, PyAny>,
+        func: F,
+    ) -> PyResult<()> {
+        let other_set = self.extract_set(other);
+        func(&mut self.lock(), other_set)
+    }
+    #[skip]
+    #[inline]
+    fn extract_set<'py>(&self, other: Bound<'py, PyAny>) -> IntoUpdate<'py> {
+        let py = other.py();
+        try_cast_into! {
+            match other {
+                CaseExact::Self(other) => {
+                    let other = other.get();
+                    if self.is(other) {
+                        IntoUpdate::None
+                    } else {
+                        IntoUpdate::from_sets(&self.get_set(py), other.get_set(py))
+                    }
+                }
+                CaseExact::PySet(pyset) => IntoUpdate::from_sets(&self.get_set(py), pyset),
+                _ => IntoUpdate::Any(other),
+            }
+        }
     }
 }

@@ -8,8 +8,11 @@ use crate::{
 use pyo3::{PyClass, PyTypeInfo, prelude::*};
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
-use sorted_rs::{DictData, KeysListsData, ListsData, prelude::*, types::DictDataRef, views};
+use sorted_rs::{
+    DictData, KeysListsData, ListsData, SetData, prelude::*, types::DictDataRef, views,
+};
 use std_tools::prelude::*;
+use tap::prelude::*;
 type DictRef<T> = Arc<Mutex<DictData<T>>>;
 
 macro_rules! impl_base_sorted_view {
@@ -62,7 +65,7 @@ trait FromIterable {
     #[pyo3(name = "_from_iterable")]
     fn from_iterable(it: Bound<'_, PyAny>) -> PyResult<Bound<'_, SortedSet>> {
         let py = it.py();
-        SortedSet::try_from(it)?.into_bound(py)
+        SetData::try_from(it)?.conv::<SortedSet>().into_bound(py)
     }
 }
 

@@ -11,7 +11,7 @@ use pyo3::{
     basic::CompareOp,
     call::PyCallArgs,
     prelude::*,
-    types::{DerefToPyAny, PyBool, PyIterator, PyList, PyNotImplemented, PySet, PyTuple},
+    types::{DerefToPyAny, PyBool, PyList, PyNotImplemented, PySet},
 };
 use pyo3_ext::{
     prelude::*,
@@ -55,9 +55,38 @@ impl<T: ListsDataMethods> ListDataOwner for SetData<T> {
         &mut self.0
     }
 }
+
+impl SetData<ListsData> {
+    pub fn build(py: Python<'_>, iterable: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
+        Self::build_inner(py, ListsData::default(), iterable)
+    }
+}
+impl TryFrom<Bound<'_, PyAny>> for SetData<ListsData> {
+    type Error = PyErr;
+    fn try_from(iterable: Bound<'_, PyAny>) -> PyResult<Self> {
+        Self::build_inner(iterable.py(), ListsData::default(), Some(iterable))
+    }
+}
+impl SetData<KeysListsData> {
+    pub fn build(key: Bound<'_, PyAny>, iterable: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
+        let py = key.py();
+        let list = KeysListsData::new(key.unbind());
+        Self::build_inner(py, list, iterable)
+    }
+}
 impl<T: ListsDataMethods> SetData<T> {
-    pub fn new(list: T, set: Py<PySet>) -> Self {
-        Self(list, set)
+    #[inline(always)]
+    fn build_inner(
+        py: Python<'_>,
+        mut list: T,
+        iterable: Option<Bound<'_, PyAny>>,
+    ) -> PyResult<Self> {
+        let set = PySet::empty(py)?;
+        if let Some(it) = iterable {
+            it.try_iter()?
+                .try_for_each(|value| try_add(&mut list, &set, value?))?;
+        }
+        Ok(Self(list, set.unbind()))
     }
     pub fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
         self.1.clone_ref(py).into_bound(py)
@@ -67,7 +96,7 @@ impl<T: ListsDataMethods> SetData<T> {
         let list = self
             .list()
             .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
-        Self::new(list, values.unbind()).pipe(Ok)
+        Self(list, values.unbind()).pipe(Ok)
     }
     pub fn clear(&mut self, py: Python<'_>) {
         self.0.clear(py);
@@ -100,40 +129,22 @@ impl<T: ListsDataMethods> SetData<T> {
         self.1.bind(py).union(iterables).and_then(|x| self.wrap(x))
     }
     pub fn difference_update(&mut self, iterables: IntoUpdate<'_>) -> PyResult<()> {
-        let py = iterables.py();
-        let set = self.1.bind(py);
-        let values = iterables.into_set()?;
-        if (4 * values.len()) > set.len() {
-            set.difference_update((values,))?;
-            self.0.clear(py);
-            self.0.extend(py, set.iter().map(Bound::unbind).collect())
-        } else {
-            values.iter().try_for_each(|value| self.discard(&value))
-        }
+        self.update_inner(
+            iterables,
+            |slf, set| slf.difference_update((set,)),
+            |slf, set| slf.discard(&set),
+        )
     }
     pub fn update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
-        let py = other.py();
-        let set = self.1.bind(py);
-        let values = other.into_set()?;
-        if (4 * values.len()) > set.len() {
-            set.update((values,))?;
-            self.0.clear(py);
-            self.0.extend(py, set.iter().map(Bound::unbind).collect())
-        } else {
-            values.iter().try_for_each(|value| self.add(value))
-        }
+        self.update_inner(other, Bound::update1, Self::add)
     }
     pub fn intersection_update<'py, O: PyCallArgs<'py>>(
         &mut self,
         py: Python<'py>,
         iterables: O,
     ) -> PyResult<()> {
-        let set = self.1.bind(py);
-        set.intersection_update(iterables)?;
-        self.0.clear(py);
-        self.0.extend(py, set.iter().map(Bound::unbind).collect())
+        self.try_update(py, iterables, Bound::intersection_update)
     }
-
     pub fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         let py = index.py();
         match index {
@@ -176,21 +187,18 @@ impl<T: ListsDataMethods> SetData<T> {
         self.1.bind(py).len()
     }
     pub fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let py = value.py();
-        let set = self.1.bind(py);
-        if !set.contains(&value)? {
-            set.add(&value)?;
-            self.0.add(value)?;
-        }
-        Ok(())
+        try_add(&mut self.0, self.1.bind(value.py()), value)
     }
     pub fn discard(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let set = self.1.bind(value.py());
-        if set.contains(value)? {
-            set.remove(value)?;
-            self.0.remove(value)?;
+        match set.contains(value) {
+            Ok(true) => {
+                set.remove(value)?;
+                self.0.remove(value)
+            }
+            Ok(false) => Ok(()),
+            Err(err) => Err(err),
         }
-        Ok(())
     }
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         PySet::new(py, self.1.bind(py).iter()).and_then(|x| self.wrap(x))
@@ -208,10 +216,10 @@ impl<T: ListsDataMethods> SetData<T> {
     }
 
     pub fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        if self.1.bind(value.py()).contains(value)? {
-            Ok(1)
-        } else {
-            Ok(0)
+        match self.1.bind(value.py()).contains(value) {
+            Ok(true) => Ok(1),
+            Ok(false) => Ok(0),
+            Err(e) => Err(e),
         }
     }
 
@@ -230,10 +238,44 @@ impl<T: ListsDataMethods> SetData<T> {
             .symmetric_difference(other)
             .and_then(|x| self.wrap(x))
     }
-    pub fn symmetric_difference_update(&mut self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        let py = other.py();
+    pub fn symmetric_difference_update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
+        match other {
+            IntoUpdate::None => Ok(()),
+            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) => {
+                self.try_update(pyset.py(), pyset, Bound::symmetric_difference_update)
+            }
+            IntoUpdate::Any(any) => {
+                self.try_update(any.py(), any, Bound::symmetric_difference_update)
+            }
+        }
+    }
+
+    fn update_inner<
+        'py,
+        F1: Fn(&Bound<'py, PySet>, Bound<'py, PySet>) -> PyResult<()>,
+        F2: Fn(&mut Self, Bound<'_, PyAny>) -> PyResult<()>,
+    >(
+        &mut self,
+        other: IntoUpdate<'py>,
+        set_fn: F1,
+        slf_fn: F2,
+    ) -> PyResult<()> {
+        match other {
+            IntoUpdate::None => Ok(()),
+            IntoUpdate::BigSet(pyset) => self.try_update(pyset.py(), pyset, set_fn),
+            IntoUpdate::SmallSet(pyset) => pyset.iter().try_for_each(|value| slf_fn(self, value)),
+            IntoUpdate::Any(any) => any.try_iter()?.try_for_each(|value| slf_fn(self, value?)),
+        }
+    }
+
+    fn try_update<'py, O, F: Fn(&Bound<'py, PySet>, O) -> PyResult<()>>(
+        &mut self,
+        py: Python<'py>,
+        obj: O,
+        set_fn: F,
+    ) -> PyResult<()> {
         let set = self.1.bind(py);
-        set.symmetric_difference_update(other)?;
+        set_fn(set, obj)?;
         self.0.clear(py);
         self.0.extend(py, set.iter().map(Bound::unbind).collect())
     }
@@ -254,49 +296,37 @@ impl<'py, T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> SetComp<'p
         }
     }
 }
+#[must_use]
 pub enum IntoUpdate<'py> {
-    Set(Bound<'py, PySet>),
-    Tuple(Bound<'py, PyTuple>),
-    Iterable(Bound<'py, PyIterator>),
+    /// Either the same object, or an empty iterable. No update is performed.
+    None,
+    SmallSet(Bound<'py, PySet>),
+    BigSet(Bound<'py, PySet>),
+    Any(Bound<'py, PyAny>),
 }
 impl<'py> IntoUpdate<'py> {
-    #[must_use]
-    pub fn py(&self) -> Python<'py> {
-        match self {
-            Self::Set(pyset) => pyset.py(),
-            Self::Tuple(tup) => tup.py(),
-            Self::Iterable(any) => any.py(),
-        }
-    }
-    pub fn into_set(self) -> PyResult<Bound<'py, PySet>> {
-        let py = self.py();
-        match self {
-            // TODO: Should detect if the contained value(s) are/is the same object as the set being updated
-            // Until then, we can't handle Mutex reetrancy
-            Self::Tuple(tup) => tup
-                .iter()
-                .map(|x| x.try_conv::<IntoUpdate>()?.into_set())
-                .collect::<PyResult<Vec<_>>>()?
-                .into_iter()
-                .flatten()
-                .collect_bound(py),
-            Self::Set(pyset) => Ok(pyset),
-            Self::Iterable(any) => any.try_collect_bound(py),
-        }
-    }
-}
-impl<'py> TryFrom<Bound<'py, PyAny>> for IntoUpdate<'py> {
-    type Error = PyErr;
-    fn try_from(other: Bound<'py, PyAny>) -> PyResult<Self> {
-        if other.is_exact_instance_of::<PySet>() {
-            Self::Set(unsafe { other.cast_into_unchecked() }).pipe(Ok)
+    #[inline]
+    pub fn from_sets(original: &Bound<'py, PySet>, other: Bound<'py, PySet>) -> Self {
+        if (4 * other.len()) > original.len() {
+            IntoUpdate::BigSet(other)
         } else {
-            other.try_iter().map(Self::Iterable)
+            IntoUpdate::SmallSet(other)
         }
     }
 }
-impl<'py> From<Bound<'py, PyTuple>> for IntoUpdate<'py> {
-    fn from(other: Bound<'py, PyTuple>) -> Self {
-        Self::Tuple(other)
+
+#[inline(always)]
+fn try_add<T: ListsDataMethods>(
+    list: &mut T,
+    set: &Bound<'_, PySet>,
+    value: Bound<'_, PyAny>,
+) -> PyResult<()> {
+    match set.contains(&value) {
+        Ok(true) => Ok(()),
+        Ok(false) => {
+            set.add(&value)?;
+            list.add(value)
+        }
+        Err(e) => Err(e),
     }
 }

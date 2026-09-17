@@ -387,7 +387,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         """
 
-    def difference_update(self, *iterables: Iterable[T]) -> Self:
+    def difference_update(self, *iterables: Iterable[T]) -> None:
         """Remove all values of `iterables` from this sorted set.
 
         The `difference_update` method also corresponds to operator ``-=``.
@@ -396,9 +396,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Args:
             *iterables (Iterable[T]): iterable arguments
-
-        Returns:
-            Self: updated sorted set
 
         Examples:
             ```python
@@ -438,7 +435,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         """
 
-    def intersection_update(self, *iterables: Iterable[Any]) -> Self:
+    def intersection_update(self, *iterables: Iterable[Any]) -> None:
         """In-place update of the sorted set with the intersection of `iterables`.
 
         The `intersection_update` method also corresponds to operator ``&=``.
@@ -449,9 +446,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Args:
             *iterables (Iterable[Any]): iterable arguments
-
-        Returns:
-            Self: updated sorted set
 
         Examples:
             ```python
@@ -492,7 +486,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         """
 
-    def symmetric_difference_update(self, other: Iterable[T]) -> Self:
+    def symmetric_difference_update(self, other: Iterable[T]) -> None:
         """In-place update of the sorted set with the symmetric difference with `other`.
 
         The `symmetric_difference_update` method also corresponds to operator
@@ -505,9 +499,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         Args:
             other (Iterable[T]): `other` iterable
 
-        Returns:
-            Self: updated sorted set
-
         Examples:
             ```python
             from pyochain.collections import SortedSet
@@ -518,7 +509,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ```
         """
 
-    def update(self, *iterables: Iterable[T]) -> Self:
+    def update(self, *iterables: Iterable[T]) -> None:
         """In-place update of the sorted set, adding values from all `iterables`.
 
         The `update` method also corresponds to operator ``|=``.
@@ -528,9 +519,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Args:
             *iterables (Iterable[T]): iterable arguments
-
-        Returns:
-            Self: updated sorted set
 
         Examples:
             ```python
