@@ -122,10 +122,19 @@ pub trait PySetExtMethods<'py>: Sized {
 }
 pub trait PySetExtMethodsMut<'py>: PySetExtMethods<'py> {
     fn difference_update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()>;
+    fn difference_update1<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<()> {
+        self.difference_update((s,))
+    }
     fn intersection_update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()>;
+    fn intersection_update1<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<()> {
+        self.intersection_update((s,))
+    }
     fn remove<T: IntoPyObject<'py>>(&self, element: T) -> PyResult<()>;
     fn symmetric_difference_update<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<()>;
     fn update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()>;
+    fn update1<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<()> {
+        self.update((s,))
+    }
 }
 impl<'py> PySetExtMethodsMut<'py> for Bound<'py, PySet> {
     fn difference_update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()> {
