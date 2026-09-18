@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from pyochain.collections._sorted import BaseSortedSet
 type UpdateFn = Callable[[SortedSet[int], *tuple[Iterable[int]]], None]
-type UpdateFn1 = Callable[[SortedSet[int], Iterable[int]], object]
+type UpdateFn1[T] = Callable[[SortedSet[int], Iterable[int]], T]
 type SortedSetFactory = Callable[[], BaseSortedSet[int]]
 DATA = Range(5)
 PY_EMPTY = set[int]()
@@ -32,7 +32,7 @@ def test_set_bisect(data: BaseSortedSet[int]) -> None:
     assert data.bisect_right(2) == 3
 
 
-def _param(fn: UpdateFn1, expected: AbstractSet[int]) -> ParameterSet:
+def _param[T](fn: UpdateFn1[T], expected: T) -> ParameterSet:
     return pytest.param(fn, expected, id=fn.__name__)
 
 
@@ -49,7 +49,9 @@ def _param(fn: UpdateFn1, expected: AbstractSet[int]) -> ParameterSet:
         _param(SortedSet[int].__and__, PY_DATA_SET),
     ),
 )
-def test_deadlock(method: UpdateFn1, expected: AbstractSet[int]) -> None:
+def test_deadlock(
+    method: UpdateFn1[AbstractSet[int]], expected: AbstractSet[int]
+) -> None:
     a = SortedSet(DATA)
     assert method(a, a) == expected
 
@@ -65,9 +67,12 @@ def test_deadlock(method: UpdateFn1, expected: AbstractSet[int]) -> None:
         _param(SortedSet[int].__ior__, PY_DATA_SET),
         _param(SortedSet[int].intersection_update, PY_DATA_SET),
         _param(SortedSet[int].__iand__, PY_DATA_SET),
+        _param(SortedSet[int].is_disjoint, True),
+        _param(SortedSet[int].is_subset, True),
+        _param(SortedSet[int].is_superset, True),
     ),
 )
-def test_deadlock_mut(method: UpdateFn1, expected: AbstractSet[int]) -> None:
+def test_deadlock_mut[T](method: UpdateFn1[object], expected: object) -> None:
     a = SortedSet(DATA)
     _ = method(a, a)
     assert a == expected
