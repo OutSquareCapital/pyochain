@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from pyochain.collections._sorted import BaseSortedSet
 type UpdateFn = Callable[[SortedSet[int], *tuple[Iterable[int]]], None]
-type UpdateFn1 = Callable[[SortedSet[int], Iterable[int]], None]
+type UpdateFn1 = Callable[[SortedSet[int], Iterable[int]], object]
 type SortedSetFactory = Callable[[], BaseSortedSet[int]]
 DATA = Range(5)
 PY_EMPTY = set[int]()
@@ -68,12 +68,16 @@ def _param(fn: UpdateFn1, expected: AbstractSet[int]) -> ParameterSet:
     ("method", "expected"),
     (
         _param(SortedSet[int].difference_update, PY_EMPTY),
+        _param(SortedSet[int].__isub__, PY_EMPTY),
         _param(SortedSet[int].symmetric_difference_update, PY_EMPTY),
+        _param(SortedSet[int].__ixor__, PY_EMPTY),
         _param(SortedSet[int].update, PY_DATA_SET),
+        _param(SortedSet[int].__ior__, PY_DATA_SET),
         _param(SortedSet[int].intersection_update, PY_DATA_SET),
+        _param(SortedSet[int].__iand__, PY_DATA_SET),
     ),
 )
 def test_update_semantics(method: UpdateFn1, expected: AbstractSet[int]) -> None:
     a = SortedSet(DATA)
-    method(a, a)
+    _ = method(a, a)
     assert a == expected
