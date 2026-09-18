@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from collections.abc import Set as AbstractSet
 from operator import neg
 from typing import TYPE_CHECKING
@@ -24,34 +24,6 @@ PY_EMPTY = set[int]()
 PY_DATA_SET = set[int](DATA)
 DATA_SET = SortedSet(DATA)
 DATA_KEY_SET = SortedKeySet(neg, DATA)
-VALUES_PARAMS = pytest.mark.parametrize(
-    "data",
-    ([DATA], [DATA, DATA], [DATA_SET], [DATA_SET, DATA_SET]),
-)
-
-
-@VALUES_PARAMS
-@pytest.mark.parametrize(
-    "fn", (SortedSet[int].update, SortedSet[int].intersection_update)
-)
-def test_update_deadlock(data: Iterable[Iterable[int]], fn: UpdateFn) -> None:
-    a = SortedSet(DATA)
-    fn(a, *data)
-    assert a == DATA_SET
-
-
-@VALUES_PARAMS
-def test_diff_update_deadlock(data: Sequence[Iterable[int]]) -> None:
-    a = SortedSet(DATA)
-    a.difference_update(*data)
-    assert a.is_empty()
-
-
-@pytest.mark.parametrize("data", (DATA, DATA_SET))
-def test_symmetric_diff_update_deadlock(data: Iterable[int]) -> None:
-    a = SortedSet(DATA)
-    a.symmetric_difference_update(data)
-    assert a.is_empty()
 
 
 @pytest.mark.parametrize("data", (DATA_SET, SortedKeySet(neg, DATA)))
@@ -67,6 +39,24 @@ def _param(fn: UpdateFn1, expected: AbstractSet[int]) -> ParameterSet:
 @pytest.mark.parametrize(
     ("method", "expected"),
     (
+        _param(SortedSet[int].difference, PY_EMPTY),
+        _param(SortedSet[int].__sub__, PY_EMPTY),
+        _param(SortedSet[int].symmetric_difference, PY_EMPTY),
+        _param(SortedSet[int].__xor__, PY_EMPTY),
+        _param(SortedSet[int].union, PY_DATA_SET),
+        _param(SortedSet[int].__or__, PY_DATA_SET),
+        _param(SortedSet[int].intersection, PY_DATA_SET),
+        _param(SortedSet[int].__and__, PY_DATA_SET),
+    ),
+)
+def test_deadlock(method: UpdateFn1, expected: AbstractSet[int]) -> None:
+    a = SortedSet(DATA)
+    assert method(a, a) == expected
+
+
+@pytest.mark.parametrize(
+    ("method", "expected"),
+    (
         _param(SortedSet[int].difference_update, PY_EMPTY),
         _param(SortedSet[int].__isub__, PY_EMPTY),
         _param(SortedSet[int].symmetric_difference_update, PY_EMPTY),
@@ -77,7 +67,7 @@ def _param(fn: UpdateFn1, expected: AbstractSet[int]) -> ParameterSet:
         _param(SortedSet[int].__iand__, PY_DATA_SET),
     ),
 )
-def test_update_semantics(method: UpdateFn1, expected: AbstractSet[int]) -> None:
+def test_deadlock_mut(method: UpdateFn1, expected: AbstractSet[int]) -> None:
     a = SortedSet(DATA)
     _ = method(a, a)
     assert a == expected

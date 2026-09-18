@@ -138,12 +138,17 @@ impl<T: ListsDataMethods> SetData<T> {
     pub fn update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
         self.update_inner(other, Bound::update1, Self::add)
     }
-    pub fn intersection_update<'py, O: PyCallArgs<'py>>(
-        &mut self,
-        py: Python<'py>,
-        iterables: O,
-    ) -> PyResult<()> {
-        self.try_update(py, iterables, Bound::intersection_update)
+    pub fn intersection_update(&mut self, iterables: IntoUpdate<'_>) -> PyResult<()> {
+        match iterables {
+            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) => {
+                self.try_update(pyset.py(), pyset, |set, obj| {
+                    set.intersection_update((obj,))
+                })
+            }
+            IntoUpdate::Any(any) => {
+                self.try_update(any.py(), any, |set, obj| set.intersection_update((obj,)))
+            }
+        }
     }
     pub fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         let py = index.py();

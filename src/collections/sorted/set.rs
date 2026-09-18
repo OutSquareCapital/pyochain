@@ -152,7 +152,7 @@ pub(super) trait SortedSetMethods:
     }
 
     fn __iand__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.lock().intersection_update(other.py(), (other,))
+        self.update_any(other, Self::T::intersection_update)
     }
 
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
@@ -232,7 +232,7 @@ pub(super) trait SortedSetMethods:
 
     #[pyo3(signature = (*iterables))]
     fn intersection_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
-        self.lock().intersection_update(iterables.py(), iterables)
+        self.update_iter(iterables, Self::T::intersection_update)
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
