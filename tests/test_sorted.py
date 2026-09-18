@@ -47,6 +47,9 @@ def _param[T](fn: UpdateFn1[T], expected: T) -> ParameterSet:
         _param(SortedSet[int].__or__, PY_DATA_SET),
         _param(SortedSet[int].intersection, PY_DATA_SET),
         _param(SortedSet[int].__and__, PY_DATA_SET),
+        _param(SortedSet[int].is_disjoint, True),
+        _param(SortedSet[int].is_subset, True),
+        _param(SortedSet[int].is_superset, True),
     ),
 )
 def test_deadlock(
@@ -67,9 +70,6 @@ def test_deadlock(
         _param(SortedSet[int].__ior__, PY_DATA_SET),
         _param(SortedSet[int].intersection_update, PY_DATA_SET),
         _param(SortedSet[int].__iand__, PY_DATA_SET),
-        _param(SortedSet[int].is_disjoint, True),
-        _param(SortedSet[int].is_subset, True),
-        _param(SortedSet[int].is_superset, True),
     ),
 )
 def test_deadlock_mut[T](method: UpdateFn1[object], expected: object) -> None:
