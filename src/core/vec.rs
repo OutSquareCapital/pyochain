@@ -1,8 +1,8 @@
-use crate::{abc, display::get_repr, traits::PyWrapper};
+use crate::{abc, traits::PyWrapper};
 
 use either::Either;
 use pyo3::{
-    PyTypeInfo, ffi, intern,
+    ffi, intern,
     prelude::*,
     types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PySlice},
 };
@@ -25,10 +25,7 @@ impl PyoVec {
         self.inner_bind(key.py()).contains(key)
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name()?;
-        self.inner_bind(py)
-            .pipe_ref(get_repr)
-            .map(|repr| format!("{name}({repr})"))
+        self.inner_bind(py).as_any().pipe(Self::get_repr)
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {

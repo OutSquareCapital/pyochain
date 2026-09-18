@@ -1,4 +1,4 @@
-use crate::{abc, display::get_repr, traits::PyWrapper};
+use crate::{abc, traits::PyWrapper};
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -10,6 +10,7 @@ use pyo3_ext::{
     types::{FromCmp, PyAbstractSet, PyCmpOut},
 };
 use pyochain_macros::{BoundFromAny, try_cast};
+use tap::Pipe;
 /// Accepted types for set operations.
 /// In the case of pyochain types, we extract the inner sets.
 /// For python builtins, we directly work with them and call the corresponding numeric operators
@@ -36,7 +37,7 @@ trait SetCmpMethods<
     T: PyTypeInfo
         + DerefToPyAny
         + TryFromBoundIterator<'py, Bound<'py, PyIterator>, Item = Bound<'py, PyAny>>,
->: Sized + PyWrapper + PyTypeInfo
+>: PyWrapper + PyTypeInfo
 {
     #[inline(always)]
     fn handle_pyabstract_set(pyset: Bound<'py, PyAny>) -> PyResult<Bound<'py, T>> {
@@ -162,12 +163,11 @@ pub struct Set(pub Py<PyFrozenSet>);
 #[pymethods]
 impl Set {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name()?;
         self.inner_bind(py)
             .into_iter()
-            .collect_bound::<PyTuple>(py)
-            .and_then(|x| get_repr(&x))
-            .map(|repr| format!("{name}({repr})"))
+            .collect_bound::<PyTuple>(py)?
+            .as_any()
+            .pipe(Self::get_repr)
     }
 
     fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -284,17 +284,12 @@ impl SetMut {
         self.inner_bind(py).len()
     }
 
-    fn __contains__(&self, py: Python<'_>, item: Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner_bind(py).contains(item)
+    fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner_bind(item.py()).contains(item)
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name()?;
-        self.inner_bind(py)
-            .into_iter()
-            .collect_bound::<PyTuple>(py)
-            .and_then(|x| get_repr(&x))
-            .map(|repr| format!("{name}({repr})"))
+        self.inner_bind(py).as_any().pipe(Self::get_repr)
     }
 
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {

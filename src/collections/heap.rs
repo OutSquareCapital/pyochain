@@ -54,13 +54,13 @@ impl IntoHeap<'_> {
     }
 }
 #[py_abc(HeapMin, HeapMax)]
-trait HeapType: Sized + PyWrapper<Wrapped = PyList> {
+trait HeapType: PyWrapper<Wrapped = PyList> {
     #[new]
     fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>>;
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
-        let repr = self.inner_bind(py).repr()?.to_string();
+        let repr = self.inner_bind(py).repr()?;
         Ok(format!("{name}({repr})"))
     }
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;

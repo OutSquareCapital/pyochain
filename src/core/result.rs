@@ -157,7 +157,7 @@ impl PyoOk {
     }
 
     fn expect_err(&self, msg: &Bound<'_, PyString>) -> PyResult<Py<PyAny>> {
-        let ok_repr = self.value.bind(msg.py()).repr()?.to_string();
+        let ok_repr = self.value.bind(msg.py()).repr()?;
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
             "{msg}: expected Err, got Ok({ok_repr})"
         )))
@@ -319,8 +319,8 @@ impl PyoErr {
         )))
     }
 
-    fn expect_err(&self, _msg: String, py: Python<'_>) -> Py<PyAny> {
-        self.error.clone_ref(py)
+    fn expect_err(&self, msg: &Bound<'_, PyAny>) -> Py<PyAny> {
+        self.error.clone_ref(msg.py())
     }
     #[allow(clippy::unused_self)]
     fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {

@@ -1,28 +1,34 @@
-/// Module for bisect functions, adapted from the Python standard library's bisect module.\
 use pyo3::prelude::*;
-pub(super) trait Bisect {
+use std::ops::Not;
+
+/// Trait for bisect functions, adapted from the Python standard library's bisect module.
+pub trait Bisect {
     fn bisect_left(&self, item: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_right(&self, item: &Bound<'_, PyAny>) -> PyResult<usize>;
 }
 impl Bisect for [Py<PyAny>] {
-    #[inline]
+    #[inline(always)]
     fn bisect_left(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let py = item.py();
-        resolve(self.len(), |mid| Ok(!self[mid].bind(py).lt(item)?))
+        resolve(self, item, |item, mid| mid.lt(item).map(Not::not))
     }
-    #[inline]
+    #[inline(always)]
     fn bisect_right(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
-        let py = item.py();
-        resolve(self.len(), |mid| item.lt(self[mid].bind(py)))
+        resolve(self, item, |item, mid| item.lt(mid))
     }
 }
 
 #[inline(always)]
-fn resolve(mut high: usize, mut func: impl FnMut(usize) -> PyResult<bool>) -> PyResult<usize> {
+fn resolve(
+    vec: &[Py<PyAny>],
+    item: &Bound<'_, PyAny>,
+    mut func: impl FnMut(&Bound<'_, PyAny>, &Bound<'_, PyAny>) -> PyResult<bool>,
+) -> PyResult<usize> {
+    let py = item.py();
+    let mut high = vec.len();
     let mut low = 0;
     while low < high {
         let mid = low.midpoint(high);
-        if func(mid)? {
+        if func(item, vec[mid].bind(py))? {
             high = mid;
         } else {
             low = mid + 1;

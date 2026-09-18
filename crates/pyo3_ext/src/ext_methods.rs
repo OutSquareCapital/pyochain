@@ -1,12 +1,14 @@
 //! Traits extending the functionality of various pre-existing Pyo3 types
 use pyo3::{
     PyTypeInfo,
+    basic::CompareOp,
     call::PyCallArgs,
+    exceptions::PyTypeError,
     ffi, intern,
     prelude::*,
     types::{
         PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator,
-        PyList, PyMapping, PyRange, PySet, PyTuple,
+        PyList, PyMapping, PyRange, PySet, PyString, PyTuple,
     },
 };
 
@@ -57,7 +59,6 @@ impl ABCMethods<'_> for types::PyValuesView {}
 impl ABCMethods<'_> for types::PyItemsView {}
 pub trait PySequenceExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
-
     fn index(
         &self,
         value: &Bound<'py, PyAny>,
@@ -93,11 +94,10 @@ macro_rules! impl_sequence_ext_methods {
     };
 }
 
-impl_sequence_ext_methods!(PyList, PyTuple, types::PyDeque);
+impl_sequence_ext_methods!(PyList, PyTuple, types::PyDeque, PyString);
 /// The `index` method is different on `range`, so we need to implement it separately.
 pub trait PyRangeExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
-
     fn index(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
 }
 impl<'py> PyRangeExtMethods<'py> for Bound<'py, PyRange> {
@@ -123,9 +123,12 @@ pub trait PySetExtMethods<'py>: Sized {
 pub trait PySetExtMethodsMut<'py>: PySetExtMethods<'py> {
     fn difference_update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()>;
     fn intersection_update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()>;
-    fn remove(&self, element: &Bound<'_, PyAny>) -> PyResult<()>;
-    fn symmetric_difference_update(&self, s: Bound<'_, PyAny>) -> PyResult<()>;
+    fn remove<T: IntoPyObject<'py>>(&self, element: T) -> PyResult<()>;
+    fn symmetric_difference_update<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<()>;
     fn update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()>;
+    fn update1<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<()> {
+        self.update((s,))
+    }
 }
 impl<'py> PySetExtMethodsMut<'py> for Bound<'py, PySet> {
     fn difference_update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()> {
@@ -136,12 +139,12 @@ impl<'py> PySetExtMethodsMut<'py> for Bound<'py, PySet> {
         self.call_method1(intern!(self.py(), "intersection_update"), s)?;
         Ok(())
     }
-    fn remove(&self, element: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.call_method1(intern!(element.py(), "remove"), (element,))?;
+    fn remove<T: IntoPyObject<'py>>(&self, element: T) -> PyResult<()> {
+        self.call_method1(intern!(self.py(), "remove"), (element,))?;
         Ok(())
     }
-    fn symmetric_difference_update(&self, s: Bound<'_, PyAny>) -> PyResult<()> {
-        self.call_method1(intern!(s.py(), "symmetric_difference_update"), (s,))?;
+    fn symmetric_difference_update<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<()> {
+        self.call_method1(intern!(self.py(), "symmetric_difference_update"), (s,))?;
         Ok(())
     }
     fn update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()> {
@@ -334,6 +337,55 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
             0 => Ok(()),
             // Return code is -1 here, hence error
             _ => Err(PyErr::fetch(seq.py())),
+        }
+    }
+}
+pub trait PyMappingExtMethods<'py>: Sized {
+    fn items_view(&self) -> PyResult<Bound<'py, types::PyItemsView>>;
+    fn keys_view(&self) -> PyResult<Bound<'py, types::PyKeysView>>;
+    fn values_view(&self) -> PyResult<Bound<'py, types::PyValuesView>>;
+}
+
+impl<'py> PyMappingExtMethods<'py> for Bound<'py, PyMapping> {
+    fn items_view(&self) -> PyResult<Bound<'py, types::PyItemsView>> {
+        self.call_method0(intern!(self.py(), "items"))?
+            .cast_into::<types::PyItemsView>()
+            .map_err(|_| PyTypeError::new_err("expected a mapping view for items"))
+    }
+    fn keys_view(&self) -> PyResult<Bound<'py, types::PyKeysView>> {
+        self.call_method0(intern!(self.py(), "keys"))?
+            .cast_into::<types::PyKeysView>()
+            .map_err(|_| PyTypeError::new_err("expected a mapping view for keys"))
+    }
+    fn values_view(&self) -> PyResult<Bound<'py, types::PyValuesView>> {
+        self.call_method0(intern!(self.py(), "values"))?
+            .cast_into::<types::PyValuesView>()
+            .map_err(|_| PyTypeError::new_err("expected a mapping view for values"))
+    }
+}
+
+pub trait CompareOpExtMethods {
+    /// If two objects are the same, we know that they are equal.
+    /// Return `true` if the comparison operator is one of `Eq`, `Le`, or `Ge`.
+    fn on_identity(&self) -> bool;
+    /// Return the corresponding comparison function for the given `CompareOp`.\
+    /// Allow to handle both Rust and Python values with the same variant of `CompareOp`.
+    fn as_fn<T: PartialOrd + PartialEq>(&self) -> impl Fn(&T, &T) -> bool;
+}
+impl CompareOpExtMethods for CompareOp {
+    #[inline]
+    fn on_identity(&self) -> bool {
+        matches!(self, Self::Eq | Self::Le | Self::Ge)
+    }
+    #[inline]
+    fn as_fn<T: PartialOrd + PartialEq>(&self) -> impl Fn(&T, &T) -> bool {
+        match self {
+            Self::Lt => PartialOrd::lt,
+            Self::Le => PartialOrd::le,
+            Self::Gt => PartialOrd::gt,
+            Self::Ge => PartialOrd::ge,
+            Self::Eq => PartialEq::eq,
+            Self::Ne => PartialEq::ne,
         }
     }
 }

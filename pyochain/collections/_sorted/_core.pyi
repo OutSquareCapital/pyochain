@@ -3,7 +3,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Any, Self, override
+from typing import Self
 
 from _typeshed import SupportsRichComparison
 
@@ -16,9 +16,6 @@ class SortedCollection[T](ABC):
 
     @abstractmethod
     def __contains__(self, value: object, /) -> bool: ...
-    @abstractmethod
-    @override
-    def __reduce__(self) -> tuple[type[Self], tuple[Any, ...]]: ...
     @abstractmethod
     def bisect_left(self, value: T) -> int:
         """Return an index to insert *value* in the `SortedCollection`.

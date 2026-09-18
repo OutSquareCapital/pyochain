@@ -37,7 +37,7 @@ def test_issue_5647() -> None:
 def test_issue_4920() -> None:
     # PyoMutableSet.pop() method did not work
     class MySet(PyoMutableSet[object]):
-        __slots__ = ["__s"]  # pyright: ignore[reportUnannotatedClassAttribute]
+        __slots__ = ("__s",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
         def __init__(self, items: Iterable[object] | None = None) -> None:
             if items is None:

@@ -1,70 +1,49 @@
 use crate::collections::{
     SortedDict, SortedKeyDict, SortedKeyList, SortedList,
     sorted::{
+        getters::ListGetter,
         set::{SortedKeySet, SortedSet},
-        traits::{ListGetter, SortedDictMethods, SortedSetMethods},
     },
 };
-use either::Either;
 use pyo3::prelude::*;
-use sorted_rs::{InnerGetter, ListDataGetters, debug::check_key_list, pyassert};
+use pyo3_ext::types::BoundedEither;
+use sorted_rs::{debug, prelude::*};
+use tap::Pipe;
 
 #[pyfunction]
-pub fn check_sorted_dict(
-    py: Python<'_>,
-    data: Either<Py<SortedDict>, Py<SortedKeyDict>>,
-) -> PyResult<()> {
-    data.map_either(|x| check_dict(x.get(), py), |x| check_dict(x.get(), py))
-        .into_inner()
-}
-
-fn check_dict(x: &impl SortedDictMethods, py: Python<'_>) -> PyResult<()> {
-    let data = x.try_lock();
-    data.inner().check(py)?;
-
-    pyassert!(x.len(py) == data.length());
-    pyassert!(data.inner().iter().all(|item| {
-        x.contains(item.bind(py))
-            .expect("Failed to check dict membership")
-    }));
-    Ok(())
-}
-#[pyfunction]
-pub fn check_sorted_set(
-    py: Python<'_>,
-    data: Either<Py<SortedSet>, Py<SortedKeySet>>,
-) -> PyResult<()> {
+pub fn check_sorted_dict(data: BoundedEither<'_, SortedDict, SortedKeyDict>) -> PyResult<()> {
     data.map_either(
-        |x| check_set_len(x.get(), py),
-        |x| check_set_len(x.get(), py),
+        |x| debug::check_dict(x.py(), &x.get().lock()),
+        |x| debug::check_dict(x.py(), &x.get().lock()),
     )
     .into_inner()
 }
 
-fn check_set_len<T: SortedSetMethods>(checked: &T, py: Python<'_>) -> PyResult<()> {
-    let set = checked.get_set().clone_ref(py).into_bound(py);
-    let data = checked.try_lock();
-    pyassert!(set.len() == data.length());
-    data.inner().check(py)?;
-    pyassert!(
-        data.inner()
-            .iter()
-            .all(|x| set.contains(x).expect("Failed to check set membership"))
-    );
-    Ok(())
+#[pyfunction]
+pub fn check_sorted_set(data: BoundedEither<'_, SortedSet, SortedKeySet>) -> PyResult<()> {
+    data.map_either(
+        |x| debug::check_set_len(x.py(), &x.get().lock()),
+        |x| debug::check_set_len(x.py(), &x.get().lock()),
+    )
+    .into_inner()
+}
+
+#[pyfunction]
+pub fn assert_sorted_list_empty(lst: BoundedEither<'_, SortedList, SortedKeyList>) -> PyResult<()> {
+    lst.map_either(
+        |x| x.get().lock().inner().pipe(debug::check_empty),
+        |x| x.get().lock().inner().pipe(debug::check_empty),
+    )
+    .into_inner()
 }
 #[pyfunction]
-pub fn assert_sorted_list_empty(lst: Either<Py<SortedList>, Py<SortedKeyList>>) -> PyResult<()> {
-    match lst {
-        Either::Left(x) => x.get().try_lock().inner().check_empty(),
-        Either::Right(x) => x.get().try_lock().inner().check_empty(),
-    }
+pub fn check_sorted_list(data: &Bound<'_, SortedList>) -> PyResult<()> {
+    data.get()
+        .lock()
+        .inner()
+        .pipe(|x| debug::check_list(data.py(), x))
 }
 #[pyfunction]
-pub fn check_sorted_list(py: Python<'_>, data: &Bound<'_, SortedList>) -> PyResult<()> {
-    data.get().try_lock().inner().check(py)
-}
-#[pyfunction]
-pub fn check_sorted_key_list(py: Python<'_>, data: &Bound<'_, SortedKeyList>) -> PyResult<()> {
-    check_key_list(py, &data.get().try_lock())
+pub fn check_sorted_key_list(data: &Bound<'_, SortedKeyList>) -> PyResult<()> {
+    debug::check_key_list(data.py(), &data.get().lock())
 }

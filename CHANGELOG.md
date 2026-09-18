@@ -4,6 +4,8 @@
 
 ### 💥 Breaking changes
 
+- `SortedKeySet` and `SortedKeyDict` don't expose anymore their `key` attribute, as this is an implementation detail.
+
 #### `SortedKeyList` and `SortedList` `update` methods replaced by `extend`
 
 This is just a naming change, fixed from the original `sortedcontainers` library who incorrectly raise error at runtime when `extend` is called, suggesting to use `update` instead.
@@ -21,6 +23,8 @@ This allows performance improvements, simplify internal implementations, but mos
 Because, frankly, why would you create a `SortedKeyList` with an identity function as key, when you can just use a `SortedList` instead?
 
 ### 🚀 Performance improvements
+
+- `pprint` was used internally in many `__repr__` implementations, which is no longer the case. The "raw" repr of inner objects (e.g `list`, `set`, etc...) is now used, which means we swap a Python call with a CPython one.
 
 #### args concatenation
 
@@ -52,6 +56,7 @@ See below for the benchmark results, with the number of `args` in the left colum
 
 - **typing**: `PyoIterator::{map_windows, map_windows_star}` now correctly handle functions with varargs.
 - **typing**: `PyoIterator::for_each_star` now correctly handle functions with varargs and ParamSpec.
+- **typing**: `Iter::__new__` missed overloads, which caused false positives with type checkers, for example, when providing a single `Iterable` argument. This is now fixed.
 
 ### 🔄 Refactors
 

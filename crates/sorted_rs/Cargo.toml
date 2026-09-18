@@ -18,6 +18,7 @@ pyo3 = {
   ]
 }
 pyo3_ext = { path = "../pyo3_ext" }
+pyochain_macros = { path = "../pyochain_macros" }
 std_tools = { path = "../std_tools" }
 tap = "1.0.1"
 
