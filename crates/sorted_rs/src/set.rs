@@ -206,20 +206,19 @@ impl<T: ListsDataMethods> SetData<T> {
         }
     }
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
-        PySet::new(py, self.1.bind(py).iter()).and_then(|x| self.wrap(x))
+        self.1.bind(py).copy().and_then(|x| self.wrap(x))
     }
-    pub fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.1.bind(other.py()).isdisjoint(other)
-    }
-
-    pub fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.1.bind(other.py()).issubset(other)
+    pub fn is_disjoint<'py>(&self, other: IntoUpdate<'py>) -> PyResult<Bound<'py, PyBool>> {
+        self.map_set(other, Bound::isdisjoint)
     }
 
-    pub fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.1.bind(other.py()).issuperset(other)
+    pub fn is_subset<'py>(&self, other: IntoUpdate<'py>) -> PyResult<Bound<'py, PyBool>> {
+        self.map_set(other, Bound::issubset)
     }
 
+    pub fn is_superset<'py>(&self, other: IntoUpdate<'py>) -> PyResult<Bound<'py, PyBool>> {
+        self.map_set(other, Bound::issuperset)
+    }
     pub fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
         match self.1.bind(value.py()).contains(value) {
             Ok(true) => Ok(1),
@@ -237,10 +236,8 @@ impl<T: ListsDataMethods> SetData<T> {
         self.1.bind(value.py()).remove(value)?;
         self.0.remove(value)
     }
-    pub fn symmetric_difference(&self, other: Bound<'_, PyAny>) -> PyResult<Self> {
-        self.1
-            .bind(other.py())
-            .symmetric_difference(other)
+    pub fn symmetric_difference(&self, other: IntoUpdate<'_>) -> PyResult<Self> {
+        self.map_set(other, Bound::symmetric_difference)
             .and_then(|x| self.wrap(x))
     }
     pub fn symmetric_difference_update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
@@ -251,6 +248,18 @@ impl<T: ListsDataMethods> SetData<T> {
             IntoUpdate::Any(any) => {
                 self.try_update(any.py(), any, Bound::symmetric_difference_update)
             }
+        }
+    }
+    #[inline(always)]
+    fn map_set<'py, R, F: Fn(&Bound<'py, PySet>, Bound<'py, PyAny>) -> R>(
+        &self,
+        other: IntoUpdate<'py>,
+        f: F,
+    ) -> R {
+        let set = self.1.bind(other.py());
+        match other {
+            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) => f(set, pyset.into_any()),
+            IntoUpdate::Any(any) => f(set, any),
         }
     }
 
@@ -306,6 +315,12 @@ pub enum IntoUpdate<'py> {
     Any(Bound<'py, PyAny>),
 }
 impl<'py> IntoUpdate<'py> {
+    fn py(&self) -> Python<'py> {
+        match self {
+            IntoUpdate::SmallSet(set) | IntoUpdate::BigSet(set) => set.py(),
+            IntoUpdate::Any(any) => any.py(),
+        }
+    }
     #[inline]
     pub fn from_sets(original: &Bound<'py, PySet>, other: Bound<'py, PySet>) -> Self {
         if (4 * other.len()) > original.len() {

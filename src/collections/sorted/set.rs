@@ -187,15 +187,15 @@ pub(super) trait SortedSetMethods:
         self.lock().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.lock().is_disjoint(other)
+        self.map_any(other, Self::T::is_disjoint)
     }
 
     fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.lock().is_subset(other)
+        self.map_any(other, Self::T::is_subset)
     }
 
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.lock().is_superset(other)
+        self.map_any(other, Self::T::is_superset)
     }
     fn clear(&self, py: Python<'_>) {
         self.lock().clear(py);
@@ -240,8 +240,7 @@ pub(super) trait SortedSetMethods:
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        self.lock()
-            .symmetric_difference(other)?
+        self.map_any(other, Self::T::symmetric_difference)?
             .conv::<Self>()
             .into_bound(py)
     }
@@ -293,13 +292,23 @@ pub(super) trait SortedSetMethods:
     }
     #[skip]
     #[inline]
-    fn update_any<F: Fn(&mut Self::T, IntoUpdate<'_>) -> PyResult<()>>(
+    fn update_any<R, F: Fn(&mut Self::T, IntoUpdate<'_>) -> R>(
         &self,
         other: Bound<'_, PyAny>,
         func: F,
-    ) -> PyResult<()> {
+    ) -> R {
         let other_set = self.extract_set(other);
         func(&mut self.lock(), other_set)
+    }
+    #[skip]
+    #[inline]
+    fn map_any<'py, R, F: Fn(&Self::T, IntoUpdate<'py>) -> R>(
+        &self,
+        other: Bound<'py, PyAny>,
+        func: F,
+    ) -> R {
+        let other_set = self.extract_set(other);
+        func(&self.lock(), other_set)
     }
     #[skip]
     #[inline]
