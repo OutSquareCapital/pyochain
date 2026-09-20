@@ -113,11 +113,11 @@ impl<'py> PyRangeExtMethods<'py> for Bound<'py, PyRange> {
 pub trait PySetExtMethods<'py>: Sized {
     fn copy(&self) -> PyResult<Self>;
     fn difference<O: PyCallArgs<'py>>(&self, others: O) -> PyResult<Self>;
-    fn isdisjoint(&self, s: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>>;
-    fn issubset(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>>;
-    fn issuperset(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>>;
+    fn isdisjoint<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<Bound<'py, PyBool>>;
+    fn issubset<T: IntoPyObject<'py>>(&self, other: T) -> PyResult<Bound<'py, PyBool>>;
+    fn issuperset<T: IntoPyObject<'py>>(&self, other: T) -> PyResult<Bound<'py, PyBool>>;
     fn intersection<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<Self>;
-    fn symmetric_difference(&self, other: Bound<'py, PyAny>) -> PyResult<Self>;
+    fn symmetric_difference<T: IntoPyObject<'py>>(&self, other: T) -> PyResult<Self>;
     fn union<O: PyCallArgs<'py>>(&self, others: O) -> PyResult<Self>;
 }
 pub trait PySetExtMethodsMut<'py>: PySetExtMethods<'py> {
@@ -126,9 +126,6 @@ pub trait PySetExtMethodsMut<'py>: PySetExtMethods<'py> {
     fn remove<T: IntoPyObject<'py>>(&self, element: T) -> PyResult<()>;
     fn symmetric_difference_update<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<()>;
     fn update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()>;
-    fn update1<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<()> {
-        self.update((s,))
-    }
 }
 impl<'py> PySetExtMethodsMut<'py> for Bound<'py, PySet> {
     fn difference_update<O: PyCallArgs<'py>>(&self, s: O) -> PyResult<()> {
@@ -160,17 +157,17 @@ macro_rules! impl_sequence_ext_methods {
                     self.call_method0(intern!(self.py(), "copy"))
                         .map(|x| unsafe { x.cast_into_unchecked::<$t>() })
                 }
-                fn isdisjoint(&self, s: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+                fn isdisjoint<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<Bound<'py, PyBool>> {
                     self.call_method1(intern!(self.py(), "isdisjoint"), (s,))
                         .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
                 }
 
-                fn issubset(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+                fn issubset<T: IntoPyObject<'py>>(&self, other: T) -> PyResult<Bound<'py, PyBool>> {
                     self.call_method1(intern!(self.py(), "issubset"), (other,))
                         .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
                 }
 
-                fn issuperset(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+                fn issuperset<T: IntoPyObject<'py>>(&self, other: T) -> PyResult<Bound<'py, PyBool>> {
                     self.call_method1(intern!(self.py(), "issuperset"), (other,))
                         .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
                 }
@@ -188,7 +185,7 @@ macro_rules! impl_sequence_ext_methods {
                         .map(|x| unsafe { x.cast_into_unchecked::<$t>() })
                 }
 
-                fn symmetric_difference(&self, other: Bound<'py, PyAny>) -> PyResult<Self> {
+                fn symmetric_difference<T: IntoPyObject<'py>>(&self, other: T) -> PyResult<Self> {
                     self.call_method1(intern!(self.py(), "symmetric_difference"), (other,))
                         .map(|x| unsafe { x.cast_into_unchecked::<$t>() })
                 }

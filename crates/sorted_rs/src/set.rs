@@ -136,7 +136,7 @@ impl<T: ListsDataMethods> SetData<T> {
         )
     }
     pub fn update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
-        self.update_inner(other, Bound::update1, Self::add)
+        self.update_inner(other, |slf, other| slf.update((other,)), Self::add)
     }
     pub fn intersection_update(&mut self, iterables: IntoUpdate<'_>) -> PyResult<()> {
         match iterables {
