@@ -9,7 +9,6 @@ use either::Either;
 use pyo3::{
     PyTypeInfo,
     basic::CompareOp,
-    call::PyCallArgs,
     prelude::*,
     types::{DerefToPyAny, PyBool, PyList, PyNotImplemented, PySet},
 };
@@ -105,28 +104,17 @@ impl<T: ListsDataMethods> SetData<T> {
     pub fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.0.reset(py, load)
     }
-    pub fn difference<'py, O: PyCallArgs<'py>>(
-        &self,
-        py: Python<'py>,
-        iterables: O,
-    ) -> PyResult<Self> {
-        self.1
-            .bind(py)
-            .difference(iterables)
+    pub fn difference(&self, iterables: IntoUpdate<'_>) -> PyResult<Self> {
+        self.map_set(iterables, |slf, other| slf.difference((other,)))
             .and_then(|x| self.wrap(x))
     }
-    pub fn intersection<'py, O: PyCallArgs<'py>>(
-        &self,
-        py: Python<'py>,
-        iterables: O,
-    ) -> PyResult<Self> {
-        self.1
-            .bind(py)
-            .intersection(iterables)
+    pub fn intersection(&self, iterables: IntoUpdate<'_>) -> PyResult<Self> {
+        self.map_set(iterables, |slf, other| slf.intersection((other,)))
             .and_then(|x| self.wrap(x))
     }
-    pub fn union<'py, O: PyCallArgs<'py>>(&self, py: Python<'py>, iterables: O) -> PyResult<Self> {
-        self.1.bind(py).union(iterables).and_then(|x| self.wrap(x))
+    pub fn union(&self, iterables: IntoUpdate<'_>) -> PyResult<Self> {
+        self.map_set(iterables, |slf, other| slf.union((other,)))
+            .and_then(|x| self.wrap(x))
     }
     pub fn difference_update(&mut self, iterables: IntoUpdate<'_>) -> PyResult<()> {
         self.update_inner(
