@@ -314,8 +314,8 @@ pub(super) trait SortedSetMethods:
             .map(|other| self.extract_set(other))
             .try_fold(PySet::empty(py)?, |pyset, other| {
                 match other {
-                    IntoUpdate::SmallSet(other) | IntoUpdate::BigSet(other) => {
-                        pyset.update((other,))
+                    IntoUpdate::Slf(set) | IntoUpdate::SmallSet(set) | IntoUpdate::BigSet(set) => {
+                        pyset.update((set,))
                     }
                     IntoUpdate::Any(other) => pyset.update((other,)),
                 }
@@ -332,7 +332,7 @@ pub(super) trait SortedSetMethods:
                     let slf_set = self.get_set(py);
                     let other = other.get();
                     if self.is(other) {
-                        IntoUpdate::SmallSet(slf_set)
+                        IntoUpdate::Slf(slf_set)
                     } else {
                         IntoUpdate::from_sets(&slf_set, other.get_set(py))
                     }
