@@ -8,30 +8,26 @@ This document outlines the repository structure, coding standards, and contribut
 
 ### Python API and typing
 
-- [pyochain/](pyochain/) — all stubs
-- [pyochain/_types.pyi](pyochain/_types.pyi) — shared typing protocols and type aliases; it has no direct Rust module.
-- [pyochain/pyochain.pyi](pyochain/pyochain.pyi) — top-level public re-exports for the extension initialized by [src/lib.rs](src/lib.rs).
-- [pyochain/core/](pyochain/core/) — stubs for the core Rust types in [src/core/](src/core/).
-- [pyochain/abc/](pyochain/abc/) — stubs for the ABCs and mixins in [src/abc/](src/abc/).
-- [pyochain/collections/](pyochain/collections/) — stubs for the concrete collections in [src/collections/](src/collections/), including sorted collections.
+All the stubs are located in the `pyochain` folder.
 
 The stub packages follow the public Rust module hierarchy, but the mapping is not strictly one-to-one: package initializers, grouped stubs, and private Rust helper modules do not always have a matching file.
 
 ### Rust and PyO3 implementation
 
+The actual source code implementation lives in the `src` folder, with the following structure:
+
 - [src/lib.rs](src/lib.rs) — initializes the `pyochain` PyO3 module and registers the `core`, `abc`, `collections`, and `collections._sorted` submodules.
-- [src/core/](src/core/) — implements the core types: `Dict`, `Iter`, `Peekable`, `Option`, `Result`, `Range`, `Seq`, `Set`, `SetMut`, `SliceView`, and `Vec`.
+- [src/core/](src/core/) — implements the core types.
 - [src/abc/](src/abc/) — implements the abstract base classes, mixins, and shared ABC traits.
-- [src/collections/](src/collections/) — implements concrete collections such as `Deque`, `Heap`, `HeapMax`, `HeapMin`, `PyoCounter`, and `StableSet`.
+- [src/collections/](src/collections/) — implements concrete collections such as `Deque`, `HeapMax`, `HeapMin`, `StableSet` etc...
 - [src/collections/sorted/](src/collections/sorted/) — implements sorted collections, views, iterators, and their internal support modules.
-- [src/display.rs](src/display.rs) — formats Python objects for `repr` output.
-- [src/hasher.rs](src/hasher.rs) — provides shared hashing helpers.
 - [src/traits.rs](src/traits.rs) — defines shared wrapper, conversion, and initialization traits.
 
 ### Internal crates
 
 - [crates/pyo3_ext/](crates/pyo3_ext/) — internal PyO3 extensions and utility traits.
 - [crates/pyochain_macros/](crates/pyochain_macros/) — procedural macros used by the Rust implementation.
+- [crates/pyochain_build/](crates/pyochain_build/) — build tool for generating documentation and validating the repository.
 
 ### Tests, documentation, and tooling
 
