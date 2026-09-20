@@ -1,6 +1,6 @@
 //! Traits extending the functionality of various pre-existing Pyo3 types
 use pyo3::{
-    PyTypeInfo,
+    BoundObject, IntoPyObjectExt, PyTypeInfo,
     basic::CompareOp,
     call::PyCallArgs,
     exceptions::PyTypeError,
@@ -199,7 +199,7 @@ impl_sequence_ext_methods!(PySet, PyFrozenSet);
 pub trait PyListExtMethods<'py>: Sized {
     fn clear(&self) -> ();
     fn copy(&self) -> PyResult<Self>;
-    fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
+    fn extend<O: IntoPyObject<'py>>(&self, iterable: O) -> PyResult<()>;
     fn last(&self) -> PyResult<Bound<'py, PyAny>>;
     fn pop(&self, index: usize) -> PyResult<Bound<'py, PyAny>>;
     fn sort_by(&self, key: &Bound<'_, PyAny>, reverse: bool) -> PyResult<()>;
@@ -218,8 +218,16 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
         unsafe { ffi::PyList_Clear(self.as_ptr()) };
     }
 
-    fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
-        match unsafe { ffi::PyList_Extend(self.as_ptr(), iterable.as_ptr()) } {
+    fn extend<O: IntoPyObject<'py>>(&self, iterable: O) -> PyResult<()> {
+        match unsafe {
+            ffi::PyList_Extend(
+                self.as_ptr(),
+                iterable
+                    .into_pyobject_or_pyerr(self.py())?
+                    .as_borrowed()
+                    .as_ptr(),
+            )
+        } {
             0 => Ok(()),
             _ => Err(PyErr::fetch(self.py())),
         }
