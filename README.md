@@ -10,7 +10,7 @@
 - [Links](#links)
 - [Why use pyochain?](#why-use-pyochain)
 - [Getting started](#getting-started)
-- [Notice on Stability](#notice-on-stability-)
+- [Notice on Stability](#notice-on-stability ⚠️)
 - [Contributing](#contributing)
 - [Credits](#credits)
 
