@@ -128,7 +128,7 @@ impl<T: ListsDataMethods> SetData<T> {
     }
     pub fn intersection_update(&mut self, iterables: IntoUpdate<'_>) -> PyResult<()> {
         match iterables {
-            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) | IntoUpdate::Slf(pyset) => {
+            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) => {
                 self.try_update(pyset.py(), pyset, |set, obj| {
                     set.intersection_update((obj,))
                 })
@@ -230,7 +230,7 @@ impl<T: ListsDataMethods> SetData<T> {
     }
     pub fn symmetric_difference_update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
         match other {
-            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) | IntoUpdate::Slf(pyset) => {
+            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) => {
                 self.try_update(pyset.py(), pyset, Bound::symmetric_difference_update)
             }
             IntoUpdate::Any(any) => {
@@ -246,9 +246,7 @@ impl<T: ListsDataMethods> SetData<T> {
     ) -> R {
         let set = self.1.bind(other.py());
         match other {
-            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) | IntoUpdate::Slf(pyset) => {
-                f(set, pyset.into_any())
-            }
+            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) => f(set, pyset.into_any()),
             IntoUpdate::Any(any) => f(set, any),
         }
     }
@@ -264,9 +262,7 @@ impl<T: ListsDataMethods> SetData<T> {
         slf_fn: F2,
     ) -> PyResult<()> {
         match other {
-            IntoUpdate::BigSet(pyset) | IntoUpdate::Slf(pyset) => {
-                self.try_update(pyset.py(), pyset, set_fn)
-            }
+            IntoUpdate::BigSet(pyset) => self.try_update(pyset.py(), pyset, set_fn),
             IntoUpdate::SmallSet(pyset) => pyset.iter().try_for_each(|value| slf_fn(self, value)),
             IntoUpdate::Any(any) => any.try_iter()?.try_for_each(|value| slf_fn(self, value?)),
         }
@@ -302,7 +298,6 @@ impl<'py, T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> SetComp<'p
 }
 #[must_use]
 pub enum IntoUpdate<'py> {
-    Slf(Bound<'py, PySet>),
     SmallSet(Bound<'py, PySet>),
     BigSet(Bound<'py, PySet>),
     Any(Bound<'py, PyAny>),
@@ -310,7 +305,7 @@ pub enum IntoUpdate<'py> {
 impl<'py> IntoUpdate<'py> {
     fn py(&self) -> Python<'py> {
         match self {
-            Self::Slf(set) | Self::SmallSet(set) | Self::BigSet(set) => set.py(),
+            Self::SmallSet(set) | Self::BigSet(set) => set.py(),
             Self::Any(any) => any.py(),
         }
     }
