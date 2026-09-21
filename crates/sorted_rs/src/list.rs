@@ -1,4 +1,4 @@
-use pyo3::{PyTypeInfo, prelude::*};
+use pyo3::prelude::*;
 use tap::Pipe;
 
 use crate::{
@@ -7,18 +7,10 @@ use crate::{
     bounds::{Bounds, Loc},
     cmp::py_cmp,
     errors, ops,
-    traits::{ListsDataMethods, NestedVec, PyRepr, update_list_by},
+    traits::{ListsDataMethods, NestedVec, update_list_by},
     types::VecPy,
 };
 
-impl PyRepr for ListsData {
-    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
-        let name = T::type_object(py).name()?;
-        self.as_pylist(py)?
-            .repr()
-            .map(|repr| format!("{name}({repr})"))
-    }
-}
 impl ListsDataMethods for ListsData {
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::default();

@@ -8,11 +8,11 @@ use crate::{
     Bounds, Loc, errors,
     indexing::Nb,
     inner::InnerData,
+    reprs::PyRepr,
     types::{IntOrSlice, ListOrAny, VecPy},
 };
 use either::Either;
 use pyo3::{
-    PyTypeInfo,
     exceptions::PyIndexError,
     prelude::*,
     types::{PyIterator, PyList, PySlice, PySliceIndices},
@@ -46,9 +46,6 @@ impl<T> NestedVec<T> for [Vec<T>] {
     fn loc_len(&self, loc: &Loc) -> usize {
         self[loc.pos].len()
     }
-}
-pub trait PyRepr {
-    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String>;
 }
 pub enum ListAdd<'py, T> {
     Identity,

@@ -7,7 +7,7 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    PyClass, PyTypeInfo,
+    PyClass,
     basic::CompareOp,
     prelude::*,
     types::{PyBool, PyList, PyNotImplemented, PySet},
@@ -20,21 +20,6 @@ use pyochain_macros::try_cast_into;
 use std_tools::prelude::MutexExtMethods;
 use tap::prelude::*;
 
-impl PyRepr for SetData<ListsData> {
-    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
-        let name = T::type_object(py).name()?;
-        let self_repr = self.as_pylist(py)?.repr()?;
-        Ok(format!("{name}({self_repr})"))
-    }
-}
-impl PyRepr for SetData<KeysListsData> {
-    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
-        let name = T::type_object(py).name()?;
-        let key = format!(", key={}", self.0.2.bind(py).repr()?);
-        let list_repr = self.as_pylist(py)?.repr()?;
-        Ok(format!("{name}({list_repr}{key})"))
-    }
-}
 impl SetData<ListsData> {
     pub fn build(py: Python<'_>, iterable: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
         Self::build_inner(py, ListsData::default(), iterable)

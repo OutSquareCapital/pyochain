@@ -6,10 +6,10 @@ use crate::{
     errors,
     inner::InnerData,
     ops,
-    traits::{ListsDataMethods, NestedVec, PyRepr, update_list_by},
+    traits::{ListsDataMethods, NestedVec, update_list_by},
     types::VecPy,
 };
-use pyo3::{PyTypeInfo, prelude::*};
+use pyo3::prelude::*;
 use tap::prelude::*;
 
 impl KeysListsData {
@@ -19,15 +19,6 @@ impl KeysListsData {
     }
     fn extract_key<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         self.2.bind(value.py()).call1((&value,))
-    }
-}
-impl PyRepr for KeysListsData {
-    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
-        let name = T::type_object(py).name()?;
-        let key_repr = self.2.bind(py).repr()?;
-        self.as_pylist(py)?
-            .repr()
-            .map(|repr| format!("{name}({repr}, key={key_repr})"))
     }
 }
 impl ListsDataMethods for KeysListsData {
@@ -48,7 +39,6 @@ impl ListsDataMethods for KeysListsData {
         let maximum = maximum.map(|value| key.call1((value,))).transpose()?;
         Bounds::from_sorted(&self.1, &self.maxes, minimum, maximum, inclusive)
     }
-
     fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let key = self.extract_key(&value)?;
         let py = value.py();

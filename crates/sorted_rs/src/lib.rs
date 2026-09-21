@@ -12,6 +12,7 @@ mod keylist;
 mod list;
 mod ops;
 pub mod prelude;
+mod reprs;
 mod set;
 mod traits;
 pub mod types;

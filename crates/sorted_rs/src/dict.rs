@@ -11,21 +11,6 @@ use tap::Pipe;
 
 use crate::{DictData, KeysListsData, ListsData, prelude::*};
 
-impl PyRepr for DictData<ListsData> {
-    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
-        let name = T::type_object(py).name()?;
-        let items = self.values_to_str(name.py())?;
-        Ok(format!("{name}({{{items}}})"))
-    }
-}
-impl PyRepr for DictData<KeysListsData> {
-    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
-        let name = T::type_object(py).name()?;
-        let key_arg = self.0.2.bind(py).repr()?;
-        let items = self.values_to_str(py)?;
-        Ok(format!("{name}({key_arg}, {{{items}}})"))
-    }
-}
 impl DictData<ListsData> {
     #[must_use]
     pub fn empty(py: Python<'_>) -> Self {
