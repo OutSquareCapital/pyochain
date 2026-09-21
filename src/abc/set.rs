@@ -10,6 +10,7 @@ use pyo3_ext::{
     types::{FromCmp, PyAbstractSet, PyCmpOut, PyIterable},
 };
 use pyochain_macros::{BoundFromAny, py_abc};
+use std_tools::prelude::*;
 use tap::Pipe;
 #[py_abc(
     PyoSet,
@@ -149,32 +150,37 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
     }
     fn __le__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if !other.is_instance_of::<PyAbstractSet>() {
-            return PyNotImplemented::from_cmp(slf.py());
+            PyNotImplemented::from_cmp(slf.py())
+        } else if slf.len()? > other.len()? {
+            Ok(Either::Left(false))
+        } else {
+            slf.try_iter()?
+                .try_find_map(|elem| match other.contains(elem?) {
+                    Ok(true) => Ok(None),
+                    Ok(false) => Ok(Some(Either::Left(false))),
+                    Err(e) => Err(e),
+                })?
+                .unwrap_or_else(|| Either::Left(true))
+                .pipe(Ok)
         }
-        if slf.len()? > other.len()? {
-            return Ok(Either::Left(false));
-        }
-        for elem in slf.try_iter()? {
-            if !other.contains(elem?)? {
-                return Ok(Either::Left(false));
-            }
-        }
-        Ok(Either::Left(true))
     }
 
     fn __ge__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if !other.is_instance_of::<PyAbstractSet>() {
-            return PyNotImplemented::from_cmp(slf.py());
+            PyNotImplemented::from_cmp(slf.py())
+        } else if slf.len()? < other.len()? {
+            Ok(Either::Left(false))
+        } else {
+            other
+                .try_iter()?
+                .try_find_map(|elem| match slf.contains(elem?) {
+                    Ok(true) => Ok(None),
+                    Ok(false) => Ok(Some(Either::Left(false))),
+                    Err(e) => Err(e),
+                })?
+                .unwrap_or_else(|| Either::Left(true))
+                .pipe(Ok)
         }
-        if slf.len()? < other.len()? {
-            return Ok(Either::Left(false));
-        }
-        for elem in other.try_iter()? {
-            if !slf.contains(elem?)? {
-                return Ok(Either::Left(false));
-            }
-        }
-        Ok(Either::Left(true))
     }
 
     fn __lt__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
@@ -211,12 +217,15 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
         Ok(if h == -1 { 590_923_713 } else { h })
     }
     fn isdisjoint(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
-        for value in other.try_iter()? {
-            if slf.contains(value?)? {
-                return Ok(false);
-            }
-        }
-        Ok(true)
+        other
+            .try_iter()?
+            .try_find_map(|value| match slf.contains(value?) {
+                Ok(true) => Ok(Some(false)),
+                Ok(false) => Ok(None),
+                Err(e) => Err(e),
+            })?
+            .unwrap_or(true)
+            .pipe(Ok)
     }
 
     fn is_subset(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -240,27 +249,23 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
     fn intersection<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
+    ) -> PyResult<Bound<'py, PyAny>> {
         slf.bitand(other)
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
-    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         slf.bitor(other)
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     fn difference<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
+    ) -> PyResult<Bound<'py, PyAny>> {
         slf.sub(other)
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     fn symmetric_difference<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
+    ) -> PyResult<Bound<'py, PyAny>> {
         slf.bitxor(other)
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
 }
 
