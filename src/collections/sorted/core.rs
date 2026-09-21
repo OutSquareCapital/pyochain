@@ -78,7 +78,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let bounds = self.lock().list_mut().get_islice_specs(py, start, stop)?;
+        let bounds = self.lock().get_islice_specs(py, start, stop)?;
         self.iter_bounds(py, bounds, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {

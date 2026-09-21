@@ -1,6 +1,5 @@
 use crate::{
     KeysListsData, ListsData,
-    getters::ListDataOwner,
     prelude::*,
     types::{IntOrSlice, ListOrAny},
 };
@@ -29,7 +28,7 @@ impl PyRepr for SetData<ListsData> {
 impl PyRepr for SetData<KeysListsData> {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
         let name = T::type_object(py).name()?;
-        let key = format!(", key={}", self.list().2.bind(py).repr()?);
+        let key = format!(", key={}", self.0.2.bind(py).repr()?);
         let list_repr = self.as_pylist(py)?.repr()?;
         Ok(format!("{name}({list_repr}{key})"))
     }
@@ -72,7 +71,7 @@ impl<T: ListsDataMethods> SetData<T> {
     fn wrap(&self, values: Bound<'_, PySet>) -> PyResult<Self> {
         let py = values.py();
         let list = self
-            .list()
+            .0
             .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
         Self(list, values.unbind()).pipe(Ok)
     }

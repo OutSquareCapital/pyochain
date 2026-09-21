@@ -14,10 +14,10 @@ pub fn check_empty(slf: &InnerData) -> PyResult<()> {
     Ok(())
 }
 pub fn check_dict<T: ListsDataMethods>(py: Python<'_>, data: &DictData<T>) -> PyResult<()> {
-    check_list(py, data.list())?;
+    check_list(py, data)?;
     let dict = data.get_dict().bind(py);
     pyassert!(dict.len() == data.len);
-    pyassert!(data.list().iter().all(|item| {
+    pyassert!(data.iter().all(|item| {
         dict.contains(item.bind(py))
             .expect("Failed to check dict membership")
     }));
@@ -27,10 +27,9 @@ pub fn check_dict<T: ListsDataMethods>(py: Python<'_>, data: &DictData<T>) -> Py
 pub fn check_set_len<T: ListsDataMethods>(py: Python<'_>, checked: &SetData<T>) -> PyResult<()> {
     let set = checked.get_set(py);
     pyassert!(set.len() == checked.len);
-    check_list(py, checked.list())?;
+    check_list(py, checked)?;
     pyassert!(
         checked
-            .list()
             .iter()
             .all(|x| set.contains(x).expect("Failed to check set membership"))
     );

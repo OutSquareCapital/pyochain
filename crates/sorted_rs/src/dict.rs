@@ -22,7 +22,7 @@ impl PyRepr for DictData<ListsData> {
 impl PyRepr for DictData<KeysListsData> {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
         let name = T::type_object(py).name()?;
-        let key_arg = self.list().2.bind(py).repr()?;
+        let key_arg = self.0.2.bind(py).repr()?;
         let items = self.values_to_str(py)?;
         Ok(format!("{name}({key_arg}, {{{items}}})"))
     }
@@ -67,7 +67,7 @@ impl<T: ListsDataMethods> DictData<T> {
     }
 
     pub fn extract_index<'py>(&mut self, int: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        self.list_mut().get_item(int.py(), int.extract::<isize>()?)
+        self.0.get_item(int.py(), int.extract::<isize>()?)
     }
 
     pub fn or(&mut self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
@@ -110,7 +110,7 @@ impl<T: ListsDataMethods> DictData<T> {
         let py = key.py();
         let dict = self.1.bind(py);
         if !dict.contains(&key)? {
-            self.0.list_mut().add(key.clone())?;
+            self.0.add(key.clone())?;
         }
         dict.set_item(key, value)
     }
@@ -119,7 +119,7 @@ impl<T: ListsDataMethods> DictData<T> {
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        let key = self.0.list_mut().get_item(py, index)?;
+        let key = self.0.get_item(py, index)?;
         self.get_item(&key).map(|value| (key, value))
     }
     pub fn setdefault<'py>(
@@ -133,7 +133,7 @@ impl<T: ListsDataMethods> DictData<T> {
             dict.as_any().get_item(&key).map(Some)
         } else {
             dict.set_item(&key, &default)?;
-            self.0.list_mut().add(key)?;
+            self.0.add(key)?;
             Ok(default)
         }
     }
@@ -142,7 +142,7 @@ impl<T: ListsDataMethods> DictData<T> {
     }
     pub fn clear(&mut self, py: Python<'_>) {
         self.1.bind(py).clear();
-        self.0.list_mut().clear(py);
+        self.0.clear(py);
     }
     pub fn copy_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
         &self,
@@ -159,13 +159,13 @@ impl<T: ListsDataMethods> DictData<T> {
                 })
             })
             .collect::<PyResult<Vec<_>>>()?;
-        let list = self.0.list().as_owned_from(py, unbounded)?;
+        let list = self.0.as_owned_from(py, unbounded)?;
         DictData::new(list, inner.unbind()).pipe(Ok)
     }
 
     pub fn del_item(&mut self, key: &Bound<'_, PyAny>) -> PyResult<()> {
         self.1.bind(key.py()).as_any().del_item(key)?;
-        self.0.list_mut().remove(key)
+        self.0.remove(key)
     }
     pub fn popitem<'py>(
         &mut self,
@@ -177,7 +177,7 @@ impl<T: ListsDataMethods> DictData<T> {
             let msg = "popitem(): dictionary is empty";
             Err(PyKeyError::new_err(msg))
         } else {
-            let key = self.0.list_mut().pop(py, index)?;
+            let key = self.0.pop(py, index)?;
             let value = dict.pop_or_err(&key).into_pyresult()?;
             Ok((key, value))
         }
@@ -190,7 +190,7 @@ impl<T: ListsDataMethods> DictData<T> {
         let py = key.py();
         let dict = self.1.bind(py);
         if dict.contains(key)? {
-            self.0.list_mut().remove(key)?;
+            self.0.remove(key)?;
             dict.pop_or_err(key).into_pyresult()
         } else {
             default.ok_or_else(|| PyKeyError::new_err(key.to_string()))
@@ -221,7 +221,7 @@ impl<T: ListsDataMethods> DictData<T> {
                 .iter()
                 .map(|(k, _)| k.unbind())
                 .collect::<Vec<_>>()
-                .pipe(|v| self.0.list_mut().extend(py, v))?;
+                .pipe(|v| self.0.extend(py, v))?;
             Ok(())
         } else {
             let pairs = try_cast_into! {match (m, kwargs) {
@@ -252,12 +252,12 @@ impl<T: ListsDataMethods> DictData<T> {
             }};
             if (10 * pairs.len()) > inner.len() {
                 inner.update(pairs.as_mapping())?;
-                self.0.list_mut().clear(py);
+                self.0.clear(py);
                 inner
                     .iter()
                     .map(|(k, _)| k.unbind())
                     .collect::<Vec<_>>()
-                    .pipe(|v| self.0.list_mut().extend(py, v))?;
+                    .pipe(|v| self.0.extend(py, v))?;
                 Ok(())
             } else {
                 pairs.keys_view().iter_py().try_for_each(|key| {
