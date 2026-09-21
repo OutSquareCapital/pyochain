@@ -72,27 +72,27 @@ pub(super) trait SortedListMethods:
         self.copy(py)
     }
     fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().inner().eq(other)
+        self.lock().eq(other)
     }
 
     fn __ne__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().inner().ne(other)
+        self.lock().ne(other)
     }
 
     fn __lt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().inner().lt(other)
+        self.lock().lt(other)
     }
 
     fn __gt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().inner().gt(other)
+        self.lock().gt(other)
     }
 
     fn __le__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().inner().le(other)
+        self.lock().le(other)
     }
 
     fn __ge__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().inner().ge(other)
+        self.lock().ge(other)
     }
 
     fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
@@ -105,7 +105,7 @@ pub(super) trait SortedListMethods:
             .and_then_left(Bound::try_into_py)
     }
     fn __len__(&self) -> usize {
-        self.lock().len()
+        self.lock().len
     }
 
     fn __radd__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -124,7 +124,10 @@ pub(super) trait SortedListMethods:
         self.extend(&other)
     }
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        self.lock().repeat(py, num)?.conv::<Self>().into_bound(py)
+        self.lock()
+            .as_repeated(py, num)?
+            .conv::<Self>()
+            .into_bound(py)
     }
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
         self.lock().imul(py, num)
@@ -157,11 +160,11 @@ pub(super) trait SortedListMethods:
         let out = into_list_add(self, iterable)?;
         match out {
             ListAdd::Identity => {
-                let values = self.lock().inner().collapse(py);
+                let values = self.lock().collapse(py);
                 self.lock().extend(py, values)
             }
             ListAdd::Sorted(list) => {
-                let values = list.inner().collapse(py);
+                let values = list.collapse(py);
                 self.lock().extend(py, values)
             }
             ListAdd::Iterator(it) => {

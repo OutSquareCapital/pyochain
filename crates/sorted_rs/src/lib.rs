@@ -18,6 +18,7 @@ pub mod types;
 pub mod views;
 pub use bounds::{Bounds, Loc};
 pub use dict::DictData;
+pub use inner::InnerData;
 pub use keylist::KeysListsData;
 pub use list::ListsData;
 pub use set::{IntoUpdate, SetComp, SetData};

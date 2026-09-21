@@ -1,14 +1,9 @@
-use crate::{inner::InnerData, prelude::*, types::VecPy};
-use pyo3::prelude::*;
+use std::ops::{Deref, DerefMut};
 
-pub trait InnerGetter: Sized {
-    fn inner(&self) -> &InnerData;
-    fn inner_mut(&mut self) -> &mut InnerData;
-}
+use crate::{DictData, InnerData, SetData, prelude::*};
 
 pub trait ListDataOwner {
     type List: ListsDataMethods;
-
     fn list(&self) -> &Self::List;
     fn list_mut(&mut self) -> &mut Self::List;
 }
@@ -24,82 +19,45 @@ impl<T: ListsDataMethods> ListDataOwner for T {
     }
 }
 
-pub trait ListDataGetters: Sized {
-    fn values(&self) -> &[VecPy];
-    fn values_mut(&mut self) -> &mut Vec<VecPy>;
-    fn maxes(&self) -> &[Py<PyAny>];
-    fn maxes_mut(&mut self) -> &mut VecPy;
-    fn idx(&self) -> &[usize];
-    fn idx_mut(&mut self) -> &mut Vec<usize>;
-    fn len(&self) -> usize;
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-    fn increment_len(&mut self);
-    fn decrement_len(&mut self);
-    fn set_len(&mut self, len: usize);
-    fn offset(&self) -> usize;
-    fn set_offset(&mut self, offset: usize);
-    fn load(&self) -> usize;
-    fn set_load(&mut self, load: usize);
-}
-
-impl<T: InnerGetter> ListDataGetters for T {
-    fn values(&self) -> &[VecPy] {
-        &self.inner().values
-    }
-    fn values_mut(&mut self) -> &mut Vec<VecPy> {
-        &mut self.inner_mut().values
-    }
-    fn maxes(&self) -> &[Py<PyAny>] {
-        &self.inner().maxes
-    }
-    fn maxes_mut(&mut self) -> &mut VecPy {
-        &mut self.inner_mut().maxes
-    }
-    fn idx(&self) -> &[usize] {
-        &self.inner().idx
-    }
-    fn idx_mut(&mut self) -> &mut Vec<usize> {
-        &mut self.inner_mut().idx
-    }
-    fn len(&self) -> usize {
-        self.inner().len
-    }
-    fn set_len(&mut self, len: usize) {
-        self.inner_mut().len = len;
-    }
-    fn increment_len(&mut self) {
-        self.inner_mut().len += 1;
-    }
-    fn decrement_len(&mut self) {
-        self.inner_mut().len -= 1;
-    }
-    fn offset(&self) -> usize {
-        self.inner().offset
-    }
-    fn set_offset(&mut self, offset: usize) {
-        self.inner_mut().offset = offset;
-    }
-    fn load(&self) -> usize {
-        self.inner().load
-    }
-    fn set_load(&mut self, load: usize) {
-        self.inner_mut().load = load;
-    }
-}
-
 #[macro_export]
 macro_rules! impl_inner_getter {
     ($name:ident) => {
-        impl $crate::getters::InnerGetter for $name {
-            fn inner(&self) -> &InnerData {
+        impl std::ops::Deref for $name {
+            type Target = InnerData;
+            fn deref(&self) -> &Self::Target {
                 &self.0
             }
-
-            fn inner_mut(&mut self) -> &mut InnerData {
+        }
+        impl std::ops::DerefMut for $name {
+            fn deref_mut(&mut self) -> &mut Self::Target {
                 &mut self.0
             }
         }
     };
 }
+macro_rules! impl_getters {
+    ($name:ident) => {
+        impl<T: ListsDataMethods> Deref for $name<T> {
+            type Target = InnerData;
+            fn deref(&self) -> &InnerData {
+                self.0.deref()
+            }
+        }
+        impl<T: ListsDataMethods> DerefMut for $name<T> {
+            fn deref_mut(&mut self) -> &mut InnerData {
+                self.0.deref_mut()
+            }
+        }
+        impl<T: ListsDataMethods> ListDataOwner for $name<T> {
+            type List = T;
+            fn list(&self) -> &Self::List {
+                &self.0
+            }
+            fn list_mut(&mut self) -> &mut Self::List {
+                &mut self.0
+            }
+        }
+    };
+}
+impl_getters!(SetData);
+impl_getters!(DictData);

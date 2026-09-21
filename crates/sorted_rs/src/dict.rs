@@ -9,28 +9,9 @@ use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::Pipe;
 
-use crate::{KeysListsData, ListsData, inner::InnerData, prelude::*};
-pub struct DictData<T: ListsDataMethods>(T, pub(super) Py<PyDict>);
+use crate::{KeysListsData, ListsData, prelude::*};
+pub struct DictData<T: ListsDataMethods>(pub(super) T, pub(super) Py<PyDict>);
 
-impl<T: ListsDataMethods> InnerGetter for DictData<T> {
-    fn inner(&self) -> &InnerData {
-        self.0.inner()
-    }
-    fn inner_mut(&mut self) -> &mut InnerData {
-        self.0.inner_mut()
-    }
-}
-impl<T: ListsDataMethods> ListDataOwner for DictData<T> {
-    type List = T;
-
-    fn list(&self) -> &Self::List {
-        &self.0
-    }
-
-    fn list_mut(&mut self) -> &mut Self::List {
-        &mut self.0
-    }
-}
 impl PyRepr for DictData<ListsData> {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
         let name = T::type_object(py).name()?;
@@ -75,8 +56,7 @@ impl<T: ListsDataMethods> DictData<T> {
     }
     pub fn values_to_str(&self, py: Python<'_>) -> PyResult<String> {
         let dict = self.1.bind(py).as_any();
-        self.inner()
-            .iter()
+        self.iter()
             .map(|x| x.bind(py))
             .map(|key| {
                 dict.get_item(key)
@@ -87,16 +67,13 @@ impl<T: ListsDataMethods> DictData<T> {
     }
 
     pub fn extract_index<'py>(&mut self, int: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        self.list_mut()
-            .inner_mut()
-            .get_item(int.py(), int.extract::<isize>()?)
+        self.list_mut().get_item(int.py(), int.extract::<isize>()?)
     }
 
     pub fn or(&mut self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
         let py = value.py();
         let dict = self.1.bind(py).as_any();
         self.0
-            .inner()
             .iter()
             .map(|x| x.clone_ref(py).into_bound(py))
             .map(|key| dict.get_item(&key).map(|value| (key, value)))
@@ -112,7 +89,6 @@ impl<T: ListsDataMethods> DictData<T> {
             .iter()
             .chain(
                 self.0
-                    .inner()
                     .iter()
                     .map(|x| x.clone_ref(py).into_bound(py))
                     .map(|key| dict.get_item(&key).map(|value| (key, value))),
@@ -122,7 +98,6 @@ impl<T: ListsDataMethods> DictData<T> {
     pub fn copy(&mut self, py: Python<'_>) -> PyResult<Self> {
         let dict = self.1.bind(py).as_any();
         self.0
-            .inner()
             .iter()
             .map(|x| x.clone_ref(py).into_bound(py))
             .map(|key| dict.get_item(&key).map(|value| (key, value)))
@@ -144,7 +119,7 @@ impl<T: ListsDataMethods> DictData<T> {
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        let key = self.0.list_mut().inner_mut().get_item(py, index)?;
+        let key = self.0.list_mut().get_item(py, index)?;
         self.get_item(&key).map(|value| (key, value))
     }
     pub fn setdefault<'py>(

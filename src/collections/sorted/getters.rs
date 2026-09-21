@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::{
+    ops::{Deref, DerefMut},
+    sync::{Arc, Mutex, MutexGuard},
+};
 
 use crate::{
     abc,
@@ -7,13 +10,15 @@ use crate::{
     traits::IntoInit,
 };
 use pyo3::{PyClass, prelude::*};
-use sorted_rs::{Bounds, DictData, KeysListsData, ListsData, SetData, iter as rsiter, prelude::*};
+use sorted_rs::{
+    Bounds, DictData, InnerData, KeysListsData, ListsData, SetData, iter as rsiter, prelude::*,
+};
 use std_tools::prelude::*;
 use tap::Conv;
 pub(super) trait ListGetter:
     PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
-    type T: ListDataGetters + ListDataOwner + PyRepr;
+    type T: Deref<Target = InnerData> + DerefMut + ListDataOwner + PyRepr;
     type I: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
     type IRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::BoundedRev<Self::T>>;
     type IFull: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;

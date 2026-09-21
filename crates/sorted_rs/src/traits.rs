@@ -1,9 +1,13 @@
-use std::{cmp::Ordering, sync::MutexGuard};
+use std::{
+    cmp::Ordering,
+    ops::{Deref, DerefMut},
+    sync::MutexGuard,
+};
 
 use crate::{
     Bounds, Loc, errors,
     indexing::Nb,
-    prelude::*,
+    inner::InnerData,
     types::{IntOrSlice, ListOrAny, VecPy},
 };
 use either::Either;
@@ -51,24 +55,7 @@ pub enum ListAdd<'py, T> {
     Sorted(MutexGuard<'py, T>),
     Iterator(Bound<'py, PyIterator>),
 }
-pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
-    fn concat(&self, py: Python<'_>, other: ListAdd<'_, Self>) -> PyResult<Self> {
-        let inner = self.inner();
-        let out = match other {
-            ListAdd::Identity => inner.repeat(py, 2),
-            ListAdd::Sorted(list) => inner
-                .iter()
-                .chain(list.inner().iter())
-                .map(|x| x.clone_ref(py))
-                .collect(),
-            ListAdd::Iterator(it) => inner
-                .iter()
-                .map(|x| x.clone_ref(py).pipe(Ok::<Py<PyAny>, PyErr>))
-                .chain(it.map(|x| x?.unbind().pipe(Ok)))
-                .collect::<PyResult<_>>()?,
-        };
-        self.as_owned_from(py, out)
-    }
+pub trait ListsDataMethods: Deref<Target = InnerData> + DerefMut + PyRepr + Sized {
     fn irange_specs<'py>(
         &self,
         py: Python<'py>,
@@ -102,25 +89,39 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
         self.find(value).map(|x| x.is_some())
     }
     fn copy(&self, py: Python<'_>) -> PyResult<Self> {
-        self.as_owned_from(py, self.inner().collapse(py))
+        self.as_owned_from(py, self.collapse(py))
+    }
+    fn concat(&self, py: Python<'_>, other: ListAdd<'_, Self>) -> PyResult<Self> {
+        let out = match other {
+            ListAdd::Identity => self.repeat(py, 2),
+            ListAdd::Sorted(list) => self
+                .iter()
+                .chain(list.iter())
+                .map(|x| x.clone_ref(py))
+                .collect(),
+            ListAdd::Iterator(it) => self
+                .iter()
+                .map(|x| x.clone_ref(py).pipe(Ok::<Py<PyAny>, PyErr>))
+                .chain(it.map(|x| x?.unbind().pipe(Ok)))
+                .collect::<PyResult<_>>()?,
+        };
+        self.as_owned_from(py, out)
     }
     fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         match index {
             Either::Right(slice) => self
-                .inner_mut()
                 .get_slice(&slice)?
                 .iter()
                 .collect_bound::<PyList>(slice.py())
                 .map(Either::Left),
             Either::Left(index) => self
-                .inner_mut()
                 .get_item(index.py(), index.extract()?)
                 .map(Either::Right),
         }
     }
     fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
         let mut bounds = Loc::default();
-        self.inner_mut().set_pos(index, &mut bounds)?;
+        self.set_pos(index, &mut bounds)?;
         self.delete(py, &mut bounds)
     }
     fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
@@ -131,7 +132,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
     }
     fn del_slice(&mut self, slice: &Bound<'_, PySlice>) -> PyResult<()> {
         let py = slice.py();
-        let length = self.len().cast_signed();
+        let length = self.len.cast_signed();
         let mut loc = Loc::default();
         let PySliceIndices {
             start, stop, step, ..
@@ -142,11 +143,9 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
                 Ok(())
             }
             (Nb::One, Ordering::Less) if length <= 8 * (stop - start) => {
-                let mut values = self.inner_mut().get_slice(&PySlice::new(py, 0, start, 1))?;
+                let mut values = self.get_slice(&PySlice::new(py, 0, start, 1))?;
                 if stop < length {
-                    let new_slice = self
-                        .inner_mut()
-                        .get_slice(&PySlice::new(py, stop, length, 1))?;
+                    let new_slice = self.get_slice(&PySlice::new(py, stop, length, 1))?;
                     values.extend(new_slice);
                 }
                 self.clear(py);
@@ -157,7 +156,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
                 .step_by(step.cast_unsigned())
                 .rev()
                 .try_for_each(|idx| {
-                    self.inner_mut().set_pos(idx, &mut loc)?;
+                    self.set_pos(idx, &mut loc)?;
                     self.delete(py, &mut loc)
                 }),
             // Negative step with nothing to delete (mirrors Python's
@@ -167,7 +166,7 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .try_for_each(|idx| {
-                        self.inner_mut().set_pos(idx, &mut loc)?;
+                        self.set_pos(idx, &mut loc)?;
                         self.delete(py, &mut loc)
                     })
             }
@@ -178,34 +177,34 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
             .map_or(Ok(()), |mut loc| self.delete(value.py(), &mut loc))
     }
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let values = self.inner().repeat(py, num);
+        let values = self.repeat(py, num);
         self.clear(py);
         self.extend(py, values)
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut bounds = Loc::default();
-        if self.is_empty() {
+        if self.len == 0 {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));
         }
-        let len_last = self.values().last().unwrap().len().cast_signed();
+        let len_last = self.values.last().unwrap().len().cast_signed();
         match index.conv::<Nb>() {
             Nb::NegOne => {
-                bounds.pos = self.values().len() - 1;
-                bounds.idx = self.values().loc_len(&bounds) - 1_usize;
+                bounds.pos = self.values.len() - 1;
+                bounds.idx = self.values.loc_len(&bounds) - 1_usize;
             }
-            Nb::Zero | Nb::One | Nb::Pos if index < self.values()[0].len().cast_signed() => {
+            Nb::Zero | Nb::One | Nb::Pos if index < self.values[0].len().cast_signed() => {
                 bounds.idx = index.cast_unsigned();
             }
             Nb::Neg if -len_last < index => {
-                bounds.pos = self.values().len() - 1;
+                bounds.pos = self.values.len() - 1;
                 bounds.idx = (len_last + index).cast_unsigned();
             }
             _ => {
-                self.inner_mut().set_pos(index, &mut bounds)?;
+                self.set_pos(index, &mut bounds)?;
             }
         }
-        let val = self.values().loc(&bounds).clone_ref(py);
+        let val = self.values.loc(&bounds).clone_ref(py);
         self.delete(py, &mut bounds)?;
         Ok(val.into_bound(py))
     }
@@ -215,13 +214,13 @@ pub trait ListsDataMethods: InnerGetter + ListDataGetters + PyRepr {
             None => Err(errors::not_in_list(&value.repr()?)),
         }
     }
-    fn repeat(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
-        self.as_owned_from(py, self.inner().repeat(py, num))
+    fn as_repeated(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
+        self.as_owned_from(py, self.repeat(py, num))
     }
     fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
-        let values = self.inner().collapse(py);
+        let values = self.collapse(py);
         self.clear(py);
-        self.set_load(load);
+        self.load = load;
         self.extend(py, values)
     }
 }
@@ -232,11 +231,11 @@ pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) 
     func: F,
 ) -> PyResult<()> {
     values.sort_by(&func);
-    if list.maxes().is_empty() {
+    if list.maxes.is_empty() {
         list.finalize_update(py, &values)
-    } else if 4 * values.len() >= list.len() {
-        list.values_mut().push(values);
-        values = list.inner().collapse(py);
+    } else if 4 * values.len() >= list.len {
+        list.values.push(values);
+        values = list.collapse(py);
         values.sort_by(func);
         list.clear(py);
         list.finalize_update(py, &values)

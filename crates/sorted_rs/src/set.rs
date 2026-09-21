@@ -1,7 +1,6 @@
 use crate::{
     KeysListsData, ListsData,
     getters::ListDataOwner,
-    inner::InnerData,
     prelude::*,
     types::{IntOrSlice, ListOrAny},
 };
@@ -18,20 +17,12 @@ use pyo3_ext::{
 };
 use tap::prelude::*;
 
-pub struct SetData<T>(T, Py<PySet>);
-impl<T: InnerGetter> InnerGetter for SetData<T> {
-    fn inner(&self) -> &InnerData {
-        self.0.inner()
-    }
-    fn inner_mut(&mut self) -> &mut InnerData {
-        self.0.inner_mut()
-    }
-}
+pub struct SetData<T>(pub(super) T, Py<PySet>);
 
 impl PyRepr for SetData<ListsData> {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
         let name = T::type_object(py).name()?;
-        let self_repr = self.inner().as_pylist(py)?.repr()?;
+        let self_repr = self.as_pylist(py)?.repr()?;
         Ok(format!("{name}({self_repr})"))
     }
 }
@@ -39,22 +30,10 @@ impl PyRepr for SetData<KeysListsData> {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
         let name = T::type_object(py).name()?;
         let key = format!(", key={}", self.list().2.bind(py).repr()?);
-        let list_repr = self.inner().as_pylist(py)?.repr()?;
+        let list_repr = self.as_pylist(py)?.repr()?;
         Ok(format!("{name}({list_repr}{key})"))
     }
 }
-impl<T: ListsDataMethods> ListDataOwner for SetData<T> {
-    type List = T;
-
-    fn list(&self) -> &Self::List {
-        &self.0
-    }
-
-    fn list_mut(&mut self) -> &mut Self::List {
-        &mut self.0
-    }
-}
-
 impl SetData<ListsData> {
     pub fn build(py: Python<'_>, iterable: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
         Self::build_inner(py, ListsData::default(), iterable)
@@ -142,15 +121,11 @@ impl<T: ListsDataMethods> SetData<T> {
         let py = index.py();
         match index {
             Either::Right(slice) => self
-                .inner_mut()
                 .get_slice(&slice)?
                 .iter()
                 .collect_bound::<PyList>(py)
                 .map(Either::Left),
-            Either::Left(index) => self
-                .inner_mut()
-                .get_item(py, index.extract()?)
-                .map(Either::Right),
+            Either::Left(index) => self.get_item(py, index.extract()?).map(Either::Right),
         }
     }
 
@@ -160,7 +135,6 @@ impl<T: ListsDataMethods> SetData<T> {
             Either::Right(slice) => {
                 let values = self
                     .0
-                    .inner_mut()
                     .get_slice(&slice)?
                     .iter()
                     .collect_bound::<PySet>(py)?;
@@ -169,7 +143,7 @@ impl<T: ListsDataMethods> SetData<T> {
             }
             Either::Left(int) => {
                 let idx = int.extract::<isize>()?;
-                let value = self.0.inner_mut().get_item(py, idx)?;
+                let value = self.0.get_item(py, idx)?;
                 self.1.bind(py).remove(&value)?;
                 self.0.del_item(py, idx)
             }

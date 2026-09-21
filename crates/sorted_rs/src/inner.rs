@@ -21,9 +21,9 @@ use std_tools::prelude::*;
 use tap::{Conv, Pipe};
 pub struct InnerData {
     pub(super) values: Vec<VecPy>,
-    pub(super) maxes: VecPy,
+    pub maxes: VecPy,
     pub(super) idx: Vec<usize>,
-    pub(super) len: usize,
+    pub len: usize,
     pub(super) offset: usize,
     pub(super) load: usize,
 }

@@ -78,11 +78,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let bounds = self
-            .lock()
-            .list_mut()
-            .inner_mut()
-            .get_islice_specs(py, start, stop)?;
+        let bounds = self.lock().list_mut().get_islice_specs(py, start, stop)?;
         self.iter_bounds(py, bounds, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
@@ -106,7 +102,7 @@ where
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         let data = self.lock();
         let list = data.list();
-        let bounds = Bounds::from_sorted(&list.1, list.maxes(), min_key, max_key, inclusive)?;
+        let bounds = Bounds::from_sorted(&list.1, &list.maxes, min_key, max_key, inclusive)?;
         self.iter_bounds(py, bounds, reverse)
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {

@@ -16,7 +16,7 @@ pub fn delitem<T: ListsDataMethods>(
     try_cast! {
         match index {
             Case::PySlice(slice) => {
-                let keys = mapping.list_mut().inner_mut().get_slice(slice)?;
+                let keys = mapping.list_mut().get_slice(slice)?;
                 mapping.list_mut().del_slice(slice)?;
                 for key in keys {
                     dict.del_item(key)?;
@@ -42,7 +42,6 @@ pub fn get_item_for_items<'py, T: ListsDataMethods>(
         match index {
             Case::PySlice(slice) => mapping
                 .list_mut()
-                .inner_mut()
                 .get_slice(slice)?
                 .iter()
                 .map(|key| tuple!(key.bind(py), &dict.get_item(key)?).map(Bound::into_any))
@@ -67,7 +66,6 @@ pub fn get_item_for_values<'py, T: ListsDataMethods>(
         match index {
             Case::PySlice(slice) => mapping
                 .list_mut()
-                .inner_mut()
                 .get_slice(slice)?
                 .iter()
                 .map(|key| dict.get_item(key))
@@ -89,7 +87,6 @@ pub fn get_item_for_keys<'py, T: ListsDataMethods>(
         match index {
             Case::PySlice(slice) => mapping
                 .list_mut()
-                .inner_mut()
                 .get_slice(slice)?
                 .iter()
                 .collect_bound::<PyList>(py)
