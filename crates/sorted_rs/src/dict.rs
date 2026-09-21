@@ -1,5 +1,4 @@
 use pyo3::{
-    PyTypeInfo,
     exceptions::PyKeyError,
     prelude::*,
     types::{PyDict, PyMapping},
@@ -9,7 +8,7 @@ use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::Pipe;
 
-use crate::{DictData, KeysListsData, ListsData, prelude::*};
+use crate::{DictData, ListsData, prelude::*};
 
 impl DictData<ListsData> {
     #[must_use]
