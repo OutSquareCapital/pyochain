@@ -8,6 +8,7 @@ pub trait TryIterator: Iterator {
     /// # Errors
     ///
     /// Returns the first error produced by `f`.
+    #[inline]
     fn try_find_map<B, E, F>(&mut self, mut f: F) -> Result<Option<B>, E>
     where
         Self: Sized,
@@ -25,6 +26,7 @@ pub trait TryIterator: Iterator {
     /// # Errors
     ///
     /// Returns the first error produced by the closure.
+    #[inline]
     fn try_all<E, F>(&mut self, f: F) -> Result<bool, E>
     where
         Self: Sized,
@@ -42,6 +44,7 @@ pub trait TryIterator: Iterator {
     /// # Errors
     ///
     /// Returns the first error produced by the closure.
+    #[inline]
     fn try_any<E, F>(&mut self, f: F) -> Result<bool, E>
     where
         Self: Sized,
