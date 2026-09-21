@@ -2,18 +2,15 @@ use pyo3::{PyTypeInfo, prelude::*};
 use tap::Pipe;
 
 use crate::{
+    ListsData,
     bisect::Bisect,
     bounds::{Bounds, Loc},
     cmp::py_cmp,
-    errors,
-    inner::InnerData,
-    ops,
+    errors, ops,
     traits::{ListsDataMethods, NestedVec, PyRepr, update_list_by},
     types::VecPy,
 };
 
-#[derive(Default)]
-pub struct ListsData(pub(super) InnerData);
 impl PyRepr for ListsData {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
         let name = T::type_object(py).name()?;

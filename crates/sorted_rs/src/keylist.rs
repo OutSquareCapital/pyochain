@@ -1,5 +1,5 @@
 use crate::{
-    Bounds,
+    Bounds, KeysListsData,
     bisect::Bisect,
     bounds::Loc,
     cmp::py_cmp_by_key,
@@ -11,7 +11,6 @@ use crate::{
 };
 use pyo3::{PyTypeInfo, prelude::*};
 use tap::prelude::*;
-pub struct KeysListsData(pub(super) InnerData, pub Vec<VecPy>, pub(super) Py<PyAny>);
 
 impl KeysListsData {
     #[must_use]

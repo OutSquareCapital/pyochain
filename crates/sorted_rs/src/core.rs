@@ -1,7 +1,15 @@
+use crate::{InnerData, prelude::*, types::VecPy};
+use pyo3::{
+    prelude::*,
+    types::{PyDict, PySet},
+};
 use std::ops::{Deref, DerefMut};
 
-use crate::{DictData, InnerData, KeysListsData, ListsData, SetData, prelude::*};
-
+#[derive(Default)]
+pub struct ListsData(pub(super) InnerData);
+pub struct KeysListsData(pub(super) InnerData, pub Vec<VecPy>, pub(super) Py<PyAny>);
+pub struct SetData<T: ListsDataMethods>(pub(super) T, pub(super) Py<PySet>);
+pub struct DictData<T: ListsDataMethods>(pub(super) T, pub(super) Py<PyDict>);
 pub trait ListDataOwner {
     type List: ListsDataMethods;
     fn list(&self) -> &Self::List;
@@ -35,8 +43,6 @@ macro_rules! impl_inner_getter {
     };
 }
 
-impl_inner_getter!(ListsData);
-impl_inner_getter!(KeysListsData);
 macro_rules! impl_getters {
     ($name:ident) => {
         impl<T: ListsDataMethods> Deref for $name<T> {
@@ -61,5 +67,8 @@ macro_rules! impl_getters {
         }
     };
 }
+
+impl_inner_getter!(ListsData);
+impl_inner_getter!(KeysListsData);
 impl_getters!(SetData);
 impl_getters!(DictData);

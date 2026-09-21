@@ -9,8 +9,7 @@ use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::Pipe;
 
-use crate::{KeysListsData, ListsData, prelude::*};
-pub struct DictData<T: ListsDataMethods>(pub(super) T, pub(super) Py<PyDict>);
+use crate::{DictData, KeysListsData, ListsData, prelude::*};
 
 impl PyRepr for DictData<ListsData> {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {

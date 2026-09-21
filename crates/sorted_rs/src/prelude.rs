@@ -1,4 +1,4 @@
 pub use crate::{
-    getters::ListDataOwner,
+    core::ListDataOwner,
     traits::{ListsDataMethods, PyRepr},
 };

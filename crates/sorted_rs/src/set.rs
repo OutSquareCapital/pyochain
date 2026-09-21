@@ -1,5 +1,5 @@
 use crate::{
-    KeysListsData, ListsData,
+    KeysListsData, ListsData, SetData,
     prelude::*,
     types::{IntOrSlice, ListOrAny},
 };
@@ -15,8 +15,6 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use tap::prelude::*;
-
-pub struct SetData<T>(pub(super) T, Py<PySet>);
 
 impl PyRepr for SetData<ListsData> {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
