@@ -31,7 +31,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         self.lock().list_mut().bisect_right(value)
     }
     fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.inner()
+        self.as_ref()
             .clone()
             .pipe(rsiter::Full::new)
             .conv::<Self::IFull>()
@@ -39,7 +39,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
             .map(Bound::into_super)
     }
     fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.inner()
+        self.as_ref()
             .clone()
             .pipe(rsiter::FullRev::new)
             .conv::<Self::IFullRev>()

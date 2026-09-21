@@ -87,13 +87,13 @@ where
         self.lock().get_dict().clone_ref(py).into_bound(py)
     }
     fn keys<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::KView>> {
-        self.inner().clone().conv::<Self::KView>().into_bound(py)
+        self.as_ref().clone().conv::<Self::KView>().into_bound(py)
     }
     fn items<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::IView>> {
-        self.inner().clone().conv::<Self::IView>().into_bound(py)
+        self.as_ref().clone().conv::<Self::IView>().into_bound(py)
     }
     fn values<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::VView>> {
-        self.inner().clone().conv::<Self::VView>().into_bound(py)
+        self.as_ref().clone().conv::<Self::VView>().into_bound(py)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.lock().copy(py)?.conv::<Self>().into_bound(py)

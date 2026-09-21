@@ -19,5 +19,5 @@ pub mod views;
 pub use bounds::{Bounds, Loc};
 pub use core::{DictData, KeysListsData, ListsData, SetData};
 pub use inner::InnerData;
-pub use set::{IntoUpdate, SetComp};
+pub use set::IntoUpdate;
 pub use traits::ListAdd;

@@ -1,5 +1,5 @@
 use pyo3::{
-    PyTypeInfo,
+    PyClass, PyTypeInfo,
     basic::CompareOp,
     prelude::*,
     types::{PyBool, PySet, PyTuple},
@@ -12,9 +12,7 @@ use super::{
 use crate::{abc, traits::IntoInit};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::{py_abc, try_cast_into};
-use sorted_rs::{
-    IntoUpdate, KeysListsData, ListsData, SetComp, SetData, prelude::*, types::IntOrSlice,
-};
+use sorted_rs::{IntoUpdate, KeysListsData, ListsData, SetData, prelude::*, types::IntOrSlice};
 use std::{
     cmp::Ordering,
     sync::{Arc, Mutex},
@@ -62,7 +60,9 @@ impl SortedSetMethods for SortedKeySet {
 
 #[py_abc(SortedSet, SortedKeySet)]
 pub(super) trait SortedSetMethods:
-    SortedCollectionsMethods
+    Sync
+    + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+    + SortedCollectionsMethods
     + ListGetter<T = SetData<Self::L>>
     + IntoInit
     + From<SetData<Self::L>>
@@ -73,22 +73,6 @@ pub(super) trait SortedSetMethods:
     #[inline(always)]
     fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
         self.lock().get_set(py)
-    }
-    #[skip]
-    #[inline]
-    fn comp<'py>(&self, value: Bound<'py, PyAny>, op: CompareOp) -> PyCmpOut<bool, 'py> {
-        let py = value.py();
-        try_cast_into! {
-            match value {
-                CaseExact::Self(sorted) if self.is(sorted.get()) => SetComp::Identity,
-                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => {
-                    SetComp::Comparable(self.get_set(py), sorted.get().get_set(py))
-                }
-                Case::PySet(pyset) => SetComp::Comparable(self.get_set(py), pyset),
-                _ => SetComp::NotImplemented(py),
-            }
-        }
-        .comp(op)
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.get_set(value.py()).contains(value)
@@ -103,27 +87,27 @@ pub(super) trait SortedSetMethods:
     }
 
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        self.comp(other, CompareOp::Eq)
+        Self::T::comp(self, other, CompareOp::Eq)
     }
 
     fn __ne__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        self.comp(other, CompareOp::Ne)
+        Self::T::comp(self, other, CompareOp::Ne)
     }
 
     fn __lt__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        self.comp(other, CompareOp::Lt)
+        Self::T::comp(self, other, CompareOp::Lt)
     }
 
     fn __gt__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        self.comp(other, CompareOp::Gt)
+        Self::T::comp(self, other, CompareOp::Gt)
     }
 
     fn __le__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        self.comp(other, CompareOp::Le)
+        Self::T::comp(self, other, CompareOp::Le)
     }
 
     fn __ge__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        self.comp(other, CompareOp::Ge)
+        Self::T::comp(self, other, CompareOp::Ge)
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {

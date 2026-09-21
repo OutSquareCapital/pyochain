@@ -8,7 +8,7 @@ use std::ops::{Deref, DerefMut};
 #[derive(Default)]
 pub struct ListsData(pub(super) InnerData);
 pub struct KeysListsData(pub(super) InnerData, pub Vec<VecPy>, pub(super) Py<PyAny>);
-pub struct SetData<T: ListsDataMethods>(pub(super) T, pub(super) Py<PySet>);
+pub struct SetData<T: ListsDataMethods>(pub(super) T, pub Py<PySet>);
 pub struct DictData<T: ListsDataMethods>(pub(super) T, pub(super) Py<PyDict>);
 pub trait ListDataOwner {
     type List: ListsDataMethods;

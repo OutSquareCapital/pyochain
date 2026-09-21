@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use crate::{
     KeysListsData, ListsData, SetData,
     prelude::*,
@@ -5,15 +7,17 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    PyTypeInfo,
+    PyClass, PyTypeInfo,
     basic::CompareOp,
     prelude::*,
-    types::{DerefToPyAny, PyBool, PyList, PyNotImplemented, PySet},
+    types::{PyBool, PyList, PyNotImplemented, PySet},
 };
 use pyo3_ext::{
     prelude::*,
     types::{FromCmp, PyCmpOut},
 };
+use pyochain_macros::try_cast_into;
+use std_tools::prelude::MutexExtMethods;
 use tap::prelude::*;
 
 impl PyRepr for SetData<ListsData> {
@@ -65,6 +69,32 @@ impl<T: ListsDataMethods> SetData<T> {
     }
     pub fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
         self.1.clone_ref(py).into_bound(py)
+    }
+
+    pub fn comp<'py, C>(left: &C, value: Bound<'py, PyAny>, op: CompareOp) -> PyCmpOut<'py, bool>
+    where
+        C: Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self>>>,
+    {
+        let py = value.py();
+        let slf = left.as_ref().try_into_inner();
+        try_cast_into! {
+            match value {
+                CaseExact::C(sorted) if Arc::ptr_eq(left.as_ref(), sorted.get().as_ref()) => {
+                    op.on_identity().pipe(Either::Left).pipe(Ok)
+                }
+                CaseExact::C(sorted) => slf
+                    .1
+                    .bind(py)
+                    .rich_compare_bool(sorted.get().as_ref().try_into_inner().1.bind(py), op)
+                    .map(Either::Left),
+                Case::PySet(pyset) => slf
+                    .1
+                    .bind(py)
+                    .rich_compare_bool(pyset, op)
+                    .map(Either::Left),
+                _ => PyNotImplemented::from_cmp(py),
+            }
+        }
     }
     fn wrap(&self, values: Bound<'_, PySet>) -> PyResult<Self> {
         let py = values.py();
@@ -249,22 +279,6 @@ impl<T: ListsDataMethods> SetData<T> {
         set_fn(set, obj)?;
         self.0.clear(py);
         self.0.extend(py, set.iter().map(Bound::unbind).collect())
-    }
-}
-pub enum SetComp<'py, T, U> {
-    /// If both operands are the same object, return true for equality and false for inequality.
-    Identity,
-    Comparable(Bound<'py, T>, Bound<'py, U>),
-    NotImplemented(Python<'py>),
-}
-impl<'py, T: DerefToPyAny + PyTypeInfo, U: DerefToPyAny + PyTypeInfo> SetComp<'py, T, U> {
-    #[inline]
-    pub fn comp(self, op: CompareOp) -> PyCmpOut<'py, bool> {
-        match self {
-            Self::Identity => op.on_identity().pipe(Either::Left).pipe(Ok),
-            Self::NotImplemented(py) => PyNotImplemented::from_cmp(py),
-            Self::Comparable(a, b) => a.rich_compare_bool(&b, op).map(Either::Left),
-        }
     }
 }
 #[must_use]
