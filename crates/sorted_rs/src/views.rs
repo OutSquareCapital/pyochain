@@ -12,7 +12,7 @@ pub fn delitem<T: ListsDataMethods>(
     index: Bound<'_, PyAny>,
 ) -> PyResult<()> {
     let py = index.py();
-    let dict = mapping.get_dict().clone_ref(py).into_bound(py);
+    let dict = mapping.1.clone_ref(py).into_bound(py);
     try_cast! {
         match index {
             Case::PySlice(slice) => {
@@ -37,7 +37,7 @@ pub fn get_item_for_items<'py, T: ListsDataMethods>(
     index: Bound<'py, PyAny>,
 ) -> PyResult<ListOrAny<'py>> {
     let py = index.py();
-    let dict = mapping.get_dict().clone_ref(py).into_bound(py).into_any();
+    let dict = mapping.1.clone_ref(py).into_bound(py).into_any();
     try_cast! {
         match index {
             Case::PySlice(slice) => mapping
@@ -60,7 +60,7 @@ pub fn get_item_for_values<'py, T: ListsDataMethods>(
     index: Bound<'py, PyAny>,
 ) -> PyResult<ListOrAny<'py>> {
     let py = index.py();
-    let dict = mapping.get_dict().clone_ref(py).into_bound(py).into_any();
+    let dict = mapping.1.clone_ref(py).into_bound(py).into_any();
     try_cast! {
         match index {
             Case::PySlice(slice) => mapping

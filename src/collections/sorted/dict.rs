@@ -84,7 +84,7 @@ where
     }
     #[getter]
     fn get_dict<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
-        self.lock().get_dict().clone_ref(py).into_bound(py)
+        self.lock().1.clone_ref(py).into_bound(py)
     }
     fn keys<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::KView>> {
         self.as_ref().clone().conv::<Self::KView>().into_bound(py)

@@ -31,9 +31,6 @@ impl<T: ListsDataMethods> DictData<T> {
     pub fn new(list: T, dict: Py<PyDict>) -> Self {
         Self(list, dict)
     }
-    pub fn get_dict(&self) -> &Py<PyDict> {
-        &self.1
-    }
     pub fn __len__(&self, py: Python<'_>) -> usize {
         self.1.bind(py).len()
     }

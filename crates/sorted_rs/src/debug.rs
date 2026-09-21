@@ -1,5 +1,6 @@
 use crate::{DictData, KeysListsData, SetData, inner::InnerData, prelude::*};
 use pyo3::prelude::*;
+use std_tools::prelude::*;
 macro_rules! pyassert {
     ($cond:expr) => {
         if !$cond {
@@ -15,12 +16,12 @@ pub fn check_empty(slf: &InnerData) -> PyResult<()> {
 }
 pub fn check_dict<T: ListsDataMethods>(py: Python<'_>, data: &DictData<T>) -> PyResult<()> {
     check_list(py, data)?;
-    let dict = data.get_dict().bind(py);
+    let dict = data.1.bind(py);
     pyassert!(dict.len() == data.len);
-    pyassert!(data.iter().all(|item| {
-        dict.contains(item.bind(py))
-            .expect("Failed to check dict membership")
-    }));
+    pyassert!(
+        data.iter()
+            .try_all(|item| { dict.contains(item.bind(py)) })?
+    );
     Ok(())
 }
 
@@ -28,11 +29,7 @@ pub fn check_set_len<T: ListsDataMethods>(py: Python<'_>, checked: &SetData<T>) 
     let set = checked.get_set(py);
     pyassert!(set.len() == checked.len);
     check_list(py, checked)?;
-    pyassert!(
-        checked
-            .iter()
-            .all(|x| set.contains(x).expect("Failed to check set membership"))
-    );
+    pyassert!(checked.iter().try_all(|x| set.contains(x))?);
     Ok(())
 }
 pub fn check_list(py: Python<'_>, slf: &InnerData) -> PyResult<()> {
