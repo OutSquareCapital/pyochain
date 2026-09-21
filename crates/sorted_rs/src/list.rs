@@ -5,7 +5,7 @@ use crate::{
     bisect::Bisect,
     bounds::{Bounds, Loc},
     cmp::py_cmp,
-    errors, impl_inner_getter,
+    errors,
     inner::InnerData,
     ops,
     traits::{ListsDataMethods, NestedVec, PyRepr, update_list_by},
@@ -13,8 +13,7 @@ use crate::{
 };
 
 #[derive(Default)]
-pub struct ListsData(InnerData);
-impl_inner_getter!(ListsData);
+pub struct ListsData(pub(super) InnerData);
 impl PyRepr for ListsData {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
         let name = T::type_object(py).name()?;

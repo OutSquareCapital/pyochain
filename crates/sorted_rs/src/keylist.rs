@@ -3,7 +3,7 @@ use crate::{
     bisect::Bisect,
     bounds::Loc,
     cmp::py_cmp_by_key,
-    errors, impl_inner_getter,
+    errors,
     inner::InnerData,
     ops,
     traits::{ListsDataMethods, NestedVec, PyRepr, update_list_by},
@@ -11,7 +11,7 @@ use crate::{
 };
 use pyo3::{PyTypeInfo, prelude::*};
 use tap::prelude::*;
-pub struct KeysListsData(InnerData, pub Vec<VecPy>, pub(super) Py<PyAny>);
+pub struct KeysListsData(pub(super) InnerData, pub Vec<VecPy>, pub(super) Py<PyAny>);
 
 impl KeysListsData {
     #[must_use]
@@ -22,7 +22,6 @@ impl KeysListsData {
         self.2.bind(value.py()).call1((&value,))
     }
 }
-impl_inner_getter!(KeysListsData);
 impl PyRepr for KeysListsData {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
         let name = T::type_object(py).name()?;

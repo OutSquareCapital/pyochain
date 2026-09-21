@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use crate::{DictData, InnerData, SetData, prelude::*};
+use crate::{DictData, InnerData, KeysListsData, ListsData, SetData, prelude::*};
 
 pub trait ListDataOwner {
     type List: ListsDataMethods;
@@ -19,7 +19,6 @@ impl<T: ListsDataMethods> ListDataOwner for T {
     }
 }
 
-#[macro_export]
 macro_rules! impl_inner_getter {
     ($name:ident) => {
         impl std::ops::Deref for $name {
@@ -35,6 +34,9 @@ macro_rules! impl_inner_getter {
         }
     };
 }
+
+impl_inner_getter!(ListsData);
+impl_inner_getter!(KeysListsData);
 macro_rules! impl_getters {
     ($name:ident) => {
         impl<T: ListsDataMethods> Deref for $name<T> {
