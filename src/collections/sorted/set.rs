@@ -11,7 +11,7 @@ use super::{
 };
 use crate::{abc, traits::IntoInit};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
-use pyochain_macros::{py_abc, try_cast_into};
+use pyochain_macros::py_abc;
 use sorted_rs::{IntoUpdate, KeysListsData, ListsData, SetData, prelude::*, types::IntOrSlice};
 use std::{
     cmp::Ordering,
@@ -265,7 +265,7 @@ pub(super) trait SortedSetMethods:
         other: Bound<'_, PyAny>,
         func: F,
     ) -> R {
-        let other_set = self.extract_set(other);
+        let other_set = IntoUpdate::extract_from(self, other);
         func(&mut self.lock(), other_set)
     }
     #[skip]
@@ -275,7 +275,7 @@ pub(super) trait SortedSetMethods:
         other: Bound<'py, PyAny>,
         func: F,
     ) -> R {
-        let other_set = self.extract_set(other);
+        let other_set = IntoUpdate::extract_from(self, other);
         func(&self.lock(), other_set)
     }
     #[skip]
@@ -286,7 +286,7 @@ pub(super) trait SortedSetMethods:
         func: F,
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let other_set = self.extract_set(other);
+        let other_set = IntoUpdate::extract_from(self, other);
         func(&self.lock(), other_set)?.conv::<Self>().into_bound(py)
     }
     #[skip]
@@ -295,7 +295,7 @@ pub(super) trait SortedSetMethods:
         let py = iterables.py();
         iterables
             .into_iter()
-            .map(|other| self.extract_set(other))
+            .map(|other| IntoUpdate::extract_from(self, other))
             .try_fold(PySet::empty(py)?, |pyset, other| {
                 match other {
                     IntoUpdate::SmallSet(set) | IntoUpdate::BigSet(set) => pyset.update((set,)),
@@ -303,25 +303,5 @@ pub(super) trait SortedSetMethods:
                 }
                 .map(|()| pyset)
             })
-    }
-    #[skip]
-    #[inline]
-    fn extract_set<'py>(&self, other: Bound<'py, PyAny>) -> IntoUpdate<'py> {
-        let py = other.py();
-        try_cast_into! {
-            match other {
-                CaseExact::Self(other) => {
-                    let slf_set = self.get_set(py);
-                    let other = other.get();
-                    if self.is(other) {
-                        IntoUpdate::BigSet(slf_set)
-                    } else {
-                        IntoUpdate::from_sets(&slf_set, other.get_set(py))
-                    }
-                }
-                CaseExact::PySet(pyset) => IntoUpdate::from_sets(&self.get_set(py), pyset),
-                _ => IntoUpdate::Any(other),
-            }
-        }
     }
 }
