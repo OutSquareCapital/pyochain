@@ -37,7 +37,6 @@ impl SortedDict {
     }
 }
 impl SortedDictMethods for SortedDict {
-    type L = ListsData;
     type IView = SortedItemsView;
     type KView = SortedKeysView;
     type VView = SortedValuesView;
@@ -63,7 +62,6 @@ impl SortedKeyDict {
     }
 }
 impl SortedDictMethods for SortedKeyDict {
-    type L = KeysListsData;
     type IView = SortedByKeyItemsView;
     type KView = SortedByKeyKeysView;
     type VView = SortedByKeyValuesView;
@@ -71,14 +69,16 @@ impl SortedDictMethods for SortedKeyDict {
 
 #[py_abc(SortedDict, SortedKeyDict)]
 pub(super) trait SortedDictMethods:
-    SortedCollectionsMethods + ListGetter<T = DictData<Self::L>> + IntoInit + From<DictData<Self::L>>
+    SortedCollectionsMethods
+    + ListGetter<T = DictData<<Self as ListGetter>::L>>
+    + IntoInit
+    + From<DictData<<Self as ListGetter>::L>>
 where
-    DictData<Self::L>: PyRepr,
+    DictData<<Self as ListGetter>::L>: PyRepr,
 {
-    type L: ListsDataMethods;
-    type KView: SortedViewMethods<L = Self::L>;
-    type VView: SortedViewMethods<L = Self::L>;
-    type IView: SortedViewMethods<L = Self::L>;
+    type KView: SortedViewMethods<L = <Self as ListGetter>::L>;
+    type VView: SortedViewMethods<L = <Self as ListGetter>::L>;
+    type IView: SortedViewMethods<L = <Self as ListGetter>::L>;
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.lock().contains(value)
     }

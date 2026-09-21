@@ -1,4 +1,4 @@
-use crate::{DictData, KeysListsData, ListsData, SetData};
+use crate::{DictData, KeysListsData, ListsData, SetData, traits::ListsDataMethods};
 use pyo3::{PyTypeInfo, prelude::*};
 
 pub trait PyRepr {
@@ -19,22 +19,12 @@ impl PyRepr for KeysListsData {
         let key_repr = self.2.bind(py).repr()?;
         self.as_pylist(py)?
             .repr()
-            .map(|repr| format!("{name}({repr}, key={key_repr})"))
+            .map(|repr| format!("{name}({key_repr}, {repr})"))
     }
 }
-impl PyRepr for SetData<ListsData> {
-    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
-        let name = T::type_object(py).name()?;
-        let self_repr = self.as_pylist(py)?.repr()?;
-        Ok(format!("{name}({self_repr})"))
-    }
-}
-impl PyRepr for SetData<KeysListsData> {
-    fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
-        let name = T::type_object(py).name()?;
-        let key = format!(", key={}", self.0.2.bind(py).repr()?);
-        let list_repr = self.as_pylist(py)?.repr()?;
-        Ok(format!("{name}({list_repr}{key})"))
+impl<T: ListsDataMethods> PyRepr for SetData<T> {
+    fn repr<U: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
+        self.0.repr::<U>(py)
     }
 }
 impl PyRepr for DictData<ListsData> {

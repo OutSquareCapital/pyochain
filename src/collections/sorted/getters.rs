@@ -18,7 +18,8 @@ use tap::Conv;
 pub trait ListGetter:
     Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self::T>>>
 {
-    type T: Deref<Target = InnerData> + DerefMut + ListDataOwner + PyRepr;
+    type L: ListsDataMethods;
+    type T: Deref<Target = InnerData> + DerefMut + ListDataOwner<List = Self::L> + PyRepr;
     type I: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
     type IRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::BoundedRev<Self::T>>;
     type IFull: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
@@ -71,6 +72,7 @@ impl_arc_as_ref!(
 );
 impl ListGetter for sorted::SortedList {
     type T = ListsData;
+    type L = ListsData;
     type I = iter::PyBounded;
     type IRev = iter::PyBoundedRev;
     type IFull = iter::PyFull;
@@ -78,6 +80,7 @@ impl ListGetter for sorted::SortedList {
 }
 impl ListGetter for sorted::SortedKeyList {
     type T = KeysListsData;
+    type L = KeysListsData;
     type I = iter::PyBoundedKey;
     type IRev = iter::PyBoundedKeyRev;
     type IFull = iter::PyFullKey;
@@ -85,6 +88,7 @@ impl ListGetter for sorted::SortedKeyList {
 }
 impl ListGetter for sorted::SortedSet {
     type T = SetData<ListsData>;
+    type L = ListsData;
     type I = iter::PySetBounded;
     type IRev = iter::PySetBoundedRev;
     type IFull = iter::PySetFull;
@@ -92,6 +96,7 @@ impl ListGetter for sorted::SortedSet {
 }
 impl ListGetter for sorted::SortedKeySet {
     type T = SetData<KeysListsData>;
+    type L = KeysListsData;
     type I = iter::PySetBoundedKey;
     type IRev = iter::PySetBoundedKeyRev;
     type IFull = iter::PySetFullKey;
@@ -99,6 +104,7 @@ impl ListGetter for sorted::SortedKeySet {
 }
 impl ListGetter for sorted::SortedDict {
     type T = DictData<ListsData>;
+    type L = ListsData;
     type I = iter::PyDictBounded;
     type IRev = iter::PyDictBoundedRev;
     type IFull = iter::PyDictFull;
@@ -106,6 +112,7 @@ impl ListGetter for sorted::SortedDict {
 }
 impl ListGetter for sorted::SortedKeyDict {
     type T = DictData<KeysListsData>;
+    type L = KeysListsData;
     type I = iter::PyDictBoundedKey;
     type IRev = iter::PyDictBoundedKeyRev;
     type IFull = iter::PyDictFullKey;

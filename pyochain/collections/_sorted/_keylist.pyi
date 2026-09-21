@@ -27,9 +27,9 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
     from operator import neg
 
     skl = SortedKeyList(neg)
-    assert repr(skl) == "SortedKeyList([], key=<built-in function neg>)"
+    assert repr(skl) == "SortedKeyList(<built-in function neg>, [])"
     skl = SortedKeyList(neg, [3, 1, 2])
-    assert repr(skl) == "SortedKeyList([3, 2, 1], key=<built-in function neg>)"
+    assert repr(skl) == "SortedKeyList(<built-in function neg>, [3, 2, 1])"
     ```
     """
     def __new__(

@@ -12,7 +12,7 @@ use super::{
 use crate::{abc, traits::IntoInit};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
-use sorted_rs::{IntoUpdate, KeysListsData, ListsData, SetData, prelude::*, types::IntOrSlice};
+use sorted_rs::{IntoUpdate, KeysListsData, ListsData, SetData, types::IntOrSlice};
 use std::{
     cmp::Ordering,
     sync::{Arc, Mutex},
@@ -35,9 +35,6 @@ impl SortedSet {
             .pipe(Ok)
     }
 }
-impl SortedSetMethods for SortedSet {
-    type L = ListsData;
-}
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedKeySet(pub(super) Arc<Mutex<SetData<KeysListsData>>>);
 #[pymethods]
@@ -54,21 +51,17 @@ impl SortedKeySet {
             .pipe(Ok)
     }
 }
-impl SortedSetMethods for SortedKeySet {
-    type L = KeysListsData;
-}
 
 #[py_abc(SortedSet, SortedKeySet)]
 pub(super) trait SortedSetMethods:
     Sync
     + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
     + SortedCollectionsMethods
-    + ListGetter<T = SetData<Self::L>>
+    + ListGetter<T = SetData<<Self as ListGetter>::L>>
     + IntoInit
-    + From<SetData<Self::L>>
+    + From<SetData<<Self as ListGetter>::L>>
     + PyTypeInfo
 {
-    type L: ListsDataMethods;
     #[getter]
     #[inline(always)]
     fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {

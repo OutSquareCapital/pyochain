@@ -39,9 +39,7 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
             from operator import neg
 
             ss = SortedKeySet(neg, [3, 1, 2, 5, 4])
-            assert (
-                repr(ss) == "SortedKeySet([5, 4, 3, 2, 1], key=<built-in function neg>)"
-            )
+            assert repr(ss) == "SortedKeySet(<built-in function neg>, [5, 4, 3, 2, 1])"
             ```
 
         """

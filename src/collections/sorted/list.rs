@@ -20,9 +20,6 @@ use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedList(pub(super) Arc<Mutex<ListsData>>);
 
-impl SortedListMethods for SortedList {
-    type L = ListsData;
-}
 #[pymethods]
 impl SortedList {
     #[new]
@@ -39,9 +36,6 @@ impl SortedList {
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedKeyList(pub(super) Arc<Mutex<KeysListsData>>);
 
-impl SortedListMethods for SortedKeyList {
-    type L = KeysListsData;
-}
 #[pymethods]
 impl SortedKeyList {
     #[new]
@@ -60,9 +54,11 @@ impl SortedKeyList {
 
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedListMethods:
-    SortedCollectionsMethods + IntoInit + From<Self::L> + ListGetter<T = Self::L>
+    SortedCollectionsMethods
+    + IntoInit
+    + From<<Self as ListGetter>::L>
+    + ListGetter<T = <Self as ListGetter>::L>
 {
-    type L: ListsDataMethods;
     fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let out = into_list_add(self, other)?;

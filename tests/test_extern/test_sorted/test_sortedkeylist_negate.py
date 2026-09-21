@@ -665,9 +665,9 @@ def negate(val: int) -> int:  # ruff:ignore[reimplemented-operator]
 def test_repr() -> None:
     this = SortedKeyList(negate, range(10))
     this.reset(4)
-    assert repr(this).startswith(
-        "SortedKeyList([9, 8, 7, 6, 5, 4, 3, 2, 1, 0], key=<function negate at "
-    )
+    representation = repr(this)
+    assert representation.startswith("SortedKeyList(<function negate at ")
+    assert representation.endswith(">, [9, 8, 7, 6, 5, 4, 3, 2, 1, 0])")
 
 
 @pytest.mark.skip(reason="Pyo3 doesn't support pickling yet")

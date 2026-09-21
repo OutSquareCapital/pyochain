@@ -532,7 +532,7 @@ class Identity:
 def test_repr() -> None:
     temp = SortedKeySet(Identity(), range(10))
     temp.reset(7)
-    assert repr(temp) == "SortedKeySet([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], key=identity)"
+    assert repr(temp) == "SortedKeySet(identity, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
 
 
 @pytest.mark.skip(reason="Pickle not supported by Pyo3")
