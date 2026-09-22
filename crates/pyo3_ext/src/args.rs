@@ -68,12 +68,14 @@ impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
     }
 }
 
-pub trait ArgsConcat<'py> {
+/// # Safety
+/// Implementors must call `buf.push_ptr` from `extend_buf` exactly `len_unpacked()` times.
+pub unsafe trait ArgsConcat<'py> {
     fn len_unpacked(&self) -> usize;
     fn extend_buf<B: ArgBuffer>(&self, buf: &mut B);
 }
 
-impl<'py> ArgsConcat<'py> for Bound<'py, PyAny> {
+unsafe impl<'py> ArgsConcat<'py> for Bound<'py, PyAny> {
     #[inline(always)]
     fn len_unpacked(&self) -> usize {
         1
@@ -84,7 +86,7 @@ impl<'py> ArgsConcat<'py> for Bound<'py, PyAny> {
     }
 }
 
-impl<'py> ArgsConcat<'py> for Bound<'py, PyTuple> {
+unsafe impl<'py> ArgsConcat<'py> for Bound<'py, PyTuple> {
     #[inline(always)]
     fn len_unpacked(&self) -> usize {
         self.len()
@@ -98,7 +100,7 @@ impl<'py> ArgsConcat<'py> for Bound<'py, PyTuple> {
         }
     }
 }
-impl<A> ArgsConcat<'_> for SmallVec<A>
+unsafe impl<A> ArgsConcat<'_> for SmallVec<A>
 where
     A: Array<Item = Py<PyAny>>,
 {
@@ -111,7 +113,7 @@ where
         self.iter().for_each(|item| buf.push_ptr(item.as_ptr()));
     }
 }
-impl<'py, T: ArgsConcat<'py> + ?Sized> ArgsConcat<'py> for &T {
+unsafe impl<'py, T: ArgsConcat<'py> + ?Sized> ArgsConcat<'py> for &T {
     #[inline(always)]
     fn len_unpacked(&self) -> usize {
         (**self).len_unpacked()
@@ -124,7 +126,7 @@ impl<'py, T: ArgsConcat<'py> + ?Sized> ArgsConcat<'py> for &T {
 
 macro_rules! impl_arg_concat_tuple {
     ($($T:ident : $idx:tt),+) => {
-        impl<'py, $($T: ArgsConcat<'py>),+> ArgsConcat<'py> for ($($T,)+) {
+        unsafe impl<'py, $($T: ArgsConcat<'py>),+> ArgsConcat<'py> for ($($T,)+) {
             #[inline(always)]
             fn len_unpacked(&self) -> usize {
                 0 $(+ self.$idx.len_unpacked())+
