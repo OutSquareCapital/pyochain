@@ -20,5 +20,5 @@ pub mod views;
 pub use bounds::{Bounds, Loc};
 pub use core::{DictData, KeysListsData, ListsData, SetData};
 pub use inner::InnerData;
-pub use set::Args;
+pub use set::{SetOp, SetPred};
 pub use traits::ListAdd;

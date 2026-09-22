@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    cmp::Ordering,
+    sync::{Arc, Mutex},
+};
 
 use crate::{
     KeysListsData, ListsData, SetData,
@@ -10,7 +13,7 @@ use pyo3::{
     PyClass,
     basic::CompareOp,
     prelude::*,
-    types::{PyBool, PyList, PyNotImplemented, PySet},
+    types::{PyBool, PyList, PyNotImplemented, PySet, PyTuple},
 };
 use pyo3_ext::{
     prelude::*,
@@ -55,26 +58,6 @@ impl<T: ListsDataMethods> SetData<T> {
     pub fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
         self.1.clone_ref(py).into_bound(py)
     }
-
-    pub fn comp<'py, C>(left: &C, value: Bound<'py, PyAny>, op: CompareOp) -> PyCmpOut<'py, bool>
-    where
-        C: Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self>>>,
-    {
-        let py = value.py();
-        let slf = left.as_ref().try_into_inner().get_set(py);
-        try_cast_into! {
-            match value {
-                CaseExact::C(sorted) if left.as_ref().is(sorted.get().as_ref()) => {
-                    op.on_identity().pipe(Either::Left).pipe(Ok)
-                }
-                CaseExact::C(sorted) => slf
-                    .rich_compare_bool(sorted.get().as_ref().try_into_inner().1.bind(py), op)
-                    .map(Either::Left),
-                Case::PySet(pyset) => slf.rich_compare_bool(pyset, op).map(Either::Left),
-                _ => PyNotImplemented::from_cmp(py),
-            }
-        }
-    }
     fn wrap(&self, values: Bound<'_, PySet>) -> PyResult<Self> {
         let py = values.py();
         let list = self
@@ -88,40 +71,6 @@ impl<T: ListsDataMethods> SetData<T> {
     }
     pub fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.0.reset(py, load)
-    }
-    pub fn difference(&self, iterables: Args<'_>) -> PyResult<Self> {
-        self.map_set(iterables, |slf, other| slf.difference((other,)))
-            .and_then(|x| self.wrap(x))
-    }
-    pub fn intersection(&self, iterables: Args<'_>) -> PyResult<Self> {
-        self.map_set(iterables, |slf, other| slf.intersection((other,)))
-            .and_then(|x| self.wrap(x))
-    }
-    pub fn union(&self, iterables: Args<'_>) -> PyResult<Self> {
-        self.map_set(iterables, |slf, other| slf.union((other,)))
-            .and_then(|x| self.wrap(x))
-    }
-    pub fn difference_update(&mut self, iterables: Args<'_>) -> PyResult<()> {
-        self.update_inner(
-            iterables,
-            |slf, set| slf.difference_update((set,)),
-            |list, set, value| try_discard(list, set, &value),
-        )
-    }
-    pub fn update(&mut self, other: Args<'_>) -> PyResult<()> {
-        self.update_inner(other, |slf, other| slf.update((other,)), try_add)
-    }
-    pub fn intersection_update(&mut self, iterables: Args<'_>) -> PyResult<()> {
-        match iterables {
-            Args::BigSet(pyset) | Args::SmallSet(pyset) => {
-                self.try_update(pyset.py(), pyset, |set, obj| {
-                    set.intersection_update((obj,))
-                })
-            }
-            Args::Any(any) => {
-                self.try_update(any.py(), any, |set, obj| set.intersection_update((obj,)))
-            }
-        }
     }
     pub fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         let py = index.py();
@@ -163,21 +112,18 @@ impl<T: ListsDataMethods> SetData<T> {
         try_add(&mut self.0, self.1.bind(value.py()), value)
     }
     pub fn discard(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        try_discard(&mut self.0, self.1.bind(value.py()), value)
+        let set = self.1.bind(value.py());
+        match set.contains(value) {
+            Ok(true) => {
+                set.remove(value)?;
+                self.0.remove(value)
+            }
+            Ok(false) => Ok(()),
+            Err(err) => Err(err),
+        }
     }
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         self.1.bind(py).copy().and_then(|x| self.wrap(x))
-    }
-    pub fn is_disjoint<'py>(&self, other: Args<'py>) -> PyResult<Bound<'py, PyBool>> {
-        self.map_set(other, Bound::isdisjoint)
-    }
-
-    pub fn is_subset<'py>(&self, other: Args<'py>) -> PyResult<Bound<'py, PyBool>> {
-        self.map_set(other, Bound::issubset)
-    }
-
-    pub fn is_superset<'py>(&self, other: Args<'py>) -> PyResult<Bound<'py, PyBool>> {
-        self.map_set(other, Bound::issuperset)
     }
     pub fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
         match self.1.bind(value.py()).contains(value) {
@@ -196,111 +142,206 @@ impl<T: ListsDataMethods> SetData<T> {
         self.1.bind(value.py()).remove(value)?;
         self.0.remove(value)
     }
-    pub fn symmetric_difference(&self, other: Args<'_>) -> PyResult<Self> {
-        self.map_set(other, Bound::symmetric_difference)
+    #[inline(always)]
+    fn map_set(&self, other: Args<'_>, op: SetOp) -> PyResult<Self> {
+        op.call(self.1.bind(other.py()), other)
             .and_then(|x| self.wrap(x))
     }
-    pub fn symmetric_difference_update(&mut self, other: Args<'_>) -> PyResult<()> {
-        match other {
-            Args::BigSet(pyset) | Args::SmallSet(pyset) => {
-                self.try_update(pyset.py(), pyset, Bound::symmetric_difference_update)
-            }
-            Args::Any(any) => self.try_update(any.py(), any, Bound::symmetric_difference_update),
-        }
-    }
     #[inline(always)]
-    fn map_set<'py, R, F: Fn(&Bound<'py, PySet>, Bound<'py, PyAny>) -> R>(
-        &self,
-        other: Args<'py>,
-        f: F,
-    ) -> R {
-        let set = self.1.bind(other.py());
-        match other {
-            Args::BigSet(pyset) | Args::SmallSet(pyset) => f(set, pyset.into_any()),
-            Args::Any(any) => f(set, any),
-        }
-    }
-
-    fn update_inner<
-        'py,
-        F1: Fn(&Bound<'py, PySet>, Bound<'py, PySet>) -> PyResult<()>,
-        F2: Fn(&mut T, &Bound<'_, PySet>, Bound<'_, PyAny>) -> PyResult<()>,
-    >(
-        &mut self,
-        other: Args<'py>,
-        set_fn: F1,
-        slf_fn: F2,
-    ) -> PyResult<()> {
+    fn update(&mut self, other: Args<'_>, op: SetOp) -> PyResult<()> {
         let py = other.py();
-        let list = &mut self.0;
         let set = &self.1.clone_ref(py).into_bound(py);
-        match other {
-            Args::BigSet(pyset) => self.try_update(pyset.py(), pyset, set_fn),
-            Args::SmallSet(pyset) => {
-                let f = |value| slf_fn(list, set, value);
-                pyset.iter().try_for_each(f)
-            }
-            Args::Any(any) => {
-                let f = |value| slf_fn(list, set, value?);
-                any.try_iter()?.try_for_each(f)
-            }
-        }
-    }
-
-    fn try_update<'py, O, F: Fn(&Bound<'py, PySet>, O) -> PyResult<()>>(
-        &mut self,
-        py: Python<'py>,
-        obj: O,
-        set_fn: F,
-    ) -> PyResult<()> {
-        let set = self.1.bind(py);
-        set_fn(set, obj)?;
+        op.call_mut(set, other)?;
         self.0.clear(py);
         self.0.extend(py, set.iter().map(Bound::unbind).collect())
     }
-
+    #[inline(always)]
+    pub fn comp<'py, C>(left: &C, value: Bound<'py, PyAny>, op: CompareOp) -> PyCmpOut<'py, bool>
+    where
+        C: Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self>>>,
+    {
+        let py = value.py();
+        let slf = left.as_ref().try_into_inner().get_set(py);
+        try_cast_into! {
+            match value {
+                CaseExact::C(sorted) if left.as_ref().is(sorted.get().as_ref()) => {
+                    op.on_identity().pipe(Either::Left).pipe(Ok)
+                }
+                CaseExact::C(sorted) => slf
+                    .rich_compare_bool(sorted.get().as_ref().try_into_inner().1.bind(py), op)
+                    .map(Either::Left),
+                Case::PySet(pyset) => slf.rich_compare_bool(pyset, op).map(Either::Left),
+                _ => PyNotImplemented::from_cmp(py),
+            }
+        }
+    }
     #[inline]
-    pub fn extract_from<'py, C>(left: &C, other: Bound<'py, PyAny>) -> Args<'py>
+    pub fn map_any<C>(slf: &C, other: Bound<'_, PyAny>, op: SetOp) -> PyResult<C>
+    where
+        C: Sync
+            + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+            + AsRef<Arc<Mutex<Self>>>
+            + From<Self>,
+    {
+        let other_set = Args::Any(other).into_extracted(slf);
+        slf.as_ref()
+            .try_into_inner()
+            .map_set(other_set, op)
+            .map(C::from)
+    }
+    #[inline]
+    pub fn map_any_mut<C>(slf: &C, other: Bound<'_, PyAny>, op: SetOp) -> PyResult<()>
+    where
+        C: Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self>>>,
+    {
+        let other_set = Args::Any(other).into_extracted(slf);
+        slf.as_ref().try_into_inner().update(other_set, op)
+    }
+    #[inline]
+    pub fn map_pred<'py, C>(
+        slf: &C,
+        other: Bound<'py, PyAny>,
+        op: SetPred,
+    ) -> PyResult<Bound<'py, PyBool>>
     where
         C: Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self>>>,
     {
         let py = other.py();
-        let set = left.as_ref().try_into_inner().get_set(py);
-        try_cast_into! {
-            match other {
-                CaseExact::C(other) => {
-                    let other = other.get();
-                    if left.as_ref().is(other.as_ref()) {
-                        Args::BigSet(set)
-                    } else {
-                        Args::from_sets(&set, other.as_ref().try_into_inner().get_set(py))
-                    }
-                }
-                CaseExact::PySet(pyset) => Args::from_sets(&set, pyset),
-                _ => Args::Any(other),
-            }
+        let args = Args::Any(other).into_extracted(slf);
+        op.call(slf.as_ref().try_into_inner().1.bind(py), args)
+    }
+    #[inline]
+    pub fn map_iter<C>(slf: &C, tuple: Bound<'_, PyTuple>, op: SetOp) -> PyResult<C>
+    where
+        C: Sync
+            + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+            + AsRef<Arc<Mutex<Self>>>
+            + From<Self>,
+    {
+        let args = Args::Tuple(tuple).into_extracted(slf);
+        slf.as_ref().try_into_inner().map_set(args, op).map(C::from)
+    }
+    #[inline(always)]
+    pub fn map_iter_mut<C>(slf: &C, tuple: Bound<'_, PyTuple>, op: SetOp) -> PyResult<()>
+    where
+        C: Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self>>>,
+    {
+        let args = Args::Tuple(tuple).into_extracted(slf);
+        slf.as_ref().try_into_inner().update(args, op)
+    }
+}
+#[derive(Clone, Copy)]
+pub enum SetPred {
+    Subset,
+    Superset,
+    Disjoint,
+}
+impl SetPred {
+    #[inline(always)]
+    fn call<'py>(self, set: &Bound<'py, PySet>, other: Args<'py>) -> PyResult<Bound<'py, PyBool>> {
+        match (self, other) {
+            (_, Args::Tuple(_)) => unreachable!(),
+            (Self::Subset, Args::Any(other)) => set.issubset(other),
+            (Self::Superset, Args::Any(other)) => set.issuperset(other),
+            (Self::Disjoint, Args::Any(other)) => set.isdisjoint(other),
         }
     }
 }
-#[must_use]
 pub enum Args<'py> {
-    SmallSet(Bound<'py, PySet>),
-    BigSet(Bound<'py, PySet>),
+    Tuple(Bound<'py, PyTuple>),
     Any(Bound<'py, PyAny>),
 }
 impl<'py> Args<'py> {
     fn py(&self) -> Python<'py> {
         match self {
-            Self::SmallSet(set) | Self::BigSet(set) => set.py(),
+            Self::Tuple(set) => set.py(),
             Self::Any(any) => any.py(),
         }
     }
-    #[inline]
-    pub fn from_sets(original: &Bound<'py, PySet>, other: Bound<'py, PySet>) -> Self {
-        if (4 * other.len()) > original.len() {
-            Self::BigSet(other)
-        } else {
-            Self::SmallSet(other)
+    #[inline(always)]
+    pub fn into_extracted<C, L>(self, left: &C) -> Self
+    where
+        L: ListsDataMethods,
+        C: Sync
+            + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+            + AsRef<Arc<Mutex<SetData<L>>>>,
+    {
+        match self {
+            Self::Any(any) => Args::Any(Self::extract_one(left, any)),
+            Self::Tuple(tuple) => {
+                let py = tuple.py();
+                match tuple.len().cmp(&1) {
+                    Ordering::Less => Args::Tuple(tuple),
+                    Ordering::Equal => {
+                        Self::extract_one(left, unsafe { tuple.get_item_unchecked(0) })
+                            .pipe(Args::Any)
+                    }
+                    Ordering::Greater => tuple
+                        .into_iter()
+                        .map(|other| Self::extract_one(left, other))
+                        .collect_bound(py)
+                        .unwrap()
+                        .pipe(Args::Tuple),
+                }
+            }
+        }
+    }
+    #[inline(always)]
+    fn extract_one<C, L>(left: &C, any: Bound<'py, PyAny>) -> Bound<'py, PyAny>
+    where
+        L: ListsDataMethods,
+        C: Sync
+            + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+            + AsRef<Arc<Mutex<SetData<L>>>>,
+    {
+        let py = any.py();
+        match any.cast_exact::<C>().map(Bound::get) {
+            Ok(other) if left.as_ref().is(other.as_ref()) => {
+                left.as_ref().try_into_inner().get_set(py).into_any()
+            }
+            Ok(other) => other.as_ref().try_into_inner().get_set(py).into_any(),
+            Err(_) => any,
+        }
+    }
+}
+#[derive(Clone, Copy)]
+pub enum SetOp {
+    Difference,
+    Intersection,
+    Union,
+    SymmetricDifference,
+}
+impl SetOp {
+    #[inline(always)]
+    pub fn call<'py>(
+        self,
+        set: &Bound<'py, PySet>,
+        other: Args<'py>,
+    ) -> PyResult<Bound<'py, PySet>> {
+        match (self, other) {
+            (Self::Difference, Args::Any(any)) => set.difference((any,)),
+            (Self::Intersection, Args::Any(any)) => set.intersection((any,)),
+            (Self::Union, Args::Any(any)) => set.union((any,)),
+            (Self::SymmetricDifference, Args::Any(any)) => set.symmetric_difference(any),
+            (Self::Difference, Args::Tuple(tuple)) => set.difference(tuple),
+            (Self::Intersection, Args::Tuple(tuple)) => set.intersection(tuple),
+            (Self::Union, Args::Tuple(tuple)) => set.union(tuple),
+            (Self::SymmetricDifference, Args::Tuple(tuple)) => set.symmetric_difference(tuple),
+        }
+    }
+    #[inline(always)]
+    pub fn call_mut<'py>(self, set: &Bound<'py, PySet>, other: Args<'py>) -> PyResult<()> {
+        match (self, other) {
+            (Self::Difference, Args::Any(any)) => set.difference_update((any,)),
+            (Self::Intersection, Args::Any(any)) => set.intersection_update((any,)),
+            (Self::Union, Args::Any(any)) => set.update((any,)),
+            (Self::SymmetricDifference, Args::Any(any)) => set.symmetric_difference_update(any),
+            (Self::Difference, Args::Tuple(tuple)) => set.difference_update(tuple),
+            (Self::Intersection, Args::Tuple(tuple)) => set.intersection_update(tuple),
+            (Self::Union, Args::Tuple(tuple)) => set.update(tuple),
+            (Self::SymmetricDifference, Args::Tuple(tuple)) => {
+                set.symmetric_difference_update(tuple)
+            }
         }
     }
 }
@@ -317,19 +358,5 @@ where
             list.add(value)
         }
         Err(e) => Err(e),
-    }
-}
-#[inline(always)]
-fn try_discard<T>(list: &mut T, set: &Bound<'_, PySet>, value: &Bound<'_, PyAny>) -> PyResult<()>
-where
-    T: ListsDataMethods,
-{
-    match set.contains(value) {
-        Ok(true) => {
-            set.remove(value)?;
-            list.remove(value)
-        }
-        Ok(false) => Ok(()),
-        Err(err) => Err(err),
     }
 }

@@ -12,11 +12,8 @@ use super::{
 use crate::{abc, traits::IntoInit};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
-use sorted_rs::{Args, KeysListsData, ListsData, SetData, types::IntOrSlice};
-use std::{
-    cmp::Ordering,
-    sync::{Arc, Mutex},
-};
+use sorted_rs::{KeysListsData, ListsData, SetData, SetOp, SetPred, types::IntOrSlice};
+use std::sync::{Arc, Mutex};
 use std_tools::prelude::ResultExt;
 use tap::{Conv, Pipe};
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
@@ -110,28 +107,27 @@ pub(super) trait SortedSetMethods:
         self.copy(py)
     }
     fn __sub__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.map_into_bound(other, Self::T::difference)
+        self.map_into_bound(other, SetOp::Difference)
     }
     fn __isub__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.map_any_mut(other, Self::T::difference_update)
+        Self::T::map_any_mut(self, other, SetOp::Difference)
     }
 
     fn __and__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.map_into_bound(other, Self::T::intersection)
+        self.map_into_bound(other, SetOp::Intersection)
     }
     fn __rand__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__and__(other)
     }
 
     fn __iand__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.map_any_mut(other, Self::T::intersection_update)
+        Self::T::map_any_mut(self, other, SetOp::Intersection)
     }
-
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.map_any_mut(other, Self::T::update)
+        Self::T::map_any_mut(self, other, SetOp::Union)
     }
     fn __or__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.map_into_bound(other, Self::T::union)
+        self.map_into_bound(other, SetOp::Union)
     }
     fn __ror__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__or__(other)
@@ -155,15 +151,15 @@ pub(super) trait SortedSetMethods:
         self.lock().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.map_any(other, Self::T::is_disjoint)
+        Self::T::map_pred(self, other, SetPred::Disjoint)
     }
 
     fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.map_any(other, Self::T::is_subset)
+        Self::T::map_pred(self, other, SetPred::Subset)
     }
 
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.map_any(other, Self::T::is_superset)
+        Self::T::map_pred(self, other, SetPred::Superset)
     }
     fn clear(&self, py: Python<'_>) {
         self.lock().clear(py);
@@ -178,123 +174,58 @@ pub(super) trait SortedSetMethods:
     }
     #[pyo3(signature = (*iterables))]
     fn difference<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.map_iter(iterables, Self::T::difference)
+        self.map_tup_into_bound(iterables, SetOp::Difference)
     }
 
     #[pyo3(signature = (*iterables))]
     fn difference_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
-        self.map_iter_mut(iterables, Self::T::difference_update)
+        Self::T::map_iter_mut(self, iterables, SetOp::Difference)
     }
     #[pyo3(signature = (*iterables))]
     fn intersection<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.map_iter(iterables, Self::T::intersection)
+        self.map_tup_into_bound(iterables, SetOp::Intersection)
     }
 
     #[pyo3(signature = (*iterables))]
     fn intersection_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
-        self.map_iter_mut(iterables, Self::T::intersection_update)
+        Self::T::map_iter_mut(self, iterables, SetOp::Intersection)
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         self.lock().remove(value)
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.map_into_bound(other, Self::T::symmetric_difference)
+        self.map_into_bound(other, SetOp::SymmetricDifference)
     }
     fn symmetric_difference_update(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.map_any_mut(other, Self::T::symmetric_difference_update)
+        Self::T::map_any_mut(self, other, SetOp::SymmetricDifference)
     }
     #[pyo3(signature= (*iterables))]
     fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.map_iter(iterables, Self::T::union)
+        self.map_tup_into_bound(iterables, SetOp::Union)
     }
     #[pyo3(signature = (*iterables))]
     fn update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
-        self.map_iter_mut(iterables, Self::T::update)
+        Self::T::map_iter_mut(self, iterables, SetOp::Union)
     }
     #[skip]
     #[inline]
-    fn map_iter_mut<R, F: Fn(&mut Self::T, Args<'_>) -> PyResult<R>>(
+    fn map_tup_into_bound<'py>(
         &self,
-        iterables: Bound<'_, PyTuple>,
-        func: F,
-    ) -> PyResult<R> {
-        let py = iterables.py();
-        match iterables.len().cmp(&1) {
-            Ordering::Less => func(&mut self.lock(), Args::SmallSet(PySet::empty(py)?)),
-            Ordering::Equal => self.map_any_mut(unsafe { iterables.get_item_unchecked(0) }, func),
-            Ordering::Greater => self.iter_into_set(iterables).and_then(|pyset| {
-                let mut locked = self.lock();
-                let update_set = Args::from_sets(&locked.get_set(py), pyset);
-                func(&mut locked, update_set)
-            }),
-        }
-    }
-
-    #[skip]
-    #[inline]
-    fn map_iter<'py, F: Fn(&Self::T, Args<'_>) -> PyResult<Self::T>>(
-        &self,
-        iterables: Bound<'py, PyTuple>,
-        func: F,
+        tup: Bound<'py, PyTuple>,
+        op: SetOp,
     ) -> PyResult<Bound<'py, Self>> {
-        let py = iterables.py();
-        match iterables.len().cmp(&1) {
-            Ordering::Less => func(&mut self.lock(), Args::SmallSet(PySet::empty(py)?)),
-            Ordering::Equal => self.map_any(unsafe { iterables.get_item_unchecked(0) }, func),
-            Ordering::Greater => self.iter_into_set(iterables).and_then(|pyset| {
-                let mut locked = self.lock();
-                let update_set = Args::from_sets(&locked.get_set(py), pyset);
-                func(&mut locked, update_set)
-            }),
-        }?
-        .conv::<Self>()
-        .into_bound(py)
+        let py = tup.py();
+        Self::T::map_iter(self, tup, op)?.into_bound(py)
     }
     #[skip]
     #[inline]
-    fn map_any_mut<R, F: Fn(&mut Self::T, Args<'_>) -> R>(
-        &self,
-        other: Bound<'_, PyAny>,
-        func: F,
-    ) -> R {
-        let other_set = Self::T::extract_from(self, other);
-        func(&mut self.lock(), other_set)
-    }
-    #[skip]
-    #[inline]
-    fn map_any<'py, R, F: Fn(&Self::T, Args<'py>) -> R>(
+    fn map_into_bound<'py>(
         &self,
         other: Bound<'py, PyAny>,
-        func: F,
-    ) -> R {
-        let other_set = Self::T::extract_from(self, other);
-        func(&self.lock(), other_set)
-    }
-    #[skip]
-    #[inline]
-    fn map_into_bound<'py, F: Fn(&Self::T, Args<'py>) -> PyResult<Self::T>>(
-        &self,
-        other: Bound<'py, PyAny>,
-        func: F,
+        op: SetOp,
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let other_set = Self::T::extract_from(self, other);
-        func(&self.lock(), other_set)?.conv::<Self>().into_bound(py)
-    }
-    #[skip]
-    #[inline]
-    fn iter_into_set<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, PySet>> {
-        let py = iterables.py();
-        iterables
-            .into_iter()
-            .map(|other| Self::T::extract_from(self, other))
-            .try_fold(PySet::empty(py)?, |pyset, other| {
-                match other {
-                    Args::SmallSet(set) | Args::BigSet(set) => pyset.update((set,)),
-                    Args::Any(other) => pyset.update((other,)),
-                }
-                .map(|()| pyset)
-            })
+        Self::T::map_any(self, other, op)?.into_bound(py)
     }
 }
