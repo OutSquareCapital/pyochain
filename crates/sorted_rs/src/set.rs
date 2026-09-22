@@ -105,11 +105,11 @@ impl<T: ListsDataMethods> SetData<T> {
         self.update_inner(
             iterables,
             |slf, set| slf.difference_update((set,)),
-            |slf, set| slf.discard(&set),
+            |list, set, value| try_discard(list, set, &value),
         )
     }
     pub fn update(&mut self, other: Args<'_>) -> PyResult<()> {
-        self.update_inner(other, |slf, other| slf.update((other,)), Self::add)
+        self.update_inner(other, |slf, other| slf.update((other,)), try_add)
     }
     pub fn intersection_update(&mut self, iterables: Args<'_>) -> PyResult<()> {
         match iterables {
@@ -163,15 +163,7 @@ impl<T: ListsDataMethods> SetData<T> {
         try_add(&mut self.0, self.1.bind(value.py()), value)
     }
     pub fn discard(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        let set = self.1.bind(value.py());
-        match set.contains(value) {
-            Ok(true) => {
-                set.remove(value)?;
-                self.0.remove(value)
-            }
-            Ok(false) => Ok(()),
-            Err(err) => Err(err),
-        }
+        try_discard(&mut self.0, self.1.bind(value.py()), value)
     }
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         self.1.bind(py).copy().and_then(|x| self.wrap(x))
@@ -232,17 +224,26 @@ impl<T: ListsDataMethods> SetData<T> {
     fn update_inner<
         'py,
         F1: Fn(&Bound<'py, PySet>, Bound<'py, PySet>) -> PyResult<()>,
-        F2: Fn(&mut Self, Bound<'_, PyAny>) -> PyResult<()>,
+        F2: Fn(&mut T, &Bound<'_, PySet>, Bound<'_, PyAny>) -> PyResult<()>,
     >(
         &mut self,
         other: Args<'py>,
         set_fn: F1,
         slf_fn: F2,
     ) -> PyResult<()> {
+        let py = other.py();
+        let list = &mut self.0;
+        let set = &self.1.clone_ref(py).into_bound(py);
         match other {
             Args::BigSet(pyset) => self.try_update(pyset.py(), pyset, set_fn),
-            Args::SmallSet(pyset) => pyset.iter().try_for_each(|value| slf_fn(self, value)),
-            Args::Any(any) => any.try_iter()?.try_for_each(|value| slf_fn(self, value?)),
+            Args::SmallSet(pyset) => {
+                let f = |value| slf_fn(list, set, value);
+                pyset.iter().try_for_each(f)
+            }
+            Args::Any(any) => {
+                let f = |value| slf_fn(list, set, value?);
+                any.try_iter()?.try_for_each(f)
+            }
         }
     }
 
@@ -305,11 +306,10 @@ impl<'py> Args<'py> {
 }
 
 #[inline(always)]
-fn try_add<T: ListsDataMethods>(
-    list: &mut T,
-    set: &Bound<'_, PySet>,
-    value: Bound<'_, PyAny>,
-) -> PyResult<()> {
+fn try_add<T>(list: &mut T, set: &Bound<'_, PySet>, value: Bound<'_, PyAny>) -> PyResult<()>
+where
+    T: ListsDataMethods,
+{
     match set.contains(&value) {
         Ok(true) => Ok(()),
         Ok(false) => {
@@ -317,5 +317,19 @@ fn try_add<T: ListsDataMethods>(
             list.add(value)
         }
         Err(e) => Err(e),
+    }
+}
+#[inline(always)]
+fn try_discard<T>(list: &mut T, set: &Bound<'_, PySet>, value: &Bound<'_, PyAny>) -> PyResult<()>
+where
+    T: ListsDataMethods,
+{
+    match set.contains(value) {
+        Ok(true) => {
+            set.remove(value)?;
+            list.remove(value)
+        }
+        Ok(false) => Ok(()),
+        Err(err) => Err(err),
     }
 }
