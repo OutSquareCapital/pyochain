@@ -1,3 +1,5 @@
+use std::ops::Not;
+
 use crate::{abc::PyoCollection, collections::sorted};
 use either::Either;
 use pyo3::{
@@ -155,13 +157,8 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
             Ok(Either::Left(false))
         } else {
             slf.try_iter()?
-                .try_find_map(|elem| match other.contains(elem?) {
-                    Ok(true) => Ok(None),
-                    Ok(false) => Ok(Some(Either::Left(false))),
-                    Err(e) => Err(e),
-                })?
-                .unwrap_or_else(|| Either::Left(true))
-                .pipe(Ok)
+                .try_all(|elem| other.contains(elem?))
+                .map(Either::Left)
         }
     }
 
@@ -173,13 +170,8 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
         } else {
             other
                 .try_iter()?
-                .try_find_map(|elem| match slf.contains(elem?) {
-                    Ok(true) => Ok(None),
-                    Ok(false) => Ok(Some(Either::Left(false))),
-                    Err(e) => Err(e),
-                })?
-                .unwrap_or_else(|| Either::Left(true))
-                .pipe(Ok)
+                .try_all(|elem| slf.contains(elem?))
+                .map(Either::Left)
         }
     }
 
@@ -219,13 +211,8 @@ pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
     fn isdisjoint(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
         other
             .try_iter()?
-            .try_find_map(|value| match slf.contains(value?) {
-                Ok(true) => Ok(Some(false)),
-                Ok(false) => Ok(None),
-                Err(e) => Err(e),
-            })?
-            .unwrap_or(true)
-            .pipe(Ok)
+            .try_any(|value| slf.contains(value?))
+            .map(Not::not)
     }
 
     fn is_subset(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {

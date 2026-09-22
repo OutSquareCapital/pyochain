@@ -672,10 +672,10 @@ impl FilterStar {
             })
             .try_find_map(|res| {
                 let tup = res?;
-                if predicate.call1(&tup)?.is_truthy()? {
-                    Ok(Some(tup))
-                } else {
-                    Ok(None)
+                match predicate.call1(&tup)?.is_truthy() {
+                    Ok(true) => Ok(Some(tup)),
+                    Ok(false) => Ok(None),
+                    Err(e) => Err(e),
                 }
             })
     }

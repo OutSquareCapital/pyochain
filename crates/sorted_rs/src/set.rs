@@ -17,7 +17,7 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use pyochain_macros::try_cast_into;
-use std_tools::prelude::MutexExtMethods;
+use std_tools::prelude::*;
 use tap::prelude::*;
 
 impl SetData<ListsData> {
