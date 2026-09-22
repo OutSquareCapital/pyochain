@@ -5,6 +5,7 @@ use pyo3::{
     prelude::*,
     types::PySequence,
 };
+use std_tools::prelude::TryIterator;
 use tap::Pipe;
 
 use crate::{
@@ -32,13 +33,8 @@ impl PyoSequence {
             .pipe(iterators::SequenceIterator::new)
     }
     fn __contains__(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        for v in slf.try_iter()? {
-            let item = v?;
-            if item.is(value) || item.eq(value)? {
-                return Ok(true);
-            }
-        }
-        Ok(false)
+        slf.try_iter()?
+            .try_any(|v| v.and_then(|item| Ok(item.is(value) || item.eq(value)?)))
     }
     fn __reversed__(slf: Bound<'_, Self>) -> PyResult<iterators::SequenceReverseIterator> {
         slf.pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })

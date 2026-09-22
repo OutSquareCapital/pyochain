@@ -11,10 +11,10 @@ from __future__ import annotations
 import operator
 import random
 from functools import partial
-from itertools import chain
 
 import pytest
 
+from pyochain import Range
 from pyochain.collections import SortedKeyList
 from pyochain.collections._sorted import (  # ruff: ignore[import-private-name]
     assert_sorted_list_empty,
@@ -89,10 +89,8 @@ def test_update() -> None:
     assert len(slt) == 11100
     check_sorted_key_list(slt)
 
-    values = sorted(
-        (val for val in chain(range(100), range(1000), range(10000))), key=operator.neg
-    )
-    assert all(tup[0] == tup[1] for tup in zip(slt, values, strict=False))
+    values = Range(100).iter().chain(range(1000), range(10000)).sort_by(operator.neg)
+    assert slt.iter().zip(values, strict=False).all(lambda tup: tup[0] == tup[1])
 
 
 def test_contains() -> None:
@@ -667,9 +665,9 @@ def negate(val: int) -> int:  # ruff:ignore[reimplemented-operator]
 def test_repr() -> None:
     this = SortedKeyList(negate, range(10))
     this.reset(4)
-    assert repr(this).startswith(
-        "SortedKeyList([9, 8, 7, 6, 5, 4, 3, 2, 1, 0], key=<function negate at "
-    )
+    representation = repr(this)
+    assert representation.startswith("SortedKeyList(<function negate at ")
+    assert representation.endswith(">, [9, 8, 7, 6, 5, 4, 3, 2, 1, 0])")
 
 
 @pytest.mark.skip(reason="Pyo3 doesn't support pickling yet")

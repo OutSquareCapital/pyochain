@@ -6,7 +6,6 @@ from typing import Self, override
 
 from _typeshed import SupportsRichComparison
 
-from pyochain import Vec
 from pyochain.abc import PyoIterator
 
 from ._core import KeyFunc
@@ -28,9 +27,9 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
     from operator import neg
 
     skl = SortedKeyList(neg)
-    assert repr(skl) == "SortedKeyList([], key=<built-in function neg>)"
+    assert repr(skl) == "SortedKeyList(<built-in function neg>, [])"
     skl = SortedKeyList(neg, [3, 1, 2])
-    assert repr(skl) == "SortedKeyList([3, 2, 1], key=<built-in function neg>)"
+    assert repr(skl) == "SortedKeyList(<built-in function neg>, [3, 2, 1])"
     ```
     """
     def __new__(
@@ -50,8 +49,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
     def __add__(self, other: Iterable[T]) -> Self: ...
     @override
     def __mul__(self, num: int) -> Self: ...
-    @override
-    def __reduce__(self) -> tuple[type[Self], tuple[Vec[T], KeyFunc[T, OT]]]: ...
     def irange_key(
         self,
         min_key: OT | None = None,

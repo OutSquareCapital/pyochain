@@ -1,19 +1,13 @@
-use crate::{
-    abc, collections,
-    core::{Dict, PyoVec, Range, Seq, Set, SetMut, SliceView, iterators::Iter},
-};
+use crate::{abc, collections, core};
 use pyo3::{
     PyClass, PyTypeInfo,
     exceptions::PyTypeError,
     prelude::*,
-    types::{
-        DerefToPyAny, PyDict, PyFrozenSet, PyIterator, PyList, PyRange, PySequence, PySet, PyTuple,
-    },
+    types::{self, DerefToPyAny},
 };
-use pyo3_ext::prelude::TryFromPy;
 use pyo3_ext::{prelude::*, types::PyDeque};
 use pyochain_macros::py_abc;
-use tap::Pipe;
+use tap::{Pipe, Tap};
 pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync {
     type Wrapped: PyTypeInfo + DerefToPyAny;
     fn inner(&self) -> &Py<Self::Wrapped>;
@@ -44,6 +38,21 @@ pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Syn
                 PyTypeError::new_err(txt)
             })
     }
+
+    fn get_repr(obj: &Bound<'_, PyAny>) -> PyResult<String> {
+        let name = Self::type_object(obj.py()).name()?;
+        match obj.len() {
+            Ok(0) => Ok(format!("{name}()")),
+            Ok(_) => {
+                let elements = obj.repr()?.to_string().tap_mut(|txt| {
+                    txt.pop();
+                    txt.remove(0);
+                });
+                Ok(format!("{name}({elements})"))
+            }
+            Err(err) => Err(err),
+        }
+    }
 }
 /// Implement `PyWrapper` for pyochain types in one line.
 macro_rules! impl_py_wrapper {
@@ -61,22 +70,22 @@ macro_rules! impl_py_wrapper {
     };
 }
 impl_py_wrapper! {
-    Seq => PyTuple,
-    PyoVec => PyList,
-    Set => PyFrozenSet,
-    SetMut => PySet,
-    Range => PyRange,
-    Dict => PyDict,
-    Iter => PyIterator,
-    collections::StableSet => PyDict,
-    collections::PyoCounter => PyDict,
-    collections::HeapMin => PyList,
-    collections::HeapMax => PyList,
+    core::Seq => types::PyTuple,
+    core::PyoVec => types::PyList,
+    core::Set => types::PyFrozenSet,
+    core::SetMut => types::PySet,
+    core::Range => types::PyRange,
+    core::Dict => types::PyDict,
+    core::iterators::Iter => types::PyIterator,
+    collections::StableSet => types::PyDict,
+    collections::PyoCounter => types::PyDict,
+    collections::HeapMin => types::PyList,
+    collections::HeapMax => types::PyList,
     collections::Deque => PyDeque,
 }
 /// Named struct so need to implement `PyWrapper` manually.
-impl PyWrapper for SliceView {
-    type Wrapped = PySequence;
+impl PyWrapper for core::SliceView {
+    type Wrapped = types::PySequence;
     #[inline(always)]
     fn inner(&self) -> &Py<Self::Wrapped> {
         &self.inner
@@ -96,13 +105,13 @@ macro_rules! impl_try_from_py {
 }
 
 impl_try_from_py!(
-    PyTuple => Seq,
-    PyList => PyoVec,
-    PyFrozenSet => Set,
-    PySet => SetMut,
-    PyRange => Range,
-    PyDict => Dict,
-    PyIterator => Iter,
+    types::PyTuple => core::Seq,
+    types::PyList => core::PyoVec,
+    types::PyFrozenSet => core::Set,
+    types::PySet => core::SetMut,
+    types::PyRange => core::Range,
+    types::PyDict => core::Dict,
+    types::PyIterator => core::iterators::Iter,
     PyDeque => collections::Deque
 
 );
@@ -129,8 +138,8 @@ trait PyoABC:
     #[new]
     #[allow(unused_variables)]
     fn new(
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Bound<'_, types::PyTuple>,
+        kwargs: Option<&Bound<'_, types::PyDict>>,
     ) -> PyClassInitializer<Self> {
         Self::build_init()
     }
@@ -185,13 +194,13 @@ impl<
 }
 
 #[py_abc(
-    Seq,
-    PyoVec,
-    Set,
-    SetMut,
+    core::Seq,
+    core::PyoVec,
+    core::Set,
+    core::SetMut,
     collections::StableSet,
-    Iter,
-    Dict,
+    core::iterators::Iter,
+    core::Dict,
     collections::PyoCounter
 )]
 pub trait FlexWrapper: PyWrapper {
@@ -206,7 +215,7 @@ impl FlexWrapper for collections::StableSet {
     }
 }
 impl FlexWrapper for collections::PyoCounter {
-    fn wrap(data: Bound<'_, PyDict>) -> PyResult<Bound<'_, Self>> {
+    fn wrap(data: Bound<'_, types::PyDict>) -> PyResult<Bound<'_, Self>> {
         let py = data.py();
         data.unbind().pipe(Self).into_bound(py)
     }
@@ -222,4 +231,11 @@ macro_rules! impl_flex_wrapper {
         )*
     };
 }
-impl_flex_wrapper!(Set, SetMut, Iter, PyoVec, Seq, Dict);
+impl_flex_wrapper!(
+    core::Set,
+    core::SetMut,
+    core::iterators::Iter,
+    core::PyoVec,
+    core::Seq,
+    core::Dict
+);

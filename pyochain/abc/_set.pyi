@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from collections.abc import Set as AbstractSet
 from typing import Any, override
@@ -6,7 +6,7 @@ from typing import Any, override
 from pyochain.abc import PyoCollection
 
 # pyrefly: ignore [implicit-abstract-class]
-class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImplicitAbstractClass]
+class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
     """Extends `PyoCollection[T]` and `collections.abc.Set[T]`.
 
     Is the shared ABC for concrete set-like collections: `Set` and `FrozenSet`.

@@ -1,7 +1,6 @@
 mod abc;
 mod collections;
 mod core;
-mod display;
 mod traits;
 use crate::collections::sorted::debug;
 use pyo3::{
@@ -31,8 +30,8 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_submodule(&collections_mod)?;
     collections_mod.add_submodule(&sorted_mod)?;
     // NOTE: We need to do this two times to handle both relative imports, e.g `from pyochain import Vec` and direct import paths, e.g `import pyochain.core.Vec`
-    populate_core(m, py)?;
-    populate_core(&core_mod, py)?;
+    populate_core(m)?;
+    populate_core(&core_mod)?;
     populate_abc(&abc_mod)?;
     populate_collections(&collections_mod)?;
     populate_sorted(&sorted_mod)?;
@@ -45,7 +44,7 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     register_all(py)
 }
 
-fn populate_core(m: &Bound<'_, PyModule>, py: Python<'_>) -> PyResult<()> {
+fn populate_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<core::PyochainOption>()?;
     m.add_class::<core::PyochainOptionType>()?;
     m.add_class::<core::PySome>()?;
@@ -53,7 +52,7 @@ fn populate_core(m: &Bound<'_, PyModule>, py: Python<'_>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(core::then_if_some, m)?)?;
     m.add_function(wrap_pyfunction!(core::then_if_true, m)?)?;
     m.add_function(wrap_pyfunction!(core::new_option, m)?)?;
-    m.add("NONE", core::PyNull::get(py))?;
+    m.add("NONE", core::PyNull::get(m.py()))?;
     m.add_class::<core::PyoOk>()?;
     m.add_class::<core::PyoErr>()?;
     m.add_class::<core::OptionUnwrapError>()?;
@@ -143,7 +142,13 @@ fn register_all(py: Python<'_>) -> PyResult<()> {
     PyValuesView::register::<abc::PyoValuesView>(py)?;
     PyItemsView::register::<abc::PyoItemsView>(py)?;
     PyMapping::register::<abc::PyoMapping>(py)?;
-    PyMutableMapping::register::<abc::PyoMutableMapping>(py)
+    PyMutableMapping::register::<abc::PyoMutableMapping>(py)?;
+    PyKeysView::register::<collections::sorted::SortedKeysView>(py)?;
+    PyValuesView::register::<collections::sorted::SortedValuesView>(py)?;
+    PyItemsView::register::<collections::sorted::SortedItemsView>(py)?;
+    PyKeysView::register::<collections::sorted::SortedByKeyKeysView>(py)?;
+    PyValuesView::register::<collections::sorted::SortedByKeyValuesView>(py)?;
+    PyItemsView::register::<collections::sorted::SortedByKeyItemsView>(py)
 }
 #[cfg(debug_assertions)]
 fn debug_backtrace() {

@@ -1,15 +1,15 @@
 use std::cmp::Ordering;
 
 use crate::{
-    Bounds, Loc,
-    debug::check_list,
-    errors, pyassert,
+    Bounds, Loc, errors,
+    indexing::Nb,
     traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
 use either::Either;
 use pyo3::{
-    exceptions::PyIndexError,
+    basic::CompareOp,
+    exceptions::PyValueError,
     prelude::*,
     types::{PyList, PyNotImplemented, PySlice, PySliceIndices},
 };
@@ -18,21 +18,20 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use std_tools::prelude::*;
-use tap::Pipe;
-
+use tap::{Conv, Pipe};
 pub struct InnerData {
-    pub lists: Vec<VecPy>,
+    pub(super) values: Vec<VecPy>,
     pub maxes: VecPy,
-    pub idx: Vec<usize>,
+    pub(super) idx: Vec<usize>,
     pub len: usize,
-    pub offset: usize,
-    pub load: usize,
+    pub(super) offset: usize,
+    pub(super) load: usize,
 }
 
 impl Default for InnerData {
     fn default() -> Self {
         Self {
-            lists: Vec::default(),
+            values: Vec::default(),
             maxes: Vec::default(),
             idx: Vec::default(),
             len: usize::default(),
@@ -44,7 +43,7 @@ impl Default for InnerData {
 impl InnerData {
     #[inline]
     pub fn clear(&mut self) {
-        self.lists.clear();
+        self.values.clear();
         self.maxes.clear();
         self.idx.clear();
         self.len = 0;
@@ -57,14 +56,11 @@ impl InnerData {
     }
     #[inline(always)]
     pub fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
-        self.lists.iter().flatten()
+        self.values.iter().flatten()
     }
 
     pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         self.iter().collect_bound::<PyList>(py)
-    }
-    pub fn check(&self, py: Python<'_>) -> PyResult<()> {
-        check_list(self, py)
     }
     pub fn loc(&mut self, loc: &Loc) -> usize {
         if loc.pos == 0 {
@@ -96,13 +92,6 @@ impl InnerData {
             total + loc.idx
         }
     }
-
-    pub fn check_empty(&self) -> PyResult<()> {
-        pyassert!(self.len == 0);
-        pyassert!(self.maxes.is_empty());
-        pyassert!(self.lists.is_empty());
-        Ok(())
-    }
     #[inline]
     #[must_use]
     pub fn repeat(&self, py: Python<'_>, num: usize) -> VecPy {
@@ -114,133 +103,108 @@ impl InnerData {
     }
 
     pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let mut bounds = Bounds::default();
-        let len_last = self
-            .lists
-            .last()
-            .ok_or(PyIndexError::new_err("list index out of range"))?
-            .len()
-            .cast_signed();
-        match (index, self.len != 0) {
-            (0, true) => self.lists[0][0].clone_ref(py).into_bound(py).pipe(Ok),
-            (-1, true) => self
-                .lists
-                .last()
-                .unwrap()
-                .last()
-                .unwrap()
+        if self.len == 0 {
+            Err(errors::out_of_range())
+        } else {
+            let first_list = &self.values[0];
+            let last_list = self.values.last().unwrap();
+            let len_last = last_list.len().cast_signed();
+            match index.conv::<Nb>() {
+                Nb::Zero => first_list[0].clone_ref(py).into_bound(py).pipe(Ok),
+                Nb::NegOne => last_list
+                    .last()
+                    .unwrap()
+                    .clone_ref(py)
+                    .into_bound(py)
+                    .pipe(Ok),
+                Nb::One | Nb::Pos if index < first_list.len().cast_signed() => first_list
+                    [index.cast_unsigned()]
                 .clone_ref(py)
                 .into_bound(py)
                 .pipe(Ok),
-            (_, false) => {
-                let msg = "list index out of range";
-                Err(PyIndexError::new_err(msg))
-            }
-            (_, true) if 0 <= index && index < self.lists[0].len().cast_signed() => self.lists[0]
-                [index.cast_unsigned()]
-            .clone_ref(py)
-            .into_bound(py)
-            .pipe(Ok),
-            (_, true) if -len_last < index && index < 0 => self.lists.last().unwrap()
-                [(len_last + index).cast_unsigned()]
-            .clone_ref(py)
-            .into_bound(py)
-            .pipe(Ok),
-            _ => {
-                self.set_pos(index, &mut bounds.min)?;
-                self.lists
-                    .loc(&bounds.min)
+                Nb::Neg if -len_last < index => last_list[(len_last + index).cast_unsigned()]
                     .clone_ref(py)
                     .into_bound(py)
-                    .pipe(Ok)
+                    .pipe(Ok),
+                Nb::Neg | Nb::Pos | Nb::One => {
+                    let mut bounds = Bounds::default();
+                    self.set_pos(index, &mut bounds.min)?;
+                    self.values
+                        .loc(&bounds.min)
+                        .clone_ref(py)
+                        .into_bound(py)
+                        .pipe(Ok)
+                }
             }
         }
     }
-    pub fn get_slice<'py>(
-        &mut self,
-        py: Python<'py>,
-        slice: &Bound<'py, PySlice>,
-    ) -> PyResult<VecPy> {
+    pub fn get_slice(&mut self, slice: &Bound<'_, PySlice>) -> PyResult<VecPy> {
+        let py = slice.py();
         let PySliceIndices {
             start, stop, step, ..
         } = slice.indices(self.len.cast_signed())?;
-        let stop_eq_len = stop == self.len.cast_signed();
+        let stop_eq_len = stop.cmp(&self.len.cast_signed());
         let mut bounds = Bounds::default();
-        match (step, start.cmp(&stop)) {
+        match (start.cmp(&stop), step.conv::<Nb>()) {
+            (_, Nb::Zero) => Err(PyValueError::new_err("slice step cannot be zero")),
             // Whole slice optimization: start to stop slices the whole sorted list.
-            (1, Ordering::Less) if start == 0 && stop_eq_len => self.collapse(py).pipe(Ok),
-            (1, Ordering::Less) => {
+            (Ordering::Less, Nb::One) if start == 0 && stop_eq_len.is_eq() => {
+                self.collapse(py).pipe(Ok)
+            }
+            (Ordering::Less, Nb::One) => {
                 self.set_pos(start, &mut bounds.min)?;
-                let start_list = &self.lists[bounds.min.pos];
+                let start_list = &self.values[bounds.min.pos];
                 bounds.max.idx = bounds.min.idx + (stop - start).cast_unsigned();
-                match (start_list.len() >= bounds.max.idx, stop_eq_len) {
+                match (start_list.len().cmp(&bounds.max.idx), stop_eq_len) {
                     // Small slice optimization: start index and stop index are
                     // within the start list.
-                    (true, _) => start_list[bounds.min.idx..bounds.max.idx]
+                    (Ordering::Equal | Ordering::Greater, _) => start_list
+                        [bounds.min.idx..bounds.max.idx]
                         .iter()
                         .map(|x| x.clone_ref(py))
                         .collect::<Vec<_>>()
                         .pipe(Ok),
-                    (false, true) => {
-                        bounds.max.pos = self.lists.len() - 1;
-                        bounds.max.idx = self.lists.loc_len(&bounds.max);
-                        get_slice(&self.lists, &bounds)
+                    (Ordering::Less, Ordering::Equal) => {
+                        bounds.max.pos = self.values.len() - 1;
+                        bounds.max.idx = self.values.loc_len(&bounds.max);
+                        get_slice(&self.values, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                             .pipe(Ok)
                     }
-                    (false, false) => {
+                    (Ordering::Less, Ordering::Greater | Ordering::Less) => {
                         self.set_pos(stop, &mut bounds.max)?;
-                        get_slice(&self.lists, &bounds)
+                        get_slice(&self.values, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                             .pipe(Ok)
                     }
                 }
             }
-            (-1, Ordering::Greater) => {
-                let mut result = self.get_slice(py, &PySlice::new(py, stop + 1, start + 1, 1))?;
+            (Ordering::Greater, Nb::NegOne) => {
+                let mut result = self.get_slice(&PySlice::new(py, stop + 1, start + 1, 1))?;
                 result.reverse();
                 Ok(result)
             }
-            // Return a list because a negative step could reverse the order
-            // of the items and this could be the desired behavior.
-            _ if step > 0 => (start..stop)
-                .step_by(step.cast_unsigned())
-                .map(|i| self.get_item(py, i).map(Bound::unbind))
-                .collect(),
             // Negative step with nothing to iterate (mirrors Python's `range`,
             // which is empty when `start <= stop` for a negative step).
-            (_, Ordering::Less | Ordering::Equal) => Ok(Vec::new()),
-            _ => {
-                // Negative step, `start > stop` guaranteed by the arm above.
+            (Ordering::Less | Ordering::Equal, Nb::NegOne | Nb::Neg) => Ok(Vec::new()),
+            (Ordering::Greater, Nb::Neg) => {
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .map(|i| self.get_item(py, i).map(Bound::unbind))
                     .collect()
             }
+            // Return a list because a negative step could reverse the order
+            // of the items and this could be the desired behavior.
+            (_, Nb::One | Nb::Pos) => (start..stop)
+                .step_by(step.cast_unsigned())
+                .map(|i| self.get_item(py, i).map(Bound::unbind))
+                .collect(),
         }
     }
 
-    /// Build a positional index for indexing the sorted list.
-    /// Indexes are represented as binary trees in a dense array notation similar to a binary heap.
-    /// For example, given a lists representation storing integers:\
-    ///     0: [1, 2, 3]
-    ///     1: [4, 5]
-    ///     2: [6, 7, 8, 9]
-    ///     3: [10, 11, 12, 13, 14]
-    /// The first transformation maps the sub-lists by their length.\
-    /// The first row of the index is the length of the `sub-lists::`
-    ///     0: [3, 2, 4, 5]
-    /// Each row after that is the sum of consecutive pairs of the previous row:
-    ///     1: [5, 9]
-    ///     2: [14]
-    /// Finally, the index is built by concatenating these lists together:
-    ///     _index = [14, 5, 9, 3, 2, 4, 5]
-    /// An offset storing the start of the first row is also stored:
-    ///     _offset = 3
-    /// When built, the index can be used for efficient indexing into the list.
     fn build_index(&mut self) {
-        let row0 = self.lists.iter().map(Vec::len).collect::<Vec<usize>>();
+        let row0 = self.values.iter().map(Vec::len).collect::<Vec<usize>>();
 
         if row0.len() == 1 {
             self.idx.extend(&row0);
@@ -286,7 +250,7 @@ impl InnerData {
         self.idx[0] += 1;
     }
     pub(super) fn remove_pos(&mut self, loc: &Loc) {
-        self.lists.remove(loc.pos);
+        self.values.remove(loc.pos);
         self.maxes.remove(loc.pos);
         self.idx.clear();
     }
@@ -299,7 +263,7 @@ impl InnerData {
     ) {
         self.maxes[pos] = new_max_at_pos;
         self.maxes.insert(pos + 1, last_max);
-        self.lists.insert(pos + 1, half);
+        self.values.insert(pos + 1, half);
         self.idx.clear();
     }
 
@@ -318,9 +282,9 @@ impl InnerData {
 
     pub(super) fn set_pos(&mut self, mut idx: isize, loc: &mut Loc) -> PyResult<()> {
         if idx < 0 {
-            if idx >= -self.lists.last().unwrap().len().cast_signed() {
-                loc.pos = self.lists.len() - 1;
-                loc.idx = (self.lists.last().unwrap().len().cast_signed() + idx).cast_unsigned();
+            if idx >= -self.values.last().unwrap().len().cast_signed() {
+                loc.pos = self.values.len() - 1;
+                loc.idx = (self.values.last().unwrap().len().cast_signed() + idx).cast_unsigned();
                 return Ok(());
             }
 
@@ -333,7 +297,7 @@ impl InnerData {
             return Err(errors::out_of_range());
         }
 
-        if idx < self.lists[0].len().cast_signed() {
+        if idx < self.values[0].len().cast_signed() {
             loc.pos = 0;
             loc.idx = idx.cast_unsigned();
             return Ok(());
@@ -389,124 +353,32 @@ impl InnerData {
                 self.set_pos(indices.start, &mut bounds.min)?;
 
                 if indices.stop == length {
-                    bounds.max.pos = self.lists.len() - 1;
-                    bounds.max.idx = self.lists.last().unwrap().len();
+                    bounds.max.pos = self.values.len() - 1;
+                    bounds.max.idx = self.values.last().unwrap().len();
                 } else {
                     self.set_pos(indices.stop, &mut bounds.max)?;
                 }
-
                 Ok(Some(bounds))
             }
         }
     }
-
     pub fn eq<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                if self.len.ne(&seq.len()?) {
-                    Either::Left(false).pipe(Ok)
-                } else {
-                    let py = seq.py();
-                    self.iter()
-                        .zip(seq.iter_py())
-                        .try_all(|(a, b)| a.bind(py).eq(b?))
-                        .map(Either::Left)
-                }
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Eq)
     }
-
     pub fn ne<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                if self.len.ne(&seq.len()?) {
-                    Either::Left(true).pipe(Ok)
-                } else {
-                    let py = seq.py();
-                    self.iter()
-                        .zip(seq.iter_py())
-                        .try_any(|(a, b)| a.bind(py).ne(b?))
-                        .map(Either::Left)
-                }
-            }
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Ne)
     }
-
     pub fn lt<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
-                    let a = alpha.bind(py);
-                    let b = beta?;
-                    if a.ne(&b)? {
-                        return a.lt(&b).map(Either::Left);
-                    }
-                }
-
-                self.len.lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Lt)
     }
-
     pub fn gt<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
-                    let b = beta?;
-                    let a = alpha.bind(py);
-                    if a.ne(&b)? {
-                        return Either::Left(a.gt(&b)?).pipe(Ok);
-                    }
-                }
-                self.len.gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Gt)
     }
-
     pub fn le<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
-                    let b = beta?;
-                    let a = alpha.bind(py);
-                    if a.ne(&b)? {
-                        return a.le(b).map(Either::Left);
-                    }
-                }
-
-                self.len.le(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Le)
     }
-
     pub fn ge<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        match other {
-            Either::Left(seq) => {
-                let py = seq.py();
-                for (alpha, beta) in self.iter().zip(seq.iter_py()) {
-                    let b = beta?;
-                    let a = alpha.bind(py);
-                    if a.ne(&b)? {
-                        return a.ge(b).map(Either::Left);
-                    }
-                }
-
-                self.len.ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
-            }
-            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
-        }
+        inner_cmp(self, other, CompareOp::Ge)
     }
     pub(super) fn extend_lists(&mut self, py: Python<'_>, values: &[Py<PyAny>]) {
         let val_len = values.len();
@@ -518,7 +390,7 @@ impl InnerData {
                     .map(|x| x.clone_ref(py))
                     .collect::<Vec<_>>()
             })
-            .pipe(|it| self.lists.extend(it));
+            .pipe(|it| self.values.extend(it));
     }
 }
 
@@ -527,4 +399,43 @@ fn get_slice<'a>(lists: &'a [VecPy], bounds: &Bounds) -> impl Iterator<Item = &'
         .iter()
         .chain(lists[bounds.min.pos + 1..bounds.max.pos].iter().flatten())
         .chain(lists[bounds.max.pos][0..bounds.max.idx].iter())
+}
+
+#[inline]
+fn inner_cmp<'py>(data: &InnerData, other: SeqOrAny<'py>, op: CompareOp) -> PyCmpOut<'py, bool> {
+    let py = other.py();
+    let it = data.iter().map(|a| a.bind(py));
+    match (other, op) {
+        (Either::Left(seq), CompareOp::Eq) => {
+            if data.len == seq.len()? {
+                it.zip(seq.iter_py())
+                    .try_all(|(a, b)| a.eq(b?))
+                    .map(Either::Left)
+            } else {
+                Ok(Either::Left(false))
+            }
+        }
+        (Either::Left(seq), CompareOp::Ne) => {
+            if data.len == seq.len()? {
+                it.zip(seq.iter_py())
+                    .try_any(|(a, b)| a.ne(b?))
+                    .map(Either::Left)
+            } else {
+                Ok(Either::Left(true))
+            }
+        }
+        (Either::Left(seq), op) => it
+            .zip(seq.iter_py())
+            .try_find_map(|(a, b)| {
+                let b = b?;
+                if a.ne(&b)? {
+                    a.rich_compare_bool(&b, op).map(Some)
+                } else {
+                    Ok(None)
+                }
+            })?
+            .map_or_else(|| Ok(op.as_fn::<usize>()(&data.len, &seq.len()?)), Ok)
+            .map(Either::Left),
+        (Either::Right(any), _) => PyNotImplemented::from_cmp(any.py()),
+    }
 }

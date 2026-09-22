@@ -1,7 +1,6 @@
-use crate::{abc, display::get_repr, traits::PyWrapper};
+use crate::{abc, traits::PyWrapper};
 use either::Either;
 use pyo3::{
-    PyTypeInfo,
     prelude::*,
     types::{PyInt, PyIterator, PySequence, PySlice, PyTuple},
 };
@@ -14,10 +13,7 @@ pub struct Seq(pub Py<PyTuple>);
 #[pymethods]
 impl Seq {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name()?;
-        self.inner_bind(py)
-            .pipe(get_repr)
-            .map(|repr| format!("{name}({repr})"))
+        self.inner_bind(py).as_any().pipe(Self::get_repr)
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {

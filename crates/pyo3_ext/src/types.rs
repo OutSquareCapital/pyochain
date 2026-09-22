@@ -8,13 +8,14 @@ use pyo3::{
     sync::PyOnceLock,
     types::{
         PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator, PyList,
-        PyNotImplemented, PySequence, PySet, PySlice, PyType,
+        PyNotImplemented, PySet, PySlice, PyType,
     },
 };
 use tap::prelude::*;
 const COLLECTIONS_ABC: &str = "collections.abc";
 /// Return type from python comparison dunders, returning either `T` in case of success, or `NotImplemented`.
 pub type PyCmpOut<'py, T> = PyResult<Either<T, Bound<'py, PyNotImplemented>>>;
+pub type BoundedEither<'py, T, U> = Either<Bound<'py, T>, Bound<'py, U>>;
 /// Small extension trait for `PyNotImplemented` to allow for easy conversion to `PyCmpOut`.
 pub trait FromCmp<'py, T> {
     fn from_cmp(py: Python<'py>) -> PyCmpOut<'py, T>;
@@ -143,7 +144,18 @@ unsafe impl PyTypeInfo for PyKeysView {
                 .unwrap_or_else(|err| false_and_write(err, object))
     }
 }
-
+/// Key-value pair type from a Python `Mapping`
+pub type DictItem<'py> = (Bound<'py, PyAny>, Bound<'py, PyAny>);
+pub trait ItemsViewMethods<'py> {
+    fn iter(&self) -> impl Iterator<Item = PyResult<DictItem<'py>>>;
+}
+impl<'py> ItemsViewMethods<'py> for Bound<'py, PyItemsView> {
+    fn iter(&self) -> impl Iterator<Item = PyResult<DictItem<'py>>> {
+        self.try_iter()
+            .expect("an ItemsView should always be iterable")
+            .map(|iter| iter?.extract::<DictItem>())
+    }
+}
 #[repr(transparent)]
 pub struct PyValuesView(PyAny);
 pyobject_native_type_named!(PyValuesView);
@@ -468,8 +480,6 @@ impl PyDeque {
     }
 }
 pub trait PyDequeMethods<'py> {
-    /// Returns `self` cast as a `PySequence`.
-    fn as_sequence(&self) -> &Bound<'py, PySequence>;
     fn append(&self, x: Bound<'_, PyAny>) -> PyResult<()>;
     fn append_left(&self, x: Bound<'_, PyAny>) -> PyResult<()>;
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
@@ -482,11 +492,6 @@ pub trait PyDequeMethods<'py> {
     fn reversed(&self) -> PyResult<Bound<'py, PyIterator>>;
 }
 impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
-    /// Returns `self` cast as a `PySequence`.
-    fn as_sequence(&self) -> &Bound<'py, PySequence> {
-        unsafe { self.cast_unchecked() }
-    }
-
     fn append(&self, x: Bound<'_, PyAny>) -> PyResult<()> {
         self.call_method1(intern!(self.py(), "append"), (x,))?;
         Ok(())

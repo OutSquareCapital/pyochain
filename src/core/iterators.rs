@@ -267,7 +267,7 @@ impl InnerWindow {
             .map(|(iter, prev)| Self { iter, prev, func })
     }
     fn get_vec(&self) -> MutexGuard<'_, WindowVec> {
-        self.prev.lock().unwrap()
+        self.prev.try_into_inner()
     }
     fn as_tuple<'py>(&self, py: Python<'py>, item: Py<PyAny>) -> PyResult<Bound<'py, PyTuple>> {
         let mut vec = self.get_vec();
@@ -672,10 +672,10 @@ impl FilterStar {
             })
             .try_find_map(|res| {
                 let tup = res?;
-                if predicate.call1(&tup)?.is_truthy()? {
-                    Ok(Some(tup))
-                } else {
-                    Ok(None)
+                match predicate.call1(&tup)?.is_truthy() {
+                    Ok(true) => Ok(Some(tup)),
+                    Ok(false) => Ok(None),
+                    Err(e) => Err(e),
                 }
             })
     }
@@ -690,7 +690,7 @@ mod position {
     const LAST: &str = "last";
     const ONLY: &str = "only";
     #[inline(always)]
-    pub fn get(did_iter: bool, has_next: bool, py: Python<'_>) -> &Bound<'_, PyString> {
+    pub fn get(py: Python<'_>, did_iter: bool, has_next: bool) -> &Bound<'_, PyString> {
         match (did_iter, has_next) {
             (false, true) => intern!(py, FIRST),
             (false, false) => intern!(py, ONLY),
@@ -737,7 +737,7 @@ impl WithPosition {
             }
             None => false,
         };
-        let position = position::get(slf.did_iter, has_next, py);
+        let position = position::get(py, slf.did_iter, has_next);
         slf.did_iter = true;
 
         Ok(Some((position, current)))
@@ -915,9 +915,9 @@ impl Iter {
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name();
+        let name = Self::type_object(py).name()?;
         let inner_repr = self.inner_bind(py).repr()?;
-        Ok(format!("{name:?}({inner_repr:?})"))
+        Ok(format!("{name}({inner_repr})"))
     }
 }
 

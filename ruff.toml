@@ -34,7 +34,8 @@ ignore = [
   "unnecessary-dunder-call",
   "unnecessary-map",
   "lambda-assignment",
-  "p-print"
+  "p-print",
+  "boolean-positional-value-in-call"
 ]
 
 preview = true

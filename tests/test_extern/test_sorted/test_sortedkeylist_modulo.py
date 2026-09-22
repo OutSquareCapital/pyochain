@@ -805,9 +805,9 @@ def test_ge() -> None:
 def test_repr() -> None:
     this = _modulo_list(range(10))
     this.reset(4)
-    assert repr(this).startswith(
-        "SortedKeyList([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], key=<function modulo at "
-    )
+    representation = repr(this)
+    assert repr(this).startswith("SortedKeyList(<function modulo at ")
+    assert representation.endswith(">, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])")
 
 
 @pytest.mark.skip(reason="Same reason as `test_repr_recursion` in `test_sortedlist.py`")
