@@ -12,7 +12,7 @@ use super::{
 use crate::{abc, traits::IntoInit};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
-use sorted_rs::{IntoUpdate, KeysListsData, ListsData, SetData, types::IntOrSlice};
+use sorted_rs::{Args, KeysListsData, ListsData, SetData, types::IntOrSlice};
 use std::{
     cmp::Ordering,
     sync::{Arc, Mutex},
@@ -214,18 +214,18 @@ pub(super) trait SortedSetMethods:
     }
     #[skip]
     #[inline]
-    fn map_iter_mut<R, F: Fn(&mut Self::T, IntoUpdate<'_>) -> PyResult<R>>(
+    fn map_iter_mut<R, F: Fn(&mut Self::T, Args<'_>) -> PyResult<R>>(
         &self,
         iterables: Bound<'_, PyTuple>,
         func: F,
     ) -> PyResult<R> {
         let py = iterables.py();
         match iterables.len().cmp(&1) {
-            Ordering::Less => func(&mut self.lock(), IntoUpdate::SmallSet(PySet::empty(py)?)),
+            Ordering::Less => func(&mut self.lock(), Args::SmallSet(PySet::empty(py)?)),
             Ordering::Equal => self.map_any_mut(unsafe { iterables.get_item_unchecked(0) }, func),
             Ordering::Greater => self.iter_into_set(iterables).and_then(|pyset| {
                 let mut locked = self.lock();
-                let update_set = IntoUpdate::from_sets(&locked.get_set(py), pyset);
+                let update_set = Args::from_sets(&locked.get_set(py), pyset);
                 func(&mut locked, update_set)
             }),
         }
@@ -233,18 +233,18 @@ pub(super) trait SortedSetMethods:
 
     #[skip]
     #[inline]
-    fn map_iter<'py, F: Fn(&Self::T, IntoUpdate<'_>) -> PyResult<Self::T>>(
+    fn map_iter<'py, F: Fn(&Self::T, Args<'_>) -> PyResult<Self::T>>(
         &self,
         iterables: Bound<'py, PyTuple>,
         func: F,
     ) -> PyResult<Bound<'py, Self>> {
         let py = iterables.py();
         match iterables.len().cmp(&1) {
-            Ordering::Less => func(&mut self.lock(), IntoUpdate::SmallSet(PySet::empty(py)?)),
+            Ordering::Less => func(&mut self.lock(), Args::SmallSet(PySet::empty(py)?)),
             Ordering::Equal => self.map_any(unsafe { iterables.get_item_unchecked(0) }, func),
             Ordering::Greater => self.iter_into_set(iterables).and_then(|pyset| {
                 let mut locked = self.lock();
-                let update_set = IntoUpdate::from_sets(&locked.get_set(py), pyset);
+                let update_set = Args::from_sets(&locked.get_set(py), pyset);
                 func(&mut locked, update_set)
             }),
         }?
@@ -253,7 +253,7 @@ pub(super) trait SortedSetMethods:
     }
     #[skip]
     #[inline]
-    fn map_any_mut<R, F: Fn(&mut Self::T, IntoUpdate<'_>) -> R>(
+    fn map_any_mut<R, F: Fn(&mut Self::T, Args<'_>) -> R>(
         &self,
         other: Bound<'_, PyAny>,
         func: F,
@@ -263,7 +263,7 @@ pub(super) trait SortedSetMethods:
     }
     #[skip]
     #[inline]
-    fn map_any<'py, R, F: Fn(&Self::T, IntoUpdate<'py>) -> R>(
+    fn map_any<'py, R, F: Fn(&Self::T, Args<'py>) -> R>(
         &self,
         other: Bound<'py, PyAny>,
         func: F,
@@ -273,7 +273,7 @@ pub(super) trait SortedSetMethods:
     }
     #[skip]
     #[inline]
-    fn map_into_bound<'py, F: Fn(&Self::T, IntoUpdate<'py>) -> PyResult<Self::T>>(
+    fn map_into_bound<'py, F: Fn(&Self::T, Args<'py>) -> PyResult<Self::T>>(
         &self,
         other: Bound<'py, PyAny>,
         func: F,
@@ -291,8 +291,8 @@ pub(super) trait SortedSetMethods:
             .map(|other| Self::T::extract_from(self, other))
             .try_fold(PySet::empty(py)?, |pyset, other| {
                 match other {
-                    IntoUpdate::SmallSet(set) | IntoUpdate::BigSet(set) => pyset.update((set,)),
-                    IntoUpdate::Any(other) => pyset.update((other,)),
+                    Args::SmallSet(set) | Args::BigSet(set) => pyset.update((set,)),
+                    Args::Any(other) => pyset.update((other,)),
                 }
                 .map(|()| pyset)
             })

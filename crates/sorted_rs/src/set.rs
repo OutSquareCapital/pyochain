@@ -89,36 +89,36 @@ impl<T: ListsDataMethods> SetData<T> {
     pub fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.0.reset(py, load)
     }
-    pub fn difference(&self, iterables: IntoUpdate<'_>) -> PyResult<Self> {
+    pub fn difference(&self, iterables: Args<'_>) -> PyResult<Self> {
         self.map_set(iterables, |slf, other| slf.difference((other,)))
             .and_then(|x| self.wrap(x))
     }
-    pub fn intersection(&self, iterables: IntoUpdate<'_>) -> PyResult<Self> {
+    pub fn intersection(&self, iterables: Args<'_>) -> PyResult<Self> {
         self.map_set(iterables, |slf, other| slf.intersection((other,)))
             .and_then(|x| self.wrap(x))
     }
-    pub fn union(&self, iterables: IntoUpdate<'_>) -> PyResult<Self> {
+    pub fn union(&self, iterables: Args<'_>) -> PyResult<Self> {
         self.map_set(iterables, |slf, other| slf.union((other,)))
             .and_then(|x| self.wrap(x))
     }
-    pub fn difference_update(&mut self, iterables: IntoUpdate<'_>) -> PyResult<()> {
+    pub fn difference_update(&mut self, iterables: Args<'_>) -> PyResult<()> {
         self.update_inner(
             iterables,
             |slf, set| slf.difference_update((set,)),
             |slf, set| slf.discard(&set),
         )
     }
-    pub fn update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
+    pub fn update(&mut self, other: Args<'_>) -> PyResult<()> {
         self.update_inner(other, |slf, other| slf.update((other,)), Self::add)
     }
-    pub fn intersection_update(&mut self, iterables: IntoUpdate<'_>) -> PyResult<()> {
+    pub fn intersection_update(&mut self, iterables: Args<'_>) -> PyResult<()> {
         match iterables {
-            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) => {
+            Args::BigSet(pyset) | Args::SmallSet(pyset) => {
                 self.try_update(pyset.py(), pyset, |set, obj| {
                     set.intersection_update((obj,))
                 })
             }
-            IntoUpdate::Any(any) => {
+            Args::Any(any) => {
                 self.try_update(any.py(), any, |set, obj| set.intersection_update((obj,)))
             }
         }
@@ -176,15 +176,15 @@ impl<T: ListsDataMethods> SetData<T> {
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         self.1.bind(py).copy().and_then(|x| self.wrap(x))
     }
-    pub fn is_disjoint<'py>(&self, other: IntoUpdate<'py>) -> PyResult<Bound<'py, PyBool>> {
+    pub fn is_disjoint<'py>(&self, other: Args<'py>) -> PyResult<Bound<'py, PyBool>> {
         self.map_set(other, Bound::isdisjoint)
     }
 
-    pub fn is_subset<'py>(&self, other: IntoUpdate<'py>) -> PyResult<Bound<'py, PyBool>> {
+    pub fn is_subset<'py>(&self, other: Args<'py>) -> PyResult<Bound<'py, PyBool>> {
         self.map_set(other, Bound::issubset)
     }
 
-    pub fn is_superset<'py>(&self, other: IntoUpdate<'py>) -> PyResult<Bound<'py, PyBool>> {
+    pub fn is_superset<'py>(&self, other: Args<'py>) -> PyResult<Bound<'py, PyBool>> {
         self.map_set(other, Bound::issuperset)
     }
     pub fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
@@ -204,30 +204,28 @@ impl<T: ListsDataMethods> SetData<T> {
         self.1.bind(value.py()).remove(value)?;
         self.0.remove(value)
     }
-    pub fn symmetric_difference(&self, other: IntoUpdate<'_>) -> PyResult<Self> {
+    pub fn symmetric_difference(&self, other: Args<'_>) -> PyResult<Self> {
         self.map_set(other, Bound::symmetric_difference)
             .and_then(|x| self.wrap(x))
     }
-    pub fn symmetric_difference_update(&mut self, other: IntoUpdate<'_>) -> PyResult<()> {
+    pub fn symmetric_difference_update(&mut self, other: Args<'_>) -> PyResult<()> {
         match other {
-            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) => {
+            Args::BigSet(pyset) | Args::SmallSet(pyset) => {
                 self.try_update(pyset.py(), pyset, Bound::symmetric_difference_update)
             }
-            IntoUpdate::Any(any) => {
-                self.try_update(any.py(), any, Bound::symmetric_difference_update)
-            }
+            Args::Any(any) => self.try_update(any.py(), any, Bound::symmetric_difference_update),
         }
     }
     #[inline(always)]
     fn map_set<'py, R, F: Fn(&Bound<'py, PySet>, Bound<'py, PyAny>) -> R>(
         &self,
-        other: IntoUpdate<'py>,
+        other: Args<'py>,
         f: F,
     ) -> R {
         let set = self.1.bind(other.py());
         match other {
-            IntoUpdate::BigSet(pyset) | IntoUpdate::SmallSet(pyset) => f(set, pyset.into_any()),
-            IntoUpdate::Any(any) => f(set, any),
+            Args::BigSet(pyset) | Args::SmallSet(pyset) => f(set, pyset.into_any()),
+            Args::Any(any) => f(set, any),
         }
     }
 
@@ -237,14 +235,14 @@ impl<T: ListsDataMethods> SetData<T> {
         F2: Fn(&mut Self, Bound<'_, PyAny>) -> PyResult<()>,
     >(
         &mut self,
-        other: IntoUpdate<'py>,
+        other: Args<'py>,
         set_fn: F1,
         slf_fn: F2,
     ) -> PyResult<()> {
         match other {
-            IntoUpdate::BigSet(pyset) => self.try_update(pyset.py(), pyset, set_fn),
-            IntoUpdate::SmallSet(pyset) => pyset.iter().try_for_each(|value| slf_fn(self, value)),
-            IntoUpdate::Any(any) => any.try_iter()?.try_for_each(|value| slf_fn(self, value?)),
+            Args::BigSet(pyset) => self.try_update(pyset.py(), pyset, set_fn),
+            Args::SmallSet(pyset) => pyset.iter().try_for_each(|value| slf_fn(self, value)),
+            Args::Any(any) => any.try_iter()?.try_for_each(|value| slf_fn(self, value?)),
         }
     }
 
@@ -261,7 +259,7 @@ impl<T: ListsDataMethods> SetData<T> {
     }
 
     #[inline]
-    pub fn extract_from<'py, C>(left: &C, other: Bound<'py, PyAny>) -> IntoUpdate<'py>
+    pub fn extract_from<'py, C>(left: &C, other: Bound<'py, PyAny>) -> Args<'py>
     where
         C: Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self>>>,
     {
@@ -272,24 +270,24 @@ impl<T: ListsDataMethods> SetData<T> {
                 CaseExact::C(other) => {
                     let other = other.get();
                     if left.as_ref().is(other.as_ref()) {
-                        IntoUpdate::BigSet(set)
+                        Args::BigSet(set)
                     } else {
-                        IntoUpdate::from_sets(&set, other.as_ref().try_into_inner().get_set(py))
+                        Args::from_sets(&set, other.as_ref().try_into_inner().get_set(py))
                     }
                 }
-                CaseExact::PySet(pyset) => IntoUpdate::from_sets(&set, pyset),
-                _ => IntoUpdate::Any(other),
+                CaseExact::PySet(pyset) => Args::from_sets(&set, pyset),
+                _ => Args::Any(other),
             }
         }
     }
 }
 #[must_use]
-pub enum IntoUpdate<'py> {
+pub enum Args<'py> {
     SmallSet(Bound<'py, PySet>),
     BigSet(Bound<'py, PySet>),
     Any(Bound<'py, PyAny>),
 }
-impl<'py> IntoUpdate<'py> {
+impl<'py> Args<'py> {
     fn py(&self) -> Python<'py> {
         match self {
             Self::SmallSet(set) | Self::BigSet(set) => set.py(),
