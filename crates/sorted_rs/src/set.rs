@@ -224,8 +224,12 @@ impl SetPred {
     fn call<'py>(self, set: &Bound<'py, PySet>, other: Args<'py>) -> PyResult<Bound<'py, PyBool>> {
         match (self, other) {
             (_, Args::Tuple(_)) => unreachable!(),
-            (Self::Subset | Self::Superset, Args::None(py)) => Ok(PyBool::new(py, true).to_owned()),
-            (Self::Disjoint, Args::None(py)) => Ok(PyBool::new(py, set.is_empty()).to_owned()),
+            (Self::Subset | Self::Superset, Args::None(py) | Args::Slf(py)) => {
+                Ok(PyBool::new(py, true).to_owned())
+            }
+            (Self::Disjoint, Args::None(py) | Args::Slf(py)) => {
+                Ok(PyBool::new(py, set.is_empty()).to_owned())
+            }
             (Self::Subset, Args::Any(other)) => set.issubset(other),
             (Self::Superset, Args::Any(other)) => set.issuperset(other),
             (Self::Disjoint, Args::Any(other)) => set.isdisjoint(other),
@@ -233,8 +237,10 @@ impl SetPred {
     }
 }
 pub enum Args<'py> {
-    /// Either an identity reference between the two sets, or an empty tuple.
+    /// An empty tuple.
     None(Python<'py>),
+    /// An identity reference between the two sets used as operands
+    Slf(Python<'py>),
     /// A tuple of arguments with length greater than 1.
     Tuple(Bound<'py, PyTuple>),
     /// Any other type of argument.
@@ -245,7 +251,7 @@ impl<'py> Args<'py> {
         match self {
             Self::Tuple(set) => set.py(),
             Self::Any(any) => any.py(),
-            Self::None(py) => *py,
+            Self::None(py) | Self::Slf(py) => *py,
         }
     }
     #[inline(always)]
@@ -278,7 +284,7 @@ impl<'py> Args<'py> {
     {
         let py = any.py();
         match any.cast_exact::<C>().map(Bound::get) {
-            Ok(other) if left.as_ref().is(other.as_ref()) => Self::None(py),
+            Ok(other) if left.as_ref().is(other.as_ref()) => Self::Slf(py),
             Ok(other) => Self::Any(other.as_ref().try_into_inner().get_set(py).into_any()),
             Err(_) => Self::Any(any),
         }
@@ -299,8 +305,10 @@ impl SetOp {
         other: Args<'py>,
     ) -> PyResult<Bound<'py, PySet>> {
         match (self, other) {
-            (Self::Union | Self::Intersection, Args::None(_)) => set.copy(),
-            (Self::Difference | Self::SymmetricDifference, Args::None(py)) => PySet::empty(py),
+            (Self::Union | Self::Intersection | Self::Difference, Args::None(_))
+            | (Self::Union | Self::Intersection, Args::Slf(_)) => set.copy(),
+            (Self::Difference | Self::SymmetricDifference, Args::Slf(py))
+            | (Self::SymmetricDifference, Args::None(py)) => PySet::empty(py),
             (Self::Difference, Args::Any(any)) => set.difference((any,)),
             (Self::Intersection, Args::Any(any)) => set.intersection((any,)),
             (Self::Union, Args::Any(any)) => set.union((any,)),
@@ -314,8 +322,10 @@ impl SetOp {
     #[inline(always)]
     pub fn call_mut<'py>(self, set: &Bound<'py, PySet>, other: Args<'py>) -> PyResult<()> {
         match (self, other) {
-            (Self::Union | Self::Intersection, Args::None(_)) => Ok(()),
-            (Self::Difference | Self::SymmetricDifference, Args::None(_)) => {
+            (Self::Union | Self::Intersection | Self::Difference, Args::None(_))
+            | (Self::Union | Self::Intersection, Args::Slf(_)) => Ok(()),
+            (Self::SymmetricDifference, Args::None(_))
+            | (Self::Difference | Self::SymmetricDifference, Args::Slf(_)) => {
                 set.clear();
                 Ok(())
             }
