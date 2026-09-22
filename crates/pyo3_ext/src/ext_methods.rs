@@ -149,7 +149,7 @@ impl<'py> PySetExtMethodsMut<'py> for Bound<'py, PySet> {
         Ok(())
     }
 }
-macro_rules! impl_sequence_ext_methods {
+macro_rules! impl_set_ext_methods {
     ($($t:ty),*) => {
         $(
             impl<'py> PySetExtMethods<'py> for Bound<'py, $t> {
@@ -194,7 +194,7 @@ macro_rules! impl_sequence_ext_methods {
     };
 }
 
-impl_sequence_ext_methods!(PySet, PyFrozenSet);
+impl_set_ext_methods!(PySet, PyFrozenSet);
 #[allow(unused)]
 pub trait PyListExtMethods<'py>: Sized {
     fn clear(&self) -> ();
