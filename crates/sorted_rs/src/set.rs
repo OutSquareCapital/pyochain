@@ -259,6 +259,29 @@ impl<T: ListsDataMethods> SetData<T> {
         self.0.clear(py);
         self.0.extend(py, set.iter().map(Bound::unbind).collect())
     }
+
+    #[inline]
+    pub fn extract_from<'py, C>(left: &C, other: Bound<'py, PyAny>) -> IntoUpdate<'py>
+    where
+        C: Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self>>>,
+    {
+        let py = other.py();
+        let set = left.as_ref().try_into_inner().get_set(py);
+        try_cast_into! {
+            match other {
+                CaseExact::C(other) => {
+                    let other = other.get();
+                    if left.as_ref().is(other.as_ref()) {
+                        IntoUpdate::BigSet(set)
+                    } else {
+                        IntoUpdate::from_sets(&set, other.as_ref().try_into_inner().get_set(py))
+                    }
+                }
+                CaseExact::PySet(pyset) => IntoUpdate::from_sets(&set, pyset),
+                _ => IntoUpdate::Any(other),
+            }
+        }
+    }
 }
 #[must_use]
 pub enum IntoUpdate<'py> {
@@ -271,31 +294,6 @@ impl<'py> IntoUpdate<'py> {
         match self {
             Self::SmallSet(set) | Self::BigSet(set) => set.py(),
             Self::Any(any) => any.py(),
-        }
-    }
-    #[inline]
-    pub fn extract_from<T, C>(left: &C, other: Bound<'py, PyAny>) -> Self
-    where
-        T: ListsDataMethods,
-        C: Sync
-            + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
-            + AsRef<Arc<Mutex<SetData<T>>>>,
-    {
-        let py = other.py();
-        let set = left.as_ref().try_into_inner().get_set(py);
-        try_cast_into! {
-            match other {
-                CaseExact::C(other) => {
-                    let other = other.get();
-                    if Arc::ptr_eq(left.as_ref(), other.as_ref()) {
-                        Self::BigSet(set)
-                    } else {
-                        Self::from_sets(&set, other.as_ref().try_into_inner().get_set(py))
-                    }
-                }
-                CaseExact::PySet(pyset) => Self::from_sets(&set, pyset),
-                _ => Self::Any(other),
-            }
         }
     }
     #[inline]

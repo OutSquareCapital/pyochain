@@ -258,7 +258,7 @@ pub(super) trait SortedSetMethods:
         other: Bound<'_, PyAny>,
         func: F,
     ) -> R {
-        let other_set = IntoUpdate::extract_from(self, other);
+        let other_set = Self::T::extract_from(self, other);
         func(&mut self.lock(), other_set)
     }
     #[skip]
@@ -268,7 +268,7 @@ pub(super) trait SortedSetMethods:
         other: Bound<'py, PyAny>,
         func: F,
     ) -> R {
-        let other_set = IntoUpdate::extract_from(self, other);
+        let other_set = Self::T::extract_from(self, other);
         func(&self.lock(), other_set)
     }
     #[skip]
@@ -279,7 +279,7 @@ pub(super) trait SortedSetMethods:
         func: F,
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let other_set = IntoUpdate::extract_from(self, other);
+        let other_set = Self::T::extract_from(self, other);
         func(&self.lock(), other_set)?.conv::<Self>().into_bound(py)
     }
     #[skip]
@@ -288,7 +288,7 @@ pub(super) trait SortedSetMethods:
         let py = iterables.py();
         iterables
             .into_iter()
-            .map(|other| IntoUpdate::extract_from(self, other))
+            .map(|other| Self::T::extract_from(self, other))
             .try_fold(PySet::empty(py)?, |pyset, other| {
                 match other {
                     IntoUpdate::SmallSet(set) | IntoUpdate::BigSet(set) => pyset.update((set,)),
