@@ -31,9 +31,9 @@ impl SortedDict {
         iterable: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let slf = DictData::<ListsData>::empty(py).conv::<Self>();
-        slf.update(py, iterable, kwargs)?;
-        slf.init().pipe(Ok)
+        let mut dict = DictData::<ListsData>::empty(py);
+        dict.update(py, iterable, kwargs)?;
+        dict.conv::<Self>().init().pipe(Ok)
     }
 }
 impl SortedDictMethods for SortedDict {
@@ -56,9 +56,9 @@ impl SortedKeyDict {
     ) -> PyResult<PyClassInitializer<Self>> {
         let py = key.py();
         let list = KeysListsData::new(key.unbind());
-        let slf = DictData::new(list, PyDict::new(py).unbind()).conv::<Self>();
-        slf.update(py, iterable, kwargs)?;
-        slf.init().pipe(Ok)
+        let mut dict = DictData::new(list, PyDict::new(py).unbind());
+        dict.update(py, iterable, kwargs)?;
+        dict.conv::<Self>().init().pipe(Ok)
     }
 }
 impl SortedDictMethods for SortedKeyDict {

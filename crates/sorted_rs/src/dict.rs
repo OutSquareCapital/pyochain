@@ -164,6 +164,7 @@ impl<T: ListsDataMethods> DictData<T> {
             default.ok_or_else(|| PyKeyError::new_err(key.to_string()))
         }
     }
+    #[inline]
     pub fn update(
         &mut self,
         py: Python<'_>,
@@ -172,61 +173,46 @@ impl<T: ListsDataMethods> DictData<T> {
     ) -> PyResult<()> {
         let inner = self.1.bind(py);
         if inner.is_empty() {
-            if let Some(it) = m {
-                try_cast! {
-                    match it {
-                        CaseExact::PyDict(d) => inner.update(d.as_mapping())?,
-                        Case::PyMapping(m) => inner.update(m)?,
-                        iterable => inner.update_from_sequence(&iterable)?,
-                    }
+            try_cast! {
+                    match m {
+                        Some(CaseExact::PyDict(d)) => inner.update(d.as_mapping())?,
+                        Some(Case::PyMapping(m)) => inner.update(m)?,
+                        Some(iterable) => inner.update_from_sequence(&iterable)?,
+                        None => {}
                 }
             }
             if let Some(kw) = kwargs {
                 inner.update(kw.as_mapping())?;
             }
-
-            inner
-                .iter()
-                .map(|(k, _)| k.unbind())
-                .collect::<Vec<_>>()
-                .pipe(|v| self.0.extend(py, v))?;
-            Ok(())
+            extend_list_from_dict(inner, &mut self.0)
         } else {
-            let pairs = try_cast_into! {match (m, kwargs) {
-                (Some(CaseExact::PyDict(d)), None) => d,
-                (Some(CaseExact::PyDict(d)), Some(kw)) => {
-                    d.update(kw.as_mapping())?;
-                    d
+            let pairs = try_cast_into! {
+                match (m, kwargs) {
+                    (Some(CaseExact::PyDict(d)), None) => d,
+                    (Some(CaseExact::PyDict(d)), Some(kw)) => {
+                        d.update(kw.as_mapping())?;
+                        d
+                    }
+                    (Some(Case::PyMapping(m)), None) => PyDict::from_mapping(m)?,
+                    (Some(Case::PyMapping(m)), Some(kw)) => {
+                        let d = PyDict::from_mapping(m)?;
+                        d.update(kw.as_mapping())?;
+                        d
+                    }
+                    (Some(iterable), Some(kw)) => {
+                        let d = PyDict::from_sequence(&iterable)?;
+                        d.update(kw.as_mapping())?;
+                        d
+                    }
+                    (Some(iterable), None) => PyDict::from_sequence(&iterable)?,
+                    (None, Some(kw)) => kw,
+                    (None, None) => PyDict::new(py),
                 }
-                (Some(Case::PyMapping(m)), None) => {
-                    let d = PyDict::new(py);
-                    d.update(&m)?;
-                    d
-                }
-                (Some(Case::PyMapping(m)), Some(kw)) => {
-                    let d = PyDict::new(py);
-                    d.update(&m)?;
-                    d.update(kw.as_mapping())?;
-                    d
-                }
-                (Some(iterable), Some(kw)) => {
-                    let d = PyDict::from_sequence(&iterable)?;
-                    d.update(kw.as_mapping())?;
-                    d
-                }
-                (Some(iterable), None) => PyDict::from_sequence(&iterable)?,
-                (None, Some(kw)) => kw,
-                (None, None) => PyDict::new(py),
-            }};
+            };
             if (10 * pairs.len()) > inner.len() {
                 inner.update(pairs.as_mapping())?;
                 self.0.clear(py);
-                inner
-                    .iter()
-                    .map(|(k, _)| k.unbind())
-                    .collect::<Vec<_>>()
-                    .pipe(|v| self.0.extend(py, v))?;
-                Ok(())
+                extend_list_from_dict(inner, &mut self.0)
             } else {
                 pairs.keys_view().iter_py().try_for_each(|key| {
                     let k = key?;
@@ -236,4 +222,15 @@ impl<T: ListsDataMethods> DictData<T> {
             }
         }
     }
+}
+#[inline]
+fn extend_list_from_dict<T>(dict: &Bound<'_, PyDict>, list: &mut T) -> PyResult<()>
+where
+    T: ListsDataMethods,
+{
+    let py = dict.py();
+    dict.iter()
+        .map(|(k, _)| k.unbind())
+        .collect::<Vec<_>>()
+        .pipe(|v| list.extend(py, v))
 }
