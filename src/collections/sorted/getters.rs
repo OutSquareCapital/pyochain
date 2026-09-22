@@ -28,9 +28,6 @@ pub trait ListGetter:
     fn lock(&self) -> MutexGuard<'_, Self::T> {
         self.as_ref().try_into_inner()
     }
-    fn is(&self, other: &Self) -> bool {
-        Arc::ptr_eq(self.as_ref(), other.as_ref())
-    }
     fn iter_bounds<'py>(
         &self,
         py: Python<'py>,

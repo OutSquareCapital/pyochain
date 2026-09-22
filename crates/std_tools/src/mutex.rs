@@ -1,7 +1,16 @@
-use std::sync::{Mutex, MutexGuard, TryLockError};
+use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
+pub trait ArcExtMethods {
+    fn is(&self, other: &Self) -> bool;
+}
+impl<T> ArcExtMethods for Arc<T> {
+    fn is(&self, other: &Self) -> bool {
+        Arc::ptr_eq(self, other)
+    }
+}
 
 pub trait MutexExtMethods<T> {
     fn try_into_inner(&self) -> MutexGuard<'_, T>;
+    fn map_lock<R, F: FnOnce(&T) -> R>(&self, f: F) -> R;
 }
 
 impl<T> MutexExtMethods<T> for Mutex<T> {
@@ -15,5 +24,9 @@ impl<T> MutexExtMethods<T> for Mutex<T> {
             Err(TryLockError::Poisoned(poisoned)) => poisoned.into_inner(),
             Err(TryLockError::WouldBlock) => panic!("data already locked - reentrant bug"),
         }
+    }
+    #[inline(always)]
+    fn map_lock<R, F: FnOnce(&T) -> R>(&self, f: F) -> R {
+        f(&self.try_into_inner())
     }
 }

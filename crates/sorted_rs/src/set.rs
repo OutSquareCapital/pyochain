@@ -64,7 +64,7 @@ impl<T: ListsDataMethods> SetData<T> {
         let slf = left.as_ref().try_into_inner().get_set(py);
         try_cast_into! {
             match value {
-                CaseExact::C(sorted) if Arc::ptr_eq(left.as_ref(), sorted.get().as_ref()) => {
+                CaseExact::C(sorted) if left.as_ref().is(sorted.get().as_ref()) => {
                     op.on_identity().pipe(Either::Left).pipe(Ok)
                 }
                 CaseExact::C(sorted) => slf

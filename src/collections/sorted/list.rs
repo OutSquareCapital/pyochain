@@ -15,7 +15,7 @@ use sorted_rs::{
     types::{IntOrSlice, SeqOrAny},
 };
 use std::sync::{Arc, Mutex};
-use std_tools::prelude::ResultExt;
+use std_tools::prelude::*;
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedList(pub(super) Arc<Mutex<ListsData>>);
@@ -194,7 +194,7 @@ fn into_list_add<'py, T: SortedListMethods>(
     right: &'py Bound<'py, PyAny>,
 ) -> PyResult<ListAdd<'py, T::L>> {
     match right.cast_exact::<T>().map(Bound::get) {
-        Ok(slf) if left.is(slf) => ListAdd::Identity.pipe(Ok),
+        Ok(slf) if left.as_ref().is(slf.as_ref()) => ListAdd::Identity.pipe(Ok),
         Ok(list) => list.lock().pipe(ListAdd::Sorted).pipe(Ok),
         Err(_) => right.try_iter().map(ListAdd::Iterator),
     }
