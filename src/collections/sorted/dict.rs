@@ -15,7 +15,7 @@ use pyo3::{
     types::{PyDict, PyMapping},
 };
 use pyochain_macros::py_abc;
-use sorted_rs::{DictData, KeysListsData, ListsData, prelude::*};
+use sorted_rs::{DictData, KeysListsData, ListsData};
 use std::sync::{Arc, Mutex};
 use tap::prelude::*;
 
@@ -73,8 +73,6 @@ pub(super) trait SortedDictMethods:
     + ListGetter<T = DictData<<Self as ListGetter>::L>>
     + IntoInit
     + From<DictData<<Self as ListGetter>::L>>
-where
-    DictData<<Self as ListGetter>::L>: PyRepr,
 {
     type KView: SortedViewMethods<L = <Self as ListGetter>::L>;
     type VView: SortedViewMethods<L = <Self as ListGetter>::L>;

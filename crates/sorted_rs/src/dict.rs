@@ -34,18 +34,6 @@ impl<T: ListsDataMethods> DictData<T> {
     pub fn __len__(&self, py: Python<'_>) -> usize {
         self.1.bind(py).len()
     }
-    pub fn values_to_str(&self, py: Python<'_>) -> PyResult<String> {
-        let dict = self.1.bind(py).as_any();
-        self.iter()
-            .map(|x| x.bind(py))
-            .map(|key| {
-                dict.get_item(key)
-                    .and_then(|value| Ok(format!("{}: {}", key.repr()?, value.repr()?)))
-            })
-            .collect::<PyResult<Vec<_>>>()
-            .map(|v| v.join(", "))
-    }
-
     pub fn extract_index<'py>(&mut self, int: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         self.0.get_item(int.py(), int.extract::<isize>()?)
     }
