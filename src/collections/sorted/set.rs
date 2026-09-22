@@ -1,5 +1,4 @@
 use pyo3::{
-    PyClass, PyTypeInfo,
     basic::CompareOp,
     prelude::*,
     types::{PyBool, PySet, PyTuple},
@@ -12,7 +11,9 @@ use super::{
 use crate::{abc, traits::IntoInit};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
-use sorted_rs::{KeysListsData, ListsData, SetData, SetOp, SetPred, types::IntOrSlice};
+use sorted_rs::{
+    KeysListsData, ListsData, PySetDataRef, SetData, SetOp, SetPred, types::IntOrSlice,
+};
 use std::sync::{Arc, Mutex};
 use std_tools::prelude::ResultExt;
 use tap::{Conv, Pipe};
@@ -48,16 +49,18 @@ impl SortedKeySet {
             .pipe(Ok)
     }
 }
-
+impl PySetDataRef for SortedSet {
+    type L = ListsData;
+}
+impl PySetDataRef for SortedKeySet {
+    type L = KeysListsData;
+}
 #[py_abc(SortedSet, SortedKeySet)]
 pub(super) trait SortedSetMethods:
-    Sync
-    + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
-    + SortedCollectionsMethods
+    SortedCollectionsMethods
     + ListGetter<T = SetData<<Self as ListGetter>::L>>
     + IntoInit
-    + From<SetData<<Self as ListGetter>::L>>
-    + PyTypeInfo
+    + PySetDataRef<L = <Self as ListGetter>::L>
 {
     #[getter]
     #[inline(always)]
@@ -75,31 +78,24 @@ pub(super) trait SortedSetMethods:
     fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
         self.lock().del_item_or_slice(index)
     }
-
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        Self::T::comp(self, other, CompareOp::Eq)
+        self.comp(other, CompareOp::Eq)
     }
-
     fn __ne__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        Self::T::comp(self, other, CompareOp::Ne)
+        self.comp(other, CompareOp::Ne)
     }
-
     fn __lt__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        Self::T::comp(self, other, CompareOp::Lt)
+        self.comp(other, CompareOp::Lt)
     }
-
     fn __gt__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        Self::T::comp(self, other, CompareOp::Gt)
+        self.comp(other, CompareOp::Gt)
     }
-
     fn __le__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        Self::T::comp(self, other, CompareOp::Le)
+        self.comp(other, CompareOp::Le)
     }
-
     fn __ge__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
-        Self::T::comp(self, other, CompareOp::Ge)
+        self.comp(other, CompareOp::Ge)
     }
-
     fn __len__(&self, py: Python<'_>) -> usize {
         self.lock().__len__(py)
     }
@@ -110,9 +106,8 @@ pub(super) trait SortedSetMethods:
         self.map_into_bound(other, SetOp::Difference)
     }
     fn __isub__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        Self::T::map_any_mut(self, other, SetOp::Difference)
+        self.map_any_mut(other, SetOp::Difference)
     }
-
     fn __and__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.map_into_bound(other, SetOp::Intersection)
     }
@@ -121,10 +116,10 @@ pub(super) trait SortedSetMethods:
     }
 
     fn __iand__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        Self::T::map_any_mut(self, other, SetOp::Intersection)
+        self.map_any_mut(other, SetOp::Intersection)
     }
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        Self::T::map_any_mut(self, other, SetOp::Union)
+        self.map_any_mut(other, SetOp::Union)
     }
     fn __or__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.map_into_bound(other, SetOp::Union)
@@ -151,15 +146,14 @@ pub(super) trait SortedSetMethods:
         self.lock().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        Self::T::map_pred(self, other, SetPred::Disjoint)
+        self.map_pred(other, SetPred::Disjoint)
     }
-
     fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        Self::T::map_pred(self, other, SetPred::Subset)
+        self.map_pred(other, SetPred::Subset)
     }
 
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        Self::T::map_pred(self, other, SetPred::Superset)
+        self.map_pred(other, SetPred::Superset)
     }
     fn clear(&self, py: Python<'_>) {
         self.lock().clear(py);
@@ -167,7 +161,6 @@ pub(super) trait SortedSetMethods:
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
         self.lock().count(value)
     }
-
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         self.lock().pop(py, index)
@@ -176,19 +169,17 @@ pub(super) trait SortedSetMethods:
     fn difference<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.map_tup_into_bound(iterables, SetOp::Difference)
     }
-
     #[pyo3(signature = (*iterables))]
     fn difference_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
-        Self::T::map_iter_mut(self, iterables, SetOp::Difference)
+        self.map_iter_mut(iterables, SetOp::Difference)
     }
     #[pyo3(signature = (*iterables))]
     fn intersection<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.map_tup_into_bound(iterables, SetOp::Intersection)
     }
-
     #[pyo3(signature = (*iterables))]
     fn intersection_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
-        Self::T::map_iter_mut(self, iterables, SetOp::Intersection)
+        self.map_iter_mut(iterables, SetOp::Intersection)
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
@@ -198,7 +189,7 @@ pub(super) trait SortedSetMethods:
         self.map_into_bound(other, SetOp::SymmetricDifference)
     }
     fn symmetric_difference_update(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        Self::T::map_any_mut(self, other, SetOp::SymmetricDifference)
+        self.map_any_mut(other, SetOp::SymmetricDifference)
     }
     #[pyo3(signature= (*iterables))]
     fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
@@ -206,7 +197,7 @@ pub(super) trait SortedSetMethods:
     }
     #[pyo3(signature = (*iterables))]
     fn update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
-        Self::T::map_iter_mut(self, iterables, SetOp::Union)
+        self.map_iter_mut(iterables, SetOp::Union)
     }
     #[skip]
     #[inline]
@@ -216,7 +207,7 @@ pub(super) trait SortedSetMethods:
         op: SetOp,
     ) -> PyResult<Bound<'py, Self>> {
         let py = tup.py();
-        Self::T::map_iter(self, tup, op)?.into_bound(py)
+        self.map_iter(tup, op)?.into_bound(py)
     }
     #[skip]
     #[inline]
@@ -226,6 +217,6 @@ pub(super) trait SortedSetMethods:
         op: SetOp,
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        Self::T::map_any(self, other, op)?.into_bound(py)
+        self.map_any(other, op)?.into_bound(py)
     }
 }
