@@ -82,6 +82,7 @@ pub trait ListsDataMethods: Deref<Target = InnerData> + DerefMut + PyRepr + Size
     ) -> PyResult<usize>;
     fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
+    #[inline]
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.find(value).map(|x| x.is_some())
     }
