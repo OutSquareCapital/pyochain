@@ -1,5 +1,6 @@
 """pyochain - A functional programming library for Python."""
 
+from . import abc, collections
 from .pyochain import (
     NONE,
     Dict,
@@ -21,8 +22,6 @@ from .pyochain import (
     SliceView,
     Some,
     Vec,
-    abc,
-    collections,
     option,
     then_if_some,
     then_if_true,

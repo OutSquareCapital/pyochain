@@ -131,10 +131,10 @@ def test_count() -> None:
             assert inner_s.count(letter) == d.count(letter), (inner_s, d, letter)
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = d.count()  # too few args  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
+        _ = d.count()  # too few args  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[missing-argument]
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count, bad-argument-type]
-        _ = d.count(1, 2)  # too many args  # pyright: ignore[reportCallIssue]  # ty: ignore[invalid-argument-type, too-many-positional-arguments]
+        _ = d.count(1, 2)  # too many args  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[invalid-argument-type, too-many-positional-arguments]
 
     class BadCompare:  # ruff:ignore[eq-without-hash]
         @override
