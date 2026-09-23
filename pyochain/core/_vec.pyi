@@ -26,11 +26,11 @@ class Vec[T](PyoMutableSequence[T], ArgsWrapper[T]):
 
     """
     @overload
+    def __new__(cls, /) -> Self: ...
+    @overload
     def __new__(cls, data: Iterable[T], /) -> Self: ...
     @overload
     def __new__(cls, data: T, /, *more: T) -> Self: ...
-    @overload
-    def __new__(cls, /) -> Self: ...
     def __new__(cls, data: Iterable[T] | T = (), /, *more: T) -> Self:
         """Create a new `Vec` instance.
 
