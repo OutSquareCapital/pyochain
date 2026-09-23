@@ -30,7 +30,7 @@ SIZE_PARAMS = pytest.mark.parametrize("size", SIZES)
 @SIZE_PARAMS
 def test_init(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
     r = Range(size)
-    assert benchmark(cls, r)  # pyright: ignore[reportArgumentType]
+    assert benchmark(cls, r)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 @CLS_PARAMS

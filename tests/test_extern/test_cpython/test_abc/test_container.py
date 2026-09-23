@@ -59,7 +59,7 @@ class CustomSequence(PyoSequence[object]):
 
     @override
     # pyrefly: ignore [bad-override]
-    def __getitem__(self, index: int) -> object:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __getitem__(self, index: int) -> object:  # pyright: ignore[reportIncompatibleMethodOverride]  # ty: ignore[invalid-method-override]
         return self._seq[index]
 
     @override
@@ -88,5 +88,5 @@ def test_issue26915_seq() -> None:
 @pytest.mark.parametrize("container", CONTAINERS)
 def test_issue26915(container: Container[object]) -> None:
     # pyrefly: ignore [not-iterable]
-    for elem in container:  # pyright: ignore[reportGeneralTypeIssues, reportUnknownVariableType]
+    for elem in container:  # pyright: ignore[reportGeneralTypeIssues, reportUnknownVariableType]  # ty: ignore[not-iterable]
         assert elem in container

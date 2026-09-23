@@ -20,7 +20,7 @@ class _PyoOk(ImplMapping, PyoMapping[int, int]): ...
 
 def test_mapping() -> None:
     checks.init_fail(_PyFail)
-    fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]
+    fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]  # ty: ignore[call-non-callable]
     checks.getitem_fail(fail)
     checks.len_fail(fail)
     checks.iter_fail(fail)

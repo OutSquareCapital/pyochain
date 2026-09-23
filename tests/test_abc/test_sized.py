@@ -23,7 +23,7 @@ class _PyoOk(ImplSized, PyoSized): ...
 def test_sized() -> None:
     checks.init_fail(_PyFail)
     # pyrefly: ignore [bad-instantiation]
-    checks.len_fail(_PyoFail())  # pyright: ignore[reportAbstractUsage]
+    checks.len_fail(_PyoFail())  # pyright: ignore[reportAbstractUsage]  # ty: ignore[call-non-callable]
 
 
 def test_len() -> None:

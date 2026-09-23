@@ -17,4 +17,4 @@ def test_range_args(args: tuple[int], expected: tuple[int, ...]) -> None:
 
 def test_range_invalid_args() -> None:
     with pytest.raises(TypeError, match="expected at most 3 arguments"):
-        _ = Range(1, 2, 3, 4)  # pyright: ignore[reportCallIssue]
+        _ = Range(1, 2, 3, 4)  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]

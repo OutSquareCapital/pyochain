@@ -21,7 +21,7 @@ class _PyoOk(ImplSequence, PyoSequence[int]): ...
 def test_sequence() -> None:
 
     checks.init_fail(_PyFail)
-    fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]
+    fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]  # ty: ignore[call-non-callable]
     checks.getitem_fail(fail)
     checks.len_fail(fail)
     py_ok = _PyOk()

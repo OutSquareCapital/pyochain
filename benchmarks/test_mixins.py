@@ -70,28 +70,28 @@ compared = pytest.mark.parametrize(
 @compared
 def test_pipe_without_args_or_kwargs(benchmark: BenchFixture, foo: Foo) -> None:
     # pyrefly: ignore[bad-argument-type]
-    assert benchmark(foo.pipe, _without_args_or_kwargs) == 1  # pyright: ignore[reportArgumentType]
+    assert benchmark(foo.pipe, _without_args_or_kwargs) == 1  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.benchmark(group="mixin_into")
 @compared
 def test_pipe_with_one_arg(benchmark: BenchFixture, foo: Foo) -> None:
     # pyrefly: ignore[bad-argument-type]
-    assert benchmark(foo.pipe, _with_one_arg, 3) == 1  # pyright: ignore[reportArgumentType]
+    assert benchmark(foo.pipe, _with_one_arg, 3) == 1  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.benchmark(group="mixin_into")
 @compared
 def test_pipe_with_two_args(benchmark: BenchFixture, foo: Foo) -> None:
     # pyrefly: ignore[bad-argument-type]
-    assert benchmark(foo.pipe, _with_two_args, 3, 5) == 1  # pyright: ignore[reportArgumentType]
+    assert benchmark(foo.pipe, _with_two_args, 3, 5) == 1  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.benchmark(group="mixin_into")
 @compared
 def test_pipe_with_one_kwarg(benchmark: BenchFixture, foo: Foo) -> None:
     # pyrefly: ignore[bad-argument-type]
-    assert benchmark(foo.pipe, _with_one_kwarg, _kwarg1=3) == 1  # pyright: ignore[reportArgumentType]
+    assert benchmark(foo.pipe, _with_one_kwarg, _kwarg1=3) == 1  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.benchmark(group="mixin_into")
@@ -100,7 +100,7 @@ def test_pipe_with_three_kwargs(benchmark: BenchFixture, foo: Foo) -> None:
     assert (
         benchmark(
             # pyrefly: ignore[bad-argument-type]
-            foo.pipe,  # pyright: ignore[reportArgumentType]
+            foo.pipe,  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
             _with_three_kwargs,
             _kwarg1=3,
             _kwarg2=5,
@@ -116,7 +116,7 @@ def test_pipe_with_args_and_kwargs(benchmark: BenchFixture, foo: Foo) -> None:
     assert (
         benchmark(
             # pyrefly: ignore[bad-argument-type]
-            foo.pipe,  # pyright: ignore[reportArgumentType]
+            foo.pipe,  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
             _with_args_and_kwargs,
             3,
             5,

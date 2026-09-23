@@ -642,7 +642,7 @@ def test_repr() -> None:
 def test_repr_recursion() -> None:
     this = SortedList([[1], [2], [3], [4]])
     # pyrefly: ignore [bad-argument-type]
-    this.inner.lists[-1].append(this)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+    this.inner.lists[-1].append(this)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
     assert repr(this) == "SortedList([[1], [2], [3], [4], ...])"
 
 

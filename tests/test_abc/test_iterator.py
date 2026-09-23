@@ -32,7 +32,7 @@ def test_iterator() -> None:
 
     checks.init_fail(_PyFail)
     # pyrefly: ignore [bad-instantiation]
-    checks.next_fail(_PyoFail())  # pyright: ignore[reportAbstractUsage]
+    checks.next_fail(_PyoFail())  # pyright: ignore[reportAbstractUsage]  # ty: ignore[call-non-callable]
     py_ok = _PyOk()
     pyo_ok = _PyoOk()
     assert next(py_ok) == next(pyo_ok)

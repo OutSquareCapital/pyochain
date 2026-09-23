@@ -25,19 +25,19 @@ def test_constructors_not_callable() -> None:
         _ = kt(Dict[object, object](()))
     with pytest.raises(TypeError):
         # pyrefly: ignore [missing-argument]
-        _ = kt()  # pyright: ignore[reportCallIssue]
+        _ = kt()  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
     it = type(Dict[object, object](()).items())
     with pytest.raises(TypeError):
         _ = it(Dict[object, object](()))
     with pytest.raises(TypeError):
         # pyrefly: ignore [missing-argument]
-        _ = it()  # pyright: ignore[reportCallIssue]
+        _ = it()  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
     vt = type(Dict[object, object](()).values())
     with pytest.raises(TypeError):
         _ = vt(Dict[object, object](()))
     with pytest.raises(TypeError):
         # pyrefly: ignore [missing-argument]
-        _ = vt()  # pyright: ignore[ reportCallIssue]
+        _ = vt()  # pyright: ignore[ reportCallIssue]  # ty: ignore[missing-argument]
 
 
 def test_dict_keys() -> None:
@@ -75,13 +75,13 @@ def test_dict_items() -> None:
     assert ("a", "ABC") in items
     assert (1, 11) not in items
     # pyrefly: ignore [unsupported-operation]
-    assert 1 not in items  # pyright: ignore[reportOperatorIssue]
+    assert 1 not in items  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert () not in items  # pyright: ignore[reportOperatorIssue]
+    assert () not in items  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert (1,) not in items  # pyright: ignore[reportOperatorIssue]
+    assert (1,) not in items  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert (1, 2, 3) not in items  # pyright: ignore[reportOperatorIssue]
+    assert (1, 2, 3) not in items  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     assert d.items() == d.items()
     e = d.copy()
     assert d.items() == e.items()
@@ -327,29 +327,29 @@ def test_items_set_operations_with_iterator() -> None:
 def test_set_operations_with_noniterable() -> None:
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = Dict[object, object](()).keys() & 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = Dict[object, object](()).keys() & 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = Dict[object, object](()).keys() | 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = Dict[object, object](()).keys() | 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = Dict[object, object](()).keys() ^ 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = Dict[object, object](()).keys() ^ 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = Dict[object, object](()).keys() - 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = Dict[object, object](()).keys() - 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = Dict[object, object](()).items() & 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = Dict[object, object](()).items() & 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = Dict[object, object](()).items() | 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = Dict[object, object](()).items() | 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = Dict[object, object](()).items() ^ 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = Dict[object, object](()).items() ^ 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = Dict[object, object](()).items() - 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = Dict[object, object](()).items() - 1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
 
 
 @pytest.mark.skip(

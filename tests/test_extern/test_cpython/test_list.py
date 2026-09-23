@@ -53,7 +53,7 @@ def test_getitem_error() -> None:
     msg = "list indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
         # pyrefly: ignore [bad-index]
-        a["a"]  # pyright: ignore[reportCallIssue, reportArgumentType]
+        a["a"]  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def test_setitem_error() -> None:
@@ -61,7 +61,7 @@ def test_setitem_error() -> None:
     msg = "list indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
         # pyrefly: ignore [unsupported-operation]
-        a["a"] = "python"  # pyright: ignore[reportCallIssue, reportArgumentType]
+        a["a"] = "python"  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[invalid-assignment]
 
 
 @pytest.mark.skip(reason="We don't handle recursive repr yet")

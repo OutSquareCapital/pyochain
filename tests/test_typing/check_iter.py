@@ -103,7 +103,7 @@ def check_map_windows() -> None:
         return sum(x)
 
     data = Range(3)
-    _ = assert_type(data.iter().map_windows_star(1, foo), Any)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]
+    _ = assert_type(data.iter().map_windows_star(1, foo), Any)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
     _ = assert_type(data.iter().map_windows_star(2, foo), PyoIterator[int])
     _ = assert_type(data.iter().map_windows(3, baz), PyoIterator[int])
     _ = assert_type(data.iter().map_windows_star(2, bar), PyoIterator[int])
@@ -128,8 +128,8 @@ def check_for_each_star() -> None:
 
     _ = assert_type(data_tup.for_each_star(foo, 1, 2, 3), None)
     _ = assert_type(data_2.for_each_star(bar, 1), None)
-    _ = assert_type(Range(3).iter().for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
-    _ = assert_type(data_2.for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+    _ = assert_type(Range(3).iter().for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
+    _ = assert_type(data_2.for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
     _ = assert_type(data_2.for_each_star(bar2, 1, 2), None)
-    _ = assert_type(data_2.for_each_star(bar2, 1), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+    _ = assert_type(data_2.for_each_star(bar2, 1), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
     _ = assert_type(data_2.for_each_star(baz, 1, _a=1, _b=2), None)

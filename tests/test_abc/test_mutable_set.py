@@ -39,7 +39,7 @@ class _PyoOk(ImplMutableSet, PyoMutableSet[int]): ...
 
 def test_mutable_set() -> None:
     checks.init_fail(_PyFail)
-    fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]
+    fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]  # ty: ignore[call-non-callable]
     checks.len_fail(fail)
     checks.contains_fail(fail)
     checks.iter_fail(fail)

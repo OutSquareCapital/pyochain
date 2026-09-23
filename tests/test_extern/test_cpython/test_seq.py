@@ -162,7 +162,7 @@ def itermulti[T](seqn: Sequence[T]) -> chain[T]:
         return x
 
     # pyrefly: ignore [bad-argument-type]
-    return chain(map(identity, iterfunc(IterGen[T](SequenceTest(seqn)))))  # pyright: ignore[reportArgumentType]
+    return chain(map(identity, iterfunc(IterGen[T](SequenceTest(seqn)))))  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 # Various iterables
@@ -226,7 +226,7 @@ def test_constructors(type2test: TestedSeq[object]) -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [missing-argument, no-matching-overload, unexpected-keyword]
-        _ = type2test(unsupported_arg=[])  # pyright: ignore[reportCallIssue]
+        _ = type2test(unsupported_arg=[])  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
 
 
 @TEST_TYPES
@@ -260,7 +260,7 @@ def test_getitem(type2test: VecOrSeq[object]) -> None:
         _ = u[-1]
 
     with pytest.raises(TypeError):
-        _ = u.__getitem__()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = u.__getitem__()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
 
     a = type2test([10, 11])
     assert a[0] == 10
@@ -324,7 +324,7 @@ def test_contains(type2test: TestedSeq[int]) -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = u.__contains__()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = u.__contains__()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[missing-argument]
 
 
 @TEST_TYPES
@@ -381,13 +381,13 @@ def test_add[T](type2test: TestedSeq[int]) -> None:
     u1 = type2test([0])
     u2 = type2test([0, 1])
     # pyrefly: ignore [unsupported-operation]
-    assert u1 == u1 + type2test(())  # pyright: ignore[reportOperatorIssue]
+    assert u1 == u1 + type2test(())  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert u1 == type2test(()) + u1  # pyright: ignore[reportOperatorIssue]
+    assert u1 == type2test(()) + u1  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert u1 + type2test([1]) == u2  # pyright: ignore[reportOperatorIssue]
+    assert u1 + type2test([1]) == u2  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert type2test([-1]) + u1 == type2test([-1, 0])  # pyright: ignore[reportOperatorIssue]
+    assert type2test([-1]) + u1 == type2test([-1, 0])  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
 
 
 @TEST_TYPES
@@ -398,20 +398,20 @@ def test_mul(type2test: TestedSeq[int]) -> None:
     assert u2 == u2 * 1
     assert u2 == 1 * u2
     # pyrefly: ignore [unsupported-operation]
-    assert u2 + u2 == u2 * 2  # pyright: ignore[reportOperatorIssue]
+    assert u2 + u2 == u2 * 2  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert u2 + u2 == 2 * u2  # pyright: ignore[reportOperatorIssue]
+    assert u2 + u2 == 2 * u2  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert u2 + u2 + u2 == u2 * 3  # pyright: ignore[reportOperatorIssue]
+    assert u2 + u2 + u2 == u2 * 3  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert u2 + u2 + u2 == 3 * u2  # pyright: ignore[reportOperatorIssue]
+    assert u2 + u2 + u2 == 3 * u2  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
 
 
 @TEST_TYPES
 def test_iadd(type2test: TestedSeq[object]) -> None:
     u = type2test([0, 1])
     # pyrefly: ignore [unsupported-operation]
-    u += type2test(())  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+    u += type2test(())  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     assert u == type2test([0, 1])
     # pyrefly: ignore [unsupported-operation]
     # pyrefly: ignore [unsupported-operation]
@@ -423,7 +423,7 @@ def test_iadd(type2test: TestedSeq[object]) -> None:
 
     u = type2test("spam")
     # pyrefly: ignore [unsupported-operation]
-    u += type2test("eggs")  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+    u += type2test("eggs")  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     assert u == type2test("spameggs")
 
 
@@ -480,35 +480,35 @@ def test_subscript(type2test: VecOrSeq[int]) -> None:
         _ = a.__getitem__(slice(0, 10, 0))
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        _ = a.__getitem__("x")  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]
+        _ = a.__getitem__("x")  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
 
 
 @TEST_TYPES
 def test_cmp(type2test: TestedSeq[int]) -> None:
     a = type2test([0, 1])
     # pyrefly: ignore [bad-argument-type]
-    _assert_cmp(a, a, 0)  # pyright: ignore[reportArgumentType]
+    _assert_cmp(a, a, 0)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _assert_cmp(a, type2test([0, 1]), 0)  # pyright: ignore[reportArgumentType]
+    _assert_cmp(a, type2test([0, 1]), 0)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _assert_cmp(a, type2test([0]), 1)  # pyright: ignore[reportArgumentType]
+    _assert_cmp(a, type2test([0]), 1)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _assert_cmp(a, type2test([0, 2]), -1)  # pyright: ignore[reportArgumentType]
+    _assert_cmp(a, type2test([0, 2]), -1)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def _assert_cmp[T](a: TestedSeq[T], b: TestedSeq[T], r: int) -> None:
     assert (a == b) is (r == 0)
     assert (a != b) is (r != 0)
     # pyrefly: ignore [unsupported-operation]
-    assert (a > b) is (r > 0)  # pyright: ignore[reportOperatorIssue]
+    assert (a > b) is (r > 0)  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
     # pyrefly: ignore [unsupported-operation]
-    assert (a <= b) is (r <= 0)  # pyright: ignore[reportOperatorIssue]
+    assert (a <= b) is (r <= 0)  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert (a < b) is (r < 0)  # pyright: ignore[reportOperatorIssue]
+    assert (a < b) is (r < 0)  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
     # pyrefly: ignore [unsupported-operation]
-    assert (a >= b) is (r >= 0)  # pyright: ignore[reportOperatorIssue]
+    assert (a >= b) is (r >= 0)  # pyright: ignore[reportOperatorIssue]  # ty: ignore[unsupported-operator]
 
 
 @TEST_TYPES
@@ -524,7 +524,7 @@ def test_count(type2test: TestedSeq[object]) -> None:
     assert type2test([NEVER_EQ, NEVER_EQ]).count(ALWAYS_EQ) == 0
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = a.count()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = a.count()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[missing-argument]
 
     class BadExcError(Exception):
         pass
@@ -566,7 +566,7 @@ def test_index(type2test: TestedSeq[object]) -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = u.index()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = u.index()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[missing-argument]
 
     class BadExcError(Exception):
         pass

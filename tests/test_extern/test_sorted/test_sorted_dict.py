@@ -339,7 +339,7 @@ class Identity:
 def test_repr_recursion() -> None:
     temp = SortedKeyDict(Identity(), {"alice": 3, "bob": 1, "carol": 2, "dave": 4})
     # pyrefly: ignore [unsupported-operation]
-    temp["bob"] = temp  # pyright: ignore[reportArgumentType]
+    temp["bob"] = temp  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-assignment]
     assert (
         repr(temp)
         == "SortedKeyDict(identity, {'alice': 3, 'bob': ..., 'carol': 2, 'dave': 4})"
@@ -348,7 +348,7 @@ def test_repr_recursion() -> None:
 
 @pytest.mark.skip(reason="We don't support subclassing SortedDict as of now")
 def test_repr_subclass() -> None:
-    class CustomSortedDict[K: SupportsHashableAndRichComparison, V](SortedDict[K, V]):  # pyright: ignore[reportGeneralTypeIssues]
+    class CustomSortedDict[K: SupportsHashableAndRichComparison, V](SortedDict[K, V]):  # pyright: ignore[reportGeneralTypeIssues]  # ty: ignore[subclass-of-final-class]
         pass
 
     temp = CustomSortedDict({"alice": 3, "bob": 1, "carol": 2, "dave": 4})

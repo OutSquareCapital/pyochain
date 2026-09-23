@@ -110,8 +110,8 @@ def test_basics() -> None:
 )
 def test_init_reinitialization() -> None:
     c = PyoCounter({"a": 5, "b": 3, "c": 1})
-    c.__init__("a" * 500 + "b" * 300)  # pyright: ignore[reportCallIssue]
-    c.__init__("cdc")  # pyright: ignore[reportCallIssue]
+    c.__init__("a" * 500 + "b" * 300)  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
+    c.__init__("cdc")  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
     c.__init__()
     assert c == {"a": 555, "b": 333, "c": 3, "d": 1}
     assert c.setdefault("d", 5) == 1
@@ -126,7 +126,7 @@ def test_update_reentrant_add_clears_counter() -> None:
 
     class Evil(int):
         @override
-        def __add__(self, other: object) -> object:  # pyright: ignore[reportIncompatibleMethodOverride]
+        def __add__(self, other: object) -> object:  # pyright: ignore[reportIncompatibleMethodOverride]  # ty: ignore[invalid-method-override]
             c.clear()
             return NotImplemented
 
@@ -139,16 +139,16 @@ def test_init() -> None:
     assert list(PyoCounter(self=42).items()) == [("self", 42)]
     assert list(PyoCounter(iterable=42).items()) == [("iterable", 42)]
     # pyrefly: ignore [bad-argument-type]
-    assert list(PyoCounter[str](iterable=None).items()) == [("iterable", None)]  # pyright: ignore[reportArgumentType]
+    assert list(PyoCounter[str](iterable=None).items()) == [("iterable", None)]  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        _ = PyoCounter[object](42)  # pyright: ignore[reportCallIssue, reportArgumentType]
+        _ = PyoCounter[object](42)  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[no-matching-overload]
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        _ = PyoCounter[object]((), ())  # pyright: ignore[reportCallIssue]
+        _ = PyoCounter[object]((), ())  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        _ = PyoCounter[object].__init__()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = PyoCounter[object].__init__()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[missing-argument]
 
 
 def test_total() -> None:
@@ -259,17 +259,17 @@ def test_update() -> None:
     assert list(c.items()) == [("iterable", 42)]
     c = PyoCounter[object]()
     # pyrefly: ignore [bad-argument-type]
-    c.update(iterable=None)  # pyright: ignore[reportArgumentType]
+    c.update(iterable=None)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     assert list(c.items()) == [("iterable", None)]
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        c.update(42)  # pyright: ignore[reportCallIssue, reportArgumentType]
+        c.update(42)  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[no-matching-overload]
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        c.update({}, {})  # pyright: ignore[reportCallIssue]
+        c.update({}, {})  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        PyoCounter.update()  # pyright: ignore[reportCallIssue, reportUnknownMemberType]
+        PyoCounter.update()  # pyright: ignore[reportCallIssue, reportUnknownMemberType]  # ty: ignore[no-matching-overload]
 
 
 def test_copying() -> None:
@@ -413,13 +413,13 @@ def test_subtract() -> None:
     assert list(c.items()) == [("iterable", -42)]
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        c.subtract(42)  # pyright: ignore[reportCallIssue, reportArgumentType]
+        c.subtract(42)  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[no-matching-overload]
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        c.subtract({}, {})  # pyright: ignore[reportCallIssue]
+        c.subtract({}, {})  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        PyoCounter[str].subtract()  # pyright: ignore[reportCallIssue]
+        PyoCounter[str].subtract()  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
 
 
 def test_unary() -> None:
@@ -430,7 +430,7 @@ def test_unary() -> None:
 
 def test_repr_nonsortable() -> None:
     # pyrefly: ignore [bad-argument-type]
-    c = PyoCounter[str](a=2, b=None)  # pyright: ignore[reportArgumentType]
+    c = PyoCounter[str](a=2, b=None)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     r = repr(c)
     assert "'a': 2" in r
     assert "'b': None" in r

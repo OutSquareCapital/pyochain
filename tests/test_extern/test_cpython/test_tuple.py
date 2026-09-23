@@ -16,7 +16,7 @@ def test_getitem_error() -> None:
     msg = "tuple indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
         # pyrefly: ignore [bad-index]
-        t["a"]  # pyright: ignore[reportCallIssue, reportArgumentType]
+        t["a"]  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 # TODO: Make the behavior identical to tuple, which should make the two `seq is not seq_from_*` fail.
@@ -43,7 +43,7 @@ def test_constructors() -> None:
 def test_keyword_args() -> None:
     with pytest.raises(TypeError, match="keyword argument"):
         # pyrefly: ignore [missing-argument]
-        _ = Seq(sequence=())  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = Seq(sequence=())  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
 
 
 def test_truth() -> None:

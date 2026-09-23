@@ -36,7 +36,7 @@ def test_registration(cls: type) -> None:
         __hash__ = None  # Make sure it isn't hashable by default  # pyright: ignore[reportAssignmentType, reportUnannotatedClassAttribute]
 
     assert not issubclass(C, cls)
-    cls.register(C)  # pyright: ignore[reportUnknownMemberType]
+    cls.register(C)  # pyright: ignore[reportUnknownMemberType]  # ty: ignore[unresolved-attribute]
     assert issubclass(C, cls)
 
 

@@ -22,5 +22,5 @@ class _PyoOk(ImplRev, PyoReversible[int]): ...
 
 def test_reversible() -> None:
     checks.init_fail(_PyFail)
-    checks.reversed_fail(_PyoFail())  # pyright: ignore[reportAbstractUsage]
+    checks.reversed_fail(_PyoFail())  # pyright: ignore[reportAbstractUsage]  # ty: ignore[call-non-callable]
     assert_iter_eq(reversed(_PyOk()), reversed(_PyoOk()))
