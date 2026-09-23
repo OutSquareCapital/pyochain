@@ -471,7 +471,10 @@ class OptionType[T](Pipe, Protocol):
                 assert str(e) == "fruits are healthy (called `expect` on a `None`)"
             ```
         """
-
+    @overload
+    def unwrap_or[S](self: Some[T], default: S) -> T: ...
+    @overload
+    def unwrap_or[S](self: Null[T], default: S) -> S: ...
     def unwrap_or[S](self, default: S) -> T | S:
         """Returns the contained `Some` value or a provided default.
 

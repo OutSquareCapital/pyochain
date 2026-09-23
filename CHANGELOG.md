@@ -51,7 +51,7 @@ See below for the benchmark results, with the number of `args` in the left colum
 ### ✨ Enhancements
 
 - **typing**: Relaxed the _collector_ input type of `PyoIterator::collect`. The constraint on the return type `R: Collection[Any]` was artificial, and was preventing to use `collect` on functions or types who indeed consume the `Iterator`, but weren't strictly speaking a `Collection` (e.g polars DataFrames). In python, the `FromIterator` equivalent is simply `Callable[[Iterator[T]], Any]`, and this is now reflected in the typing of `collect`.
-- **typing**: `Option::{is_some, is_none, unwrap, unwrap_or_none}` now have overloads to statically return the narrowed type when the variant is already known.
+- **typing**: `Option::{is_some, is_none, unwrap, unwrap_or, unwrap_or_none}` now have overloads to statically return the narrowed type when the variant is already known.
 
 ### 🐞 Bug fixes
 

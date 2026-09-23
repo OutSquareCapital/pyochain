@@ -39,21 +39,49 @@ def check_opt_lit_inference() -> Option[AnimalLit]:
 
 
 def check_option_lit_matchs() -> None:
+    """The match cases do work as expected.
+
+    However (more a *wish* than a *need*), the original `Option` type isn't inferred after the match.
+
+    This also extends to containers.\\
+    So even tough we know that `Some.value` **IS** a `LitDog`, `Some.unwrap()` stays as `AnimalLit`.
+    """
     opt_casted = check_opt_lit_inference()
     _ = assert_type(opt_casted.map(_literal), Option[AnimalLit])
-    # Issue: Literals aren't handled for type unions, even if both members are covariant.
     # pyrefly: ignore [non-exhaustive-match]
     match opt_casted:  # pyright: ignore[reportMatchNotExhaustive]
-        case Some("dog") as opt_casted:
+        case Some("dog" as dog):
+            _ = assert_type(dog, LitDog)
             # pyrefly: ignore [assert-type]
             _ = assert_type(opt_casted.unwrap(), LitDog)  # pyright: ignore[reportAssertTypeFailure]  # ty: ignore[type-assertion-failure]
-        case Some("cat"):
+        case Some("cat" as cat):
             # pyrefly: ignore[assert-type]
+            _ = assert_type(cat, LitCat)
             _ = assert_type(opt_casted.unwrap(), LitCat)  # pyright: ignore[reportAssertTypeFailure]  # ty: ignore[type-assertion-failure]
-        case Some("tyrannosaurus"):  # pyright: ignore[reportUnnecessaryComparison]
+        case Some("tyrannosaurus" as trex):  # pyright: ignore[reportUnnecessaryComparison, reportUnknownVariableType]
+            _ = assert_never(trex)
             _ = assert_never(opt_casted.unwrap())  # pyright: ignore[reportUnreachable]
         case Null():
             _ = assert_type(opt_casted, Null[AnimalLit])
+            _ = assert_never(opt_casted.unwrap())
+
+
+def check_narrowed_overloads() -> None:
+    opt = Some(Dog())
+    _ = assert_type(opt.unwrap_or_none(), Dog | None)
+    _ = assert_type(opt.unwrap_or(str(1)), Dog | str)
+    if isinstance(opt, Some):
+        _ = assert_type(opt.unwrap(), Dog)
+        _ = assert_type(opt.is_some(), Literal[True])
+        _ = assert_type(opt.is_none(), Literal[False])
+        _ = assert_type(opt.unwrap_or_none(), Dog)
+        _ = assert_type(opt.unwrap_or(str(1)), Dog)
+    else:
+        _ = assert_never(opt.unwrap())
+        _ = assert_type(opt.is_some(), Literal[False])
+        _ = assert_type(opt.is_none(), Literal[True])
+        _ = assert_type(opt.unwrap_or_none(), None)
+        _ = assert_type(opt.unwrap_or(str(1)), str)
 
 
 def check_option_flatten() -> None:
