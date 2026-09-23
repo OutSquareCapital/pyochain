@@ -11,9 +11,6 @@ import polars as pl
 
 from pyochain import Iter
 
-# TODO: 0071_sortedlist.json is the first time we ran the benchmarks.
-# We should use it as a third reference to ensure no regressions.
-
 PLATFORM_DIR: Final[str] = (
     f"{platform.system()}-CPython-{sys.version_info.major}.{sys.version_info.minor}-{platform.architecture()[0]}"
 )
@@ -28,34 +25,48 @@ class Lib(StrEnum):
     SortedContainers = auto()
 
 
-def main() -> None:
-    """Read benchmark data, compute ratios, and generate plots."""
-    df = _get_df()
-    df.show(-1)
+def main(group: str) -> None:
+    """Read benchmark data for one method, compute ratios, and generate plots."""
+    df = _get_df(group)
     ratios = _get_ratios(df)
+    df.show(-1)
     ratios.show(-1)
-    px.bar(  # pyright: ignore[reportUnknownMemberType]
+    _absolute_plot(df, group)
+    _relative_plot(ratios, group)
+
+
+def _absolute_plot(df: pl.DataFrame, group: str) -> None:
+    return px.bar(  # pyright: ignore[reportUnknownMemberType]
         df,
-        title="Benchmark results for pyochain vs sortedcontainers",
-        x="test",
+        title=f"{group}: pyochain vs sortedcontainers across runs",
+        x="run",
         y="median",
         color="lib",
+        facet_col="size",
         barmode="group",
         log_y=True,
         template="plotly_dark",
     ).show()
-    px.bar(  # pyright: ignore[reportUnknownMemberType]
-        ratios,
-        title="Speedup of pyochain vs sortedcontainers",
-        x="test",
-        y="speedup",
-        barmode="relative",
-        color="method",
-        template="plotly_dark",
-    ).add_hline(y=1).show()
 
 
-def _get_df() -> pl.DataFrame:
+def _relative_plot(ratios: pl.DataFrame, group: str) -> None:
+    return (
+        px
+        .bar(  # pyright: ignore[reportUnknownMemberType]
+            ratios,
+            title=f"{group}: speedup of pyochain vs sortedcontainers across runs",
+            x="run",
+            y="speedup",
+            barmode="group",
+            color="size",
+            template="plotly_dark",
+        )
+        .add_hline(y=1)
+        .show()
+    )
+
+
+def _get_df(group: str) -> pl.DataFrame:
     benchmark = pl.col("benchmarks").list.explode().struct.field
     stat = benchmark("stats").struct.field
     param = pl.col("param").str.split("-").list
@@ -73,11 +84,16 @@ def _get_df() -> pl.DataFrame:
         Iter(PATH.glob("*.json"))
         .sort_by(lambda path: path.stat().st_mtime)
         .iter()
-        .map(pl.read_json)
-        .map(pl.DataFrame.lazy)
-        .map(lambda df: df.select(selected_cols))
+        .map(
+            lambda path: (
+                pl
+                .read_json(path)
+                .lazy()
+                .select(selected_cols)
+                .with_columns(pl.lit(path.stem.split("_")[0]).alias("run"))
+            )
+        )
         .collect(pl.concat)
-        .unique("fullname", keep="last")
         .with_columns(
             pl
             .col("name")
@@ -88,25 +104,21 @@ def _get_df() -> pl.DataFrame:
             param.first().cast(pl.UInt32()).alias("size"),
             param.last().cast(Lib).alias("lib"),
         )
-        .with_columns(
-            pl
-            .col("method")
-            .add("-")
-            .add(pl.col("size").cast(pl.String()))
-            .alias("test")
-        )
-        .sort("method", "size", "lib")
+        .filter(pl.col("method") == group)
+        .sort("size", "run", "lib")
         .collect()
     )
 
 
 def _get_ratios(df: pl.DataFrame) -> pl.DataFrame:
+    idx_cols = ("method", "run", "size")
     return (
         df
-        .select("method", "median", "lib", "test")
-        .pivot("lib", index=("method", "test"))
+        .select(*idx_cols, "median", "lib")
+        .pivot("lib", index=idx_cols)
         .select(
-            "test",
+            "run",
+            pl.col("size").cast(pl.String()),
             "method",
             pl
             .col(Lib.SortedContainers)
@@ -118,4 +130,4 @@ def _get_ratios(df: pl.DataFrame) -> pl.DataFrame:
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1])
