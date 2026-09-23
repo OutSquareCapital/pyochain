@@ -3,6 +3,7 @@ from typing import (
     Any,
     Concatenate,
     Final,
+    Literal,
     Never,
     Protocol,
     final,
@@ -325,7 +326,10 @@ class OptionType[T](Pipe, Protocol):
             assert NONE.eq(NONE)
             ```
         """
-
+    @overload
+    def is_some(self: Some[T]) -> Literal[True]: ...
+    @overload
+    def is_some(self: Null[T]) -> Literal[False]: ...
     def is_some(self) -> bool:
         """Returns `True` if the option is a `Some` value.
 
@@ -374,7 +378,10 @@ class OptionType[T](Pipe, Protocol):
             assert x.is_some_and(lambda x: len(x) > 1)
             ```
         """
-
+    @overload
+    def is_none(self: Some[T]) -> Literal[False]: ...
+    @overload
+    def is_none(self: Null[T]) -> Literal[True]: ...
     def is_none(self) -> bool:
         """Returns `True` if the option is a `None` value.
 
@@ -416,7 +423,10 @@ class OptionType[T](Pipe, Protocol):
             assert Some("hello").is_none_or(lambda x: len(x) > 1)
             ```
         """
-
+    @overload
+    def unwrap(self: Null[T]) -> Never: ...
+    @overload
+    def unwrap(self: Some[T]) -> T: ...
     def unwrap(self) -> T:
         """Returns the contained `Some` value.
 
@@ -944,7 +954,10 @@ class OptionType[T](Pipe, Protocol):
             assert Some("hello").xor(Some(1)).is_none()
             ```
         """
-
+    @overload
+    def unwrap_or_none(self: Some[T]) -> T: ...
+    @overload
+    def unwrap_or_none(self: Null[T]) -> None: ...
     def unwrap_or_none(self) -> T | None:
         """Returns the contained `Some` value or `None`.
 
