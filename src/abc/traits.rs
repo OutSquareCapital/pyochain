@@ -5,8 +5,12 @@ use crate::{
         Dict, PyNull, PySome, PyoErr, PyoOk, SliceViewIterator, SliceViewReverseIterator, iterators,
     },
 };
-use pyo3::{PyClass, PyTypeInfo, prelude::*, types::DerefToPyAny};
-use pyo3_ext;
+use pyo3::{
+    PyClass, PyTypeInfo,
+    prelude::*,
+    types::{DerefToPyAny, PyDict, PyTuple},
+};
+use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
 use tap::prelude::*;
 #[py_abc(Dict, collections::PyoCounter)]
@@ -31,6 +35,7 @@ pub trait ImplPyoReversible {
     iterators::UniqueKey,
     iterators::Intersperse,
     iterators::MapWindow,
+    iterators::MapWindowStar,
     iterators::FilterMap,
     iterators::FilterMapStar,
     iterators::Scan,
@@ -44,93 +49,78 @@ pub trait ImplPyoReversible {
     iterators::ZipLongest,
     iterators::Unzip,
     iterators::GroupBy,
-    sorted::iter::SortedIter
+    sorted::iter::PyBounded,
+    sorted::iter::PyBoundedRev,
+    sorted::iter::PyBoundedKey,
+    sorted::iter::PyBoundedKeyRev,
+    sorted::iter::PyFull,
+    sorted::iter::PyFullRev,
+    sorted::iter::PyFullKey,
+    sorted::iter::PyFullKeyRev,
+    sorted::iter::PySetBounded,
+    sorted::iter::PySetBoundedRev,
+    sorted::iter::PySetBoundedKey,
+    sorted::iter::PySetBoundedKeyRev,
+    sorted::iter::PySetFull,
+    sorted::iter::PySetFullRev,
+    sorted::iter::PySetFullKey,
+    sorted::iter::PySetFullKeyRev,
+    sorted::iter::PyDictBounded,
+    sorted::iter::PyDictBoundedRev,
+    sorted::iter::PyDictFull,
+    sorted::iter::PyDictFullRev,
+    sorted::iter::PyDictFullKey,
+    sorted::iter::PyDictFullKeyRev,
+    sorted::iter::PyDictBoundedKey,
+    sorted::iter::PyDictBoundedKeyRev
 )]
 pub trait ImplPyoIterator: Sized {
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
         slf
     }
 }
-impl ImplPyoIterator for SliceViewIterator {}
-impl ImplPyoIterator for SliceViewReverseIterator {}
-impl ImplPyoIterator for iterators::OnceWith {}
-impl ImplPyoIterator for iterators::Tail {}
-impl ImplPyoIterator for iterators::SequenceIterator {}
-impl ImplPyoIterator for iterators::SequenceReverseIterator {}
-impl ImplPyoIterator for iterators::ValuesViewIterator {}
-impl ImplPyoIterator for iterators::ItemsViewIterator {}
-impl ImplPyoIterator for iterators::MapJuxt {}
-impl ImplPyoIterator for iterators::UniqueIdentity {}
-impl ImplPyoIterator for iterators::UniqueKey {}
-impl ImplPyoIterator for iterators::Intersperse {}
-impl ImplPyoIterator for iterators::MapWindow {}
-impl ImplPyoIterator for iterators::FilterMap {}
-impl ImplPyoIterator for iterators::FilterMapStar {}
-impl ImplPyoIterator for iterators::Scan {}
-impl ImplPyoIterator for iterators::MapWhile {}
-impl ImplPyoIterator for iterators::FromFn {}
-impl ImplPyoIterator for iterators::Drain {}
-impl ImplPyoIterator for iterators::ExtractIf {}
-impl ImplPyoIterator for iterators::Successors {}
-impl ImplPyoIterator for iterators::FilterStar {}
-impl ImplPyoIterator for iterators::WithPosition {}
-impl ImplPyoIterator for iterators::ZipLongest {}
-impl ImplPyoIterator for iterators::Unzip {}
-impl ImplPyoIterator for iterators::GroupBy {}
-impl ImplPyoIterator for sorted::iter::SortedIter {}
-impl ImplPyoIterator for abc::PyoIterator {}
-macro_rules! impl_py_pipe {
-    ($type:ty) => {
-        #[pymethods]
-        impl $type {
-            #[pyo3(name = "pipe", signature = (func, *args, **kwargs))]
-            fn py_pipe(
-                slf: &Bound<'_, Self>,
-                func: &Bound<'_, PyAny>,
-                args: &pyo3_ext::args::Args<'_>,
-                kwargs: Option<&pyo3_ext::args::Kwargs<'_>>,
-            ) -> PyResult<Py<PyAny>> {
-                (
-                    pyo3_ext::args::Concatenate::concat(func, &slf, args, kwargs)?.unbind().pipe(Ok)
-                )
-            }
-        }
-    };
-    ($first:ty, $($rest:ty),+ $(,)?) => {
-        impl_py_pipe!($first);
-        impl_py_pipe!($($rest),+);
-    };
-}
-macro_rules! impl_tap {
-    ($type:ty) => {
-    #[pymethods]
-            impl $type {
-    #[pyo3(signature = (f, *args, **kwargs))]
-    fn tap(
-        slf: &Bound<'_, Self>,
-        f: &Bound<'_, PyAny>,
-        args: &pyo3_ext::args::Args<'_>,
-        kwargs: Option<&pyo3_ext::args::Kwargs<'_>>,
+#[py_abc(
+    PySome,
+    PyNull,
+    PyoOk,
+    PyoErr,
+    abc::Fluent,
+    abc::PyoPipe,
+    abc::PyoIterable,
+    abc::PyoIterator
+)]
+trait PipeMethod: PyTypeInfo {
+    #[pyo3(name = "pipe", signature = (func, *args, **kwargs))]
+    fn py_pipe(
+        slf: Bound<'_, Self>,
+        func: &Bound<'_, PyAny>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        pyo3_ext::args::Concatenate::concat(f, &slf, args, kwargs)?;
-        slf.to_owned().into_any().unbind().pipe(Ok)
-    }}};
-    ($first:ty, $($rest:ty),+ $(,)?) => {
-        impl_tap!($first);
-        impl_tap!($($rest),+);
-    };
+        func.call_concat((slf.as_any(), args), kwargs)?
+            .unbind()
+            .pipe(Ok)
+    }
 }
+#[py_abc(abc::Fluent, abc::PyoTap, abc::PyoIterable)]
+trait TapMethod: PyTypeInfo {
+    #[pyo3(signature = (f, *args, **kwargs))]
+    fn tap<'py>(
+        slf: Bound<'py, Self>,
+        f: &Bound<'py, PyAny>,
+        args: Bound<'py, PyTuple>,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<Bound<'py, Self>> {
+        f.call_concat((slf.as_any(), args), kwargs)?;
+        Ok(slf)
+    }
+}
+
 #[py_abc(
     abc::PyoMappingView,
     abc::PyoKeysView,
     abc::PyoValuesView,
-    abc::PyoItemsView,
-    collections::sorted::SortedItemsView,
-    collections::sorted::SortedKeysView,
-    collections::sorted::SortedValuesView,
-    collections::sorted::SortedByKeyItemsView,
-    collections::sorted::SortedByKeyKeysView,
-    collections::sorted::SortedByKeyValuesView
+    abc::PyoItemsView
 )]
 pub trait MappingView:
     Sized
@@ -152,17 +142,6 @@ pub trait MappingView:
     }
     fn __len__(&self, py: Python<'_>) -> usize;
 }
-impl_tap!(abc::Fluent, abc::PyoTap, abc::PyoIterable);
-impl_py_pipe!(
-    PySome,
-    PyNull,
-    PyoOk,
-    PyoErr,
-    abc::Fluent,
-    abc::PyoPipe,
-    abc::PyoIterable,
-    abc::PyoIterator
-);
 
 macro_rules! impl_mapping_view {
     ($($t:ty),* $(,)?) => {

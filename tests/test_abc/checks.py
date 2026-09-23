@@ -1,74 +1,76 @@
-from collections import abc
+"""Subclasshook of python ABCs raise error as soon as the class (not the instance!) is instantiated.
+
+We unfortunately cannot reciprocate this in Pyo3 ATM.
+
+Most access will raise `TypeError` tho, which is the same error as the ABC.
+
+## Note
+
+Tests that can use builtin functions, reserved keywords, or operators, we call directly the method dunder, which will raise `AttributeError` instead of `TypeError`.
+"""
+
+from __future__ import annotations
+
+import operator
+from functools import partial
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
-# Subclasshook of python ABCs raise error as soon as the class (not the instance!) is instantiated.
-# We unfortunately cannot reciprocate this in Pyo3 ATM. Most access will raise `TypeError` tho, which is the same error as the ABC.
-# For some reason, add, discard and insert are raising `AttributeError` instead of `TypeError`.
-# This is probably due to the fact that they are the only methods who are not called by builtins.
-CATCH_TYPE_ERROR = pytest.raises(TypeError)
-CATCH_ATTRIBUTE_ERROR = pytest.raises(AttributeError)
+if TYPE_CHECKING:
+    from collections import abc
 
 
 def init_fail(obj: abc.Callable[[], object]) -> None:
-    with CATCH_TYPE_ERROR:
-        _ = obj()
+    _fail(partial(operator.call, obj), TypeError)
 
 
 def iter_fail(obj: abc.Iterable[int]) -> None:
-    with CATCH_TYPE_ERROR:
-        _ = iter(obj)
+    _fail(partial(iter, obj), TypeError)
 
 
 def next_fail(obj: abc.Iterator[int]) -> None:
-    with CATCH_TYPE_ERROR:
-        _ = next(obj)
+    _fail(partial(next, obj), TypeError)
 
 
 def len_fail(obj: abc.Sized) -> None:
-    with CATCH_TYPE_ERROR:
-        _ = len(obj)
+    _fail(partial(len, obj), TypeError)
 
 
-def contains_fail(obj: abc.Container[int]) -> None:
-    with CATCH_TYPE_ERROR:
-        _ = 1 in obj
+def contains_fail(obj: abc.Container[Any]) -> None:
+    _fail(partial(operator.contains, obj, 0), TypeError)
 
 
 def reversed_fail(obj: abc.Reversible[int]) -> None:
-    with CATCH_TYPE_ERROR:
-        _ = reversed(obj)
+    _fail(partial(reversed, obj), TypeError)
 
 
 def getitem_fail(obj: abc.Sequence[int] | abc.Mapping[int, int]) -> None:
-    with CATCH_TYPE_ERROR:
-        _ = obj[0]
+    _fail(partial(operator.itemgetter(0), obj), TypeError)
 
 
 def setitem_fail(
     obj: abc.MutableSequence[int] | abc.MutableMapping[int, int],
 ) -> None:
-    with CATCH_TYPE_ERROR:
-        obj[0] = 1
+    _fail(lambda: obj.__setitem__(0, 1), AttributeError)
 
 
-def delitem_fail(
-    obj: abc.MutableSequence[int] | abc.MutableMapping[int, int],
-) -> None:
-    with CATCH_TYPE_ERROR:
-        del obj[0]
+def delitem_fail(obj: abc.MutableSequence[int] | abc.MutableMapping[int, int]) -> None:
+    _fail(lambda: obj.__delitem__(0), AttributeError)
 
 
 def insert_fail(obj: abc.MutableSequence[int]) -> None:
-    with CATCH_ATTRIBUTE_ERROR:
-        obj.insert(0, 1)
+    _fail(lambda: obj.insert(0, 1), AttributeError)
 
 
 def add_fail(obj: abc.MutableSet[int]) -> None:
-    with CATCH_ATTRIBUTE_ERROR:
-        obj.add(1)
+    _fail(lambda: obj.add(1), AttributeError)
 
 
 def discard_fail(obj: abc.MutableSet[int]) -> None:
-    with CATCH_ATTRIBUTE_ERROR:
-        obj.discard(1)
+    _fail(lambda: obj.discard(1), AttributeError)
+
+
+def _fail[T](method: abc.Callable[[], object], error: type[Exception]) -> None:
+    with pytest.raises(error):
+        _ = method()

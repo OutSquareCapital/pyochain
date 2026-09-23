@@ -3,7 +3,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Any, Self, override
+from typing import Self
 
 from _typeshed import SupportsRichComparison
 
@@ -15,10 +15,7 @@ class SortedCollection[T](ABC):
     """Base class for sorted collections."""
 
     @abstractmethod
-    def __contains__(self, value: object) -> bool: ...
-    @abstractmethod
-    @override
-    def __reduce__(self) -> tuple[type[Self], tuple[Any, ...]]: ...
+    def __contains__(self, value: object, /) -> bool: ...
     @abstractmethod
     def bisect_left(self, value: T) -> int:
         """Return an index to insert *value* in the `SortedCollection`.
@@ -44,7 +41,7 @@ class SortedCollection[T](ABC):
         sl = SortedList([10, 11, 12, 13, 14])
         assert sl.bisect_left(12) == 2
 
-        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        skl = SortedKeyList(neg, [5, 4, 3, 2, 1])
         assert skl.bisect_left(1) == 4
         ```
         """
@@ -74,7 +71,7 @@ class SortedCollection[T](ABC):
             sl = SortedList([10, 11, 12, 13, 14])
             assert sl.bisect_right(12) == 3
 
-            skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+            skl = SortedKeyList(neg, [5, 4, 3, 2, 1])
             assert skl.bisect_right(1) == 5
             ```
         """
@@ -116,7 +113,7 @@ class SortedCollection[T](ABC):
             assert sl.index("d") == 3
             with pytest.raises(ValueError):
                 sl.index("z")
-            skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+            skl = SortedKeyList(neg, [5, 4, 3, 2, 1])
             assert skl.index(2) == 3
             with pytest.raises(ValueError):
                 skl.index(0)
@@ -154,7 +151,7 @@ class SortedCollection[T](ABC):
             it = sl.irange("c", "f")
             assert list(it) == ["c", "d", "e", "f"]
 
-            skl = SortedKeyList([11, 12, 13, 14, 15], key=neg)
+            skl = SortedKeyList(neg, [11, 12, 13, 14, 15])
             it = skl.irange(14.5, 11.5)
             assert list(it) == [14, 13, 12]
             ```
@@ -247,7 +244,7 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
         sl.add(2)
         assert sl == [1, 2, 3]
 
-        skl = SortedKeyList(key=neg)
+        skl = SortedKeyList(neg)
         skl.add(3)
         skl.add(1)
         skl.add(2)
@@ -276,7 +273,7 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
         sl.discard(0)
         assert sl == [1, 2, 3, 4]
 
-        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        skl = SortedKeyList(neg, [5, 4, 3, 2, 1])
         skl.discard(1)
         skl.discard(0)
         assert skl == [5, 4, 3, 2]
@@ -311,7 +308,7 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
             sl.remove(0)
         except ValueError as e:
             assert str(e) == "0 not in list"
-        skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
+        skl = SortedKeyList(neg, [1, 2, 3, 4, 5])
         skl.remove(5)
         assert skl == [4, 3, 2, 1]
 

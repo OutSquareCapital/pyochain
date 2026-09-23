@@ -1,17 +1,20 @@
 mod abc;
 mod collections;
 mod core;
-mod display;
 mod traits;
 use crate::collections::sorted::debug;
 use pyo3::{
-    PyTypeInfo, intern,
     prelude::*,
-    types::{PyDict, PyIterator, PyMapping, PySequence, PyType},
+    types::{PyIterator, PyMapping, PySequence},
 };
 use pyo3_ext::{
     prelude::*,
-    types::{PyAbstractSet, PyIterable, PyMappingView, PyMutableSequence, PyMutableSet},
+    pylibs,
+    types::{
+        PyAbstractSet, PyCollection, PyContainer, PyItemsView, PyIterable, PyKeysView,
+        PyMappingView, PyMutableMapping, PyMutableSequence, PyMutableSet, PyReversible, PySized,
+        PyValuesView,
+    },
 };
 #[pymodule]
 fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -22,17 +25,17 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     let abc_mod = PyModule::new(py, "abc")?;
     let collections_mod = PyModule::new(py, "collections")?;
     let sorted_mod = PyModule::new(py, "_sorted")?;
-    let modules = sys_modules(py)?;
     m.add_submodule(&core_mod)?;
     m.add_submodule(&abc_mod)?;
     m.add_submodule(&collections_mod)?;
     collections_mod.add_submodule(&sorted_mod)?;
     // NOTE: We need to do this two times to handle both relative imports, e.g `from pyochain import Vec` and direct import paths, e.g `import pyochain.core.Vec`
-    populate_core(m, py)?;
-    populate_core(&core_mod, py)?;
+    populate_core(m)?;
+    populate_core(&core_mod)?;
     populate_abc(&abc_mod)?;
     populate_collections(&collections_mod)?;
     populate_sorted(&sorted_mod)?;
+    let modules = pylibs::sys::modules(py)?;
     modules.set_item("pyochain", m)?;
     modules.set_item("pyochain.core", core_mod)?;
     modules.set_item("pyochain.abc", abc_mod)?;
@@ -40,13 +43,8 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     modules.set_item("pyochain.collections._sorted", sorted_mod)?;
     register_all(py)
 }
-fn sys_modules(py: Python<'_>) -> PyResult<Bound<'_, PyDict>> {
-    py.import(intern!(py, "sys"))?
-        .getattr(intern!(py, "modules"))
-        .map(|x| unsafe { x.cast_into_unchecked::<PyDict>() })
-}
 
-fn populate_core(m: &Bound<'_, PyModule>, py: Python<'_>) -> PyResult<()> {
+fn populate_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<core::PyochainOption>()?;
     m.add_class::<core::PyochainOptionType>()?;
     m.add_class::<core::PySome>()?;
@@ -54,7 +52,7 @@ fn populate_core(m: &Bound<'_, PyModule>, py: Python<'_>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(core::then_if_some, m)?)?;
     m.add_function(wrap_pyfunction!(core::then_if_true, m)?)?;
     m.add_function(wrap_pyfunction!(core::new_option, m)?)?;
-    m.add("NONE", core::PyNull::get(py))?;
+    m.add("NONE", core::PyNull::get(m.py()))?;
     m.add_class::<core::PyoOk>()?;
     m.add_class::<core::PyoErr>()?;
     m.add_class::<core::OptionUnwrapError>()?;
@@ -126,35 +124,31 @@ fn populate_sorted(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(debug::check_sorted_dict, m)?)
 }
 fn register_all(py: Python<'_>) -> PyResult<()> {
-    let abc_mod = py.import("collections.abc")?;
     PyIterable::register::<abc::PyoIterable>(py)?;
     PyIterator::register::<abc::PyoIterator>(py)?;
-    register(&abc_mod, "Container", &abc::PyoContainer::type_object(py))?;
-    register(&abc_mod, "Sized", &abc::PyoSized::type_object(py))?;
-    register(&abc_mod, "Container", &abc::PyoCollection::type_object(py))?;
-    register(&abc_mod, "Sized", &abc::PyoCollection::type_object(py))?;
-    register(&abc_mod, "Collection", &abc::PyoCollection::type_object(py))?;
-    register(&abc_mod, "Reversible", &abc::PyoReversible::type_object(py))?;
-    register(&abc_mod, "Reversible", &abc::PyoSequence::type_object(py))?;
+    PyContainer::register::<abc::PyoContainer>(py)?;
+    PySized::register::<abc::PyoSized>(py)?;
+    PyContainer::register::<abc::PyoCollection>(py)?;
+    PySized::register::<abc::PyoCollection>(py)?;
+    PyCollection::register::<abc::PyoCollection>(py)?;
+    PyReversible::register::<abc::PyoReversible>(py)?;
+    PyReversible::register::<abc::PyoSequence>(py)?;
     PyMappingView::register::<abc::PyoMappingView>(py)?;
     PyMutableSequence::register::<abc::PyoMutableSequence>(py)?;
     PyAbstractSet::register::<abc::PyoSet>(py)?;
     PyMutableSet::register::<abc::PyoMutableSet>(py)?;
     PySequence::register::<abc::PyoSequence>(py)?;
-    register(&abc_mod, "KeysView", &abc::PyoKeysView::type_object(py))?;
-    register(&abc_mod, "ValuesView", &abc::PyoValuesView::type_object(py))?;
-    register(&abc_mod, "ItemsView", &abc::PyoItemsView::type_object(py))?;
+    PyKeysView::register::<abc::PyoKeysView>(py)?;
+    PyValuesView::register::<abc::PyoValuesView>(py)?;
+    PyItemsView::register::<abc::PyoItemsView>(py)?;
     PyMapping::register::<abc::PyoMapping>(py)?;
-    register(
-        &abc_mod,
-        "MutableMapping",
-        &abc::PyoMutableMapping::type_object(py),
-    )
-}
-fn register(abc: &Bound<'_, PyModule>, name: &str, cls: &Bound<'_, PyType>) -> PyResult<()> {
-    abc.getattr(name)?
-        .call_method1(intern!(abc.py(), "register"), (cls,))?;
-    Ok(())
+    PyMutableMapping::register::<abc::PyoMutableMapping>(py)?;
+    PyKeysView::register::<collections::sorted::SortedKeysView>(py)?;
+    PyValuesView::register::<collections::sorted::SortedValuesView>(py)?;
+    PyItemsView::register::<collections::sorted::SortedItemsView>(py)?;
+    PyKeysView::register::<collections::sorted::SortedByKeyKeysView>(py)?;
+    PyValuesView::register::<collections::sorted::SortedByKeyValuesView>(py)?;
+    PyItemsView::register::<collections::sorted::SortedByKeyItemsView>(py)
 }
 #[cfg(debug_assertions)]
 fn debug_backtrace() {

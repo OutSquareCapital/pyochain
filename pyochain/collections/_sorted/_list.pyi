@@ -41,8 +41,8 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         added = sl1 + sl2
         assert added == SortedList(["a", "a", "b", "c", "t", "t"])
 
-        skl1 = SortedKeyList([5, 4, 3], key=neg)
-        skl2 = SortedKeyList([2, 1, 0], key=neg)
+        skl1 = SortedKeyList(neg, [5, 4, 3])
+        skl2 = SortedKeyList(neg, [2, 1, 0])
         new = skl1 + skl2
         assert new == [5, 4, 3, 2, 1, 0]
         ```
@@ -71,7 +71,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         new = sl * 3
         assert new == SortedList(["a", "a", "a", "b", "b", "b", "c", "c", "c"])
 
-        skl = SortedKeyList([3, 2, 1], key=neg)
+        skl = SortedKeyList(neg, [3, 2, 1])
         new = skl * 2
         assert new == [3, 3, 2, 2, 1, 1]
         ```
@@ -109,14 +109,14 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         sl = SortedList([1, 2, 3, 4, 5])
         assert 3 in sl
 
-        skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
+        skl = SortedKeyList(neg, [1, 2, 3, 4, 5])
         assert 3 in skl
         ```
 
         """
 
     @override
-    def __eq__(self, other: object) -> NotImplementedType | bool:
+    def __eq__(self, other: object) -> bool:
         """Return `True` if and only if sorted list is equal to `other`.
 
         ``sl.__eq__(other)`` <==> ``sl == other``
@@ -129,12 +129,12 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            NotImplementedType | bool: true if sorted list is equal to `other`
+            bool: true if sorted list is equal to `other`
 
         """
 
     @override
-    def __ne__(self, other: object) -> NotImplementedType | bool:
+    def __ne__(self, other: object) -> bool:
         """Return `True` if and only if sorted list is not equal to `other`.
 
         ``sl.__ne__(other)`` <==> ``sl != other``
@@ -147,7 +147,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            NotImplementedType | bool: `True` if sorted list is not equal to `other`
+            bool: `True` if sorted list is not equal to `other`
 
         """
 
@@ -425,25 +425,13 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         sl = SortedList([1, 2, 2, 3, 3, 3, 4, 4, 4, 4])
         assert sl.count(3) == 3
 
-        skl = SortedKeyList([4, 4, 4, 4, 3, 3, 3, 2, 2, 1], key=neg)
+        skl = SortedKeyList(neg, [4, 4, 4, 4, 3, 3, 3, 2, 2, 1])
         assert skl.count(2) == 2
         ```
         """
 
     @override
     def clear(self) -> None: ...
-    @override
-    def extend(self, values: object) -> None:
-        """Warning: raise not-implemented error.
-
-        use ``sl.update(values)`` instead
-
-        Implemented to override `MutableSequence.extend` which provides an erroneous default implementation.
-
-        Args:
-            values (object): values to extend sorted list with
-        """
-
     @override
     def insert(self, index: int, value: T) -> None:
         """Warning: raise not-implemented error.
@@ -494,8 +482,9 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
     ) -> int: ...
     @override
     def reset(self, load: int) -> None: ...
-    def update(self, iterable: Iterable[T]) -> None:
-        """Add all the values from *iterable* to the `SortedCollection`.
+    @override
+    def extend(self, iterable: Iterable[T]) -> None:
+        """Add all the values from *iterable* to the `BaseSortedList`.
 
         Runtime complexity: `O(k*log(n))` -- approximate.
 
@@ -507,13 +496,13 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             from pyochain.collections import SortedList, SortedKeyList
 
             sl = SortedList()
-            sl.update([3, 1, 2])
+            sl.extend([3, 1, 2])
             assert sl == SortedList([1, 2, 3])
 
             from operator import neg
 
-            skl = SortedKeyList(key=neg)
-            skl.update([3, 1, 2])
+            skl = SortedKeyList(neg)
+            skl.extend([3, 1, 2])
             assert skl == [3, 2, 1]
             ```
         """
@@ -563,7 +552,5 @@ class SortedList[T: SupportsRichComparison](BaseSortedList[T]):
     def __add__(self, other: Iterable[T]) -> Self: ...
     @override
     def __mul__(self, num: int) -> Self: ...
-    @override
-    def __reduce__(self) -> tuple[type[Self], tuple[Vec[T]]]: ...
     @override
     def copy(self) -> Self: ...

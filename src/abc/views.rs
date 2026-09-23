@@ -10,6 +10,7 @@ use pyo3::{
     types::{PyIterator, PySet, PyType},
 };
 use pyo3_ext::prelude::*;
+use std_tools::prelude::*;
 use tap::Pipe;
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSized)]
 pub struct PyoMappingView(pub Py<PyAny>);
@@ -37,13 +38,7 @@ impl PyoValuesView {
         mapping
             .try_iter()?
             .map(|key| mapping.get_item(&key?))
-            .map(|item| item.and_then(|v| Ok(v.is(value) || v.eq(value)?)))
-            .find_map(|item| match item {
-                Ok(true) => Some(Ok(true)),
-                Ok(false) => None,
-                Err(err) => Some(Err(err)),
-            })
-            .unwrap_or_else(|| Ok(false))
+            .try_any(|item| item.and_then(|v| Ok(v.is(value) || v.eq(value)?)))
     }
 
     fn __iter__(slf: &Bound<'_, Self>) -> PyResult<iterators::ValuesViewIterator> {

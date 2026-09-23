@@ -3,7 +3,9 @@ use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{
-    Arm, ExprMatch, Ident, Pat, PatIdent, PatTuple, PatTupleStruct, Path, punctuated::Punctuated,
+    Arm, ExprMatch, Ident, Pat, PatIdent, PatTuple, PatTupleStruct, Path,
+    punctuated::Punctuated,
+    visit_mut::{self, VisitMut},
 };
 use tap::prelude::*;
 const INVALID_PATTERN_MSG: &str = "use `Case::Type(binding)` or `CaseExact::Type(binding)`";
@@ -43,70 +45,133 @@ fn run_pipeline(match_expr: &ExprMatch, mode: &Cast) -> SynResult<TokenStream2> 
 }
 
 fn generate_match_arm(arm: &Arm, mode: &Cast) -> SynResult<Vec<TokenStream2>> {
-    match &arm.pat {
-        Pat::Or(pattern) => {
-            let rewritten = pattern
+    let (pattern, guard) = match &arm.pat {
+        Pat::Guard(pattern) => (pattern.pat.as_ref(), Some(pattern.guard.as_ref())),
+        pattern => (pattern, None),
+    };
+    match pattern {
+        Pat::Or(or_pattern) => {
+            let rewritten = or_pattern
                 .cases
                 .iter()
                 .map(rewrite_pattern)
                 .collect::<SynResult<Vec<_>>>()?;
             if rewritten.iter().all(|(_, cases)| cases.is_empty()) {
-                generate_match_pattern(&arm.pat, &arm.body, mode).map(|arm| vec![arm])
+                generate_match_pattern(pattern, guard, &arm.body, mode).map(|arm| vec![arm])
             } else {
                 rewritten
                     .iter()
-                    .map(|(pattern, cases)| generate_rewritten_arm(pattern, cases, &arm.body, mode))
+                    .map(|(pattern, cases)| {
+                        generate_rewritten_arm(pattern, cases, guard, &arm.body, mode)
+                    })
                     .collect()
             }
         }
-        pattern => generate_match_pattern(pattern, &arm.body, mode).map(|arm| vec![arm]),
+        pattern => generate_match_pattern(pattern, guard, &arm.body, mode).map(|arm| vec![arm]),
     }
 }
 
-fn generate_match_pattern(pattern: &Pat, body: &syn::Expr, mode: &Cast) -> SynResult<TokenStream2> {
+fn generate_match_pattern(
+    pattern: &Pat,
+    guard: Option<&syn::Expr>,
+    body: &syn::Expr,
+    mode: &Cast,
+) -> SynResult<TokenStream2> {
     let (pattern, cases) = rewrite_pattern(pattern)?;
-    generate_rewritten_arm(&pattern, &cases, body, mode)
+    generate_rewritten_arm(&pattern, &cases, guard, body, mode)
 }
 #[allow(clippy::unnecessary_wraps)]
 fn generate_rewritten_arm(
     pattern: &TokenStream2,
     cases: &[Case],
+    guard: Option<&syn::Expr>,
     body: &syn::Expr,
     mode: &Cast,
 ) -> SynResult<TokenStream2> {
-    let casts = cases.iter().map(|case| mode.new_arm(case));
-    let checks = cases.iter().map(|case| {
-        let binding = &case.binding;
-        let ty = &case.ty;
-        if case.exact {
-            quote!(#binding.is_exact_instance_of::<#ty>())
-        } else {
-            quote!(#binding.is_instance_of::<#ty>())
-        }
+    let casts = cases.iter().map(|case| mode.new_arm(case, body));
+    let guard = guard.map(|guard| {
+        let casts = cases.iter().map(Cast::new_guard);
+        quote!({
+            #(#casts)*
+            #guard
+        })
     });
+    let mut checks = cases
+        .iter()
+        .map(|case| {
+            let binding = &case.binding;
+            let ty = &case.ty;
+            if case.exact {
+                quote!(#binding.is_exact_instance_of::<#ty>())
+            } else {
+                quote!(#binding.is_instance_of::<#ty>())
+            }
+        })
+        .peekable();
 
-    match checks.len() {
-        0 => Ok(quote!(#pattern => #body,)),
-        _ => Ok(quote!(#pattern if #(#checks)&&* => { #(#casts)* #body },)),
+    match (checks.peek().is_some(), guard) {
+        (false, None) => Ok(quote!(#pattern => #body,)),
+        (false, Some(guard)) => Ok(quote!(#pattern if #guard => #body,)),
+        (true, None) => Ok(quote!(#pattern if #(#checks)&&* => { #(#casts)* #body },)),
+        (true, Some(guard)) => Ok(quote!(
+            #pattern if #(#checks)&&* && #guard => {
+                #(#casts)*
+                #body
+            },
+        )),
     }
 }
 
 impl Cast {
-    fn new_arm(&self, case: &Case) -> TokenStream2 {
+    fn new_guard(case: &Case) -> TokenStream2 {
         let binding = &case.binding;
         let output = &case.output;
         let ty = &case.ty;
-        match self {
-            Self::Borrowed => quote! {
+        quote! {
+            // SAFETY: the preceding checks prove the concrete Python type.
+            let #output = unsafe { #binding.cast_unchecked::<#ty>() };
+        }
+    }
+
+    fn new_arm(&self, case: &Case, body: &syn::Expr) -> TokenStream2 {
+        let binding = &case.binding;
+        let output = &case.output;
+        let ty = &case.ty;
+        match (self, body_uses(body, output)) {
+            (Self::Borrowed, true) => quote! {
                 // SAFETY: this arm's guard proves the concrete Python type.
                 let #output = unsafe { #binding.cast_unchecked::<#ty>() };
             },
-            Self::Owned => quote! {
+            (Self::Owned, true) => quote! {
                 // SAFETY: this arm's guard proves the concrete Python type.
                 let #output = unsafe { #binding.cast_into_unchecked::<#ty>() };
             },
+            (_, false) => quote!(),
         }
     }
+}
+
+struct BindingUse<'a> {
+    ident: &'a Ident,
+    used: bool,
+}
+impl VisitMut for BindingUse<'_> {
+    fn visit_expr_path_mut(&mut self, path: &mut syn::ExprPath) {
+        if path.qself.is_none()
+            && path.path.segments.len() == 1
+            && &path.path.segments[0].ident == self.ident
+        {
+            self.used = true;
+        }
+        visit_mut::visit_expr_path_mut(self, path);
+    }
+}
+
+fn body_uses(body: &syn::Expr, ident: &Ident) -> bool {
+    let mut body = body.clone();
+    let mut binding = BindingUse { ident, used: false };
+    binding.visit_expr_mut(&mut body);
+    binding.used
 }
 
 fn rewrite_tuple(tuple: &PatTuple) -> SynResult<(TokenStream2, Vec<Case>)> {
@@ -154,12 +219,12 @@ fn rewrite_case(pattern: &PatTupleStruct) -> SynResult<(TokenStream2, Vec<Case>)
         CASE_EXACT => true,
         _ => return Ok((quote!(#pattern), Vec::new())),
     };
-    if pattern.path.segments.len() != 2 || pattern.elems.len() != 1 {
+    if pattern.path.segments.len() < 2 || pattern.elems.len() != 1 {
         return Err(syn::Error::new_spanned(pattern, INVALID_PATTERN_MSG));
     }
     let ty = Path {
         leading_colon: None,
-        segments: Punctuated::from_iter([pattern.path.segments[1].clone()]),
+        segments: Punctuated::from_iter(pattern.path.segments.iter().skip(1).cloned()),
     };
     let Pat::Ident(PatIdent {
         ident,

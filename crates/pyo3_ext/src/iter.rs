@@ -1,5 +1,3 @@
-use std::ops::ControlFlow;
-
 use pyo3::{
     IntoPyObjectExt, ffi,
     prelude::*,
@@ -187,28 +185,3 @@ where
         Ok(tup)
     }
 }
-
-pub trait TryIterator: Iterator {
-    /// Returns the first non-`None` value produced by `f`, or `None` if `f` returns `None` for every item.
-    ///
-    /// Iteration stops when `f` returns `Some` or an error.
-    ///
-    /// # Errors
-    ///
-    /// Returns the first error produced by `f`.
-    fn try_find_map<B, E, F>(&mut self, mut f: F) -> Result<Option<B>, E>
-    where
-        Self: Sized,
-        F: FnMut(Self::Item) -> Result<Option<B>, E>,
-    {
-        self.try_fold((), |(), item| match f(item) {
-            Ok(Some(value)) => ControlFlow::Break(Ok(value)),
-            Ok(None) => ControlFlow::Continue(()),
-            Err(error) => ControlFlow::Break(Err(error)),
-        })
-        .break_value()
-        .transpose()
-    }
-}
-
-impl<I: Iterator> TryIterator for I {}

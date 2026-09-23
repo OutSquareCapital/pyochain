@@ -1,11 +1,9 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
     core::iterators,
-    display::pformat,
     traits::PyWrapper,
 };
 use pyo3::{
-    PyTypeInfo,
     exceptions::PyKeyError,
     intern,
     prelude::*,
@@ -35,16 +33,7 @@ impl Dict {
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name()?;
-        let kwargs = PyDict::new(py);
-        kwargs.set_item("sort_dicts", false)?;
-        let repr = pformat(py, self.inner(), false).map(|x| {
-            let rs_str = x.to_string();
-            let length = rs_str.len();
-            rs_str[1..length - 1].to_string()
-        })?;
-
-        Ok(format!("{name}({repr})"))
+        self.inner_bind(py).as_any().pipe(Self::get_repr)
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
@@ -142,9 +131,7 @@ impl Dict {
     }
 
     fn popitem<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyTuple>> {
-        self.inner_bind(py)
-            .call_method0(intern!(py, "popitem"))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
+        self.inner_bind(py).popitem()
     }
 
     fn clear(&self, py: Python<'_>) {

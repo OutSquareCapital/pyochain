@@ -1,13 +1,15 @@
-pub use super::args::{Args, ConcatWith, Concatenate, Kwargs};
-pub use super::conversions::{IntoPyIterator, TryFromPy, TryIntoPy};
+pub use super::args::CallConcat;
+pub use super::conversions::{IntoPyIterator, IntoSequence, TryFromPy, TryIntoPy};
+pub use super::either::EitherExtMethods;
 pub use super::ext_methods::{
-    ABCRegister, PyDictExtConstructors, PyDictExtMethods, PyListExtMethods, PyRangeExtMethods,
-    PySequenceExtMethods, PySetExtMethods, PySetExtMethodsMut,
+    ABCMethods, CompareOpExtMethods, PyDictExtConstructors, PyDictExtMethods, PyListExtMethods,
+    PyMappingExtMethods, PyRangeExtMethods, PySequenceExtMethods, PySetExtMethods,
+    PySetExtMethodsMut,
 };
-pub use super::iter::{CollectBoundIterator, FromBoundIterator, TryFromBoundIterator, TryIterator};
-pub use super::pyany::PyAnyInPlaceMethods;
+pub use super::iter::{CollectBoundIterator, FromBoundIterator, TryFromBoundIterator};
+pub use super::pyany::PyAnyExtMethods;
 pub use super::types::{
-    PyDequeMethods, PyMutableSequenceMethods, PyMutableSetMethods, PySupportsIndexMethods,
-    PySupportsItemsMethods,
+    ItemsViewMethods, PyDequeMethods, PyMutableSequenceMethods, PyMutableSetMethods,
+    PySupportsIndexMethods, PySupportsItemsMethods,
 };
 pub use crate::{list, tuple};

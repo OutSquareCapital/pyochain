@@ -1,9 +1,12 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    sync::{Mutex, MutexGuard},
+};
 
 use crate::{
     abc,
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
-    traits::PyWrapper,
+    traits::{IntoInit, PyWrapper},
 };
 use pyo3::{
     IntoPyObjectExt, PyTypeInfo,
@@ -14,6 +17,7 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use smallvec::SmallVec;
+use std_tools::prelude::*;
 use tap::prelude::*;
 
 #[pyclass(frozen, module = "pyochain._iterators")]
@@ -21,7 +25,7 @@ pub struct MapJuxt {
     iterator: Py<PyIterator>,
     funcs: SmallVec<[Py<PyAny>; 8]>,
 }
-
+type NextOk<'py> = PyResult<Option<Bound<'py, PyAny>>>;
 #[pymethods]
 impl MapJuxt {
     #[new]
@@ -67,7 +71,7 @@ impl UniqueIdentity {
         .pipe(Ok)
     }
 
-    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+    fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
         let mut iter = self.iter.clone_ref(py).into_bound(py);
         let seen = self.seen.bind(py);
 
@@ -108,7 +112,7 @@ impl UniqueKey {
         .pipe(Ok)
     }
 
-    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+    fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
         let mut iter = self.iter.clone_ref(py).into_bound(py);
         let key = self.key.bind(py);
         let seen = self.seen.bind(py);
@@ -177,44 +181,108 @@ impl Intersperse {
         }
     }
 }
+type WindowVec = SmallVec<[Py<PyAny>; 64]>;
 ///TODO: It's actually slower than cytoolz implementation when `n` is small, we should optimize for that case.\
 /// Observed speeds:\
 /// **0.81x** -> `n=2`\
 /// **0.93x** -> `n=8`\
 /// **1.17x** -> `n=32`\
 /// **1.40x** -> `n=128`\
-#[pyclass(module = "pyochain._iterators")]
-pub struct MapWindow {
-    iter: Py<PyIterator>,
-    prev: SmallVec<[Py<PyAny>; 16]>,
-}
+#[pyclass(module = "pyochain._iterators", frozen)]
+pub struct MapWindow(pub InnerWindow);
 
 #[pymethods]
 impl MapWindow {
-    #[new]
-    pub fn new(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Self> {
-        let py = data.py();
-        std::iter::once(Ok(py.None().into_any()))
+    fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
+        self.0.next(py).and_then_transpose(|item| {
+            self.0
+                .as_tuple(py, item.unbind())
+                .and_then(|arg| self.0.func.bind(py).call1((arg,)))
+        })
+    }
+}
+// TODO: One regression on iterators of 100k elements with 32 window size, need to investigate.
+pub fn get_window_star(
+    data: Bound<'_, PyIterator>,
+    length: usize,
+    func: Py<PyAny>,
+) -> PyResult<Bound<'_, abc::PyoIterator>> {
+    let py = data.py();
+    let inner_window = InnerWindow::new(data, length, func);
+    match length {
+        _ if length > 8 && length < 64 => inner_window
+            .map(MapWindowStarMedium)?
+            .into_bound(py)
+            .map(Bound::into_super),
+        _ => inner_window
+            .map(MapWindowStar)?
+            .into_bound(py)
+            .map(Bound::into_super),
+    }
+}
+#[pyclass(module = "pyochain._iterators", frozen, extends=abc::PyoIterator)]
+pub struct MapWindowStar(pub InnerWindow);
+
+#[pymethods]
+impl MapWindowStar {
+    fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
+        self.0.next(py).and_then_transpose(|item| {
+            let mut vec = self.0.get_vec();
+            move_window(&mut vec, item.unbind());
+            self.0.func.bind(py).call_concat1(&*vec)
+        })
+    }
+}
+
+#[pyclass(module = "pyochain._iterators", frozen, extends=abc::PyoIterator)]
+pub struct MapWindowStarMedium(pub InnerWindow);
+
+#[pymethods]
+impl MapWindowStarMedium {
+    fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
+        self.0.next(py).and_then_transpose(|item| {
+            self.0
+                .as_tuple(py, item.unbind())
+                .and_then(|arg| self.0.func.bind(py).call1(arg))
+        })
+    }
+}
+pub(crate) struct InnerWindow {
+    iter: Py<PyIterator>,
+    prev: Mutex<WindowVec>,
+    func: Py<PyAny>,
+}
+impl InnerWindow {
+    pub fn new(mut data: Bound<'_, PyIterator>, n: usize, func: Py<PyAny>) -> PyResult<Self> {
+        data.py()
+            .None()
+            .into_any()
+            .pipe(Ok)
+            .pipe(std::iter::once)
             .chain(data.by_ref().map(|item| item.map(Bound::unbind)))
             .take(n)
-            .collect::<PyResult<SmallVec<[Py<PyAny>; 16]>>>()
-            .map(|prev| Self {
-                iter: data.unbind(),
-                prev,
-            })
+            .collect::<PyResult<WindowVec>>()
+            .map(Mutex::new)
+            .map(|vec| (data.unbind(), vec))
+            .map(|(iter, prev)| Self { iter, prev, func })
     }
-
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyTuple>>> {
-        let py = slf.py();
-        let item = match slf.iter.clone_ref(py).into_bound(py).next() {
-            None => return Ok(None),
-            Some(result) => result?.unbind(),
-        };
-        slf.prev.rotate_left(1);
-        let last = slf.prev.len() - 1;
-        slf.prev[last] = item;
-        Ok(Some(slf.prev.iter().collect_bound(py)?))
+    fn get_vec(&self) -> MutexGuard<'_, WindowVec> {
+        self.prev.try_into_inner()
     }
+    fn as_tuple<'py>(&self, py: Python<'py>, item: Py<PyAny>) -> PyResult<Bound<'py, PyTuple>> {
+        let mut vec = self.get_vec();
+        move_window(&mut vec, item);
+        vec.iter().collect_bound::<PyTuple>(py)
+    }
+    #[inline]
+    fn next<'py>(&self, py: Python<'py>) -> Option<PyResult<Bound<'py, PyAny>>> {
+        self.iter.clone_ref(py).into_bound(py).next()
+    }
+}
+fn move_window(vec: &mut WindowVec, item: Py<PyAny>) {
+    vec.rotate_left(1);
+    let last = vec.len() - 1;
+    vec[last] = item;
 }
 #[pyclass(frozen, module = "pyochain._iterators")]
 pub struct FilterMap {
@@ -350,7 +418,7 @@ enum FromFnStrategy {
     HasBoth(Py<PyTuple>, Py<PyDict>),
 }
 impl FromFnStrategy {
-    fn new(args: Args<'_>, kwargs: Option<Kwargs<'_>>) -> Self {
+    fn new(args: Bound<'_, PyTuple>, kwargs: Option<Bound<'_, PyDict>>) -> Self {
         match (args.is_empty(), kwargs) {
             (true, None) => Self::NoArgs,
             (false, None) => Self::HasArgs(args.unbind()),
@@ -379,7 +447,11 @@ pub struct FromFn {
 impl FromFn {
     #[pyo3(signature = (func, *args, **kwargs))]
     #[new]
-    pub fn new(func: Py<PyAny>, args: Args<'_>, kwargs: Option<Kwargs<'_>>) -> Self {
+    pub fn new(
+        func: Py<PyAny>,
+        args: Bound<'_, PyTuple>,
+        kwargs: Option<Bound<'_, PyDict>>,
+    ) -> Self {
         Self {
             func,
             strategy: FromFnStrategy::new(args, kwargs),
@@ -600,10 +672,10 @@ impl FilterStar {
             })
             .try_find_map(|res| {
                 let tup = res?;
-                if predicate.call1(&tup)?.is_truthy()? {
-                    Ok(Some(tup))
-                } else {
-                    Ok(None)
+                match predicate.call1(&tup)?.is_truthy() {
+                    Ok(true) => Ok(Some(tup)),
+                    Ok(false) => Ok(None),
+                    Err(e) => Err(e),
                 }
             })
     }
@@ -618,7 +690,7 @@ mod position {
     const LAST: &str = "last";
     const ONLY: &str = "only";
     #[inline(always)]
-    pub fn get(did_iter: bool, has_next: bool, py: Python<'_>) -> &Bound<'_, PyString> {
+    pub fn get(py: Python<'_>, did_iter: bool, has_next: bool) -> &Bound<'_, PyString> {
         match (did_iter, has_next) {
             (false, true) => intern!(py, FIRST),
             (false, false) => intern!(py, ONLY),
@@ -665,7 +737,7 @@ impl WithPosition {
             }
             None => false,
         };
-        let position = position::get(slf.did_iter, has_next, py);
+        let position = position::get(py, slf.did_iter, has_next);
         slf.did_iter = true;
 
         Ok(Some((position, current)))
@@ -707,7 +779,7 @@ impl Unzip {
         .unbind();
         Self { iterator, n }
     }
-    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+    fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
         match self.iterator.clone_ref(py).into_bound(py).next() {
             Some(Ok(item)) => unsafe { item.cast_into_unchecked::<PyTuple>() }
                 .get_item(self.n)
@@ -747,7 +819,11 @@ pub struct OnceWith {
 impl OnceWith {
     #[new]
     #[pyo3(signature = (func, *args, **kwargs))]
-    pub fn new(func: Bound<'_, PyAny>, args: Args<'_>, kwargs: Option<Kwargs<'_>>) -> Self {
+    pub fn new(
+        func: Bound<'_, PyAny>,
+        args: Bound<'_, PyTuple>,
+        kwargs: Option<Bound<'_, PyDict>>,
+    ) -> Self {
         Self {
             func: func.unbind(),
             args: args.unbind(),
@@ -756,7 +832,7 @@ impl OnceWith {
         }
     }
 
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> NextOk<'_> {
         if slf.yielded {
             Ok(None)
         } else {
@@ -834,14 +910,14 @@ impl Iter {
         self.inner().clone_ref(py)
     }
 
-    fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+    fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
         self.inner_into_bound(py).next().transpose()
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name();
+        let name = Self::type_object(py).name()?;
         let inner_repr = self.inner_bind(py).repr()?;
-        Ok(format!("{name:?}({inner_repr:?})"))
+        Ok(format!("{name}({inner_repr})"))
     }
 }
 
@@ -905,7 +981,7 @@ impl Peekable {
 }
 #[pymethods]
 impl Peekable {
-    fn __next__<'py>(&mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+    fn __next__<'py>(&mut self, py: Python<'py>) -> NextOk<'py> {
         match self.peeked.take() {
             Some(value) => Ok(Some(value.into_bound(py))),
             None => self
@@ -1018,7 +1094,7 @@ impl SequenceIterator {
             sequence: sequence.unbind(),
         }
     }
-    fn __next__<'py>(&'py mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+    fn __next__<'py>(&'py mut self, py: Python<'py>) -> NextOk<'py> {
         let v = self.sequence.bind(py).get_item(self.i);
         match v {
             Ok(value) => {
@@ -1050,7 +1126,7 @@ impl SequenceReverseIterator {
             iterator,
         })
     }
-    fn __next__<'py>(&'py mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+    fn __next__<'py>(&'py mut self, py: Python<'py>) -> NextOk<'py> {
         self.iterator
             .next()
             .map(|i| self.sequence.bind(py).get_item(i))
@@ -1072,7 +1148,7 @@ impl ValuesViewIterator {
         })
     }
 
-    fn __next__<'py>(&'py mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+    fn __next__<'py>(&'py mut self, py: Python<'py>) -> NextOk<'py> {
         self.iterator
             .clone_ref(py)
             .into_bound(py)

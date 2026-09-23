@@ -1,163 +1,201 @@
 use crate::{
     abc,
     collections::sorted::{
-        iter,
-        traits::{BaseSortedList, BaseSortedListSet, Reduced, SortedCollection, SortedListGetters},
+        core::{ObjOrVec, SortedCollectionsMethods},
+        getters::ListGetter,
     },
-    core::{PyoVec, iterators},
     traits::IntoInit,
 };
-use pyo3::{PyTypeInfo, prelude::*, types::PyList};
-use pyo3_ext::prelude::*;
-use sorted_rs::{Bounds, ListsData, ListsDataMethods};
-use std::sync::Mutex;
+use pyo3::{exceptions::PyNotImplementedError, prelude::*};
+use pyo3_ext::{prelude::*, types::PyCmpOut};
+use pyochain_macros::py_abc;
+use sorted_rs::{
+    KeysListsData, ListAdd, ListsData,
+    prelude::*,
+    types::{IntOrSlice, SeqOrAny},
+};
+use std::sync::{Arc, Mutex};
+use std_tools::prelude::*;
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
-pub struct SortedList(pub(super) Mutex<ListsData>);
-impl SortedList {
-    #[inline]
-    pub(super) fn new() -> Self {
-        Self(Mutex::new(ListsData::default()))
-    }
-    #[inline]
-    pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
-        let new_inst = Self::new();
-        new_inst.get_data().update(py, values)?;
-        Ok(new_inst)
-    }
-}
+pub struct SortedList(pub(super) Arc<Mutex<ListsData>>);
+
 #[pymethods]
 impl SortedList {
     #[new]
     #[pyo3(signature = (iterable = None))]
     fn py_new(iterable: Option<Bound<'_, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
-        let data = Self::new();
+        let data = Self::from(ListsData::default());
         if let Some(values) = iterable {
-            data.py_update(&values)?;
+            data.extend(&values)?;
         }
-
         data.init().pipe(Ok)
     }
 }
-impl SortedCollection for SortedList {
-    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.get_data().contains(value)
-    }
 
-    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
-        self.get_data()
-            .iter()
-            .collect_bound::<PyList>(py)?
-            .try_into_py::<PyoVec>()
-            .and_then(|x| tuple!(x))
-            .map(|tup| (Self::type_object(py), tup))
-    }
-    fn clear(&self, _py: Python<'_>) {
-        self.get_data().clear();
-    }
+#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
+pub struct SortedKeyList(pub(super) Arc<Mutex<KeysListsData>>);
 
-    fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_left(value)
-    }
-
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_data().bisect_right(value)
-    }
-
-    fn index(
-        &self,
-        value: Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<isize> {
-        self.get_data().index(&value, start, stop)
-    }
-    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.get_data().reset(py, load)
-    }
-    fn irange<'py>(
-        slf: Bound<'py, Self>,
-        minimum: Option<Bound<'py, PyAny>>,
-        maximum: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-        reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let py = slf.py();
-        let specs = slf
-            .get()
-            .get_data()
-            .pipe(|d| Bounds::get_irange_specs(&d.lists, &d.maxes, minimum, maximum, inclusive));
-
-        match specs? {
-            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => Self::islice_iter(slf, bounds, reverse),
+#[pymethods]
+impl SortedKeyList {
+    #[new]
+    #[pyo3(signature = (key, iterable = None, /))]
+    fn py_new(
+        key: Bound<'_, PyAny>,
+        iterable: Option<Bound<'_, PyAny>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
+        let slf = key.unbind().pipe(KeysListsData::new).conv::<Self>();
+        if let Some(iterable) = iterable {
+            slf.extend(&iterable)?;
         }
-    }
-
-    fn islice(
-        slf: Bound<'_, Self>,
-        start: Option<isize>,
-        stop: Option<isize>,
-        reverse: bool,
-    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        Self::islice_list(slf, start, stop, reverse)
+        slf.init().pipe(Ok)
     }
 }
-impl BaseSortedListSet for SortedList {
-    fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        self.get_data().add(py, value)
+
+#[py_abc(SortedList, SortedKeyList)]
+pub(super) trait SortedListMethods:
+    SortedCollectionsMethods
+    + IntoInit
+    + From<<Self as ListGetter>::L>
+    + ListGetter<T = <Self as ListGetter>::L>
+{
+    fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        let py = other.py();
+        let out = into_list_add(self, other)?;
+        self.lock().concat(py, out)?.conv::<Self>().into_bound(py)
+    }
+    fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.copy(py)
+    }
+    fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
+        self.lock().eq(other)
     }
 
-    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_data().discard(value)
+    fn __ne__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
+        self.lock().ne(other)
     }
 
-    fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_data().remove(value)
+    fn __lt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
+        self.lock().lt(other)
     }
 
-    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.get_data().collapse(py))?.into_bound(py)
-    }
-}
-impl BaseSortedList for SortedList {
-    fn __add__<'py>(
-        slf: Bound<'py, Self>,
-        other: &Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        let py = slf.py();
-        let data = slf.get().get_data();
-        let out = if other.is(&slf) {
-            data.repeat(py, 2)
-        } else {
-            data.concat(py, other)?
-        };
-        Self::from_vec(py, out)?.into_bound(py)
+    fn __gt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
+        self.lock().gt(other)
     }
 
+    fn __le__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
+        self.lock().le(other)
+    }
+
+    fn __ge__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
+        self.lock().ge(other)
+    }
+
+    fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
+        self.lock().del_item_or_slice(index)
+    }
+
+    fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
+        self.lock()
+            .get_item_or_slice(index)
+            .and_then_left(Bound::try_into_py)
+    }
+    fn __len__(&self) -> usize {
+        self.lock().len
+    }
+
+    fn __radd__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.__add__(other)
+    }
+    fn __rmul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
+        self.__mul__(py, num)
+    }
+    #[allow(unused_variables)]
+    fn __setitem__(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let msg = "use ``del sl[index]`` and ``sl.add(value)`` instead";
+        Err(PyNotImplementedError::new_err(msg))
+    }
+
+    fn __iadd__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
+        self.extend(&other)
+    }
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.get_data().repeat(py, num))?.into_bound(py)
-    }
-
-    // @recursive_repr()
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let cls_name = Self::type_object(py).name()?;
-        self.get_data()
-            .iter()
-            .collect_bound::<PyList>(py)?
-            .repr()
-            .map(|repr| format!("{cls_name}({repr})"))
-    }
-
-    fn wrap_iter(
-        py: Python<'_>,
-        inner: iter::BoundedIter<Self>,
-    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        iter::SortedIter::new(inner)
+        self.lock()
+            .as_repeated(py, num)?
+            .conv::<Self>()
             .into_bound(py)
-            .map(Bound::into_super)
+    }
+    fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
+        self.lock().imul(py, num)
+    }
+    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+        self.lock().contains(value)
+    }
+    #[allow(unused_variables)]
+    fn append(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let msg = "use ``sl.add(value)`` instead";
+        Err(PyNotImplementedError::new_err(msg))
+    }
+    fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.lock().add(value)
+    }
+    fn clear(&self, py: Python<'_>) {
+        self.lock().clear(py);
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
-        self.get_data().count(&value)
+        self.lock().count(&value)
+    }
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.lock().copy(py)?.conv::<Self>().into_bound(py)
+    }
+    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.lock().discard(value)
+    }
+    fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = iterable.py();
+        let out = into_list_add(self, iterable)?;
+        match out {
+            ListAdd::Identity => {
+                let values = self.lock().collapse(py);
+                self.lock().extend(py, values)
+            }
+            ListAdd::Sorted(list) => {
+                let values = list.collapse(py);
+                self.lock().extend(py, values)
+            }
+            ListAdd::Iterator(it) => {
+                let values = it
+                    .map(|x| x?.unbind().pipe(Ok))
+                    .collect::<PyResult<Vec<_>>>()?;
+                self.lock().extend(py, values)
+            }
+        }
+    }
+    #[allow(unused_variables)]
+    fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let msg = "use ``sl.add(value)`` instead";
+        Err(PyNotImplementedError::new_err(msg))
+    }
+    #[pyo3(signature = (index = -1))]
+    fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
+        self.lock().pop(py, index)
+    }
+    fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.lock().remove(value)
+    }
+    fn reverse(&self) -> PyResult<()> {
+        let msg = "use ``sl.rev()`` instead";
+        Err(PyNotImplementedError::new_err(msg))
+    }
+}
+
+fn into_list_add<'py, T: SortedListMethods>(
+    left: &T,
+    right: &'py Bound<'py, PyAny>,
+) -> PyResult<ListAdd<'py, T::L>> {
+    match right.cast_exact::<T>().map(Bound::get) {
+        Ok(slf) if left.as_ref().is(slf.as_ref()) => ListAdd::Identity.pipe(Ok),
+        Ok(list) => list.lock().pipe(ListAdd::Sorted).pipe(Ok),
+        Err(_) => right.try_iter().map(ListAdd::Iterator),
     }
 }

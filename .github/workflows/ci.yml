@@ -23,6 +23,8 @@ jobs:
           - rust-format
           - ruff-lint
           - ruff-format
+          - tombi-format
+          - tombi-lint
           - stub-order
           - stub-docstrings
           - basedpyright
@@ -54,6 +56,14 @@ jobs:
         run: uv run ruff format --check --preview .
         if: matrix.check == 'ruff-format'
 
+      - name: Check TOML formatting with Tombi
+        run: uv run tombi format --check
+        if: matrix.check == 'tombi-format'
+
+      - name: Check TOML linting with Tombi
+        run: uv run tombi lint
+        if: matrix.check == 'tombi-lint'
+
       - name: Check stub ordering
         run: uv run sdsort . --stubs --check
         if: matrix.check == 'stub-order'
@@ -75,7 +85,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.13', '3.14']
+        python-version: ["3.13", "3.14"]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check out repository

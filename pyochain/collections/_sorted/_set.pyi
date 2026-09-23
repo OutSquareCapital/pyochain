@@ -4,32 +4,18 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from collections.abc import Set as AbstractSet
-from types import NotImplementedType
 from typing import Any, Final, Self, final, overload, override
 
 from pyochain import SetMut, Vec
+from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
-from ._list import BaseSortedListSet
-from ._views import SupportsHashableAndRichComparison
+from ._core import BaseSortedListSet
 
 class BaseSortedSet[T: SupportsHashableAndRichComparison](
     PyoMutableSet[T], PyoSequence[T], BaseSortedListSet[T], ABC
 ):
     set: Final[SetMut[T]]
-    @override
-    @abstractmethod
-    def __reduce__(
-        self,
-    ) -> tuple[type[Self], tuple[AbstractSet[T]]]:
-        """Support for pickle.
-
-        The tricks played with exposing methods in `SortedSet.__init__` confuse pickle so customize the reducer.
-
-        Returns:
-            tuple[type[Self], tuple[AbstractSet[T]]]: tuple of class and arguments
-
-        """
 
     @override
     def __contains__(self, value: object) -> bool:
@@ -116,25 +102,17 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         """
 
     @override
-    def __eq__(self, other: object) -> bool | NotImplementedType: ...
+    def __eq__(self, other: object) -> bool: ...
     @override
-    def __ne__(self, other: object) -> bool | NotImplementedType: ...
+    def __ne__(self, other: object) -> bool: ...
     @override
-    def __lt__(
-        self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType: ...
+    def __lt__(self, other: AbstractSet[object] | Self | object) -> bool: ...
     @override
-    def __gt__(
-        self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType: ...
+    def __gt__(self, other: AbstractSet[object] | Self | object) -> bool: ...
     @override
-    def __le__(
-        self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType: ...
+    def __le__(self, other: AbstractSet[object] | Self | object) -> bool: ...
     @override
-    def __ge__(
-        self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType: ...
+    def __ge__(self, other: AbstractSet[object] | Self | object) -> bool: ...
     @override
     def __len__(self) -> int:
         """Return the size of the sorted set.
@@ -193,7 +171,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
     @override
     @abstractmethod
     # pyrefly: ignore [bad-override]
-    def union(self, *iterables: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def union(self, *iterables: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return new sorted set with values from itself and all `iterables`.
 
         The `union` method also corresponds to operator ``|``.
@@ -384,7 +362,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
     @override
     # pyrefly: ignore [bad-override]
-    def difference(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def difference(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return the difference of two or more sets as a new sorted set.
 
         The `difference` method also corresponds to operator ``-``.
@@ -409,7 +387,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         """
 
-    def difference_update(self, *iterables: Iterable[T]) -> Self:
+    def difference_update(self, *iterables: Iterable[T]) -> None:
         """Remove all values of `iterables` from this sorted set.
 
         The `difference_update` method also corresponds to operator ``-=``.
@@ -418,9 +396,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Args:
             *iterables (Iterable[T]): iterable arguments
-
-        Returns:
-            Self: updated sorted set
 
         Examples:
             ```python
@@ -434,7 +409,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
     @override
     # pyrefly: ignore [bad-override]
-    def intersection(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def intersection(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         """Return the intersection of two or more sets as a new sorted set.
 
         The `intersection` method also corresponds to operator ``&``.
@@ -460,7 +435,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         """
 
-    def intersection_update(self, *iterables: Iterable[Any]) -> Self:
+    def intersection_update(self, *iterables: Iterable[Any]) -> None:
         """In-place update of the sorted set with the intersection of `iterables`.
 
         The `intersection_update` method also corresponds to operator ``&=``.
@@ -471,9 +446,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Args:
             *iterables (Iterable[Any]): iterable arguments
-
-        Returns:
-            Self: updated sorted set
 
         Examples:
             ```python
@@ -514,7 +486,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         """
 
-    def symmetric_difference_update(self, other: Iterable[T]) -> Self:
+    def symmetric_difference_update(self, other: Iterable[T]) -> None:
         """In-place update of the sorted set with the symmetric difference with `other`.
 
         The `symmetric_difference_update` method also corresponds to operator
@@ -527,9 +499,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         Args:
             other (Iterable[T]): `other` iterable
 
-        Returns:
-            Self: updated sorted set
-
         Examples:
             ```python
             from pyochain.collections import SortedSet
@@ -540,7 +509,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ```
         """
 
-    def update(self, *iterables: Iterable[T]) -> Self:
+    def update(self, *iterables: Iterable[T]) -> None:
         """In-place update of the sorted set, adding values from all `iterables`.
 
         The `update` method also corresponds to operator ``|=``.
@@ -550,9 +519,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Args:
             *iterables (Iterable[T]): iterable arguments
-
-        Returns:
-            Self: updated sorted set
 
         Examples:
             ```python
@@ -600,9 +566,5 @@ class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
     """
 
     def __init__(self, iterable: Iterable[T] | None = None) -> None: ...
-    @override
-    def __reduce__(
-        self,
-    ) -> tuple[type[Self], tuple[AbstractSet[T]]]: ...
     @override
     def union(self, *iterables: Iterable[T]) -> Self: ...

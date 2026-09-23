@@ -34,6 +34,10 @@ pub(crate) fn generate(
     mut item_trait: ItemTrait,
     types: &Punctuated<Type, token::Comma>,
 ) -> SynResult<proc_macro2::TokenStream> {
+    let auto_impl = item_trait
+        .items
+        .iter()
+        .all(|item| matches!(item, TraitItem::Fn(method) if method.default.is_some()));
     let methods = item_trait
         .items
         .iter_mut()
@@ -52,9 +56,23 @@ pub(crate) fn generate(
             }
         }
     });
+    let trait_implementations = if auto_impl {
+        types
+            .iter()
+            .map(|ty| {
+                let trait_ident = &item_trait.ident;
+                quote! {
+                    impl #trait_ident for #ty {}
+                }
+            })
+            .collect::<Vec<_>>()
+    } else {
+        Vec::new()
+    };
 
     Ok(quote! {
         #item_trait
+        #(#trait_implementations)*
         #(#implementations)*
     })
 }

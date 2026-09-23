@@ -116,7 +116,8 @@ class Vec[T](PyoMutableSequence[T], ArgsWrapper[T]):
     def from_iter[I](iterable: Iterable[I], /) -> Vec[I]: ...
     @staticmethod
     @override
-    def wrap[S](iterable: list[S]) -> Vec[S]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    # pyrefly: ignore [bad-override]
+    def wrap[S](iterable: list[S]) -> Vec[S]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     def reverse(self) -> None: ...
     @override

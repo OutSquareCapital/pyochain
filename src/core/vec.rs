@@ -1,8 +1,8 @@
-use crate::{abc, display::get_repr, traits::PyWrapper};
+use crate::{abc, traits::PyWrapper};
 
 use either::Either;
 use pyo3::{
-    PyTypeInfo, ffi, intern,
+    ffi, intern,
     prelude::*,
     types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PySlice},
 };
@@ -25,10 +25,7 @@ impl PyoVec {
         self.inner_bind(key.py()).contains(key)
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name()?;
-        self.inner_bind(py)
-            .pipe_ref(get_repr)
-            .map(|repr| format!("{name}({repr})"))
+        self.inner_bind(py).as_any().pipe(Self::get_repr)
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {
@@ -142,11 +139,14 @@ impl PyoVec {
     #[pyo3(signature = (*, reverse=false))]
     fn sort(slf: Bound<'_, Self>, reverse: bool) -> PyResult<Bound<'_, Self>> {
         let py = slf.py();
-        let kwargs = PyDict::new(py);
-        kwargs.set_item(intern!(py, "reverse"), reverse)?;
-        slf.get()
-            .inner_bind(py)
-            .call_method(intern!(py, "sort"), (), Some(&kwargs))?;
+        let list = slf.get().inner_bind(py);
+        if reverse {
+            let kwargs = PyDict::new(py);
+            kwargs.set_item(intern!(py, "reverse"), reverse)?;
+            list.call_method(intern!(py, "sort"), (), Some(&kwargs))?;
+        } else {
+            list.sort()?;
+        }
         Ok(slf)
     }
     #[pyo3(signature = (key, *, reverse=false))]
@@ -201,10 +201,7 @@ impl PyoVec {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.inner_bind(py)
-            .call_method0(intern!(py, "copy"))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
-            .and_then(Bound::try_into_py)
+        self.inner_bind(py).copy().and_then(Bound::try_into_py)
     }
     #[pyo3(signature = (value, /))]
     fn count<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {

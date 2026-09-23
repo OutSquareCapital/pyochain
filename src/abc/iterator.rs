@@ -4,7 +4,8 @@ use pyo3::{
     ffi, intern,
     prelude::*,
     types::{
-        PyBool, PyFunction, PyInt, PyIterator, PyList, PySequence, PySet, PyString, PyTuple, PyType,
+        PyBool, PyDict, PyFunction, PyInt, PyIterator, PyList, PySequence, PySet, PyString,
+        PyTuple, PyType,
     },
 };
 use tap::Pipe;
@@ -32,8 +33,8 @@ impl PyoIterator {
     fn once_with<'py>(
         cls: &Bound<'py, PyType>,
         func: Bound<'py, PyAny>,
-        args: Args<'_>,
-        kwargs: Option<Kwargs<'_>>,
+        args: Bound<'_, PyTuple>,
+        kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<Bound<'py, Self>> {
         iterators::OnceWith::new(func, args, kwargs).pipe(|x| iterator_into_iter(x, cls.py()))
     }
@@ -42,8 +43,8 @@ impl PyoIterator {
     fn from_fn<'py>(
         cls: &Bound<'py, PyType>,
         f: Bound<'py, PyAny>,
-        args: Args<'_>,
-        kwargs: Option<Kwargs<'_>>,
+        args: Bound<'_, PyTuple>,
+        kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<Bound<'py, Self>> {
         iterators::FromFn::new(f.unbind(), args, kwargs).pipe(|x| iterator_into_iter(x, cls.py()))
     }
@@ -168,7 +169,7 @@ impl PyoIterator {
 
         Ok(count)
     }
-
+    // TODO: Use `TryIterator` methods here. Need to benchmark current impl first.
     #[pyo3(signature = (predicate=None))]
     fn any<'py>(
         slf: &Bound<'py, Self>,
@@ -188,6 +189,7 @@ impl PyoIterator {
             None => pylibs::builtins::any(&slf),
         }
     }
+    // TODO: Use `TryIterator` methods here. Need to benchmark current impl first.
     #[pyo3(signature = (predicate=None))]
     fn all<'py>(
         slf: &Bound<'py, Self>,
@@ -490,10 +492,11 @@ impl PyoIterator {
         }
     }
     #[pyo3(signature = (*others))]
-    fn chain<'py>(slf: Bound<'py, Self>, others: &Args<'py>) -> PyResult<Bound<'py, Self>> {
-        slf.into_any()
-            .concat_with(others)
-            .and_then(|x| pylibs::itertools::chain::new(&x))?
+    fn chain<'py>(
+        slf: Bound<'py, Self>,
+        others: &Bound<'py, PyTuple>,
+    ) -> PyResult<Bound<'py, Self>> {
+        pylibs::itertools::chain::new(slf.py(), (slf.into_any(), others))?
             .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
@@ -508,8 +511,8 @@ impl PyoIterator {
     fn for_each(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let mut slf = slf.try_iter()?;
         match (args.is_empty(), kwargs) {
@@ -522,11 +525,11 @@ impl PyoIterator {
                 Ok(())
             }),
             (false, Some(_)) => slf.try_for_each(|item| {
-                func.concat(&item?, args, kwargs)?;
+                func.call_concat((&item?, args), kwargs)?;
                 Ok(())
             }),
             (false, None) => slf.try_for_each(|item| {
-                func.concat1(&item?, args)?;
+                func.call_concat1((&item?, args))?;
                 Ok(())
             }),
         }
@@ -535,8 +538,8 @@ impl PyoIterator {
     fn for_each_star(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let mut slf = slf.try_iter()?;
         match (args.is_empty(), kwargs) {
@@ -549,11 +552,11 @@ impl PyoIterator {
                 Ok(())
             }),
             (false, None) => slf.try_for_each(|item| {
-                func.concat_star1(item?.cast_exact::<PyTuple>()?, args)?;
+                func.call_concat1((item?.cast_exact::<PyTuple>()?, args))?;
                 Ok(())
             }),
             (false, Some(_)) => slf.try_for_each(|item| {
-                func.concat_star(item?.cast_exact::<PyTuple>()?, args, kwargs)?;
+                func.call_concat((item?.cast_exact::<PyTuple>()?, args), kwargs)?;
                 Ok(())
             }),
         }
@@ -709,28 +712,29 @@ impl PyoIterator {
         slf: &Bound<'py, Self>,
         init: Bound<'py, PyAny>,
         func: &Bound<'py, PyAny>,
-        args: &Args<'py>,
-        kwargs: Option<&Kwargs<'py>>,
+        args: &Bound<'py, PyTuple>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let mut slf = slf.try_iter()?;
         match (args.is_empty(), kwargs) {
             (true, None) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, args)
+                func.call_concat1((&acc, item?.cast_exact::<PyTuple>()?, args))
             }),
 
             (false, None) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, args)
+                func.call_concat1((&acc, item?.cast_exact::<PyTuple>()?, args))
             }),
 
             (true, Some(_)) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, args, kwargs)
+                func.call_concat((&acc, item?.cast_exact::<PyTuple>()?, args), kwargs)
             }),
 
             (false, Some(_)) => slf.try_fold(init, |acc, item| {
-                func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, args, kwargs)
+                func.call_concat((&acc, item?.cast_exact::<PyTuple>()?, args), kwargs)
             }),
         }
     }
+    // TODO: Use `TryIterator` methods here. Need to benchmark current impl first.
     fn find(slf: &Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         slf.try_iter()?
@@ -975,14 +979,14 @@ impl PyoIterator {
     fn map_windows<'py>(
         slf: &Bound<'py, Self>,
         length: usize,
-        func: &Bound<'py, PyAny>,
+        func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
         slf.try_iter()
-            .and_then(|x| iterators::MapWindow::new(x, length))
+            .and_then(|x| iterators::InnerWindow::new(x, length, func.unbind()))
+            .map(iterators::MapWindow)
             .and_then(|x| x.into_bound_py_any(py))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
-            .and_then(|x| pylibs::builtins::map(func, &x))
             .and_then(pyiterator_into_iter)
     }
     fn map_windows_star<'py>(
@@ -990,22 +994,16 @@ impl PyoIterator {
         length: usize,
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        let py = slf.py();
         slf.try_iter()
-            .and_then(|x| iterators::MapWindow::new(x, length))
-            .and_then(|x| x.into_bound_py_any(py))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
-            .and_then(|x| pylibs::itertools::map_star(func, x))
-            .and_then(pyiterator_into_iter)
+            .and_then(|x| iterators::get_window_star(x, length, func.unbind()))
     }
     #[pyo3(signature = (func, *iterables))]
     fn map_with<'py>(
         slf: &Bound<'py, Self>,
         func: Bound<'py, PyAny>,
-        iterables: &Args<'py>,
+        iterables: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        func.concat_with_2(slf.try_iter()?.as_any(), iterables)
-            .pipe_ref(pylibs::builtins::map_with)?
+        pylibs::builtins::map_with(slf.py(), (func, slf.try_iter()?.as_any(), iterables))?
             .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
@@ -1069,12 +1067,10 @@ impl PyoIterator {
     #[pyo3(signature = (*others, repeat=1))]
     fn product<'py>(
         slf: Bound<'py, Self>,
-        others: &Args<'py>,
+        others: &Bound<'py, PyTuple>,
         repeat: usize,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.into_any()
-            .concat_with(others)
-            .and_then(|x| pylibs::itertools::product(&x, repeat))?
+        pylibs::itertools::product(slf.py(), (slf.into_any(), others), repeat)?
             .try_into_py::<iterators::Iter>()
             .map(Bound::into_super)
     }
@@ -1162,8 +1158,8 @@ impl PyoIterator {
     fn unpack_into<'py>(
         slf: &Bound<'py, Self>,
         func: &Bound<'py, PyAny>,
-        args: &Args<'py>,
-        kwargs: Option<&Kwargs<'py>>,
+        args: &Bound<'py, PyTuple>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let slf = slf.try_iter()?;
         let py = slf.py();
@@ -1171,7 +1167,7 @@ impl PyoIterator {
             Bound::from_owned_ptr(py, ffi::PySequence_Tuple(slf.as_ptr()))
                 .cast_into_unchecked::<PyTuple>()
         };
-        func.concat_star(&unpacked, args, kwargs)
+        func.call_concat((&unpacked, args), kwargs)
     }
     fn unique<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()

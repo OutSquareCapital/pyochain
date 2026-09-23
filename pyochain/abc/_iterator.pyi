@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from collections.abc import Callable, Collection, Iterable, Iterator, MutableSequence
+from collections.abc import Callable, Iterable, Iterator, MutableSequence
 from typing import (
     Any,
     Concatenate,
@@ -340,16 +340,16 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
     @overload
     def accumulate[S](
-        self: PyoIterator[S], func: None = None, initial: S | None = None
+        self: Iterator[S], func: None = None, initial: S | None = None
     ) -> PyoIterator[S]: ...
     @overload
     def accumulate[I, N](
-        self: PyoIterator[N],
+        self: Iterator[N],
         func: Callable[[I, N], I],
         initial: I | None = None,
     ) -> PyoIterator[I]: ...
     def accumulate[S](
-        self: PyoIterator[S],
+        self: Iterator[S],
         func: Callable[[S, S], S] | None = None,
         initial: S | None = None,
     ) -> PyoIterator[S]:
@@ -743,20 +743,18 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     @overload
-    def chain[S, O1](
-        self: PyoIterator[S], o1: Iterable[O1], /
-    ) -> PyoIterator[S | O1]: ...
+    def chain[S, O1](self: Iterator[S], o1: Iterable[O1], /) -> PyoIterator[S | O1]: ...
     @overload
     def chain[S, O1, O2](
-        self: PyoIterator[S], o1: Iterable[O1], o2: Iterable[O2], /
+        self: Iterator[S], o1: Iterable[O1], o2: Iterable[O2], /
     ) -> PyoIterator[S | O1 | O2]: ...
     @overload
     def chain[S, O1, O2, O3](
-        self: PyoIterator[S], o1: Iterable[O1], o2: Iterable[O2], o3: Iterable[O3], /
+        self: Iterator[S], o1: Iterable[O1], o2: Iterable[O2], o3: Iterable[O3], /
     ) -> PyoIterator[S | O1 | O2 | O3]: ...
     @overload
     def chain[S, O1, O2, O3, O4](
-        self: PyoIterator[S],
+        self: Iterator[S],
         o1: Iterable[O1],
         o2: Iterable[O2],
         o3: Iterable[O3],
@@ -765,7 +763,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> PyoIterator[S | O1 | O2 | O3 | O4]: ...
     @overload
     def chain[S, O1, O2, O3, O4, O5](
-        self: PyoIterator[S],
+        self: Iterator[S],
         o1: Iterable[O1],
         o2: Iterable[O2],
         o3: Iterable[O3],
@@ -773,7 +771,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         o5: Iterable[O5],
         /,
     ) -> PyoIterator[S | O1 | O2 | O3 | O4 | O5]: ...
-    def chain[S, O](self: PyoIterator[S], *others: Iterable[O]) -> PyoIterator[S | O]:
+    def chain[S, O](self: Iterator[S], *others: Iterable[O]) -> PyoIterator[S | O]:
         """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
 
         In other words, it links **self** and **others** together, in a chain. 🔗
@@ -812,29 +810,22 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def collect[R: Collection[Any]](self, collector: Callable[[Iterator[T]], R]) -> R:
-        """Transforms the `Iterator` into a collection.
+    def collect[R](self, collector: Callable[[Iterator[T]], R]) -> R:
+        """Consume the `Iterator` into the *collector* type or function.
 
         The most basic pattern in which `collect()` is used is to turn one collection into another.
 
-        You take a collection, call `iter()` on it, do a bunch of transformations, and then `collect()` at the end.
+        You take a collection, call [`iter()`][PyoIterator.iter] on it, do a bunch of transformations, and then `collect()` at the end.
 
-        You specify the target `Collection` type by providing a **collector** function or type.
+        The *collector* can be any `Callable` that takes an `Iterator[T]` as an input.
 
-        This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
-
-        This is equivalent to `Pipe::pipe` at runtime, but with a few differences:
-
-            - A narrower constraint (`Collection[Any]`) to specify the intent
-            - Better performance (no args/kwargs unpacking).
-
-        If you need to pass additional arguments, you can use [`Pipe::pipe`][Pipe.pipe] instead.
+        This is equivalent to [`Pipe::pipe`][Pipe.pipe] at runtime, but with a more idiomatic name, and better performance (no args/kwargs unpacking).
 
         Args:
-            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection.
+            collector (Callable[[Iterator[T]], R]): Function|type that can take an `Iterator` as input.
 
         Returns:
-            R: A materialized `Collection` containing the collected elements.
+            R: The result of the *collector* output.
 
         Example:
             ```python
@@ -864,7 +855,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
                 .collect(Seq[Result[int, int]])
             )
-            assert data.pipe(repr) == "Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))"
+            assert data == Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
             ```
             Strictly speaking, this is equivalent to annotating the variable at the beginning, but some may prefer this style to keep the type information close to the actual collection operation.
 
@@ -872,13 +863,13 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     @overload
-    def collect_into[S](self: PyoIterator[S], collection: Vec[S]) -> Vec[S]: ...
+    def collect_into[S](self: Iterator[S], collection: Vec[S]) -> Vec[S]: ...
     @overload
     def collect_into[S](
-        self: PyoIterator[S], collection: PyoMutableSequence[S]
+        self: Iterator[S], collection: PyoMutableSequence[S]
     ) -> PyoMutableSequence[S]: ...
     @overload
-    def collect_into[S](self: PyoIterator[S], collection: list[S]) -> list[S]: ...
+    def collect_into[S](self: Iterator[S], collection: list[S]) -> list[S]: ...
     def collect_into(self, collection: MutableSequence[T]) -> MutableSequence[T]:
         """Collects all the items from the `Iterator` into a `MutableSequence`.
 
@@ -925,6 +916,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def combinations(self, r: Literal[4]) -> PyoIterator[tuple[T, T, T, T]]: ...
     @overload
     def combinations(self, r: Literal[5]) -> PyoIterator[tuple[T, T, T, T, T]]: ...
+    @overload
+    def combinations(self, r: int) -> PyoIterator[tuple[T, ...]]: ...
     def combinations(self, r: int) -> PyoIterator[tuple[T, ...]]:
         """Return an `Iterator` of `tuple` with **r** elements of type `T`.
 
@@ -1173,7 +1166,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     @overload
-    def filter[N](self: PyoIterator[N | None], func: None = None) -> PyoIterator[N]: ...
+    def filter[N](self: Iterator[N | None], func: None = None) -> PyoIterator[N]: ...
     @overload
     def filter[R](self, func: Callable[[T], TypeIs[R]]) -> PyoIterator[R]: ...
     @overload
@@ -1235,7 +1228,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
     @overload
     def filter_false[N](
-        self: PyoIterator[N | None], func: None = None
+        self: Iterator[N | None], func: None = None
     ) -> PyoIterator[None]: ...
     @overload
     def filter_false[U](self, func: Callable[[T], TypeIs[U]]) -> PyoIterator[U]: ...
@@ -1315,56 +1308,56 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
     @overload
     def filter_map_star[R](
-        self: PyoIterator[tuple[Any]],
+        self: Iterator[tuple[Any]],
         func: Callable[[Any], Option[R]],
     ) -> PyoIterator[R]: ...
     @overload
     def filter_map_star[T1, T2, R](
-        self: PyoIterator[tuple[T1, T2]],
+        self: Iterator[tuple[T1, T2]],
         func: Callable[[T1, T2], Option[R]],
     ) -> PyoIterator[R]: ...
     @overload
     def filter_map_star[T1, T2, T3, R](
-        self: PyoIterator[tuple[T1, T2, T3]],
+        self: Iterator[tuple[T1, T2, T3]],
         func: Callable[[T1, T2, T3], Option[R]],
     ) -> PyoIterator[R]: ...
     @overload
     def filter_map_star[T1, T2, T3, T4, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        self: Iterator[tuple[T1, T2, T3, T4]],
         func: Callable[[T1, T2, T3, T4], Option[R]],
     ) -> PyoIterator[R]: ...
     @overload
     def filter_map_star[T1, T2, T3, T4, T5, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5]],
         func: Callable[[T1, T2, T3, T4, T5], Option[R]],
     ) -> PyoIterator[R]: ...
     @overload
     def filter_map_star[T1, T2, T3, T4, T5, T6, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
         func: Callable[[T1, T2, T3, T4, T5, T6], Option[R]],
     ) -> PyoIterator[R]: ...
     @overload
     def filter_map_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7], Option[R]],
     ) -> PyoIterator[R]: ...
     @overload
     def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Option[R]],
     ) -> PyoIterator[R]: ...
     @overload
     def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Option[R]],
     ) -> PyoIterator[R]: ...
     @overload
     def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Option[R]],
     ) -> PyoIterator[R]: ...
     def filter_map_star[U: Iterable[Any], R](
-        self: PyoIterator[U], func: Callable[..., Option[R]]
+        self: Iterator[U], func: Callable[..., Option[R]]
     ) -> PyoIterator[R]:
         """Creates an iterator that both filters and maps, where each element is an iterable.
 
@@ -1404,82 +1397,82 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
     @overload
     def filter_star[T1, R](
-        self: PyoIterator[tuple[T1]], func: Callable[[T1], TypeIs[R]]
+        self: Iterator[tuple[T1]], func: Callable[[T1], TypeIs[R]]
     ) -> PyoIterator[tuple[R]]: ...
     @overload
     def filter_star[T1, R](
-        self: PyoIterator[tuple[T1]], func: Callable[[T1], TypeGuard[R]]
+        self: Iterator[tuple[T1]], func: Callable[[T1], TypeGuard[R]]
     ) -> PyoIterator[tuple[R]]: ...
     @overload
     def filter_star[T1](
-        self: PyoIterator[tuple[T1]], func: Callable[[T1], object]
+        self: Iterator[tuple[T1]], func: Callable[[T1], object]
     ) -> PyoIterator[tuple[T1]]: ...
     @overload
     def filter_star[T1, T2, R, R2](
-        self: PyoIterator[tuple[T1, T2]], func: Callable[[T1, T2], TypeIs[tuple[R, R2]]]
+        self: Iterator[tuple[T1, T2]], func: Callable[[T1, T2], TypeIs[tuple[R, R2]]]
     ) -> PyoIterator[tuple[R, R2]]: ...
     @overload
     def filter_star[T1, T2, R, R2](
-        self: PyoIterator[tuple[T1, T2]],
+        self: Iterator[tuple[T1, T2]],
         func: Callable[[T1, T2], TypeGuard[tuple[R, R2]]],
     ) -> PyoIterator[tuple[R, R2]]: ...
     @overload
     def filter_star[T1, T2](
-        self: PyoIterator[tuple[T1, T2]],
+        self: Iterator[tuple[T1, T2]],
         func: Callable[[T1, T2], object],
     ) -> PyoIterator[tuple[T1, T2]]: ...
     @overload
     def filter_star[T1, T2, T3, R, R2, R3](
-        self: PyoIterator[tuple[T1, T2, T3]],
+        self: Iterator[tuple[T1, T2, T3]],
         func: Callable[[T1, T2, T3], TypeIs[tuple[R, R2, R3]]],
     ) -> PyoIterator[tuple[R, R2, R3]]: ...
     @overload
     def filter_star[T1, T2, T3, R, R2, R3](
-        self: PyoIterator[tuple[T1, T2, T3]],
+        self: Iterator[tuple[T1, T2, T3]],
         func: Callable[[T1, T2, T3], TypeGuard[tuple[R, R2, R3]]],
     ) -> PyoIterator[tuple[R, R2, R3]]: ...
     @overload
     def filter_star[T1, T2, T3](
-        self: PyoIterator[tuple[T1, T2, T3]],
+        self: Iterator[tuple[T1, T2, T3]],
         func: Callable[[T1, T2, T3], object],
     ) -> PyoIterator[tuple[T1, T2, T3]]: ...
     @overload
     def filter_star[T1, T2, T3, T4](
-        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        self: Iterator[tuple[T1, T2, T3, T4]],
         func: Callable[[T1, T2, T3, T4], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5]],
         func: Callable[[T1, T2, T3, T4, T5], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5, T6](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
         func: Callable[[T1, T2, T3, T4, T5, T6], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5, T6, T7](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5, T6, T7, T8](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
     def filter_star[U: tuple[Any, ...]](
-        self: PyoIterator[U], func: Callable[..., object]
+        self: Iterator[U], func: Callable[..., object]
     ) -> PyoIterator[U]:
         """Creates an `Iterator` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
 
@@ -1588,10 +1581,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     # NOTE: I'm not sure if that's the best way to type this, but at least it allows to have a `Never` return type when the `Iterator` is not of `Iterable` type.
     # It clearly separates it from an `Unknown` return type, that may be shrugged off as a typing limitation, but in this case it is a clear indication that the `Iterator` is not of `Iterable` type and thus cannot be flattened.
     @overload
-    def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]: ...
+    def flatten[U](self: Iterator[Iterable[U]]) -> PyoIterator[U]: ...
     @overload
     def flatten(self) -> Never: ...
-    def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]:
+    def flatten[U](self: Iterator[Iterable[U]]) -> PyoIterator[U]:
         """Creates an `Iterator` that flattens nested structures.
 
         This is useful when you have an `Iterator` of `Iterable` and you want to remove one level of indirection.
@@ -1660,7 +1653,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
     @overload
     def fold_star[**P, B](
-        self: PyoIterator[tuple[Any]],
+        self: Iterator[tuple[Any]],
         init: B,
         func: Callable[[Any], B],
         *args: P.args,
@@ -1668,7 +1661,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> B: ...
     @overload
     def fold_star[T1, T2, **P, B](
-        self: PyoIterator[tuple[T1, T2]],
+        self: Iterator[tuple[T1, T2]],
         init: B,
         func: Callable[Concatenate[B, T1, T2, P], B],
         *args: P.args,
@@ -1676,7 +1669,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> B: ...
     @overload
     def fold_star[T1, T2, T3, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3]],
+        self: Iterator[tuple[T1, T2, T3]],
         init: B,
         func: Callable[Concatenate[B, T1, T2, T3, P], B],
         *args: P.args,
@@ -1684,7 +1677,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> B: ...
     @overload
     def fold_star[T1, T2, T3, T4, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        self: Iterator[tuple[T1, T2, T3, T4]],
         init: B,
         func: Callable[Concatenate[B, T1, T2, T3, T4, P], B],
         *args: P.args,
@@ -1692,7 +1685,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> B: ...
     @overload
     def fold_star[T1, T2, T3, T4, T5, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5]],
         init: B,
         func: Callable[Concatenate[B, T1, T2, T3, T4, T5, P], B],
         *args: P.args,
@@ -1700,7 +1693,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> B: ...
     @overload
     def fold_star[T1, T2, T3, T4, T5, T6, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
         init: B,
         func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, P], B],
         *args: P.args,
@@ -1708,7 +1701,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> B: ...
     @overload
     def fold_star[T1, T2, T3, T4, T5, T6, T7, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
         init: B,
         func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, P], B],
         *args: P.args,
@@ -1716,7 +1709,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> B: ...
     @overload
     def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
         init: B,
         func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, P], B],
         *args: P.args,
@@ -1724,7 +1717,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> B: ...
     @overload
     def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
         init: B,
         func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, P], B],
         *args: P.args,
@@ -1732,14 +1725,14 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> B: ...
     @overload
     def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         init: B,
         func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], B],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> B: ...
     def fold_star[U: Iterable[Any], **P, B](
-        self: PyoIterator[U],
+        self: Iterator[U],
         init: B,
         func: Callable[..., B],
         *args: P.args,
@@ -1806,73 +1799,80 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert out == Vec(1, 2, 3)
             ```
         """
-
+    @overload
+    def for_each_star[*U, **P, R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], R]
+    ) -> None: ...
+    @overload
+    def for_each_star[U, R](
+        self: Iterator[tuple[U, ...]], func: Callable[[*tuple[U, ...]], R], *args: U
+    ) -> None: ...
     @overload
     def for_each_star[T1, T2, **P, R](
-        self: PyoIterator[tuple[T1, T2]],
+        self: Iterator[tuple[T1, T2]],
         func: Callable[Concatenate[T1, T2, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None: ...
     @overload
     def for_each_star[T1, T2, T3, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3]],
+        self: Iterator[tuple[T1, T2, T3]],
         func: Callable[Concatenate[T1, T2, T3, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None: ...
     @overload
     def for_each_star[T1, T2, T3, T4, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        self: Iterator[tuple[T1, T2, T3, T4]],
         func: Callable[Concatenate[T1, T2, T3, T4, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None: ...
     @overload
     def for_each_star[T1, T2, T3, T4, T5, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5]],
         func: Callable[Concatenate[T1, T2, T3, T4, T5, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None: ...
     @overload
     def for_each_star[T1, T2, T3, T4, T5, T6, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
         func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None: ...
     @overload
     def for_each_star[T1, T2, T3, T4, T5, T6, T7, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
         func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None: ...
     @overload
     def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
         func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None: ...
     @overload
     def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
         func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None: ...
     @overload
     def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None: ...
     def for_each_star[U: tuple[Any, ...], **P, R](
-        self: PyoIterator[U],
-        func: Callable[..., R],
+        self: PyoIterator[*U],
+        func: Callable[Concatenate[*U, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None:
@@ -1887,7 +1887,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         This is often used after methods like `zip()` or `enumerate()` that yield tuples.
 
         Args:
-            func (Callable[..., R]): Function to apply to each unpacked element.
+            func (Callable[Concatenate[*U, P], R]): Function to apply to each unpacked element.
             *args (P.args): Positional arguments for the function.
             **kwargs (P.kwargs): Keyword arguments for the function.
 
@@ -2100,7 +2100,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def intersperse[S](self: PyoIterator[S], element: S) -> PyoIterator[S]:
+    def intersperse[S](self: Iterator[S], element: S) -> PyoIterator[S]:
         """Creates a new `Iterator` which places a copy of separator between adjacent items of the original iterator.
 
         Args:
@@ -2132,7 +2132,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def is_sorted[U: SupportsComparison[Any]](
-        self: PyoIterator[U], *, reverse: bool = False, strict: bool = False
+        self: Iterator[U], *, reverse: bool = False, strict: bool = False
     ) -> bool:
         """Returns `True` if the items of the `Iterator` are in sorted order.
 
@@ -2211,7 +2211,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def join(self: PyoIterable[str], sep: str) -> str:
+    def join(self: Iterable[str], sep: str) -> str:
         """Join all elements of the `Iterator` into a single `str`, with a specified separator.
 
         This is equivalent to the built-in `str.join()` method, but as a method on the `Iterator` itself.
@@ -2510,58 +2510,58 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
     @overload
     def map_star[T1, R](
-        self: PyoIterator[tuple[T1]], func: Callable[[T1], R]
+        self: Iterator[tuple[T1]], func: Callable[[T1], R]
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[T1, T2, R](
-        self: PyoIterator[tuple[T1, T2]], func: Callable[[T1, T2], R]
+        self: Iterator[tuple[T1, T2]], func: Callable[[T1, T2], R]
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[T1, T2, T3, R](
-        self: PyoIterator[tuple[T1, T2, T3]], func: Callable[[T1, T2, T3], R]
+        self: Iterator[tuple[T1, T2, T3]], func: Callable[[T1, T2, T3], R]
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[T1, T2, T3, T4, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4]], func: Callable[[T1, T2, T3, T4], R]
+        self: Iterator[tuple[T1, T2, T3, T4]], func: Callable[[T1, T2, T3, T4], R]
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[T1, T2, T3, T4, T5, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5]],
         func: Callable[[T1, T2, T3, T4, T5], R],
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[T1, T2, T3, T4, T5, T6, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
         func: Callable[[T1, T2, T3, T4, T5, T6], R],
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[U: tuple[Any, ...], R](
-        self: PyoIterator[U], func: Callable[..., R]
+        self: Iterator[U], func: Callable[..., R]
     ) -> PyoIterator[R]: ...
     @overload
     def map_star(self, func: Callable[..., Any]) -> Never: ...
     def map_star[R](
-        self: PyoIterator[tuple[Any, ...]], func: Callable[..., R]
+        self: Iterator[tuple[Any, ...]], func: Callable[..., R]
     ) -> PyoIterator[R]:
         """Applies a function to each element.where each element is a `tuple`.
 
@@ -2679,7 +2679,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             The -3 is no longer there, because it was consumed in order to see if the iteration should stop, but wasn't placed back into the `Iterator`.
         """
-
+    # TODO: add doc from rust iterator for more examples
     @overload
     def map_windows[R](
         self, length: Literal[1], func: Callable[[tuple[T]], R]
@@ -2727,9 +2727,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         self, length: int, func: Callable[[tuple[T, ...]], R]
     ) -> PyoIterator[R]: ...
     def map_windows[R](
-        self,
-        length: int,
-        func: Callable[[tuple[Any, ...]], R],
+        self, length: int, func: Callable[[tuple[T, ...]], R]
     ) -> PyoIterator[R]:
         """Calls the given *func* for each contiguous window of size *length* over **self**.
 
@@ -2739,22 +2737,21 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Args:
             length (int): The length of each window.
-            func (Callable[[tuple[Any, ...]], R]): Function to apply to each window.
+            func (Callable[[tuple[T, ...]], R]): Function to apply to each window.
 
         Returns:
             PyoIterator[R]: An iterator over the outputs of func.
 
         See Also:
-            [`map_windows_star`][] for a version that unpacks the window into separate arguments.
+            [`map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.
 
         Example:
             ```python
             from pyochain import Seq, Range
-            import statistics
 
             data = Seq(1, 2, 3, 4)
-            means = data.iter().map_windows(2, statistics.mean).collect(Seq)
-            assert means == Seq(1.5, 2.5, 3.5)
+            summed = data.iter().map_windows(2, sum).collect(Seq)
+            assert summed == Seq(3, 5, 7)
 
             joined = (
                 Seq("abcd")
@@ -2763,9 +2760,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
                 .collect(Seq)
             )
             assert joined == Seq("ABC", "BCD")
-
-            sum_windows = Range(5).iter().map_windows(4, sum).collect(Seq)
-            assert sum_windows == Seq(6, 10)
             ```
         """
 
@@ -2809,8 +2803,12 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def map_windows_star[R](
         self, length: Literal[10], func: Callable[[T, T, T, T, T, T, T, T, T, T], R]
     ) -> PyoIterator[R]: ...
+    @overload
     def map_windows_star[R](
-        self, length: int, func: Callable[..., R]
+        self, length: int, func: Callable[[*tuple[T, ...]], R]
+    ) -> PyoIterator[R]: ...
+    def map_windows_star[R](
+        self, length: int, func: Callable[[*tuple[T, ...]], R]
     ) -> PyoIterator[R]:
         """Calls the given *func* for each contiguous window of size *length* over **self**.
 
@@ -2820,26 +2818,22 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Args:
             length (int): The length of each window.
-            func (Callable[..., R]): Function to apply to each window.
+            func (Callable[[*tuple[T, ...]], R]): Function to apply to each window.
 
         Returns:
             PyoIterator[R]: An iterator over the outputs of func.
 
         See Also:
-            [`map_windows`][] for a version that passes the entire window as a single tuple argument.
+            [`map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.
 
         Example:
             ```python
             from pyochain import Seq, Iter
+            import operator
 
             a = Iter("abcd").map_windows_star(2, lambda x, y: f"{x}+{y}").collect(Seq)
             assert a == Seq("a+b", "b+c", "c+d")
-            b = (
-                Seq(1, 2, 3, 4)
-                .iter()
-                .map_windows_star(2, lambda x, y: x + y)
-                .collect(Seq)
-            )
+            b = Seq(1, 2, 3, 4).iter().map_windows_star(2, operator.add).collect(Seq)
             assert b == Seq(3, 5, 7)
             ```
         """
@@ -2944,7 +2938,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def max[U: SupportsRichComparison](self: PyoIterable[U]) -> U:
+    def max[U: SupportsRichComparison](self: Iterable[U]) -> U:
         """Return the maximum element of the `Iterator`.
 
         The elements of the `Iterator` must support comparison operations.
@@ -3000,7 +2994,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def min[U: SupportsRichComparison](self: PyoIterable[U]) -> U:
+    def min[U: SupportsRichComparison](self: Iterable[U]) -> U:
         """Return the minimum of the `Iterator`.
 
         The elements of the `Iterator` must support comparison operations.
@@ -3161,7 +3155,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def partition[S](
-        self: PyoIterable[S], predicate: Callable[[S], bool]
+        self: Iterable[S], predicate: Callable[[S], bool]
     ) -> tuple[Vec[S], Vec[S]]:
         """Consumes the `Iterator`, creating two `Vec` from it.
 
@@ -3185,7 +3179,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def peekable[S](self: PyoIterator[S]) -> Peekable[S]:
+    def peekable[S](self: Iterator[S]) -> Peekable[S]:
         """Creates an iterator which can use the peek and peek_mut methods to look at the next element of the `Iterator` without consuming it.
 
         See their documentation for more information.
@@ -3272,7 +3266,13 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     @overload
-    def product(self, /) -> PyoIterator[tuple[T]]: ...
+    def product(self, /, repeat: Literal[2]) -> PyoIterator[tuple[T, T]]: ...
+    @overload
+    def product(self, /, repeat: Literal[3]) -> PyoIterator[tuple[T, T, T]]: ...
+    @overload
+    def product(self, /, repeat: Literal[4]) -> PyoIterator[tuple[T, T, T, T]]: ...
+    @overload
+    def product(self, /, repeat: Literal[5]) -> PyoIterator[tuple[T, T, T, T, T]]: ...
     @overload
     def product[T2](self, iter2: Iterable[T2], /) -> PyoIterator[tuple[T, T2]]: ...
     @overload
@@ -3354,7 +3354,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> PyoIterator[tuple[T, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
     @overload
     def product[S](
-        self: PyoIterator[S], *iterables: Iterable[S], repeat: int = ...
+        self: Iterator[S], *iterables: Iterable[S], repeat: int = ...
     ) -> PyoIterator[tuple[S, ...]]: ...
     def product(
         self, *iterables: Iterable[Any], repeat: int = 1
@@ -3445,7 +3445,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def reduce[S](self: PyoIterator[S], func: Callable[[S, S], S]) -> S:
+    def reduce[S](self: Iterator[S], func: Callable[[S, S], S]) -> S:
         """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
 
         This effectively reduces the `Iterator` to a single value.
@@ -3602,7 +3602,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def sort[U: SupportsRichComparison](
-        self: PyoIterator[U], *, reverse: bool = False
+        self: Iterator[U], *, reverse: bool = False
     ) -> Vec[U]:
         """Sort the elements of the `Iterator`.
 
@@ -3630,7 +3630,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def sort_by[S](
-        self: PyoIterator[S],
+        self: Iterator[S],
         key: Callable[[S], SupportsRichComparison],
         *,
         reverse: bool = False,
@@ -3698,19 +3698,19 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     @overload
-    def sum(self: PyoIterator[bool], start: int = 0) -> int: ...
+    def sum(self: Iterator[bool], start: int = 0) -> int: ...
     @overload
-    def sum(self: PyoIterator[LiteralInteger], start: int = 0) -> int: ...
+    def sum(self: Iterator[LiteralInteger], start: int = 0) -> int: ...
     @overload
     def sum[T1: SupportsSumWithNoDefaultGiven](
-        self: PyoIterator[T1],
+        self: Iterator[T1],
     ) -> T1 | Literal[0]: ...
     @overload
     def sum[A1: SupportsAnyAdd, A2: SupportsAnyAdd](
-        self: PyoIterator[A1], start: A2
+        self: Iterator[A1], start: A2
     ) -> A1 | A2: ...
     def sum[T1: SupportsSumWithNoDefaultGiven, A1: SupportsAnyAdd, A2: SupportsAnyAdd](
-        self: PyoIterator[bool | LiteralInteger] | PyoIterator[T1] | PyoIterator[A1],
+        self: Iterator[bool | LiteralInteger] | PyoIterator[T1] | PyoIterator[A1],
         start: int | T1 | A2 = 0,
     ) -> int | T1 | A1 | A2:
         """Return the sum of the `Iterator`.
@@ -3856,11 +3856,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     @overload
-    def try_collect[U](self: PyoIterator[Option[U]]) -> Option[Vec[U]]: ...
+    def try_collect[U](self: Iterator[Option[U]]) -> Option[Vec[U]]: ...
     @overload
-    def try_collect[U, E](self: PyoIterator[Result[U, E]]) -> Option[Vec[U]]: ...
+    def try_collect[U, E](self: Iterator[Result[U, E]]) -> Option[Vec[U]]: ...
     def try_collect[U](
-        self: PyoIterator[Option[U]] | PyoIterator[Result[U, Any]],
+        self: Iterator[Option[U]] | PyoIterator[Result[U, Any]],
     ) -> Option[Vec[U]]:
         """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
 
@@ -3991,7 +3991,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def try_reduce[S, E](
-        self: PyoIterator[S], func: Callable[[S, S], Result[S, E]]
+        self: Iterator[S], func: Callable[[S, S], Result[S, E]]
     ) -> Result[Option[S], E]:
         """Reduces elements to a single one, short-circuiting on error.
 
@@ -4101,7 +4101,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def unzip[U, V](
-        self: PyoIterator[tuple[U, V]],
+        self: Iterator[tuple[U, V]],
     ) -> tuple[PyoIterator[U], PyoIterator[V]]:
         """Converts an `Iterator` of pairs into a pair of `Iterator`s.
 
@@ -4189,7 +4189,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> PyoIterator[tuple[T, T2, T3, T4, T5]]: ...
     @overload
     def zip[S](
-        self: PyoIterator[S], /, *others: Iterable[S], strict: bool = False
+        self: Iterator[S], /, *others: Iterable[S], strict: bool = False
     ) -> PyoIterator[tuple[S, ...]]: ...
     def zip(
         self, /, *others: Iterable[Any], strict: bool = False

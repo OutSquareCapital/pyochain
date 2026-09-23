@@ -18,7 +18,7 @@ from pyochain import (
     then_if_true,
 )
 
-from ._utils import SIZES, Sizes
+from ._utils import SIZES, WINDOW_CASES, Sizes, identity, identity_vargs
 
 if TYPE_CHECKING:
     from pyochain.abc import PyoIterable, PyoIterator, PyoSequence
@@ -58,27 +58,23 @@ def test_filter_map(benchmark: BenchFixture, size: int) -> None:
         .map(lambda i: then_if_true(i, predicate=lambda i: i % 2 == 0))
         .collect(Seq)
     )
-    assert benchmark(_filter_map, data, size) == size - 2
+    assert benchmark(_filter_map, data) == size - 2
 
 
-def _filter_map(data: Seq[Option[int]], size: int) -> int:
-    for _ in SIZES[size]:
-        _ = data.iter().filter_map(lambda x: x).last()
+def _filter_map(data: Seq[Option[int]]) -> int:
     return data.iter().filter_map(lambda x: x).last()
 
 
 @pytest.mark.parametrize("size", SIZES)
 def test_filter_map_star(benchmark: BenchFixture, size: int) -> None:
     data = Range(size).iter().enumerate().collect(Seq)
-    assert benchmark(_filter_map_star, data, size) == size - 2
+    assert benchmark(_filter_map_star, data) == size - 2
 
 
-def _filter_map_star(data: Seq[tuple[int, int]], size: int) -> int:
+def _filter_map_star(data: Seq[tuple[int, int]]) -> int:
     def f(x: int, _: int) -> Option[int]:
         return Some(x) if x % 2 == 0 else Null()
 
-    for _ in SIZES[size]:
-        _ = data.iter().filter_map_star(f).last()
     return data.iter().filter_map_star(f).last()
 
 
@@ -164,15 +160,16 @@ def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
     data.iter().for_each_star(_with_args)
 
 
-@pytest.mark.benchmark(group="for_each_star_args")
 @pytest.mark.parametrize("size", SIZES)
-def test_for_each_star_args(benchmark: BenchFixture, size: int) -> None:
-    data = Range(size).iter().map(lambda i: (i, i * 2, i * 3)).collect(Seq)
-    assert benchmark(_for_each_star_args, data) is None
+@pytest.mark.parametrize("tup_len", (1, 2, 4, 8, 16))
+def test_for_each_star_args(benchmark: BenchFixture, size: int, tup_len: int) -> None:
+    args = Range(min(tup_len, size)).pipe(tuple)
+    data = Range(size).iter().map(lambda _: args).collect(Seq)
+    assert benchmark(_for_each_star_args, data, args) is None
 
 
-def _for_each_star_args(data: Seq[tuple[int, int, int]]) -> None:
-    data.iter().for_each_star(_with_args, 1, 2, 3)
+def _for_each_star_args(data: Seq[tuple[int, ...]], args: tuple[int, ...]) -> None:
+    data.iter().for_each_star(_with_args, *args)
 
 
 @pytest.mark.benchmark(group="for_each_star_kwargs")
@@ -206,9 +203,6 @@ def test_map_juxt(benchmark: BenchFixture, size: int, nb_funcs: int) -> None:
     def _map_juxt(
         data: Range, funcs: Iterable[Callable[[int], int]]
     ) -> tuple[int, ...]:
-        for _ in SIZES[size]:
-            _ = data.iter().map_juxt(*funcs).last()
-
         return data.iter().map_juxt(*funcs).last()
 
     data = Range(size)
@@ -242,8 +236,6 @@ def _map_while(data: Range, size: int) -> int:
     def f(x: int) -> Option[int]:
         return Some(x) if x < limit else Null()
 
-    for _ in SIZES[size]:
-        _ = data.iter().map_while(f).last()
     return data.iter().map_while(f).last()
 
 
@@ -453,14 +445,10 @@ def _unpack_into(data: Range) -> int:
 def test_zip_longest(benchmark: BenchFixture, size: int) -> None:
     data1 = Range(size)
     data2 = Range(size // 2)
-    assert benchmark(_zip_longest, data1, data2, size) == (Some(size - 1), NONE)
+    assert benchmark(_zip_longest, data1, data2) == (Some(size - 1), NONE)
 
 
-def _zip_longest(
-    data1: Range, data2: Range, size: int
-) -> tuple[Option[int], Option[int]]:
-    for _ in SIZES[size]:
-        _ = data1.iter().zip_longest(data2).last()
+def _zip_longest(data1: Range, data2: Range) -> tuple[Option[int], Option[int]]:
     return data1.iter().zip_longest(data2).last()
 
 
@@ -518,14 +506,16 @@ def _group_by(data: Range) -> tuple[int, PyoIterator[int]]:
     return data.iter().group_by(lambda x: x % 2).last()
 
 
-@pytest.mark.parametrize("size", (2, 8, 32, 128))
-def test_map_windows(benchmark: BenchFixture, size: int) -> None:
-    data = Range(4096)
-    assert benchmark(_map_windows, data, size) is not None
+@WINDOW_CASES
+def test_map_windows(benchmark: BenchFixture, size: int, tup_len: int) -> None:
+    data = Range(size)
+    _ = benchmark(lambda: data.iter().map_windows(tup_len, identity).last())
 
 
-def _map_windows(data: Range, size: int) -> tuple[int, ...]:
-    return data.iter().map_windows(size, lambda x: x).last()
+@WINDOW_CASES
+def test_map_windows_star(benchmark: BenchFixture, size: int, tup_len: int) -> None:
+    data = Range(size)
+    _ = benchmark(lambda: data.iter().map_windows_star(tup_len, identity_vargs).last())
 
 
 @pytest.mark.parametrize("size", SIZES)

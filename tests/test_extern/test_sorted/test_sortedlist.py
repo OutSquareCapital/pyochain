@@ -9,11 +9,11 @@ https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_cov
 from __future__ import annotations
 
 import random
-from itertools import chain
 from typing import TYPE_CHECKING
 
 import pytest
 
+from pyochain import Range
 from pyochain.collections import SortedList
 from pyochain.collections._sorted import (  # ruff: ignore[import-private-name]
     assert_sorted_list_empty,
@@ -44,51 +44,48 @@ def test_init() -> None:
 def test_add() -> None:
     random.seed(0)
     slt = SortedList[int]()
-    for val in range(1000):
+    nb = 100
+    for val in range(nb):
         slt.add(val)
         check_sorted_list(slt)
 
     slt = SortedList[int]()
-    for val in range(1000, 0, -1):
+    for val in range(nb, 0, -1):
         slt.add(val)
         check_sorted_list(slt)
 
     slt = SortedList[float]()
-    for _ in range(1000):
+    for _ in range(nb):
         slt.add(random.random())
         check_sorted_list(slt)
 
 
 def test_update() -> None:
+
+    def _update_check(mul: int) -> None:
+        slt.extend(r)
+        assert slt.len() == r.len() * mul
+        check_sorted_list(slt)
+
     slt = SortedList[int]()
-
-    slt.update(range(1000))
-    assert len(slt) == 1000
-    check_sorted_list(slt)
-
-    slt.update(range(100))
-    assert len(slt) == 1100
-    check_sorted_list(slt)
-
-    slt.update(range(10000))
-    assert len(slt) == 11100
-    check_sorted_list(slt)
-
-    values = sorted(chain(range(1000), range(100), range(10000)))
-    assert all(tup[0] == tup[1] for tup in zip(slt, values, strict=False))
+    r = Range(10)
+    _update_check(1)
+    _update_check(2)
+    _update_check(3)
+    values = r.iter().chain(r, r).sort()
+    assert slt.iter().zip(values, strict=False).all(lambda tup: tup[0] == tup[1])
 
 
 def test_contains() -> None:
     slt = SortedList[int]()
+    nb = 10
     assert 0 not in slt
 
-    slt.update(range(100))
+    slt.extend(range(nb))
 
-    for val in range(100):
+    for val in range(nb):
         assert val in slt
-
-    assert 10000 not in slt
-
+    assert nb + 1 not in slt
     check_sorted_list(slt)
 
 
@@ -96,7 +93,7 @@ def test_discard() -> None:
     slt = SortedList[int]()
 
     assert slt.discard(0) is None
-    assert len(slt) == 0
+    assert slt.len() == 0
     check_sorted_list(slt)
 
     slt = SortedList([1, 2, 2, 2, 3, 3, 5])
@@ -312,7 +309,7 @@ def test_islice() -> None:
     assert list(sl.islice()) == []
 
     values = list(range(53))
-    sl.update(values)
+    sl.extend(values)
 
     for start in range(53):
         for stop in range(53):
@@ -339,42 +336,43 @@ def test_irange() -> None:  # ruff:ignore[complex-structure]
 
     assert list(sl.irange()) == []
 
-    values = list(range(53))
-    sl.update(values)
+    nb = 20
+    values = list(range(nb))
+    sl.extend(values)
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert list(sl.irange(start, end)) == values[start : (end + 1)]
             assert (
                 list(sl.irange(start, end, reverse=True))
                 == values[start : (end + 1)][::-1]
             )
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert list(range(start, end)) == list(sl.irange(start, end, (True, False)))
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert list(range(start + 1, end + 1)) == list(
                 sl.irange(start, end, (False, True))
             )
 
-    for start in range(53):
-        for end in range(start, 53):
+    for start in range(nb):
+        for end in range(start, nb):
             assert list(range(start + 1, end)) == list(
                 sl.irange(start, end, (False, False))
             )
 
-    for start in range(53):
-        assert list(range(start, 53)) == list(sl.irange(start))
+    for start in range(nb):
+        assert list(range(start, nb)) == list(sl.irange(start))
 
-    for end in range(53):
+    for end in range(nb):
         assert list(range(end)) == list(sl.irange(None, end, (True, False)))
 
     assert values == list(sl.irange(inclusive=(False, False)))
 
-    assert list(sl.irange(53)) == []
+    assert list(sl.irange(nb)) == []
     assert values == list(sl.irange(None, 53, (True, False)))
 
 
@@ -391,7 +389,7 @@ def test_bisect_left() -> None:
     assert slt.bisect_left(0) == 0
     slt = SortedList(range(100))
     slt.reset(17)
-    slt.update(range(100))
+    slt.extend(range(100))
     check_sorted_list(slt)
     assert slt.bisect_left(50) == 100
     assert slt.bisect_left(200) == 200
@@ -402,7 +400,7 @@ def test_bisect_right() -> None:
     assert slt.bisect_right(10) == 0
     slt = SortedList(range(100))
     slt.reset(17)
-    slt.update(range(100))
+    slt.extend(range(100))
     check_sorted_list(slt)
     assert slt.bisect_right(10) == 22
     assert slt.bisect_right(200) == 200

@@ -119,7 +119,7 @@ class SortedKeysView(
     @classmethod
     @override
     # pyrefly: ignore [bad-override]
-    def _from_iterable(cls, it: Iterable[_K_co]) -> SortedSet[_K_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def _from_iterable(cls, it: Iterable[_K_co]) -> SortedSet[_K_co]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-generic-class, invalid-method-override]
         ...
 
 class SortedItemsView(
@@ -189,8 +189,9 @@ class SortedItemsView(
     @classmethod
     @override
     # pyrefly: ignore [bad-override]
-    def _from_iterable(  # pyright: ignore[reportIncompatibleMethodOverride]
-        cls, it: Iterable[tuple[_K_co, _V_co]]
+    def _from_iterable(  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
+        cls,
+        it: Iterable[tuple[_K_co, _V_co]],  # ty: ignore[invalid-generic-class]
     ) -> SortedSet[tuple[_K_co, _V_co]]: ...
 
 class SortedValuesView(

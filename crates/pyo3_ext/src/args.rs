@@ -3,251 +3,205 @@ use pyo3::{
     prelude::*,
     types::{PyDict, PyTuple},
 };
-use tap::prelude::*;
-
-use crate::iter::CollectBoundIterator;
-/// Type alias representing the `*args` parameter in Python functions (or any argument that is expected to be a tuple)
-pub type Args<'py> = Bound<'py, PyTuple>;
-/// Type alias representing the `**kwargs` parameter in Python functions
-pub type Kwargs<'py> = Bound<'py, PyDict>;
-
-/// In python, you can make a very generic function signature like this:
-/// ```python
-/// from collections.abc import Callable
-/// from typing import Concatenate
-/// def foo[**P, T, R](
-///     function: Callable[Concatenate[T, P], R],
-///     value: T,
-///     *args: P.args,
-///     **kwargs: P.kwargs,
-/// ) -> R:
-///     return function(value, *args, **kwargs)
-/// ```
-/// This trait provides the `concat` method which allows you to implement this kind of behavior in Rust.\
-/// It is implemented for `&Bound<'py, PyAny>`, so it can be used on any Python object.\
-/// `self` is the function to call, `value` is the value to concatenate with `*args`, and `kwargs` are the keyword arguments to pass to the function.\
-/// The provided methods handle various cases with presence or absence of args/kwargs, as well as the special case where `value` is itself a tuple that needs to be unpacked (similar to `itertools.starmap`).
-pub trait Concatenate<'py> {
-    /// Concatenate the provided value with the given `*args` and call the function with the resulting arguments and `**kwargs`
-    fn concat(
+use smallvec::{Array, SmallVec};
+use std::mem::MaybeUninit;
+type VecOfPtr = SmallVec<[*mut ffi::PyObject; 16]>;
+pub trait CallConcat<'py> {
+    fn call_concat<A: ArgsConcat<'py>>(
         self,
-        value: &Bound<'py, PyAny>,
-        args: &Args<'py>,
-        kwargs: Option<&Kwargs<'py>>,
+        args: A,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<Bound<'py, PyAny>>;
-    /// Same as concat star, but does not handle `**kwargs`. Use this whenever possible as it is faster.
-    fn concat1(self, value: &Bound<'py, PyAny>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>>;
-    /// Akin to `itertools::map_starmap`, where *value* is expected to be a tuple of arguments.\
-    /// Unpack each item in *value* and concatenate it with the given `*args`, then call the function with the resulting arguments and `**kwargs`
-    fn concat_star(
-        self,
-        value: &Args<'py>,
-        args: &Args<'py>,
-        kwargs: Option<&Kwargs<'py>>,
-    ) -> PyResult<Bound<'py, PyAny>>;
-    /// same as `concat_star`, but does not handle `**kwargs`. Use this whenever possible as it is faster.
-    fn concat_star1(self, value: &Args<'py>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>>;
-
-    /// Prepend `acc` to `item` and concatenate with `args`, then call the function with `**kwargs`
-    fn fold_concat_star(
-        self,
-        acc: &Bound<'py, PyAny>,
-        item: &Args<'py>,
-        args: &Args<'py>,
-        kwargs: Option<&Kwargs<'py>>,
-    ) -> PyResult<Bound<'py, PyAny>>;
-    /// same as `fold_concat_star`, but does not handle `**kwargs`
-    fn fold_concat_star1(
-        self,
-        acc: &Bound<'py, PyAny>,
-        item: &Args<'py>,
-        args: &Args<'py>,
-    ) -> PyResult<Bound<'py, PyAny>>;
+    fn call_concat1<A: ArgsConcat<'py>>(self, args: A) -> PyResult<Bound<'py, PyAny>>;
 }
-impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
-    #[inline]
-    fn concat(
-        self,
-        value: &Bound<'py, PyAny>,
-        args: &Args<'py>,
-        kwargs: Option<&Kwargs<'py>>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        let args_len = args.len();
-        match args_len {
-            0 => self.call((value,), kwargs),
-            _ => self.call(
-                unsafe { concat_val_with_args(value, args, args_len) },
-                kwargs,
-            ),
-        }
-    }
-    #[inline]
-    fn concat1(self, value: &Bound<'py, PyAny>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.call1(unsafe { concat_val_with_args(value, args, args.len()) })
-    }
-    #[inline]
-    fn concat_star(
-        self,
-        value: &Args<'py>,
-        args: &Args<'py>,
-        kwargs: Option<&Kwargs<'py>>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        let args_len = args.len();
-        match args_len {
-            0 => self.call(value, kwargs),
-            _ => self.call(
-                unsafe { concat_tup_with_args(value, args, args_len) },
-                kwargs,
-            ),
-        }
-    }
-    #[inline]
-    fn concat_star1(self, value: &Args<'py>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.call1(unsafe { concat_tup_with_args(value, args, args.len()) })
-    }
-    #[inline]
-    fn fold_concat_star(
-        self,
-        acc: &Bound<'py, PyAny>,
-        item: &Args<'py>,
-        args: &Args<'py>,
-        kwargs: Option<&Kwargs<'py>>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        self.call(
-            unsafe { concat_acc_tup_with_args(acc, item, args, args.len()) },
-            kwargs,
-        )
-    }
 
-    #[inline]
-    fn fold_concat_star1(
-        self,
-        acc: &Bound<'py, PyAny>,
-        item: &Args<'py>,
-        args: &Args<'py>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        self.call1(unsafe { concat_acc_tup_with_args(acc, item, args, args.len()) })
-    }
+macro_rules! dispatch {
+    ($func:expr, $args:expr, $kwargs:expr) => {
+        seq_macro::seq!(i in 1..=8 {
+            match $args.len_unpacked() {
+                #(i => {
+                    let mut buf = FixedBuf::<i>::new();
+                    $args.extend_buf(&mut buf);
+                    vectorcall($func, buf.as_ptr(), i, $kwargs)
+                })*
+                n => {
+                    let mut buf = VecOfPtr::with_capacity(n);
+                    $args.extend_buf(&mut buf);
+                    vectorcall($func, buf.as_ptr(), n, $kwargs)
+                }
+            }
+        })
+    };
 }
-pub trait ConcatWith<'py> {
-    fn concat_with(self, others: &Args<'py>) -> PyResult<Bound<'py, PyTuple>>;
-    fn concat_with_2(self, b: &Bound<'py, PyAny>, others: &Args<'py>) -> Bound<'py, PyTuple>;
+
+macro_rules! dispatch1 {
+    ( $func:expr, $args:expr) => {
+        seq_macro::seq!(i in 1..=8 {
+            match $args.len_unpacked() {
+                #(i => {
+                    let mut buf = FixedBuf::<i>::new();
+                    $args.extend_buf(&mut buf);
+                    vectorcall1($func, buf.as_ptr(), i)
+                })*
+                n => {
+                    let mut buf = VecOfPtr::with_capacity(n);
+                    $args.extend_buf(&mut buf);
+                    vectorcall1($func, buf.as_ptr(), n)
+                }
+            }
+        })
+    };
 }
-impl<'py> ConcatWith<'py> for Bound<'py, PyAny> {
+impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
     #[inline(always)]
-    fn concat_with(self, others: &Args<'py>) -> PyResult<Bound<'py, PyTuple>> {
-        let py = self.py();
-        self.pipe(std::iter::once)
-            .chain(others.iter())
-            .collect::<Vec<Bound<'py, PyAny>>>()
-            .into_iter()
-            .collect_bound::<PyTuple>(py)
+    fn call_concat1<A: ArgsConcat<'py>>(self, args: A) -> PyResult<Bound<'py, PyAny>> {
+        dispatch1!(self, args)
+    }
+
+    #[inline(always)]
+    fn call_concat<A: ArgsConcat<'py>>(
+        self,
+        args: A,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        dispatch!(self, args, kwargs)
+    }
+}
+
+/// # Safety
+/// Implementors must call `buf.push_ptr` from `extend_buf` exactly `len_unpacked()` times.
+pub unsafe trait ArgsConcat<'py> {
+    fn len_unpacked(&self) -> usize;
+    fn extend_buf<B: ArgBuffer>(&self, buf: &mut B);
+}
+
+unsafe impl<'py> ArgsConcat<'py> for Bound<'py, PyAny> {
+    #[inline(always)]
+    fn len_unpacked(&self) -> usize {
+        1
+    }
+    #[inline(always)]
+    fn extend_buf<B: ArgBuffer>(&self, buf: &mut B) {
+        buf.push_ptr(self.as_ptr());
+    }
+}
+
+unsafe impl<'py> ArgsConcat<'py> for Bound<'py, PyTuple> {
+    #[inline(always)]
+    fn len_unpacked(&self) -> usize {
+        self.len()
     }
     #[allow(clippy::cast_possible_wrap)]
-    #[inline]
-    fn concat_with_2(
-        self: Bound<'py, PyAny>,
-        b: &Bound<'py, PyAny>,
-        args: &Args<'py>,
-    ) -> Bound<'py, PyTuple> {
-        unsafe {
-            let args_len = args.len();
-            let new_args_ptr = ffi::PyTuple_New((args_len + 2) as ffi::Py_ssize_t);
-            let a_ptr = self.as_ptr();
-            ffi::Py_INCREF(a_ptr);
-            ffi::PyTuple_SetItem(new_args_ptr, 0, a_ptr);
-            let b_ptr = b.as_ptr();
-            ffi::Py_INCREF(b_ptr);
-            ffi::PyTuple_SetItem(new_args_ptr, 1, b_ptr);
-            let args_ptr = args.as_ptr();
-            for i in 0..args_len {
-                let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-                ffi::Py_INCREF(item);
-                ffi::PyTuple_SetItem(new_args_ptr, (i + 2) as ffi::Py_ssize_t, item);
+    #[inline(always)]
+    fn extend_buf<B: ArgBuffer>(&self, buf: &mut B) {
+        let ptr = self.as_ptr();
+        for i in 0..self.len() {
+            buf.push_ptr(unsafe { ffi::PyTuple_GET_ITEM(ptr, i as ffi::Py_ssize_t) });
+        }
+    }
+}
+unsafe impl<A> ArgsConcat<'_> for SmallVec<A>
+where
+    A: Array<Item = Py<PyAny>>,
+{
+    #[inline(always)]
+    fn len_unpacked(&self) -> usize {
+        self.len()
+    }
+    #[inline(always)]
+    fn extend_buf<B: ArgBuffer>(&self, buf: &mut B) {
+        self.iter().for_each(|item| buf.push_ptr(item.as_ptr()));
+    }
+}
+unsafe impl<'py, T: ArgsConcat<'py> + ?Sized> ArgsConcat<'py> for &T {
+    #[inline(always)]
+    fn len_unpacked(&self) -> usize {
+        (**self).len_unpacked()
+    }
+    #[inline(always)]
+    fn extend_buf<B: ArgBuffer>(&self, buf: &mut B) {
+        (**self).extend_buf(buf);
+    }
+}
+
+macro_rules! impl_arg_concat_tuple {
+    ($($T:ident : $idx:tt),+) => {
+        unsafe impl<'py, $($T: ArgsConcat<'py>),+> ArgsConcat<'py> for ($($T,)+) {
+            #[inline(always)]
+            fn len_unpacked(&self) -> usize {
+                0 $(+ self.$idx.len_unpacked())+
             }
-            Bound::from_owned_ptr(self.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
+            #[inline(always)]
+            fn extend_buf<T: ArgBuffer>(&self, buf: &mut T) {
+                $( self.$idx.extend_buf(buf); )+
+            }
         }
+    };
+}
+impl_arg_concat_tuple!(A:0, B:1);
+impl_arg_concat_tuple!(A:0, B:1, C:2);
+impl_arg_concat_tuple!(A:0, B:1, C:2, D:3);
+
+pub trait ArgBuffer {
+    fn push_ptr(&mut self, ptr: *mut ffi::PyObject);
+}
+
+impl ArgBuffer for VecOfPtr {
+    #[inline(always)]
+    fn push_ptr(&mut self, ptr: *mut ffi::PyObject) {
+        self.push(ptr);
     }
 }
-#[allow(clippy::cast_possible_wrap)]
-#[inline]
-unsafe fn concat_val_with_args<'py>(
-    value: &Bound<'py, PyAny>,
-    args: &Args<'py>,
-    args_len: usize,
-) -> Bound<'py, PyTuple> {
-    unsafe {
-        let ptr = value.as_ptr();
-        let new_argc = args_len + 1;
-        let new_args_ptr = ffi::PyTuple_New(new_argc as ffi::Py_ssize_t);
-        ffi::Py_INCREF(ptr);
-        ffi::PyTuple_SetItem(new_args_ptr, 0, ptr);
+struct FixedBuf<const N: usize> {
+    buf: [MaybeUninit<*mut ffi::PyObject>; N],
+    len: usize,
+}
 
-        let args_ptr = args.as_ptr();
-        for i in 0..args_len {
-            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (i + 1) as ffi::Py_ssize_t, item);
+impl<const N: usize> FixedBuf<N> {
+    #[inline(always)]
+    fn new() -> Self {
+        Self {
+            buf: [const { MaybeUninit::uninit() }; N],
+            len: 0,
         }
-        Bound::from_owned_ptr(value.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
+    }
+
+    #[inline(always)]
+    fn as_ptr(&self) -> *const *mut ffi::PyObject {
+        self.buf.as_ptr().cast()
     }
 }
-#[allow(clippy::cast_possible_wrap)]
-#[inline]
-unsafe fn concat_tup_with_args<'py>(
-    value: &Args<'py>,
-    args: &Args<'py>,
-    args_len: usize,
-) -> Bound<'py, PyTuple> {
-    unsafe {
-        let tuple_len = value.len();
-        let total_len = tuple_len + args_len;
-        let new_args_ptr = ffi::PyTuple_New(total_len as ffi::Py_ssize_t);
-        let tuple_ptr = value.as_ptr();
-        for i in 0..tuple_len {
-            let item = ffi::PyTuple_GET_ITEM(tuple_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, i as ffi::Py_ssize_t, item);
-        }
-        let args_ptr = args.as_ptr();
-        for i in 0..args_len {
-            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (tuple_len + i) as ffi::Py_ssize_t, item);
-        }
 
-        Bound::from_owned_ptr(value.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
+impl<const N: usize> ArgBuffer for FixedBuf<N> {
+    #[inline(always)]
+    fn push_ptr(&mut self, ptr: *mut ffi::PyObject) {
+        debug_assert!(self.len < N);
+        unsafe { self.buf.get_unchecked_mut(self.len).write(ptr) };
+        self.len += 1;
     }
 }
-#[allow(clippy::cast_possible_wrap)]
-#[inline]
-unsafe fn concat_acc_tup_with_args<'py>(
-    acc: &Bound<'py, PyAny>,
-    value: &Args<'py>,
-    args: &Args<'py>,
-    args_len: usize,
-) -> Bound<'py, PyTuple> {
+
+#[inline(always)]
+fn vectorcall1<'py>(
+    func: &Bound<'py, PyAny>,
+    ptr: *const *mut ffi::PyObject,
+    n: usize,
+) -> PyResult<Bound<'py, PyAny>> {
     unsafe {
-        let tuple_len = value.len();
-        let total_len = 1 + tuple_len + args_len;
-        let new_args_ptr = ffi::PyTuple_New(total_len as ffi::Py_ssize_t);
-
-        ffi::Py_INCREF(acc.as_ptr());
-        ffi::PyTuple_SetItem(new_args_ptr, 0, acc.as_ptr());
-
-        let tuple_ptr = value.as_ptr();
-        for i in 0..tuple_len {
-            let item = ffi::PyTuple_GET_ITEM(tuple_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (1 + i) as ffi::Py_ssize_t, item);
-        }
-        let args_ptr = args.as_ptr();
-        for i in 0..args_len {
-            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (1 + tuple_len + i) as ffi::Py_ssize_t, item);
-        }
-
-        Bound::from_owned_ptr(acc.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
+        let result = ffi::PyObject_Vectorcall(func.as_ptr(), ptr, n, std::ptr::null_mut());
+        Bound::from_owned_ptr_or_err(func.py(), result)
+    }
+}
+#[inline(always)]
+fn vectorcall<'py>(
+    func: &Bound<'py, PyAny>,
+    ptr: *const *mut ffi::PyObject,
+    n: usize,
+    kwargs: Option<&Bound<'py, PyDict>>,
+) -> PyResult<Bound<'py, PyAny>> {
+    let kw = kwargs.map_or(std::ptr::null_mut(), pyo3::Bound::as_ptr);
+    unsafe {
+        let result = ffi::PyObject_VectorcallDict(func.as_ptr(), ptr, n, kw);
+        Bound::from_owned_ptr_or_err(func.py(), result)
     }
 }

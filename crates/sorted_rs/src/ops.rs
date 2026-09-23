@@ -5,31 +5,40 @@
 
 use pyo3::prelude::*;
 
-use crate::bounds::Pos;
+use crate::{bisect::Bisect, bounds::Loc, errors, inner::InnerData, traits::NestedVec};
 
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
-pub enum Maxes {
+pub(super) enum Maxes {
     Empty,
-    LenEQPos,
-    LenNEPos,
+    LenEQPos(Loc),
+    LenNEPos(Loc),
+    BisectErr(PyErr),
 }
 impl Maxes {
+    pub fn left(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
+        Self::new(maxes, value, Bisect::bisect_left)
+    }
+    pub fn right(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
+        Self::new(maxes, value, Bisect::bisect_right)
+    }
     #[inline(always)]
-    pub fn new<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
+    fn new<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
         maxes: &[Py<PyAny>],
-        bound: &mut Pos,
         value: &Bound<'_, PyAny>,
         func: F,
-    ) -> PyResult<Self> {
+    ) -> Self {
         if maxes.is_empty() {
-            Ok(Self::Empty)
+            Self::Empty
         } else {
-            bound.pos = func(maxes, value)?;
-            if bound.pos == maxes.len() {
-                Ok(Self::LenEQPos)
-            } else {
-                Ok(Self::LenNEPos)
-            }
+            func(maxes, value)
+                .map(Loc::with_pos)
+                .map_or_else(Self::BisectErr, |bound| {
+                    if bound.pos == maxes.len() {
+                        Self::LenEQPos(bound)
+                    } else {
+                        Self::LenNEPos(bound)
+                    }
+                })
         }
     }
 }
@@ -63,8 +72,8 @@ pub enum Delete {
 impl Delete {
     #[inline(always)]
     #[must_use]
-    pub fn new<T>(lists: &[Vec<T>], load: usize, bounds: &Pos) -> Self {
-        let len_pos = lists[bounds.pos].len();
+    pub fn new<T>(lists: &[Vec<T>], load: usize, loc: &Loc) -> Self {
+        let len_pos = lists.loc_len(loc);
         if len_pos > (load >> 1) {
             Self::PosSupToLoad
         } else if lists.len() > 1 {
@@ -76,20 +85,56 @@ impl Delete {
         }
     }
 }
-pub enum Update {
-    EmptyMaxes,
-    OtherGESelf,
-    OtherLTSelf,
+/// `Loc`, `start`, and `stop` bounds for a search in a sorted list.
+type IdxBounds = (Loc, usize, usize);
+pub(super) enum Index<'py, 'a> {
+    NotFound(&'a Bound<'py, PyAny>),
+    Empty(&'a Bound<'py, PyAny>),
+    InvalidRange(&'a Bound<'py, PyAny>),
+    BisectErr(PyErr),
+    Searchable(IdxBounds),
 }
-impl Update {
-    #[inline(always)]
-    pub fn new<T, U>(maxes: &[T], length: usize, values: &[U]) -> Self {
-        if maxes.is_empty() {
-            Self::EmptyMaxes
-        } else if values.len() * 4 >= length {
-            Self::OtherGESelf
+impl<'py, 'a> Index<'py, 'a> {
+    pub fn new(
+        data: &InnerData,
+        value: &'a Bound<'py, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> Self {
+        let length = data.len.cast_signed();
+        if length == 0 {
+            Self::Empty(value)
         } else {
-            Self::OtherLTSelf
+            let mut start = start.unwrap_or(0);
+            let mut stop = stop.unwrap_or(length);
+            if start < 0 {
+                start += length;
+            }
+            start = start.max(0);
+            if stop < 0 {
+                stop += length;
+            }
+            stop = stop.min(length);
+            if stop <= start {
+                Self::InvalidRange(value)
+            } else {
+                match data.maxes.bisect_left(value).map(Loc::with_pos) {
+                    Ok(bound) if bound.pos == data.maxes.len() => Self::NotFound(value),
+                    Ok(bound) => {
+                        Self::Searchable((bound, start.cast_unsigned(), stop.cast_unsigned()))
+                    }
+                    Err(err) => Self::BisectErr(err),
+                }
+            }
+        }
+    }
+    pub fn into_res(self) -> PyResult<IdxBounds> {
+        match self {
+            Self::Searchable((bound, start, stop)) => Ok((bound, start, stop)),
+            Self::NotFound(value) | Self::Empty(value) | Self::InvalidRange(value) => {
+                Err(errors::not_in_list(&value.repr()?))
+            }
+            Self::BisectErr(err) => Err(err),
         }
     }
 }

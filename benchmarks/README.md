@@ -3,42 +3,68 @@
 This folder contains `pytest-benchmark`-based micro-benchmarks for the public
 Python API.
 
-## Useful commands
+## Pytest
+
+### Useful commands
 
 Run only benchmarks:
 
-```powershell
-uv run pytest benchmarks/ --benchmark-only --benchmark-warmup=true --benchmark-disable-gc
+```shell
+uv run pytest benchmarks/ `
+--benchmark-only `
+--benchmark-warmup=true `
+--benchmark-disable-gc
 ```
 
 Group output by parametrized dataset size:
 
-```powershell
-uv run pytest benchmarks/ --benchmark-only --benchmark-group-by=param:size --benchmark-warmup=true --benchmark-disable-gc
+```shell
+uv run pytest benchmarks/ `
+--benchmark-only `
+--benchmark-group-by=param:size `
+--benchmark-warmup=true `
+--benchmark-disable-gc
 ```
 
 Save a run with a readable name:
 
-```powershell
-uv run pytest benchmarks/ --benchmark-only --benchmark-warmup=true --benchmark-disable-gc --benchmark-save=iter-sizes
+```shell
+uv run pytest benchmarks/ `
+--benchmark-only `
+--benchmark-warmup=true `
+--benchmark-disable-gc `
+--benchmark-save=iter-sizes
 ```
 
 Save stats plus raw timing data:
 
-```powershell
-uv run pytest benchmarks/ --benchmark-only --benchmark-save-data --benchmark-autosave
+```shell
+uv run pytest benchmarks/ `
+--benchmark-only `
+--benchmark-save-data `
+--benchmark-autosave
 ```
 
 Compare against the latest saved run:
 
 ```powershell
-uv run pytest benchmarks/ --benchmark-only --benchmark-compare
+uv run pytest benchmarks/ `
+--benchmark-only `
+--benchmark-compare
 ```
 
-## Advanced examples
+### Advanced examples
 
 ```shell
-uv run pytest benchmarks/test_sequences.py::test_init --benchmark-only --benchmark-group-by=param:size --benchmark-group-by=name --benchmark-warmup=true --benchmark-disable-gc --benchmark-columns=median,mean,min,max,stddev --benchmark-sort=mean --benchmark-compare
+uv run pytest benchmarks/test_sequences.py::test_init `
+--benchmark-only `
+--benchmark-group-by=param:size `
+--benchmark-group-by=name `
+--benchmark-warmup=true `
+--benchmark-disable-gc `
+--benchmark-columns=median,mean,min,max,stddev `
+--benchmark-sort=mean `
+--benchmark-compare
 ```
 
 Run a single test, grouped by size + name, compare against the last saved run, with warmup and GC disabled, and show only the median, mean, min, max, and stddev columns.
@@ -46,7 +72,15 @@ Run a single test, grouped by size + name, compare against the last saved run, w
 Also:
 
 ```shell
-uv run pytest benchmarks/test_sequences.py::test_init -k "10-"--benchmark-only --benchmark-group-by=name --benchmark-warmup=true --benchmark-disable-gc --benchmark-columns=median,mean,min,max,stddev --benchmark-sort=mean --benchmark-compare
+uv run pytest benchmarks/test_sequences.py::test_init `
+-k "10-" `
+--benchmark-only `
+--benchmark-group-by=name `
+--benchmark-warmup=true `
+--benchmark-disable-gc `
+--benchmark-columns=median,mean,min,max,stddev `
+--benchmark-sort=mean `
+--benchmark-compare
 ```
 
 Here we add a `k` filter to only run the 10- element size, and group by name only.
@@ -64,7 +98,7 @@ uv run pytest-benchmark compare `
   --time-unit=us
 ```
 
-## Saved format
+### Saved format
 
 Saved runs go under `.benchmarks/<platform-python>/` by default, for example:
 
@@ -81,6 +115,22 @@ or with autosave:
 - `--benchmark-save` and `--benchmark-autosave` save JSON benchmark reports
 - `--benchmark-save-data` includes raw timing samples in those JSON files
 - `--benchmark-json path.json` writes a full JSON report to a path you choose
+- `--benchmark-storage=<path>` changes the default storage path for saved runs
+
+### sortedcontainers vs pyochain
+
+For these benchmarks in particular, run the following command:
+
+```shell
+uv run pytest benchmarks/test_sorted.py::<test_name> `
+    --benchmark-only `
+    --benchmark-warmup=true `
+    --benchmark-disable-gc `
+    --benchmark-group-by=param:size `
+    --benchmark-storage=file://.benchmarks/sortedlist/
+```
+
+---
 
 ## Import benchmark
 

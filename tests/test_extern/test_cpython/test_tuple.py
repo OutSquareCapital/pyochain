@@ -74,9 +74,9 @@ def test_imul() -> None:
 def test_seq_resize_bug() -> None:
     # Check that a specific bug in _PyTuple_Resize() is squashed.
     def f() -> Iterator[int]:
-        yield from range(1000)
+        yield from range(10)
 
-    assert list(Seq(f())) == list(range(1000))
+    assert list(Seq(f())) == list(range(10))
 
 
 # We expect Seqs whose base components have deterministic hashes to

@@ -17,6 +17,7 @@ use pyo3_ext::{
     types::{PyMutableSequence, PySupportsIndex},
 };
 use pyochain_macros::try_cast;
+use std_tools::prelude::*;
 use tap::prelude::*;
 
 struct OpenRange {
@@ -124,29 +125,8 @@ impl SliceView {
     fn __iter__(&self, py: Python<'_>) -> PyResult<SliceViewIterator> {
         SliceViewIterator::new(self.current_range(py)?, self.inner().clone_ref(py))
     }
-    #[staticmethod]
-    fn _from_range(
-        py: Python<'_>,
-        inner: Py<PySequence>,
-        range: Py<PyRange>,
-    ) -> PyResult<Bound<'_, Self>> {
-        Self {
-            inner,
-            range: Mutex::new(Either::Left(range)),
-        }
-        .into_bound(py)
-    }
-
     fn __contains__(slf: &Bound<'_, Self>, item: &Bound<'_, PyAny>) -> PyResult<bool> {
-        slf.try_iter()
-            .unwrap()
-            .map(|el| item.eq(el?))
-            .find_map(|x| match x {
-                Ok(true) => Some(Ok(true)),
-                Ok(false) => None,
-                Err(e) => Some(Err(e)),
-            })
-            .unwrap_or(Ok(false))
+        slf.try_iter().unwrap().try_any(|el| item.eq(el?))
     }
 
     fn __reversed__(&self, py: Python<'_>) -> PyResult<SliceViewReverseIterator> {
@@ -162,13 +142,7 @@ impl SliceView {
                 .iter_py()
                 .map(|x| seq.get_item(x?.extract::<usize>()?))
                 .zip(o.try_iter().unwrap())
-                .map(|(a, b)| a?.eq(b?))
-                .find_map(|x| match x {
-                    Ok(true) => None,
-                    Ok(false) => Some(Ok(false)),
-                    Err(e) => Some(Err(e)),
-                })
-                .unwrap_or(Ok(true))?;
+                .try_all(|(a, b)| a?.eq(b?))?;
             Ok(self.__len__(py)? == o.len()? && elem_eq)
         })
     }

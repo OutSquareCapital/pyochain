@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, Never, assert_never, assert_type
+from typing import TYPE_CHECKING, Any, Never, assert_never, assert_type
 
 from pyochain import Iter, Range, Seq
 from pyochain.abc import PyoIterator
@@ -21,6 +21,16 @@ def check_iter_covariance() -> None:
     _f: Iterator[Animal] = a
     _g: PyoIterator[Animal] = b
     _j: Iterator[Animal] = b
+
+
+def check_iter_constructor() -> None:
+    _ = assert_type(Iter[str](), Iter[str])
+    _ = assert_type(Iter(()), Iter[Never])
+    _ = assert_type(Iter(Range(3)), Iter[int])
+    _ = assert_type(Iter(Range(3).iter().map(str)), Iter[str])
+    _ = assert_type(Iter(1), Iter[int])
+    _ = assert_type(Iter(1, 2, 3), Iter[int])
+    _ = assert_type(Iter(dict[str, str]().items()), Iter[tuple[str, str]])
 
 
 def check_iter_flatten() -> Never:
@@ -77,3 +87,49 @@ def check_map_star() -> Never:
     _ = assert_type(out, Seq[tuple[int, str, bool]])
     # Expected to fail
     _ = assert_never(Range(3).iter().map_star(str))
+
+
+type TupItem = tuple[int, str, bool]
+
+
+def check_map_windows() -> None:
+    def foo(x: int, _y: int) -> int:
+        return x
+
+    def bar(*x: int) -> int:
+        return sum(x)
+
+    def baz(x: tuple[int, ...]) -> int:
+        return sum(x)
+
+    data = Range(3)
+    _ = assert_type(data.iter().map_windows_star(1, foo), Any)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]
+    _ = assert_type(data.iter().map_windows_star(2, foo), PyoIterator[int])
+    _ = assert_type(data.iter().map_windows(3, baz), PyoIterator[int])
+    _ = assert_type(data.iter().map_windows_star(2, bar), PyoIterator[int])
+    _ = assert_type(data.iter().map_windows_star(3, bar), PyoIterator[int])
+
+
+def check_for_each_star() -> None:
+    def foo(*_: int) -> None:
+        pass
+
+    def bar(_a: int, _b: int, _c: int) -> None:
+        pass
+
+    def bar2(_a: int, _b: int, _c: int, _d: int) -> None:
+        pass
+
+    def baz(_x: int, _y: int, _z: int, /, _a: int, _b: int) -> None:
+        pass
+
+    data_tup = Range(3).iter().map(lambda _: Range(10)).map(tuple)
+    data_2 = Range(3).iter().map(lambda x: (x, x + 1))
+
+    _ = assert_type(data_tup.for_each_star(foo, 1, 2, 3), None)
+    _ = assert_type(data_2.for_each_star(bar, 1), None)
+    _ = assert_type(Range(3).iter().for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
+    _ = assert_type(data_2.for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+    _ = assert_type(data_2.for_each_star(bar2, 1, 2), None)
+    _ = assert_type(data_2.for_each_star(bar2, 1), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+    _ = assert_type(data_2.for_each_star(baz, 1, _a=1, _b=2), None)
