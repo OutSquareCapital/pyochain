@@ -11,7 +11,7 @@ def check_covariance() -> None:
     res: Result[Animal, Any] = Ok(Dog()).map(lambda x: x)
     _ = assert_type(res, Result[Dog, Any])  # ty: ignore[type-assertion-failure]
     # ty does things differently and keep the explicit inference
-    _ = assert_type(res, Result[Animal, Any])
+    _ = assert_type(res, Result[Animal, Any])  # pyright: ignore[reportAssertTypeFailure]
 
 
 def check_result_basic() -> None:
@@ -28,10 +28,10 @@ def check_result_transpose() -> None:
     a = assert_type(Ok(Some(10)), Result[Option[int], Any])
     _a = assert_type(a.transpose(), Option[Result[int, Any]])  # ty: ignore[type-assertion-failure]
     # ty infer the Literal
-    _aty = assert_type(a.transpose(), Option[Result[Literal[10], Any]])
+    _aty = assert_type(a.transpose(), Option[Result[Literal[10], Any]])  # pyright: ignore[reportAssertTypeFailure]
     b = assert_type(Err(Some(10)), Result[Any, Option[int]])
     _b = assert_type(b.transpose(), Option[Result[Any, Option[int]]])  # ty: ignore[type-assertion-failure]
-    _b_ty = assert_type(b.transpose(), Option[Result[Any, Option[Literal[10]]]])
+    _b_ty = assert_type(b.transpose(), Option[Result[Any, Option[Literal[10]]]])  # pyright: ignore[reportAssertTypeFailure]
     c = assert_type(Ok[Option[int], int](NONE), Result[Option[int], int])
     _c = assert_type(c.transpose(), Option[Result[int, int]])
     d = Err[Option[int], Option[int]](Null())
@@ -52,7 +52,7 @@ def check_result_flatten() -> None:
 
     _ = assert_type(Err(Err("error")), Result[Any, Result[Any, str]])  # ty: ignore[type-assertion-failure]
     # ty infer the Literal
-    _ = assert_type(Err(Err("error")), Result[Any, Result[Any, Literal["error"]]])
+    _ = assert_type(Err(Err("error")), Result[Any, Result[Any, Literal["error"]]])  # pyright: ignore[reportAssertTypeFailure]
 
 
 def check_and_then_result() -> None:

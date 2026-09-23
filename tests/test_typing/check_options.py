@@ -34,7 +34,7 @@ def check_opt_lit_inference() -> Option[AnimalLit]:
     # Need to add explicit type hint to get Option[AnimalLit]
     opt_casted: Option[AnimalLit] = assert_type(option(lit), Option[AnimalLit])
     # ty does better and infer directly the output as Option[AnimalLit]
-    _ = assert_type(option(lit), Option[AnimalLit])
+    _ = assert_type(option(lit), Option[AnimalLit])  # pyright: ignore[reportAssertTypeFailure]
     return opt_casted
 
 
@@ -78,7 +78,7 @@ def check_option_and_then() -> None:
     """
     _a = assert_type(Some(10).and_then(Some), Option[int])  # ty: ignore[type-assertion-failure]
     # ty infer the Literal
-    _a_ty = assert_type(Some(10).and_then(Some), Option[Literal[10]])
+    _a_ty = assert_type(Some(10).and_then(Some), Option[Literal[10]])  # pyright: ignore[reportAssertTypeFailure]
     _b = assert_type(Some[Option[int]](Null()).and_then(Some), Option[Option[int]])
     _c = assert_type(Null[int]().and_then(Some), Option[int])
 
