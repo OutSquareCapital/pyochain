@@ -25,12 +25,14 @@ class ImplMutableSet(ImplCollection):
         self._data.discard(item)
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyFail(AbstractMutableSet[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
 class _PyOk(ImplMutableSet, AbstractMutableSet[int]): ...
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyoFail(PyoMutableSet[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
@@ -39,6 +41,7 @@ class _PyoOk(ImplMutableSet, PyoMutableSet[int]): ...
 
 def test_mutable_set() -> None:
     checks.init_fail(_PyFail)
+    # pyrefly: ignore [bad-instantiation]
     fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]  # ty: ignore[call-non-callable]
     checks.len_fail(fail)
     checks.contains_fail(fail)

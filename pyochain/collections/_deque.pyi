@@ -161,6 +161,7 @@ class Deque[T](PyoMutableSequence[T], ArgsWrapper[T]):
     ) -> Deque[T1]: ...
     @override
     @staticmethod
+    # pyrefly: ignore [bad-override]
     def wrap[T1](data: deque[T1]) -> Deque[T1]: ...  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
     @override
     def append(self, x: T, /) -> None: ...

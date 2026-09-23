@@ -139,6 +139,7 @@ class IterGenExc:
         return self
 
     def __next__(self) -> None:
+        # pyrefly: ignore [division-by-zero]
         _ = 3 // 0  # ty: ignore[division-by-zero]
 
 
@@ -201,7 +202,6 @@ def test_constructors(type2test: TestedSeq[object]) -> None:
             return self.__data[i]
 
     s = OtherSeq(u0)
-    # pyrefly: ignore [bad-argument-type]
     v0 = type2test(s)
     assert len(v0) == len(s)
 
@@ -212,20 +212,18 @@ def test_constructors(type2test: TestedSeq[object]) -> None:
     # Create from various iterables
     for s in ("123", "", range(1000), ("do", 1.2), range(2000, 2200, 5)):
         for g in (SequenceTest, IterFunc, IterGen, itermulti, iterfunc):
-            # pyrefly: ignore [bad-argument-type]
             assert type2test(g(s)) == type2test(s)  # pyright: ignore[ reportUnknownArgumentType]
         assert type2test(IterFuncStop(s)) == type2test(())
         assert type2test(c for c in "123") == type2test("123")
         # NOTE: Here we differ from CPython, because our constructors are more flexible
         assert type2test(IterNextOnly(s)).len() == 1
         with pytest.raises(TypeError):
-            # pyrefly: ignore [bad-argument-type]
             _ = type2test(IterNoNext(s))
         with pytest.raises(ZeroDivisionError):
             _ = type2test(IterGenExc(s))
 
     with pytest.raises(TypeError):
-        # pyrefly: ignore [missing-argument, no-matching-overload, unexpected-keyword]
+        # pyrefly: ignore [no-matching-overload]
         _ = type2test(unsupported_arg=[])  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
 
 
@@ -260,6 +258,7 @@ def test_getitem(type2test: VecOrSeq[object]) -> None:
         _ = u[-1]
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         _ = u.__getitem__()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
 
     a = type2test([10, 11])

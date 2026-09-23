@@ -516,7 +516,7 @@ class RaiseImmediateStop:
 
 def multiple_iterators(seqn: Heap[int]) -> Iterator[int]:
     """Test multiple tiers of iterators."""
-    # pyrefly: ignore [bad-argument-type, implicit-any-lambda]
+    # pyrefly: ignore [bad-argument-type]
     return chain(map(lambda x: x, reg_generator(ImplGenerator(ImplGetItem(seqn)))))  # pyright: ignore[ reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 

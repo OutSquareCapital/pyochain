@@ -110,6 +110,7 @@ def test_set_from_iterable() -> None:
             self._values: set[object] = set(values)
 
         @override
+        # pyrefly: ignore [bad-override]
         def _from_iterable(self, values: Iterable[object]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
             return type(self)(values, "from_iterable")
 

@@ -131,10 +131,10 @@ def test_count() -> None:
             assert inner_s.count(letter) == d.count(letter), (inner_s, d, letter)
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        d.count()  # too few args  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
+        _ = d.count()  # too few args  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count, bad-argument-type]
-        d.count(1, 2)  # too many args  # pyright: ignore[reportCallIssue]  # ty: ignore[invalid-argument-type, too-many-positional-arguments]
+        _ = d.count(1, 2)  # too many args  # pyright: ignore[reportCallIssue]  # ty: ignore[invalid-argument-type, too-many-positional-arguments]
 
     class BadCompare:  # ruff:ignore[eq-without-hash]
         @override
@@ -797,7 +797,7 @@ def test_reversed_new() -> None:
     klass = type(reversed(Deque[str | int]()))
     # NOTE: klass is the dedicated reversed deque iterator type
     for s in ("abcd", range(20)):
-        # pyrefly: ignore [bad-argument-count, bad-instantiation]
+        # pyrefly: ignore [bad-argument-count]
         assert Vec(klass(deque(s))) == Vec(reversed(s))  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
 
 

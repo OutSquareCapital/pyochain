@@ -25,6 +25,7 @@ This is a niche behavior anyway, `clear` is what you *should* use."""
 @_SKIP_INIT_TEST
 def test_init_clear_previous_values() -> None:
     a = Vec([1, 2, 3])
+    # pyrefly: ignore [bad-argument-count]
     a.__init__(())  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
     assert a == Vec()
 
@@ -32,6 +33,7 @@ def test_init_clear_previous_values() -> None:
 @_SKIP_INIT_TEST
 def test_init_overwrite_previous_values() -> None:
     a = Vec([1, 2, 3])
+    # pyrefly: ignore [bad-argument-count]
     a.__init__([4, 5, 6])  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
     assert a == Vec([4, 5, 6])
 
@@ -748,7 +750,7 @@ def test_basic() -> None:
 
 def test_keyword_args() -> None:
     with pytest.raises(TypeError, match="keyword argument"):
-        # pyrefly: ignore [missing-argument, unexpected-keyword]
+        # pyrefly: ignore [no-matching-overload]
         _ = Vec(sequence=[])  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
 
 
@@ -769,7 +771,7 @@ def test_len() -> None:
 
 def test_overflow() -> None:
     lst = Vec([4, 5, 6, 7])
-    n = int((sys.maxsize * 2 + 2) // len(lst))
+    n = (sys.maxsize * 2 + 2) // len(lst)
 
     def mul(a: Vec[int], b: int) -> Vec[int]:  # ruff:ignore[reimplemented-operator]
         return a * b

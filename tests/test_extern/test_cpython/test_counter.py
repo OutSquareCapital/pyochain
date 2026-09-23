@@ -110,7 +110,9 @@ def test_basics() -> None:
 )
 def test_init_reinitialization() -> None:
     c = PyoCounter({"a": 5, "b": 3, "c": 1})
+    # pyrefly: ignore [bad-argument-count]
     c.__init__("a" * 500 + "b" * 300)  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
+    # pyrefly: ignore [bad-argument-count]
     c.__init__("cdc")  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
     c.__init__()
     assert c == {"a": 555, "b": 333, "c": 3, "d": 1}
@@ -126,6 +128,7 @@ def test_update_reentrant_add_clears_counter() -> None:
 
     class Evil(int):
         @override
+        # pyrefly: ignore [bad-override]
         def __add__(self, other: object) -> object:  # pyright: ignore[reportIncompatibleMethodOverride]  # ty: ignore[invalid-method-override]
             c.clear()
             return NotImplemented
@@ -147,7 +150,7 @@ def test_init() -> None:
         # pyrefly: ignore [no-matching-overload]
         _ = PyoCounter[object]((), ())  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
     with pytest.raises(TypeError):
-        # pyrefly: ignore [no-matching-overload]
+        # pyrefly: ignore [missing-argument]
         _ = PyoCounter[object].__init__()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[missing-argument]
 
 
