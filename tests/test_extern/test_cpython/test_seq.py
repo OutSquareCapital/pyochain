@@ -240,10 +240,8 @@ def test_getitem(type2test: VecOrSeq[object]) -> None:
     u = type2test([0, 1, 2, 3, 4])
     for i in range(len(u)):
         assert u[i] == i
-        assert u[int(i)] == i
     for i in range(-len(u), -1):
         assert u[i] == len(u) + i
-        assert u[int(i)] == len(u) + i
     with pytest.raises(IndexError):
         _ = u[-len(u) - 1]
     with pytest.raises(IndexError):

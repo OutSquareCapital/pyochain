@@ -850,7 +850,6 @@ def test_constructor() -> None:
         # NOTE: Here we diff from CPython, since our constructor is more flexible.
         _ = Deque(test_seq.IterNextOnly(s))
         with pytest.raises(TypeError):
-            # pyrefly: ignore [bad-argument-type]
             _ = Deque(test_seq.IterNoNext(s))
         with pytest.raises(ZeroDivisionError):
             _ = Deque(test_seq.IterGenExc(s))

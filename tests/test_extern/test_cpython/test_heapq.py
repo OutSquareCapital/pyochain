@@ -498,6 +498,7 @@ class PropagateException:
         return self
 
     def __next__(self) -> None:
+        # pyrefly: ignore [division-by-zero]
         _ = 3 // 0  # ty: ignore[division-by-zero]
 
 

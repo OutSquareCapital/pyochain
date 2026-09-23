@@ -691,7 +691,6 @@ def test_constructor_exception_handling() -> None:
             raise KeyboardInterrupt
 
     with pytest.raises(KeyboardInterrupt):
-        # pyrefly: ignore [bad-argument-type]
         _ = Vec(F())
 
 
