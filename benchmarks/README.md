@@ -127,6 +127,7 @@ uv run pytest benchmarks/test_sorted.py::<test_name> `
     --benchmark-warmup=true `
     --benchmark-disable-gc `
     --benchmark-group-by=param:size `
+    --benchmark-autosave `
     --benchmark-storage=file://.benchmarks/sortedlist/
 ```
 
