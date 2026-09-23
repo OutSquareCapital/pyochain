@@ -20,8 +20,8 @@ PATH: Final[Path] = Path(".benchmarks", "sortedlist", PLATFORM_DIR)
 class Lib(StrEnum):
     """Libraries used in the benchmarks."""
 
-    PYOCHAIN = auto()
-    SORTEDCONTAINERS = auto()
+    Pyochain = auto()
+    SortedContainers = auto()
 
 
 def main() -> None:
@@ -52,13 +52,13 @@ def main() -> None:
 
 
 def _get_df() -> pl.DataFrame:
-    benchmark = pl.col("benchmarks").list.explode()
-    stat = benchmark.struct.field("stats").struct.field
+    benchmark = pl.col("benchmarks").list.explode().struct.field
+    stat = benchmark("stats").struct.field
     param = pl.col("param").str.split("-").list
     selected_cols = (
-        benchmark.struct.field("fullname"),
-        benchmark.struct.field("name"),
-        benchmark.struct.field("param"),
+        benchmark("fullname"),
+        benchmark("name"),
+        benchmark("param"),
         stat("min"),
         stat("max"),
         stat("median"),
@@ -105,8 +105,8 @@ def _get_ratios(df: pl.DataFrame) -> pl.DataFrame:
             "test",
             "method",
             pl
-            .col(Lib.SORTEDCONTAINERS)
-            .truediv(Lib.PYOCHAIN)
+            .col(Lib.SortedContainers)
+            .truediv(Lib.Pyochain)
             .round(3)
             .alias("speedup"),
         )
