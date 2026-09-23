@@ -25,14 +25,14 @@ This is a niche behavior anyway, `clear` is what you *should* use."""
 @_SKIP_INIT_TEST
 def test_init_clear_previous_values() -> None:
     a = Vec([1, 2, 3])
-    a.__init__(())  # pyright: ignore[reportCallIssue]
+    a.__init__(())  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
     assert a == Vec()
 
 
 @_SKIP_INIT_TEST
 def test_init_overwrite_previous_values() -> None:
     a = Vec([1, 2, 3])
-    a.__init__([4, 5, 6])  # pyright: ignore[reportCallIssue]
+    a.__init__([4, 5, 6])  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
     assert a == Vec([4, 5, 6])
 
 
@@ -78,7 +78,7 @@ def test_repr() -> None:
     assert repr(a2) == "Vec(0, 1, 2)"
 
     # pyrefly: ignore [bad-argument-type]
-    a2.append(a2)  # pyright: ignore[reportArgumentType]
+    a2.append(a2)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     a2.append(3)
     assert str(a2) == "Vec(0, 1, 2, [...], 3)"
     assert repr(a2) == "Vec(0, 1, 2, [...], 3)"
@@ -90,12 +90,12 @@ def test_set_subscript() -> None:
         a.__setitem__(slice(0, 10, 0), [1, 2, 3])
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        a.__setitem__(slice(0, 10), 1)  # pyright: ignore[reportCallIssue, reportArgumentType]
+        a.__setitem__(slice(0, 10), 1)  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[no-matching-overload]
     with pytest.raises(ValueError):
         a.__setitem__(slice(0, 10, 2), [1, 2])
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        a.__getitem__("x", 1)  # pyright: ignore[reportCallIssue]
+        a.__getitem__("x", 1)  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
     a[slice(2, 10, 3)] = [1, 2, 3]
     assert a == Vec([
         0,
@@ -131,7 +131,7 @@ def test_reversed() -> None:
     # Bug 3689: make sure list-reversed-iterator doesn't have __len__
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-type]
-        _ = len(reversed([1, 2, 3]))  # pyright: ignore[reportArgumentType]
+        _ = len(reversed([1, 2, 3]))  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def test_setitem() -> None:
