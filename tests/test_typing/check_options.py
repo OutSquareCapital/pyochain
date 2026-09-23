@@ -28,8 +28,9 @@ def check_option_transpose() -> None:
 
 def check_opt_lit_inference() -> Option[AnimalLit]:
     lit = assert_type(_get_cat(), AnimalLit | None)
-    # NOTE: specific to basedpyright and pyrefly
+    # NOTE: specific to basedpyright
     # Inferred as Option[str]
+    # pyrefly: ignore [assert-type]
     _ = assert_type(option(lit), Option[str])  # ty: ignore[type-assertion-failure]
     # Need to add explicit type hint to get Option[AnimalLit]
     opt_casted: Option[AnimalLit] = assert_type(option(lit), Option[AnimalLit])
@@ -55,8 +56,8 @@ def check_option_lit_matchs() -> None:
             # pyrefly: ignore [assert-type]
             _ = assert_type(opt_casted.unwrap(), LitDog)  # pyright: ignore[reportAssertTypeFailure]  # ty: ignore[type-assertion-failure]
         case Some("cat" as cat):
-            # pyrefly: ignore[assert-type]
             _ = assert_type(cat, LitCat)
+            # pyrefly: ignore [assert-type]
             _ = assert_type(opt_casted.unwrap(), LitCat)  # pyright: ignore[reportAssertTypeFailure]  # ty: ignore[type-assertion-failure]
         case Some("tyrannosaurus" as trex):  # pyright: ignore[reportUnnecessaryComparison, reportUnknownVariableType]
             _ = assert_never(trex)

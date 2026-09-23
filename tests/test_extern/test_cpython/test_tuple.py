@@ -42,7 +42,7 @@ def test_constructors() -> None:
 
 def test_keyword_args() -> None:
     with pytest.raises(TypeError, match="keyword argument"):
-        # pyrefly: ignore [missing-argument]
+        # pyrefly: ignore [no-matching-overload]
         _ = Seq(sequence=())  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
 
 

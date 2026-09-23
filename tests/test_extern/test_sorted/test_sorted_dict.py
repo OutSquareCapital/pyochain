@@ -348,6 +348,7 @@ def test_repr_recursion() -> None:
 
 @pytest.mark.skip(reason="We don't support subclassing SortedDict as of now")
 def test_repr_subclass() -> None:
+    # pyrefly: ignore [invalid-inheritance]
     class CustomSortedDict[K: SupportsHashableAndRichComparison, V](SortedDict[K, V]):  # pyright: ignore[reportGeneralTypeIssues]  # ty: ignore[subclass-of-final-class]
         pass
 

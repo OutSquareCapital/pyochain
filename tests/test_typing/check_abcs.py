@@ -47,7 +47,7 @@ def check_iterables_covariance() -> None:
     _seq_immutable: Seq[Animal] = base().pipe(Seq)
     # pyrefly: ignore [bad-assignment]
     _: PyoMutableSequence[Animal] = base()  # pyright: ignore[reportAssignmentType]  # ty: ignore[invalid-assignment]
-    # pyrefly: ignore [bad-assignment]
+    # pyrefly: ignore [bad-assignment, redefinition]
     _: Vec[Animal] = base()  # pyright: ignore[reportAssignmentType]  # ty: ignore[invalid-assignment]
 
 
