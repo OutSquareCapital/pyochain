@@ -21,7 +21,6 @@ from pyochain.collections import Heap, HeapMax, HeapMin
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Sequence
-    from types import NotImplementedType
 
     from _typeshed import SupportsRichComparison
 
@@ -499,7 +498,7 @@ class PropagateException:
         return self
 
     def __next__(self) -> None:
-        _ = 3 // 0
+        _ = 3 // 0  # ty: ignore[division-by-zero]
 
 
 class RaiseImmediateStop:
@@ -705,7 +704,7 @@ def test_comparison_operator_modifying_heap() -> None:
     # when comparing objects as they can alter the heap
     class EvilClass(int):
         @override
-        def __lt__(self, o: object) -> NotImplementedType:
+        def __lt__(self, o: object) -> bool:
             heap.clear()
             return NotImplemented
 
@@ -719,13 +718,13 @@ def test_comparison_operator_modifying_heap_two_heaps() -> None:
 
     class MutList1(int):
         @override
-        def __lt__(self, o: object) -> NotImplementedType:
+        def __lt__(self, o: object) -> bool:
             list2.clear()
             return NotImplemented
 
     class MutList2(int):
         @override
-        def __lt__(self, o: object) -> NotImplementedType:
+        def __lt__(self, o: object) -> bool:
             list1.clear()
             return NotImplemented
 

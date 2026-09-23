@@ -527,7 +527,7 @@ def test_pickle() -> None:
 
     alpha = SortedKeyDict(operator.neg, zip(range(100), range(100), strict=False))
     alpha.reset(500)
-    beta: SortedKeyDict[int, int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
+    beta: SortedKeyDict[int, int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]  # ty: ignore[unsound-assignment]
     assert alpha == beta
     # assert alpha.key == beta.key  # ruff: ignore[commented-out-code]
 

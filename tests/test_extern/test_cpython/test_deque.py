@@ -338,7 +338,7 @@ def test_index() -> None:
         d = Deque(range(n))
         # pyrefly: ignore [unsupported-operation]
         # pyrefly: ignore [bad-argument-type]
-        d[n // 2] = MutateCmp(d, result=False)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-assignment, invalid-argument-type, invalid-argument-type]
+        d[n // 2] = MutateCmp(d, result=False)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-assignment,  invalid-argument-type]
         with pytest.raises(RuntimeError):
             _ = d.index(n)
 

@@ -627,7 +627,7 @@ def test_iadd() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-type]
-        _ = u.__iadd__(None)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type, invalid-argument-type]
+        _ = u.__iadd__(None)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def test_imul() -> None:

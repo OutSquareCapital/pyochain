@@ -139,7 +139,7 @@ class IterGenExc:
         return self
 
     def __next__(self) -> None:
-        _ = 3 // 0
+        _ = 3 // 0  # ty: ignore[division-by-zero]
 
 
 class IterFuncStop[T]:
