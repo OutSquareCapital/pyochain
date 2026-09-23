@@ -11,10 +11,14 @@ import polars as pl
 
 from pyochain import Iter
 
+# TODO: 0071_sortedlist.json is the first time we ran the benchmarks.
+# We should use it as a third reference to ensure no regressions.
+
 PLATFORM_DIR: Final[str] = (
     f"{platform.system()}-CPython-{sys.version_info.major}.{sys.version_info.minor}-{platform.architecture()[0]}"
 )
 PATH: Final[Path] = Path(".benchmarks", "sortedlist", PLATFORM_DIR)
+"""Path to the benchmark results directory."""
 
 
 class Lib(StrEnum):
