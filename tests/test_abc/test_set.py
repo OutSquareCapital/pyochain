@@ -16,12 +16,14 @@ type SetPair[T] = tuple[AbstractSet[T], AbstractSet[T]]
 type IntoSetMutFn = Callable[[set[int]], MutableSet[int]]
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyFail(AbstractSet[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
 class _PyOk(ImplCollection, AbstractSet[int]): ...
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyoFail(PyoSet[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
@@ -30,7 +32,8 @@ class _PyoOk(ImplCollection, PyoSet[int]): ...
 
 def test_set() -> None:
     checks.init_fail(_PyFail)
-    fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]
+    # pyrefly: ignore [bad-instantiation]
+    fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]  # ty: ignore[call-non-callable]
     checks.len_fail(fail)
     checks.contains_fail(fail)
     checks.iter_fail(fail)

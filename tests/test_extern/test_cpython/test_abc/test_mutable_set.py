@@ -58,14 +58,14 @@ def test_issue_4920() -> None:
 
         @override
         # pyrefly: ignore [bad-override]
-        def add(self, v: object) -> bool:  # pyright: ignore[reportIncompatibleMethodOverride]
+        def add(self, v: object) -> bool:  # pyright: ignore[reportIncompatibleMethodOverride]  # ty: ignore[invalid-method-override]
             result = v not in self.__s
             self.__s.add(v)
             return result
 
         @override
         # pyrefly: ignore [bad-override]
-        def discard(self, v: object) -> bool:  # pyright: ignore[reportIncompatibleMethodOverride]
+        def discard(self, v: object) -> bool:  # pyright: ignore[reportIncompatibleMethodOverride]  # ty: ignore[invalid-method-override]
             result = v in self.__s
             self.__s.discard(v)
             return result
@@ -110,6 +110,7 @@ def test_set_from_iterable() -> None:
             self._values: set[object] = set(values)
 
         @override
+        # pyrefly: ignore [bad-override]
         def _from_iterable(self, values: Iterable[object]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
             return type(self)(values, "from_iterable")
 

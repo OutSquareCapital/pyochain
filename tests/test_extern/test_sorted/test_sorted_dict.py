@@ -339,7 +339,7 @@ class Identity:
 def test_repr_recursion() -> None:
     temp = SortedKeyDict(Identity(), {"alice": 3, "bob": 1, "carol": 2, "dave": 4})
     # pyrefly: ignore [unsupported-operation]
-    temp["bob"] = temp  # pyright: ignore[reportArgumentType]
+    temp["bob"] = temp  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-assignment]
     assert (
         repr(temp)
         == "SortedKeyDict(identity, {'alice': 3, 'bob': ..., 'carol': 2, 'dave': 4})"
@@ -348,7 +348,8 @@ def test_repr_recursion() -> None:
 
 @pytest.mark.skip(reason="We don't support subclassing SortedDict as of now")
 def test_repr_subclass() -> None:
-    class CustomSortedDict[K: SupportsHashableAndRichComparison, V](SortedDict[K, V]):  # pyright: ignore[reportGeneralTypeIssues]
+    # pyrefly: ignore [invalid-inheritance]
+    class CustomSortedDict[K: SupportsHashableAndRichComparison, V](SortedDict[K, V]):  # pyright: ignore[reportGeneralTypeIssues]  # ty: ignore[subclass-of-final-class]
         pass
 
     temp = CustomSortedDict({"alice": 3, "bob": 1, "carol": 2, "dave": 4})
@@ -527,7 +528,7 @@ def test_pickle() -> None:
 
     alpha = SortedKeyDict(operator.neg, zip(range(100), range(100), strict=False))
     alpha.reset(500)
-    beta: SortedKeyDict[int, int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
+    beta: SortedKeyDict[int, int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]  # ty: ignore[unsound-assignment]
     assert alpha == beta
     # assert alpha.key == beta.key  # ruff: ignore[commented-out-code]
 

@@ -49,7 +49,7 @@ REVERSIBLES: Reversibles = Seq((  # pyright: ignore[reportAssignmentType]
     Dict[object, object](()).keys(),
     Dict[object, object](()).items(),
     Dict[object, object](()).values(),
-))
+))  # ty: ignore[invalid-assignment]
 
 
 @pytest.mark.skip(reason="TODO: Correctly handle reversible for subclassing")

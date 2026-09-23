@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, Any, Never, assert_never, assert_type
+from typing import TYPE_CHECKING, Any, Literal, Never, assert_never, assert_type
 
 from pyochain import Iter, Range, Seq
 from pyochain.abc import PyoIterator
@@ -28,12 +28,17 @@ def check_iter_constructor() -> None:
     _ = assert_type(Iter(()), Iter[Never])
     _ = assert_type(Iter(Range(3)), Iter[int])
     _ = assert_type(Iter(Range(3).iter().map(str)), Iter[str])
-    _ = assert_type(Iter(1), Iter[int])
-    _ = assert_type(Iter(1, 2, 3), Iter[int])
+    _ = assert_type(Iter(1), Iter[int])  # ty: ignore[type-assertion-failure]
+    # ty infer the Literal
+    # pyrefly: ignore [assert-type]
+    _ = assert_type(Iter(1), Iter[Literal[1]])  # pyright: ignore[reportAssertTypeFailure]
+    _ = assert_type(Iter(1, 2, 3), Iter[int])  # ty: ignore[type-assertion-failure]
+    # pyrefly: ignore [assert-type]
+    _ = assert_type(Iter(1, 2, 3), Iter[Literal[1, 2, 3]])  # pyright: ignore[reportAssertTypeFailure]
     _ = assert_type(Iter(dict[str, str]().items()), Iter[tuple[str, str]])
 
 
-def check_iter_flatten() -> Never:
+def check_iter_flatten() -> None:
     nested = (
         Range(3)
         .iter()
@@ -48,9 +53,11 @@ def check_iter_flatten() -> Never:
     _ = assert_type(nested, PyoIterator[PyoIterator[PyoIterator[list[int]]]])
     one = assert_type(nested.flatten(), PyoIterator[PyoIterator[list[int]]])
     two = assert_type(one.flatten(), PyoIterator[list[int]])
-    ok = assert_type(two.flatten(), PyoIterator[int])
-    # Expected to fail
-    _fail = assert_type(ok.flatten(), Never)
+    _ = assert_type(two.flatten(), PyoIterator[int])
+
+
+def check_iter_flatten_fail(x: PyoIterator[int]) -> None:
+    _fail = assert_type(x.flatten(), Never)
 
 
 def check_chain_covariance[T, S](base: Iterable[T], *others: Iterable[S]) -> None:
@@ -76,7 +83,7 @@ def check_map_juxt() -> None:
     )
 
 
-def check_map_star() -> Never:
+def check_map_star() -> None:
     out = (
         Range(3)
         .iter()
@@ -103,7 +110,8 @@ def check_map_windows() -> None:
         return sum(x)
 
     data = Range(3)
-    _ = assert_type(data.iter().map_windows_star(1, foo), Any)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]
+    # pyrefly: ignore [no-matching-overload]
+    _ = assert_type(data.iter().map_windows_star(1, foo), Any)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
     _ = assert_type(data.iter().map_windows_star(2, foo), PyoIterator[int])
     _ = assert_type(data.iter().map_windows(3, baz), PyoIterator[int])
     _ = assert_type(data.iter().map_windows_star(2, bar), PyoIterator[int])
@@ -128,8 +136,11 @@ def check_for_each_star() -> None:
 
     _ = assert_type(data_tup.for_each_star(foo, 1, 2, 3), None)
     _ = assert_type(data_2.for_each_star(bar, 1), None)
-    _ = assert_type(Range(3).iter().for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
-    _ = assert_type(data_2.for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+    # pyrefly: ignore [no-matching-overload]
+    _ = assert_type(Range(3).iter().for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
+    # pyrefly: ignore [no-matching-overload]
+    _ = assert_type(data_2.for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
     _ = assert_type(data_2.for_each_star(bar2, 1, 2), None)
-    _ = assert_type(data_2.for_each_star(bar2, 1), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+    # pyrefly: ignore [no-matching-overload]
+    _ = assert_type(data_2.for_each_star(bar2, 1), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
     _ = assert_type(data_2.for_each_star(baz, 1, _a=1, _b=2), None)

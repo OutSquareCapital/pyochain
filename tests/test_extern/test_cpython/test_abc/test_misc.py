@@ -19,7 +19,7 @@ REGISTERABLES = (PyoIterable, PyoIterator, PyoReversible, PyoSized, PyoContainer
 @pytest.mark.parametrize("cls", REGISTERABLES)
 def test_direct_subclassing(cls: type) -> None:
 
-    class C(cls):  # pyright: ignore[reportUntypedBaseClass]
+    class C(cls):  # pyright: ignore[reportUntypedBaseClass]  # ty: ignore[unsupported-base]
         pass
 
     assert issubclass(C, cls)
@@ -36,7 +36,7 @@ def test_registration(cls: type) -> None:
         __hash__ = None  # Make sure it isn't hashable by default  # pyright: ignore[reportAssignmentType, reportUnannotatedClassAttribute]
 
     assert not issubclass(C, cls)
-    cls.register(C)  # pyright: ignore[reportUnknownMemberType]
+    cls.register(C)  # pyright: ignore[reportUnknownMemberType]  # ty: ignore[unresolved-attribute]
     assert issubclass(C, cls)
 
 

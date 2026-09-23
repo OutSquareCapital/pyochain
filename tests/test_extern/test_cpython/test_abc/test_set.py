@@ -300,13 +300,13 @@ def test_interop_lt() -> None:
     assert not OP.r1 < OP.r2
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 < OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 < OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 < OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 < OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 < OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 < OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
 
 
 def test_interop_le() -> None:
@@ -322,13 +322,13 @@ def test_interop_le() -> None:
     assert not OP.r1 <= OP.r2
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 <= OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 <= OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 <= OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 <= OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 <= OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 <= OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
 
 
 def test_interop_gt() -> None:
@@ -344,13 +344,13 @@ def test_interop_gt() -> None:
     assert not OP.r2 > OP.r1
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 > OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 > OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 > OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 > OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 > OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 > OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
 
 
 def test_interop_ge() -> None:
@@ -366,13 +366,13 @@ def test_interop_ge() -> None:
     assert not OP.r2 >= OP.r1
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 >= OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 >= OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 >= OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 >= OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = OP.f1 >= OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 >= OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
 
 
 def test_interop_eq() -> None:

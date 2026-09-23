@@ -38,7 +38,8 @@ class SequenceSubclass(PyoSequence[object]):
         self.seq: Sequence[object] = seq
 
     @override
-    def __getitem__(self, index: int) -> object:  # pyright: ignore[reportIncompatibleMethodOverride]
+    # pyrefly: ignore [bad-override]
+    def __getitem__(self, index: int) -> object:  # pyright: ignore[reportIncompatibleMethodOverride]  # ty: ignore[invalid-method-override]
         return self.seq[index]
 
     @override

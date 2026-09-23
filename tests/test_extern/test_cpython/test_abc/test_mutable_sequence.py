@@ -48,12 +48,12 @@ def test_mutable_sequence_mixins() -> None:
 
         @override
         # pyrefly: ignore [bad-override]
-        def __setitem__(self, index: int, value: object) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        def __setitem__(self, index: int, value: object) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]  # ty: ignore[invalid-method-override]
             self.lst[index] = value
 
         @override
         # pyrefly: ignore [bad-override]
-        def __getitem__(self, index: int) -> object:  # pyright: ignore[reportIncompatibleMethodOverride]
+        def __getitem__(self, index: int) -> object:  # pyright: ignore[reportIncompatibleMethodOverride]  # ty: ignore[invalid-method-override]
             return self.lst[index]
 
         @override
@@ -62,7 +62,7 @@ def test_mutable_sequence_mixins() -> None:
 
         @override
         # pyrefly: ignore [bad-override]
-        def __delitem__(self, index: int) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        def __delitem__(self, index: int) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]  # ty: ignore[invalid-method-override]
             del self.lst[index]
 
         @override

@@ -25,14 +25,16 @@ This is a niche behavior anyway, `clear` is what you *should* use."""
 @_SKIP_INIT_TEST
 def test_init_clear_previous_values() -> None:
     a = Vec([1, 2, 3])
-    a.__init__(())  # pyright: ignore[reportCallIssue]
+    # pyrefly: ignore [bad-argument-count]
+    a.__init__(())  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
     assert a == Vec()
 
 
 @_SKIP_INIT_TEST
 def test_init_overwrite_previous_values() -> None:
     a = Vec([1, 2, 3])
-    a.__init__([4, 5, 6])  # pyright: ignore[reportCallIssue]
+    # pyrefly: ignore [bad-argument-count]
+    a.__init__([4, 5, 6])  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
     assert a == Vec([4, 5, 6])
 
 
@@ -53,7 +55,7 @@ def test_getitem_error() -> None:
     msg = "list indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
         # pyrefly: ignore [bad-index]
-        a["a"]  # pyright: ignore[reportCallIssue, reportArgumentType]
+        a["a"]  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def test_setitem_error() -> None:
@@ -61,7 +63,7 @@ def test_setitem_error() -> None:
     msg = "list indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
         # pyrefly: ignore [unsupported-operation]
-        a["a"] = "python"  # pyright: ignore[reportCallIssue, reportArgumentType]
+        a["a"] = "python"  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[invalid-assignment]
 
 
 @pytest.mark.skip(reason="We don't handle recursive repr yet")
@@ -78,7 +80,7 @@ def test_repr() -> None:
     assert repr(a2) == "Vec(0, 1, 2)"
 
     # pyrefly: ignore [bad-argument-type]
-    a2.append(a2)  # pyright: ignore[reportArgumentType]
+    a2.append(a2)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     a2.append(3)
     assert str(a2) == "Vec(0, 1, 2, [...], 3)"
     assert repr(a2) == "Vec(0, 1, 2, [...], 3)"
@@ -90,12 +92,12 @@ def test_set_subscript() -> None:
         a.__setitem__(slice(0, 10, 0), [1, 2, 3])
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        a.__setitem__(slice(0, 10), 1)  # pyright: ignore[reportCallIssue, reportArgumentType]
+        a.__setitem__(slice(0, 10), 1)  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[no-matching-overload]
     with pytest.raises(ValueError):
         a.__setitem__(slice(0, 10, 2), [1, 2])
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        a.__getitem__("x", 1)  # pyright: ignore[reportCallIssue]
+        a.__getitem__("x", 1)  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
     a[slice(2, 10, 3)] = [1, 2, 3]
     assert a == Vec([
         0,
@@ -131,7 +133,7 @@ def test_reversed() -> None:
     # Bug 3689: make sure list-reversed-iterator doesn't have __len__
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-type]
-        _ = len(reversed([1, 2, 3]))  # pyright: ignore[reportArgumentType]
+        _ = len(reversed([1, 2, 3]))  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def test_setitem() -> None:
@@ -155,7 +157,7 @@ def test_setitem() -> None:
         a.__setitem__(-1, 200)
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        a.__setitem__()  # pyright: ignore[reportCallIssue]
+        a.__setitem__()  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
 
     a = Vec([0, 1, 2, 3, 4])
     a[0] = 1
@@ -176,7 +178,7 @@ def test_setitem() -> None:
     msg = "list indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
         # pyrefly: ignore [unsupported-operation]
-        a["a"] = "python"  # pyright: ignore[reportCallIssue, reportArgumentType]
+        a["a"] = "python"  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[invalid-assignment]
 
 
 def test_delitem() -> None:
@@ -204,7 +206,7 @@ def test_delitem() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [missing-argument]
-        a.__delitem__()  # pyright: ignore[reportCallIssue]
+        a.__delitem__()  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
 
 
 def test_setslice() -> None:
@@ -252,11 +254,11 @@ def test_setslice() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        a.__setitem__(slice(0, 1, 5))  # pyright: ignore[reportCallIssue]
+        a.__setitem__(slice(0, 1, 5))  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [no-matching-overload]
-        a.__setitem__()  # pyright: ignore[reportCallIssue]
+        a.__setitem__()  # pyright: ignore[reportCallIssue]  # ty: ignore[no-matching-overload]
 
 
 def test_slice_assign_iterator() -> None:
@@ -319,7 +321,7 @@ def test_append() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [missing-argument]
-        a.append()  # pyright: ignore[reportCallIssue]
+        a.append()  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
 
 
 def test_extend() -> None:
@@ -341,10 +343,10 @@ def test_extend() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-type]
-        a.extend(None)  # pyright: ignore[reportArgumentType]
+        a.extend(None)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     with pytest.raises(TypeError):
         # pyrefly: ignore [missing-argument]
-        a.extend()  # pyright: ignore[reportCallIssue]
+        a.extend()  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
 
     # overflow test. issue1621
     class CustomIter:
@@ -376,7 +378,7 @@ def test_insert() -> None:
     assert b == Vec(["left", -2, -1, 0, 0, "foo", 1, 2, "right"])
     with pytest.raises(TypeError):
         # pyrefly: ignore [missing-argument]
-        a.insert()  # pyright: ignore[reportCallIssue]
+        a.insert()  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
 
 
 def test_pop() -> None:
@@ -393,7 +395,7 @@ def test_pop() -> None:
         _ = a.pop()
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = a.pop(42, 42)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = a.pop(42, 42)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[too-many-positional-arguments]
     a = Vec([0, 10, 20, 30, 40])
 
 
@@ -411,7 +413,7 @@ def test_remove() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        a.remove()  # pyright: ignore[reportCallIssue]
+        a.remove()  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
 
     a = Vec[object]([1, 2])
     with pytest.raises(ValueError):
@@ -501,7 +503,7 @@ def test_reverse() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        u.reverse(42)  # pyright: ignore[reportCallIssue]
+        u.reverse(42)  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
 
 
 def test_clear() -> None:
@@ -521,7 +523,7 @@ def test_clear() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        u.clear(None)  # pyright: ignore[reportCallIssue]
+        u.clear(None)  # pyright: ignore[reportCallIssue]  # ty: ignore[too-many-positional-arguments]
 
 
 def test_copy() -> None:
@@ -548,7 +550,7 @@ def test_copy() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = u.copy(None)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = u.copy(None)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[too-many-positional-arguments]
 
 
 def test_sort() -> None:
@@ -562,7 +564,7 @@ def test_sort() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = u.sort(42, 42)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = u.sort(42, 42)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[too-many-positional-arguments]
 
     def revcmp(a: int, b: int) -> int:
         if a == b:
@@ -590,7 +592,7 @@ def test_sort() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = z.sort(2)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = z.sort(2)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[too-many-positional-arguments]
 
     def self_modifying_comp(x: int, y: int) -> int:
         z.append(1)
@@ -606,7 +608,7 @@ def test_sort() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = z.sort(42, 42, 42, 42)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        _ = z.sort(42, 42, 42, 42)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[too-many-positional-arguments]
 
 
 def test_slice() -> None:
@@ -627,7 +629,7 @@ def test_iadd() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-type]
-        _ = u.__iadd__(None)  # pyright: ignore[reportArgumentType]
+        _ = u.__iadd__(None)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def test_imul() -> None:
@@ -667,11 +669,11 @@ def test_extendedslicing() -> None:
     b = a[:]
     c = a[:]
     # pyrefly: ignore [unsupported-operation]
-    a[2:3] = Vec(["two", "elements"])  # pyright: ignore[reportCallIssue, reportArgumentType]
+    a[2:3] = Vec(["two", "elements"])  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[invalid-assignment]
     # pyrefly: ignore [unsupported-operation]
-    b[slice(2, 3)] = Vec(["two", "elements"])  # pyright: ignore[reportCallIssue, reportArgumentType]
+    b[slice(2, 3)] = Vec(["two", "elements"])  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[invalid-assignment]
     # pyrefly: ignore [unsupported-operation]
-    c[2:3:] = Vec(["two", "elements"])  # pyright: ignore[reportCallIssue, reportArgumentType]
+    c[2:3:] = Vec(["two", "elements"])  # pyright: ignore[reportCallIssue, reportArgumentType]  # ty: ignore[invalid-assignment]
     assert a == b
     assert a == c
     a = Vec(range(10))
@@ -689,7 +691,6 @@ def test_constructor_exception_handling() -> None:
             raise KeyboardInterrupt
 
     with pytest.raises(KeyboardInterrupt):
-        # pyrefly: ignore [bad-argument-type]
         _ = Vec(F())
 
 
@@ -748,8 +749,8 @@ def test_basic() -> None:
 
 def test_keyword_args() -> None:
     with pytest.raises(TypeError, match="keyword argument"):
-        # pyrefly: ignore [missing-argument, unexpected-keyword]
-        _ = Vec(sequence=[])  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+        # pyrefly: ignore [no-matching-overload]
+        _ = Vec(sequence=[])  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
 
 
 def test_truth() -> None:
@@ -769,7 +770,7 @@ def test_len() -> None:
 
 def test_overflow() -> None:
     lst = Vec([4, 5, 6, 7])
-    n = int((sys.maxsize * 2 + 2) // len(lst))
+    n = (sys.maxsize * 2 + 2) // len(lst)
 
     def mul(a: Vec[int], b: int) -> Vec[int]:  # ruff:ignore[reimplemented-operator]
         return a * b
@@ -955,7 +956,7 @@ def test_lt_operator_modifying_operand() -> None:
     a = Vec([Evil()])
     with pytest.raises(TypeError):
         # pyrefly: ignore [unsupported-operation]
-        _ = a[0] < a  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = a[0] < a  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]  # ty: ignore[unsupported-operator]
 
 
 def test_list_index_modifing_operand() -> None:

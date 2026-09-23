@@ -6,12 +6,14 @@ from . import checks
 from ._utils import ImplMutableMapping, assert_iter_eq
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyFail(MutableMapping[int, int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
 class _PyOk(ImplMutableMapping, MutableMapping[int, int]): ...
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyoFail(PyoMutableMapping[int, int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
@@ -21,7 +23,8 @@ class _PyoOk(ImplMutableMapping, PyoMutableMapping[int, int]): ...
 def test_mutable_mapping() -> None:
 
     checks.init_fail(_PyFail)
-    fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]
+    # pyrefly: ignore [bad-instantiation]
+    fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]  # ty: ignore[call-non-callable]
     checks.getitem_fail(fail)
     checks.len_fail(fail)
     checks.iter_fail(fail)

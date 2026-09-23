@@ -1,5 +1,5 @@
 preset = "all"
-search-path = [".", "src"]
+search-path = ["."]
 
 [errors]
 explicit-any = false  # We have no choice as a library.

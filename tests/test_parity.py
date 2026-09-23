@@ -170,16 +170,16 @@ def test_pyosequence_methods(method: Fn[Sequence[object]]) -> None:
 @_parametrize_methods(TUP_METHODS)
 def test_seq_methods(method: Fn[tuple[int, ...]]) -> None:
     # pyrefly: ignore [bad-argument-type]
-    assert method(PY_TUP) == method(PYO_SEQ)  # pyright: ignore[reportArgumentType]
+    assert method(PY_TUP) == method(PYO_SEQ)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 @_parametrize_methods(LIST_METHODS)
 def test_vec_methods(method: Fn[list[int]]) -> None:
     # pyrefly: ignore [bad-argument-type]
-    assert method(PY_LIST) == method(PYO_VEC)  # pyright: ignore[reportArgumentType]
+    assert method(PY_LIST) == method(PYO_VEC)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 @_parametrize_methods(DEQUE_METHODS)
 def test_deque_methods(method: Fn[deque[int]]) -> None:
     # pyrefly: ignore [bad-argument-type]
-    assert method(PY_DEQUE) == method(PYO_DEQUE)  # pyright: ignore[reportArgumentType]
+    assert method(PY_DEQUE) == method(PYO_DEQUE)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]

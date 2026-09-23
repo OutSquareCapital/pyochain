@@ -136,15 +136,13 @@ impl FromPyArgs for iterators::Iter {
 impl FromPyArgs for Seq {
     fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
         let py = elements.py();
-        {
-            match elements.len() {
-                1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                    CaseExact::Self(inner) => inner.get().inner_into_bound(py),
-                    Case::PyIterable(iterable) => iterable.try_into_py::<PyTuple>()?,
-                    any => tuple!(any)?,
-                }},
-                _ => elements,
-            }
+        match elements.len() {
+            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
+                CaseExact::Self(inner) => inner.get().inner_into_bound(py),
+                Case::PyIterable(iterable) => iterable.try_into_py::<PyTuple>()?,
+                any => tuple!(any)?,
+            }},
+            _ => elements,
         }
         .unbind()
         .pipe(Self)

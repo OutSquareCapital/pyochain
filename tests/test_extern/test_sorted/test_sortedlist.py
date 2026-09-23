@@ -641,8 +641,8 @@ def test_repr() -> None:
 )
 def test_repr_recursion() -> None:
     this = SortedList([[1], [2], [3], [4]])
-    # pyrefly: ignore [bad-argument-type]
-    this.inner.lists[-1].append(this)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+    # pyrefly: ignore [missing-attribute]
+    this.inner.lists[-1].append(this)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
     assert repr(this) == "SortedList([[1], [2], [3], [4], ...])"
 
 
@@ -661,7 +661,7 @@ def test_pickle() -> None:
 
     alpha = SortedList(range(100))
     alpha.reset(500)
-    beta: SortedList[int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
+    beta: SortedList[int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]  # ty: ignore[unsound-assignment]
     assert alpha == beta
     # assert alpha.load == 500  # ruff: ignore[commented-out-code]
     # assert beta.load == 1000  # ruff: ignore[commented-out-code]

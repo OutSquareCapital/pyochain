@@ -676,7 +676,7 @@ def test_pickle() -> None:
 
     alpha = _neg_list(range(100))
     alpha.reset(500)
-    beta: SortedKeyList[int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
+    beta: SortedKeyList[int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]  # ty: ignore[unsound-assignment]
     assert alpha == beta
     # assert alpha.load == 500  # ruff: ignore[commented-out-code]
     # assert beta.load == 1000  # ruff: ignore[commented-out-code]

@@ -46,9 +46,9 @@ def check_iterables_covariance() -> None:
     _abc_set_immutable: PyoSet[Animal] = base().pipe(Set)
     _seq_immutable: Seq[Animal] = base().pipe(Seq)
     # pyrefly: ignore [bad-assignment]
-    _: PyoMutableSequence[Animal] = base()  # pyright: ignore[reportAssignmentType]
-    # pyrefly: ignore [bad-assignment]
-    _: Vec[Animal] = base()  # pyright: ignore[reportAssignmentType]
+    _: PyoMutableSequence[Animal] = base()  # pyright: ignore[reportAssignmentType]  # ty: ignore[invalid-assignment]
+    # pyrefly: ignore [bad-assignment, redefinition]
+    _: Vec[Animal] = base()  # pyright: ignore[reportAssignmentType]  # ty: ignore[invalid-assignment]
 
 
 type EntryData = list[tuple[object, tuple[str, ...]]]
@@ -62,54 +62,54 @@ def covariance_pyomapping(data: EntryData) -> None:
 def check_iterable_args(base: PyoIterable[Dog], canary: abc.Iterable[Dog]) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _sized(base, canary)  # pyright: ignore[reportArgumentType]
+    _sized(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _container(base, canary)  # pyright: ignore[reportArgumentType]
+    _container(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _collection(base, canary)  # pyright: ignore[reportArgumentType]
+    _collection(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def check_iterator_args(base: PyoIterator[Dog], canary: abc.Iterator[Dog]) -> None:
     _iterable(base, canary)
     _iterator(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _sized(base, canary)  # pyright: ignore[reportArgumentType]
+    _sized(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _container(base, canary)  # pyright: ignore[reportArgumentType]
+    _container(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _collection(base, canary)  # pyright: ignore[reportArgumentType]
+    _collection(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def check_sized_args(base: PyoSized, canary: abc.Sized) -> None:
     # pyrefly: ignore [bad-argument-type]
-    _iterable(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterable(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _sized(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _container(base, canary)  # pyright: ignore[reportArgumentType]
+    _container(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _collection(base, canary)  # pyright: ignore[reportArgumentType]
+    _collection(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def check_reversible_args(
@@ -117,38 +117,38 @@ def check_reversible_args(
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _sized(base, canary)  # pyright: ignore[reportArgumentType]
+    _sized(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _container(base, canary)  # pyright: ignore[reportArgumentType]
+    _container(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _reversible(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _collection(base, canary)  # pyright: ignore[reportArgumentType]
+    _collection(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def check_container_args(
     base: PyoContainer[Animal], canary: abc.Container[Animal]
 ) -> None:
     # pyrefly: ignore [bad-argument-type]
-    _iterable(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterable(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _sized(base, canary)  # pyright: ignore[reportArgumentType]
+    _sized(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _container(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _collection(base, canary)  # pyright: ignore[reportArgumentType]
+    _collection(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def check_collection_args(
@@ -156,29 +156,29 @@ def check_collection_args(
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _sized(base, canary)
     _container(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _collection(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def check_sequence_args(base: PyoSequence[Dog], canary: abc.Sequence[Dog]) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _sized(base, canary)
     _container(base, canary)
     _reversible(base, canary)
     _collection(base, canary)
     _sequence(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def check_mutable_sequence_args(
@@ -186,7 +186,7 @@ def check_mutable_sequence_args(
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _sized(base, canary)
     _container(base, canary)
     _reversible(base, canary)
@@ -200,21 +200,21 @@ def check_mapping(
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _sized(base, canary)
     _container(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _collection(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _mapping(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _ = _mutable_mapping(base, canary)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_mapping(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mapping_view(base, canary)  # pyright: ignore[reportArgumentType]
+    _mapping_view(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def check_mutable_mapping(
@@ -222,38 +222,38 @@ def check_mutable_mapping(
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _sized(base, canary)
     _container(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _collection(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _mapping(base, canary)
     _ = _mutable_mapping(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mapping_view(base, canary)  # pyright: ignore[reportArgumentType]
+    _mapping_view(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def check_mapping_view_args(base: PyoMappingView, canary: abc.MappingView) -> None:
     # pyrefly: ignore [bad-argument-type]
-    _iterable(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterable(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _sized(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _container(base, canary)  # pyright: ignore[reportArgumentType]
+    _container(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _collection(base, canary)  # pyright: ignore[reportArgumentType]
+    _collection(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _mapping_view(base, canary)
 
 
@@ -261,19 +261,19 @@ def check_items_view_args(
     base: PyoItemsView[Animal, Animal], canary: abc.ItemsView[Animal, Animal]
 ) -> None:
     # pyrefly: ignore [bad-argument-type]
-    _iterable(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterable(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _sized(base, canary)
     _container(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _collection(base, canary)  # pyright: ignore[reportArgumentType]
+    _collection(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _mapping_view(base, canary)
     _items_view(base, canary)
 
@@ -283,19 +283,19 @@ def check_values_view_args(
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _sized(base, canary)
     _container(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _collection(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _mapping_view(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _keys_view(base, canary)  # pyright: ignore[reportArgumentType]
+    _keys_view(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _values_view(base, canary)
 
 
@@ -304,20 +304,20 @@ def check_keys_view_args(
 ) -> None:
     _iterable(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _iterator(base, canary)  # pyright: ignore[reportArgumentType]
+    _iterator(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _sized(base, canary)
     _container(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _reversible(base, canary)  # pyright: ignore[reportArgumentType]
+    _reversible(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _collection(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     # pyrefly: ignore [bad-argument-type]
-    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]
+    _mutable_sequence(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
     _mapping_view(base, canary)
     _keys_view(base, canary)
     # pyrefly: ignore [bad-argument-type]
-    _values_view(base, canary)  # pyright: ignore[reportArgumentType]
+    _values_view(base, canary)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
 
 def _iterable(*_: abc.Iterable[Animal]) -> None: ...

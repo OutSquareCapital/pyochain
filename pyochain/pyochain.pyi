@@ -3,7 +3,6 @@
 Duplication of import here and in `__init__.py` is unfortunately necessary.
 """
 
-from . import abc, collections
 from .core import (
     NONE,
     Dict,
@@ -51,8 +50,6 @@ __all__ = [
     "SliceView",
     "Some",
     "Vec",
-    "abc",
-    "collections",
     "option",
     "then_if_some",
     "then_if_true",

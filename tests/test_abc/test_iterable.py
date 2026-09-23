@@ -24,5 +24,5 @@ def test_iterable() -> None:
 
     checks.init_fail(_PyFail)
     # pyrefly: ignore [bad-instantiation]
-    checks.iter_fail(_PyoFail())  # pyright: ignore[reportAbstractUsage]
+    checks.iter_fail(_PyoFail())  # pyright: ignore[reportAbstractUsage]  # ty: ignore[call-non-callable]
     assert_iter_eq(iter(_PyOk()), iter(_PyoOk()))
