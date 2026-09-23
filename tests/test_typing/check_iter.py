@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, Any, Never, assert_never, assert_type
+from typing import TYPE_CHECKING, Any, Literal, Never, assert_never, assert_type
 
 from pyochain import Iter, Range, Seq
 from pyochain.abc import PyoIterator
@@ -28,8 +28,11 @@ def check_iter_constructor() -> None:
     _ = assert_type(Iter(()), Iter[Never])
     _ = assert_type(Iter(Range(3)), Iter[int])
     _ = assert_type(Iter(Range(3).iter().map(str)), Iter[str])
-    _ = assert_type(Iter(1), Iter[int])
-    _ = assert_type(Iter(1, 2, 3), Iter[int])
+    _ = assert_type(Iter(1), Iter[int])  # ty: ignore[type-assertion-failure]
+    # ty infer the Literal
+    _ = assert_type(Iter(1), Iter[Literal[1]])
+    _ = assert_type(Iter(1, 2, 3), Iter[int])  # ty: ignore[type-assertion-failure]
+    _ = assert_type(Iter(1, 2, 3), Iter[Literal[1, 2, 3]])
     _ = assert_type(Iter(dict[str, str]().items()), Iter[tuple[str, str]])
 
 
@@ -50,7 +53,9 @@ def check_iter_flatten() -> Never:
     two = assert_type(one.flatten(), PyoIterator[list[int]])
     ok = assert_type(two.flatten(), PyoIterator[int])
     # Expected to fail
-    _fail = assert_type(ok.flatten(), Never)
+    # TODO: When an assertion fail, should we use `Any` or `Never`?
+    _fail = assert_type(ok.flatten(), Never)  # ty: ignore[type-assertion-failure]
+    _fail_ty = assert_type(ok.flatten(), Any)
 
 
 def check_chain_covariance[T, S](base: Iterable[T], *others: Iterable[S]) -> None:
@@ -76,7 +81,7 @@ def check_map_juxt() -> None:
     )
 
 
-def check_map_star() -> Never:
+def check_map_star() -> None:
     out = (
         Range(3)
         .iter()

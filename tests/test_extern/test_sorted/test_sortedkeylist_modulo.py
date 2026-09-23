@@ -816,7 +816,7 @@ def test_repr_recursion() -> None:
         lambda val: val, [[1], [2], [3], [4]]
     )
     # pyrefly: ignore [bad-argument-type]
-    this.inner.lists[-1].append(this)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+    this.inner.lists[-1].append(this)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
     assert repr(this).startswith(
         "SortedKeyList([[1], [2], [3], [4], ...], key=<function "
     )

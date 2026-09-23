@@ -134,7 +134,7 @@ def test_count() -> None:
         d.count()  # too few args  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count, bad-argument-type]
-        d.count(1, 2)  # too many args  # pyright: ignore[reportCallIssue]  # ty: ignore[invalid-argument-type]
+        d.count(1, 2)  # too many args  # pyright: ignore[reportCallIssue]  # ty: ignore[invalid-argument-type, too-many-positional-arguments]
 
     class BadCompare:  # ruff:ignore[eq-without-hash]
         @override
@@ -205,7 +205,7 @@ def test_contains() -> None:
     d = Deque(range(n))
     # pyrefly: ignore [unsupported-operation]
     # pyrefly: ignore [bad-argument-type]
-    d[n // 2] = MutateCmp(d, result=False)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-assignment]
+    d[n // 2] = MutateCmp(d, result=False)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-assignment, invalid-argument-type]
     with pytest.raises(RuntimeError):
         _ = n in d
 
@@ -338,7 +338,7 @@ def test_index() -> None:
         d = Deque(range(n))
         # pyrefly: ignore [unsupported-operation]
         # pyrefly: ignore [bad-argument-type]
-        d[n // 2] = MutateCmp(d, result=False)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-assignment]
+        d[n // 2] = MutateCmp(d, result=False)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-assignment, invalid-argument-type, invalid-argument-type]
         with pytest.raises(RuntimeError):
             _ = d.index(n)
 

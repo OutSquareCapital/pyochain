@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, assert_never, assert_type
+from typing import Any, Literal, assert_never, assert_type
 
 from pyochain import Err, Null, Ok, Option, Result, Some, option
 
@@ -26,22 +26,30 @@ def check_option_transpose() -> None:
     _c: Result[Option[int], int] = Null().transpose()
 
 
-def check_option_literal() -> None:
+def check_opt_lit_inference() -> Option[AnimalLit]:
     lit = assert_type(_get_cat(), AnimalLit | None)
+    # NOTE: specific to basedpyright and pyrefly
     # Inferred as Option[str]
-    _ = assert_type(option(lit), Option[str])
+    _ = assert_type(option(lit), Option[str])  # ty: ignore[type-assertion-failure]
     # Need to add explicit type hint to get Option[AnimalLit]
     opt_casted: Option[AnimalLit] = assert_type(option(lit), Option[AnimalLit])
+    # ty does better and infer directly the output as Option[AnimalLit]
+    _ = assert_type(option(lit), Option[AnimalLit])
+    return opt_casted
+
+
+def check_option_lit_matchs() -> None:
+    opt_casted = check_opt_lit_inference()
     _ = assert_type(opt_casted.map(_literal), Option[AnimalLit])
     # Issue: Literals aren't handled for type unions, even if both members are covariant.
     # pyrefly: ignore [non-exhaustive-match]
     match opt_casted:  # pyright: ignore[reportMatchNotExhaustive]
         case Some("dog") as opt_casted:
             # pyrefly: ignore [assert-type]
-            _ = assert_type(opt_casted.unwrap(), LitDog)  # pyright: ignore[reportAssertTypeFailure]
+            _ = assert_type(opt_casted.unwrap(), LitDog)  # pyright: ignore[reportAssertTypeFailure]  # ty: ignore[type-assertion-failure]
         case Some("cat"):
             # pyrefly: ignore[assert-type]
-            _ = assert_type(opt_casted.unwrap(), LitCat)  # pyright: ignore[reportAssertTypeFailure]
+            _ = assert_type(opt_casted.unwrap(), LitCat)  # pyright: ignore[reportAssertTypeFailure]  # ty: ignore[type-assertion-failure]
         case Some("tyrannosaurus"):  # pyright: ignore[reportUnnecessaryComparison]
             _ = assert_never(opt_casted.unwrap())  # pyright: ignore[reportUnreachable]
         case Null():
@@ -68,7 +76,9 @@ def check_option_and_then() -> None:
     let _c: Option<i32> = None::<i32>.and_then(Some);
     ```
     """
-    _a = assert_type(Some(10).and_then(Some), Option[int])
+    _a = assert_type(Some(10).and_then(Some), Option[int])  # ty: ignore[type-assertion-failure]
+    # ty infer the Literal
+    _a_ty = assert_type(Some(10).and_then(Some), Option[Literal[10]])
     _b = assert_type(Some[Option[int]](Null()).and_then(Some), Option[Option[int]])
     _c = assert_type(Null[int]().and_then(Some), Option[int])
 
