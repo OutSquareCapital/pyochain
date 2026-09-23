@@ -77,11 +77,11 @@ def check_narrowed_overloads() -> None:
         _ = assert_type(opt.unwrap_or_none(), Dog)
         _ = assert_type(opt.unwrap_or(str(1)), Dog)
     else:
-        _ = assert_never(opt.unwrap())
         _ = assert_type(opt.is_some(), Literal[False])
         _ = assert_type(opt.is_none(), Literal[True])
         _ = assert_type(opt.unwrap_or_none(), None)
         _ = assert_type(opt.unwrap_or(str(1)), str)
+        _ = assert_never(opt.unwrap())
 
 
 def check_option_flatten() -> None:

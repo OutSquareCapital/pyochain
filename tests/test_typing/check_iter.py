@@ -55,14 +55,7 @@ def check_iter_flatten() -> None:
 
 
 def check_iter_flatten_fail(x: PyoIterator[int]) -> None:
-    """Here the `flatten` call is expected to fail.
-
-    TODO: When an assertion fail, should we use `Any` or `Never`?
-
-    Here basedpyright and ty disagree, and it's a bit tricky to implement a generic solution
-    """
-    _fail_ty = assert_type(x.flatten(), Any)  # pyright: ignore[reportAssertTypeFailure]
-    _fail = assert_type(x.flatten(), Never)  # ty: ignore[type-assertion-failure]  # pyright: ignore[reportUnreachable]
+    _fail = assert_type(x.flatten(), Never)
 
 
 def check_chain_covariance[T, S](base: Iterable[T], *others: Iterable[S]) -> None:
