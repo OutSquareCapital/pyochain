@@ -26,19 +26,6 @@ def check_option_transpose() -> None:
     _c: Result[Option[int], int] = Null().transpose()
 
 
-def check_opt_lit_inference() -> Option[AnimalLit]:
-    lit = assert_type(_get_cat(), AnimalLit | None)
-    # NOTE: specific to basedpyright
-    # Inferred as Option[str]
-    # pyrefly: ignore [assert-type]
-    _ = assert_type(option(lit), Option[str])  # ty: ignore[type-assertion-failure]
-    # Need to add explicit type hint to get Option[AnimalLit]
-    opt_casted: Option[AnimalLit] = assert_type(option(lit), Option[AnimalLit])
-    # ty does better and infer directly the output as Option[AnimalLit]
-    _ = assert_type(option(lit), Option[AnimalLit])  # pyright: ignore[reportAssertTypeFailure]
-    return opt_casted
-
-
 def check_option_lit_matchs() -> None:
     """The match cases do work as expected.
 
@@ -65,6 +52,19 @@ def check_option_lit_matchs() -> None:
         case Null():
             _ = assert_type(opt_casted, Null[AnimalLit])
             _ = assert_never(opt_casted.unwrap())
+
+
+def check_opt_lit_inference() -> Option[AnimalLit]:
+    lit = assert_type(_get_cat(), AnimalLit | None)
+    # NOTE: specific to basedpyright
+    # Inferred as Option[str]
+    # pyrefly: ignore [assert-type]
+    _ = assert_type(option(lit), Option[str])  # ty: ignore[type-assertion-failure]
+    # Need to add explicit type hint to get Option[AnimalLit]
+    opt_casted: Option[AnimalLit] = assert_type(option(lit), Option[AnimalLit])
+    # ty does better and infer directly the output as Option[AnimalLit]
+    _ = assert_type(option(lit), Option[AnimalLit])  # pyright: ignore[reportAssertTypeFailure]
+    return opt_casted
 
 
 def check_narrowed_overloads() -> None:
