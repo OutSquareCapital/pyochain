@@ -267,7 +267,7 @@ impl InnerWindow {
             .map(|(iter, prev)| Self { iter, prev, func })
     }
     fn get_vec(&self) -> MutexGuard<'_, WindowVec> {
-        self.prev.try_into_inner()
+        self.prev.lock_or_inner()
     }
     fn as_tuple<'py>(&self, py: Python<'py>, item: Py<PyAny>) -> PyResult<Bound<'py, PyTuple>> {
         let mut vec = self.get_vec();
