@@ -66,7 +66,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         let bounds = self
             .lock()
-            .list_mut()
+            .list()
             .irange_specs(py, minimum, maximum, inclusive)?;
         self.iter_bounds(py, bounds, reverse)
     }
