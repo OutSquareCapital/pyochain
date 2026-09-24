@@ -25,10 +25,10 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         self.lock().repr::<Self>(py)
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect_left(value)
+        self.write().list_mut().bisect_left(value)
     }
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect_right(value)
+        self.write().list_mut().bisect_right(value)
     }
     fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
         self.as_ref()
@@ -53,7 +53,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<usize> {
-        self.lock().list_mut().index(&value, start, stop)
+        self.write().list_mut().index(&value, start, stop)
     }
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
@@ -78,11 +78,11 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let bounds = self.lock().get_islice_specs(py, start, stop)?;
+        let bounds = self.write().get_islice_specs(py, start, stop)?;
         self.iter_bounds(py, bounds, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.lock().list_mut().reset(py, load)
+        self.write().list_mut().reset(py, load)
     }
 }
 
@@ -106,9 +106,9 @@ where
         self.iter_bounds(py, bounds, reverse)
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect(key, Bisect::bisect_left)
+        self.write().list_mut().bisect(key, Bisect::bisect_left)
     }
     fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.lock().list_mut().bisect(key, Bisect::bisect_right)
+        self.write().list_mut().bisect(key, Bisect::bisect_right)
     }
 }

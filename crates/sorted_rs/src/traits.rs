@@ -1,7 +1,7 @@
 use std::{
     cmp::Ordering,
     ops::{Deref, DerefMut},
-    sync::MutexGuard,
+    sync::RwLockReadGuard,
 };
 
 use crate::{
@@ -49,7 +49,7 @@ impl<T> NestedVec<T> for [Vec<T>] {
 }
 pub enum ListAdd<'py, T> {
     Identity,
-    Sorted(MutexGuard<'py, T>),
+    Sorted(RwLockReadGuard<'py, T>),
     Iterator(Bound<'py, PyIterator>),
 }
 pub trait ListsDataMethods: Deref<Target = InnerData> + DerefMut + PyRepr + Sized {
