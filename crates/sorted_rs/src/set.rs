@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
 };
 
 use crate::{
@@ -25,7 +25,7 @@ use tap::prelude::*;
 pub trait PySetDataRef:
     Sync
     + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
-    + AsRef<Arc<Mutex<SetData<Self::L>>>>
+    + AsRef<Arc<RwLock<SetData<Self::L>>>>
     + From<SetData<Self::L>>
 {
     type L: ListsDataMethods;
@@ -33,14 +33,14 @@ pub trait PySetDataRef:
     #[inline(always)]
     fn comp<'py>(&self, value: Bound<'py, PyAny>, op: CompareOp) -> PyCmpOut<'py, bool> {
         let py = value.py();
-        let slf = self.as_ref().try_into_inner().get_set(py);
+        let slf = self.as_ref().read_or_inner().get_set(py);
         try_cast_into! {
             match value {
                 CaseExact::Self(sorted) if self.as_ref().is(sorted.get().as_ref()) => {
                     op.on_identity().pipe(Either::Left).pipe(Ok)
                 }
                 CaseExact::Self(sorted) => slf
-                    .rich_compare_bool(sorted.get().as_ref().try_into_inner().1.bind(py), op)
+                    .rich_compare_bool(sorted.get().as_ref().read_or_inner().1.bind(py), op)
                     .map(Either::Left),
                 Case::PySet(pyset) => slf.rich_compare_bool(pyset, op).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
@@ -51,33 +51,33 @@ pub trait PySetDataRef:
     fn map_any(&self, other: Bound<'_, PyAny>, op: SetOp) -> PyResult<Self> {
         let other_set = Args::from_any(self, other);
         self.as_ref()
-            .try_into_inner()
+            .read_or_inner()
             .map_set(other_set, op)
             .map(Self::from)
     }
     #[inline]
     fn map_any_mut(&self, other: Bound<'_, PyAny>, op: SetOp) -> PyResult<()> {
         let other_set = Args::from_any(self, other);
-        self.as_ref().try_into_inner().update(other_set, op)
+        self.as_ref().write_or_inner().update(other_set, op)
     }
     #[inline]
     fn map_pred<'py>(&self, other: Bound<'py, PyAny>, op: SetPred) -> PyResult<Bound<'py, PyBool>> {
         let py = other.py();
         let args = Args::from_any(self, other);
-        op.call(self.as_ref().try_into_inner().1.bind(py), args)
+        op.call(self.as_ref().read_or_inner().1.bind(py), args)
     }
     #[inline]
     fn map_iter(&self, tuple: Bound<'_, PyTuple>, op: SetOp) -> PyResult<Self> {
         let args = Args::from_tuple(self, tuple);
         self.as_ref()
-            .try_into_inner()
+            .read_or_inner()
             .map_set(args, op)
             .map(Self::from)
     }
     #[inline(always)]
     fn map_iter_mut(&self, tuple: Bound<'_, PyTuple>, op: SetOp) -> PyResult<()> {
         let args = Args::from_tuple(self, tuple);
-        self.as_ref().try_into_inner().update(args, op)
+        self.as_ref().write_or_inner().update(args, op)
     }
 }
 impl SetData<ListsData> {
@@ -267,9 +267,9 @@ impl<'py> Args<'py> {
                 .into_iter()
                 .map(|other| match other.cast_exact::<C>().map(Bound::get) {
                     Ok(other) if left.as_ref().is(other.as_ref()) => {
-                        left.as_ref().try_into_inner().get_set(py).into_any()
+                        left.as_ref().read_or_inner().get_set(py).into_any()
                     }
-                    Ok(other) => other.as_ref().try_into_inner().get_set(py).into_any(),
+                    Ok(other) => other.as_ref().read_or_inner().get_set(py).into_any(),
                     Err(_) => other,
                 })
                 .collect_bound(py)
@@ -285,7 +285,7 @@ impl<'py> Args<'py> {
         let py = any.py();
         match any.cast_exact::<C>().map(Bound::get) {
             Ok(other) if left.as_ref().is(other.as_ref()) => Self::Slf(py),
-            Ok(other) => Self::Any(other.as_ref().try_into_inner().get_set(py).into_any()),
+            Ok(other) => Self::Any(other.as_ref().read_or_inner().get_set(py).into_any()),
             Err(_) => Self::Any(any),
         }
     }

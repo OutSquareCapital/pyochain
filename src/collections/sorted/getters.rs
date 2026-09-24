@@ -1,6 +1,6 @@
 use std::{
     ops::{Deref, DerefMut},
-    sync::{Arc, Mutex, MutexGuard},
+    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
 use crate::{
@@ -16,7 +16,7 @@ use sorted_rs::{
 use std_tools::prelude::*;
 use tap::Conv;
 pub trait ListGetter:
-    Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self::T>>>
+    Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<RwLock<Self::T>>>
 {
     type L: ListsDataMethods;
     type T: Deref<Target = InnerData> + DerefMut + ListDataOwner<List = Self::L> + PyRepr;
@@ -25,8 +25,12 @@ pub trait ListGetter:
     type IFull: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
     type IFullRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::FullRev<Self::T>>;
     #[inline(always)]
-    fn lock(&self) -> MutexGuard<'_, Self::T> {
-        self.as_ref().try_into_inner()
+    fn lock(&self) -> RwLockReadGuard<'_, Self::T> {
+        self.as_ref().read_or_inner()
+    }
+    #[inline(always)]
+    fn write(&self) -> RwLockWriteGuard<'_, Self::T> {
+        self.as_ref().write_or_inner()
     }
     fn iter_bounds<'py>(
         &self,
@@ -51,8 +55,8 @@ pub trait ListGetter:
 macro_rules! impl_arc_as_ref {
     ($($t:ty),* $(,)?) => {
         $(
-            impl AsRef<Arc<Mutex<<$t as ListGetter>::T>>> for $t {
-                fn as_ref(&self) -> &Arc<Mutex<<$t as ListGetter>::T>> {
+            impl AsRef<Arc<RwLock<<$t as ListGetter>::T>>> for $t {
+                fn as_ref(&self) -> &Arc<RwLock<<$t as ListGetter>::T>> {
                     &self.0
                 }
             }

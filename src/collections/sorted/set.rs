@@ -14,11 +14,11 @@ use pyochain_macros::py_abc;
 use sorted_rs::{
     KeysListsData, ListsData, PySetDataRef, SetData, SetOp, SetPred, types::IntOrSlice,
 };
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use std_tools::prelude::ResultExt;
 use tap::{Conv, Pipe};
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedSet(pub(super) Arc<Mutex<SetData<ListsData>>>);
+pub struct SortedSet(pub(super) Arc<RwLock<SetData<ListsData>>>);
 #[pymethods]
 impl SortedSet {
     #[new]
@@ -34,7 +34,7 @@ impl SortedSet {
     }
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedKeySet(pub(super) Arc<Mutex<SetData<KeysListsData>>>);
+pub struct SortedKeySet(pub(super) Arc<RwLock<SetData<KeysListsData>>>);
 #[pymethods]
 impl SortedKeySet {
     #[new]
@@ -71,12 +71,12 @@ pub(super) trait SortedSetMethods:
         self.get_set(value.py()).contains(value)
     }
     fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
-        self.lock()
+        self.write()
             .get_item_or_slice(index)
             .and_then_left(Bound::try_into_py)
     }
     fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
-        self.lock().del_item_or_slice(index)
+        self.write().del_item_or_slice(index)
     }
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         self.comp(other, CompareOp::Eq)
@@ -137,10 +137,10 @@ pub(super) trait SortedSetMethods:
         self.symmetric_difference_update(other)
     }
     fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.lock().add(value)
+        self.write().add(value)
     }
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.lock().discard(&value)
+        self.write().discard(&value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.lock().copy(py)?.conv::<Self>().into_bound(py)
@@ -156,14 +156,14 @@ pub(super) trait SortedSetMethods:
         self.map_pred(other, SetPred::Superset)
     }
     fn clear(&self, py: Python<'_>) {
-        self.lock().clear(py);
+        self.write().clear(py);
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
         self.lock().count(value)
     }
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        self.lock().pop(py, index)
+        self.write().pop(py, index)
     }
     #[pyo3(signature = (*iterables))]
     fn difference<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
@@ -183,7 +183,7 @@ pub(super) trait SortedSetMethods:
     }
 
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.lock().remove(value)
+        self.write().remove(value)
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.map_into_bound(other, SetOp::SymmetricDifference)
