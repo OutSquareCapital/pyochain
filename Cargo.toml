@@ -29,6 +29,7 @@ name = "pyochain"
 
 [dependencies]
 color-eyre = "0.6.5"
+derive_more = { version = "2.1.1", features = ["deref", "deref_mut", "from"] }
 either = "1.16.0"
 pyderive = "0.9"
 pyo3 = {
