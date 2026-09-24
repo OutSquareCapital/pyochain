@@ -41,7 +41,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
         self.as_ref()
             .clone()
-            .pipe(rsiter::FullRev::new)
+            .pipe(rsiter::Full::new_rev)
             .conv::<Self::IFullRev>()
             .into_bound(py)
             .map(Bound::into_super)

@@ -4,11 +4,11 @@ use crate::abc;
 use pyo3::prelude::*;
 use sorted_rs::{
     DictData, KeysListsData, ListsData, SetData,
-    iter::{Bounded, BoundedRev, Full, FullRev, ListDataIteratorMethods},
+    iter::{Bounded, Full},
 };
 use std_tools::prelude::*;
 macro_rules! impl_sorted_iter {
-    ($($t:ty => { $($iter:ident => $name:ident),+ $(,)? }),+ $(,)?) => {
+    ($($t:ty => { $($iter:ident => $method:expr => $name:ident),+ $(,)? }),+ $(,)?) => {
         $($(
             #[pyclass(module = "pyochain._iterators", frozen, generic, extends=abc::PyoIterator)]
             pub struct $name(RwLock<$iter<$t>>);
@@ -20,7 +20,7 @@ macro_rules! impl_sorted_iter {
             #[pymethods]
             impl $name {
                 fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
-                    self.0.write_or_inner().next(py)
+                    $method(&mut self.0.write_or_inner(), py)
                 }
             }
         )+)+
@@ -29,39 +29,39 @@ macro_rules! impl_sorted_iter {
 
 impl_sorted_iter! {
     ListsData => {
-        Bounded => PyBounded,
-        BoundedRev => PyBoundedRev,
-        Full => PyFull,
-        FullRev => PyFullRev,
+        Bounded => Bounded::next => PyBounded,
+        Bounded => Bounded::next_back => PyBoundedRev,
+        Full => Full::next => PyFull,
+        Full => Full::next_back =>  PyFullRev,
     },
     KeysListsData => {
-        Bounded => PyBoundedKey,
-        BoundedRev => PyBoundedKeyRev,
-        Full => PyFullKey,
-        FullRev => PyFullKeyRev,
+        Bounded  => Bounded::next => PyBoundedKey,
+        Bounded  => Bounded::next_back => PyBoundedKeyRev,
+        Full  =>Full::next=> PyFullKey,
+        Full  => Full::next_back=> PyFullKeyRev,
     },
     SetData<ListsData> => {
-        Bounded => PySetBounded,
-        BoundedRev => PySetBoundedRev,
-        Full => PySetFull,
-        FullRev => PySetFullRev,
+        Bounded  => Bounded::next => PySetBounded,
+        Bounded  => Bounded::next_back => PySetBoundedRev,
+        Full => Full::next => PySetFull,
+        Full => Full::next_back => PySetFullRev,
     },
     SetData<KeysListsData> => {
-        Bounded => PySetBoundedKey,
-        BoundedRev => PySetBoundedKeyRev,
-        Full => PySetFullKey,
-        FullRev => PySetFullKeyRev,
+        Bounded  => Bounded::next => PySetBoundedKey,
+        Bounded  => Bounded::next_back => PySetBoundedKeyRev,
+        Full  => Full::next=> PySetFullKey,
+        Full => Full::next_back => PySetFullKeyRev,
     },
     DictData<ListsData> => {
-        Bounded => PyDictBounded,
-        BoundedRev => PyDictBoundedRev,
-        Full => PyDictFull,
-        FullRev => PyDictFullRev,
+        Bounded  => Bounded::next => PyDictBounded,
+        Bounded => Bounded::next_back => PyDictBoundedRev,
+        Full => Full::next => PyDictFull,
+        Full => Full::next_back => PyDictFullRev,
     },
     DictData<KeysListsData> => {
-        Bounded => PyDictBoundedKey,
-        BoundedRev => PyDictBoundedKeyRev,
-        Full => PyDictFullKey,
-        FullRev => PyDictFullKeyRev,
+        Bounded  => Bounded::next=> PyDictBoundedKey,
+        Bounded => Bounded::next_back => PyDictBoundedKeyRev,
+        Full => Full::next => PyDictFullKey,
+        Full  => Full::next_back=> PyDictFullKeyRev,
     },
 }

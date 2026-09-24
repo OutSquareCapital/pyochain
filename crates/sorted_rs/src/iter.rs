@@ -7,61 +7,73 @@ use pyo3::prelude::*;
 use std_tools::prelude::*;
 
 use crate::{Bounds, Loc, inner::InnerData, traits::NestedVec};
-struct ListDataIterInner<T: Deref<Target = InnerData>> {
+pub struct Bounded<T> {
     data: Arc<RwLock<T>>,
     bounds: Bounds,
 }
 
-struct ListDataFullInner<T: Deref<Target = InnerData>> {
+pub struct Full<T> {
     data: Arc<RwLock<T>>,
     loc: Loc,
 }
 
-pub struct Bounded<T: Deref<Target = InnerData>>(ListDataIterInner<T>);
-pub struct BoundedRev<T: Deref<Target = InnerData>>(ListDataIterInner<T>);
-pub struct Full<T: Deref<Target = InnerData>>(ListDataFullInner<T>);
-pub struct FullRev<T: Deref<Target = InnerData>>(ListDataFullInner<T>);
-pub trait ListDataIteratorMethods<T: Deref<Target = InnerData>>: Sized {
-    fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>>;
-}
-
 impl<T: Deref<Target = InnerData>> Bounded<T> {
     pub fn new(data: Arc<RwLock<T>>, bounds: Bounds) -> Self {
-        Self(ListDataIterInner { data, bounds })
+        Self { data, bounds }
+    }
+    pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
+        if self.bounds.min == self.bounds.max {
+            None
+        } else {
+            let data = self.data.read_or_inner();
+            let item = data.values.loc(&self.bounds.min).clone_ref(py);
+            let loc = &mut self.bounds.min;
+            if loc.pos + 1 < data.values.len() && loc.idx + 1 >= data.values.loc_len(loc) {
+                loc.pos += 1;
+                loc.idx = 0;
+            } else {
+                loc.idx += 1;
+            }
+            Some(item)
+        }
+    }
+    pub fn next_back(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
+        if self.bounds.min == self.bounds.max {
+            None
+        } else {
+            let data = self.data.read_or_inner();
+            let loc = &mut self.bounds.max;
+
+            if loc.idx > 0 {
+                loc.idx -= 1;
+            } else {
+                loc.pos -= 1;
+                loc.idx = data.values.loc_len(loc) - 1;
+            }
+            Some(data.values.loc(&self.bounds.max).clone_ref(py))
+        }
     }
 }
-
-impl<T: Deref<Target = InnerData>> BoundedRev<T> {
-    pub fn new(data: Arc<RwLock<T>>, bounds: Bounds) -> Self {
-        Self(ListDataIterInner { data, bounds })
-    }
-}
-
 impl<T: Deref<Target = InnerData>> Full<T> {
     pub fn new(data: Arc<RwLock<T>>) -> Self {
-        Self(ListDataFullInner {
+        Self {
             data,
             loc: Loc::default(),
-        })
+        }
     }
-}
-
-impl<T: Deref<Target = InnerData>> FullRev<T> {
-    pub fn new(data: Arc<RwLock<T>>) -> Self {
+    pub fn new_rev(data: Arc<RwLock<T>>) -> Self {
         let data_ref = data.read_or_inner();
         let loc = Loc::new(
             data_ref.values.len().saturating_sub(1),
             data_ref.values.last().map_or(0, Vec::len),
         );
         drop(data_ref);
-        Self(ListDataFullInner { data, loc })
+        Self { data, loc }
     }
-}
 
-impl<T: Deref<Target = InnerData>> ListDataIteratorMethods<T> for Full<T> {
-    fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let data = self.0.data.read_or_inner();
-        let loc = &mut self.0.loc;
+    pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
+        let data = self.data.read_or_inner();
+        let loc = &mut self.loc;
         if loc.pos == data.values.len() {
             None
         } else {
@@ -75,12 +87,9 @@ impl<T: Deref<Target = InnerData>> ListDataIteratorMethods<T> for Full<T> {
             Some(item)
         }
     }
-}
-
-impl<T: Deref<Target = InnerData>> ListDataIteratorMethods<T> for FullRev<T> {
-    fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let data = self.0.data.read_or_inner();
-        let loc = &mut self.0.loc;
+    pub fn next_back(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
+        let data = self.data.read_or_inner();
+        let loc = &mut self.loc;
         if loc.pos == 0 && loc.idx == 0 {
             None
         } else {
@@ -90,44 +99,6 @@ impl<T: Deref<Target = InnerData>> ListDataIteratorMethods<T> for FullRev<T> {
             }
             loc.idx -= 1;
             Some(data.values.loc(loc).clone_ref(py))
-        }
-    }
-}
-
-impl<T: Deref<Target = InnerData>> ListDataIteratorMethods<T> for Bounded<T> {
-    fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        if self.0.bounds.min == self.0.bounds.max {
-            None
-        } else {
-            let data = self.0.data.read_or_inner();
-            let item = data.values.loc(&self.0.bounds.min).clone_ref(py);
-            let loc = &mut self.0.bounds.min;
-            if loc.pos + 1 < data.values.len() && loc.idx + 1 >= data.values.loc_len(loc) {
-                loc.pos += 1;
-                loc.idx = 0;
-            } else {
-                loc.idx += 1;
-            }
-            Some(item)
-        }
-    }
-}
-
-impl<T: Deref<Target = InnerData>> ListDataIteratorMethods<T> for BoundedRev<T> {
-    fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        if self.0.bounds.min == self.0.bounds.max {
-            None
-        } else {
-            let data = self.0.data.read_or_inner();
-            let loc = &mut self.0.bounds.max;
-
-            if loc.idx > 0 {
-                loc.idx -= 1;
-            } else {
-                loc.pos -= 1;
-                loc.idx = data.values.loc_len(loc) - 1;
-            }
-            Some(data.values.loc(&self.0.bounds.max).clone_ref(py))
         }
     }
 }

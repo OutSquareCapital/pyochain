@@ -21,9 +21,9 @@ pub trait ListGetter:
     type L: ListsDataMethods;
     type T: Deref<Target = InnerData> + DerefMut + ListDataOwner<List = Self::L> + PyRepr;
     type I: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
-    type IRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::BoundedRev<Self::T>>;
+    type IRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
     type IFull: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
-    type IFullRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::FullRev<Self::T>>;
+    type IFullRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
     #[inline(always)]
     fn lock(&self) -> RwLockReadGuard<'_, Self::T> {
         self.as_ref().read_or_inner()
@@ -40,7 +40,7 @@ pub trait ListGetter:
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         match (bounds, reverse) {
             (None, _) => iterators::Iter::empty(py).map(Bound::into_super),
-            (Some(bounds), true) => rsiter::BoundedRev::new(self.as_ref().clone(), bounds)
+            (Some(bounds), true) => rsiter::Bounded::new(self.as_ref().clone(), bounds)
                 .conv::<Self::IRev>()
                 .into_bound(py)
                 .map(Bound::into_super),
