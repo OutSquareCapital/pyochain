@@ -3,6 +3,7 @@ use crate::{
     core::{SetMut, iterators},
     traits::IntoInit,
 };
+use derive_more::{Deref, From};
 use pyo3::{
     PyTypeInfo,
     exceptions::PyKeyError,
@@ -12,8 +13,9 @@ use pyo3::{
 use pyo3_ext::prelude::*;
 use std_tools::prelude::*;
 use tap::Pipe;
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSized)]
-pub struct PyoMappingView(pub Py<PyAny>);
+pub struct PyoMappingView(Py<PyAny>);
 #[pymethods]
 impl PyoMappingView {
     #[new]
@@ -23,9 +25,9 @@ impl PyoMappingView {
             .add_subclass(Self(mapping.unbind()))
     }
 }
-
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
-pub struct PyoValuesView(pub Py<PyAny>);
+pub struct PyoValuesView(Py<PyAny>);
 #[pymethods]
 impl PyoValuesView {
     #[new]
@@ -50,9 +52,9 @@ impl PyoValuesView {
             .pipe(iterators::ValuesViewIterator::new)
     }
 }
-
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
-pub struct PyoKeysView(pub Py<PyAny>);
+pub struct PyoKeysView(Py<PyAny>);
 #[pymethods]
 impl PyoKeysView {
     #[new]
@@ -111,9 +113,9 @@ impl PyoKeysView {
             .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 }
-
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
-pub struct PyoItemsView(pub Py<PyAny>);
+pub struct PyoItemsView(Py<PyAny>);
 #[pymethods]
 impl PyoItemsView {
     #[new]

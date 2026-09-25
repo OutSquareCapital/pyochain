@@ -5,6 +5,8 @@ use crate::{
     collections::sorted::{SortedDict, SortedKeyDict, SortedSet, core::ObjOrVec},
     traits::IntoInit,
 };
+use derive_more::From;
+
 use pyo3::{PyClass, PyTypeInfo, prelude::*};
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
@@ -19,14 +21,10 @@ macro_rules! impl_base_sorted_view {
     ($($l:ty:$name:ty => [$($getitem:path => $t:ident),* $(,)?] );* $(;)?) => {
         $(
             $(
+
+                #[derive(From)]
                 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
                 pub struct $t(DictRef<$l>);
-
-                impl From<Arc<Mutex<DictData<$l>>>> for $t {
-                fn from(mapping: Arc<Mutex<DictData<$l>>>) -> Self {
-                    Self(mapping)
-                    }
-                }
 
                 impl SortedViewMethods for $t {
                         type L = $l;
@@ -42,6 +40,7 @@ macro_rules! impl_base_sorted_view {
         )*
     };
 }
+
 impl_base_sorted_view!(
     ListsData: SortedDict => [
         views::get_item_for_items => SortedItemsView,

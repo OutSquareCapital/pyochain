@@ -1,7 +1,5 @@
-use crate::{
-    abc,
-    traits::{IntoInit, PyWrapper},
-};
+use crate::{abc, traits::IntoInit};
+use derive_more::{Deref, From};
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -16,8 +14,9 @@ use pyo3_ext::{
 };
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::prelude::*;
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.collections",frozen, generic, sequence, extends = abc::PyoMutableSequence)]
-pub struct Deque(pub Py<PyDeque>);
+pub struct Deque(Py<PyDeque>);
 #[pymethods]
 impl Deque {
     #[new]
@@ -36,7 +35,7 @@ impl Deque {
             _ => PyDeque::new(elements.into_any(), max_length)?,
         }
         .unbind()
-        .pipe(Self)
+        .conv::<Self>()
         .init()
         .pipe(Ok)
     }
@@ -64,7 +63,7 @@ impl Deque {
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        self.inner_bind(py)
+        self.bind(py)
             .repr()?
             .to_string()
             .replace("deque", &Self::type_object(py).name()?.to_string())
@@ -73,7 +72,7 @@ impl Deque {
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
-        self.inner_bind(py).iter_py()
+        self.bind(py).iter_py()
     }
 
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -81,11 +80,11 @@ impl Deque {
     }
 
     fn __len__(&self, py: Python<'_>) -> PyResult<usize> {
-        self.inner_bind(py).len()
+        self.bind(py).len()
     }
 
     fn __getitem__<'py>(&self, key: Bound<'py, PySupportsIndex>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner_bind(key.py()).as_any().get_item(key)
+        self.bind(key.py()).as_any().get_item(key)
     }
 
     fn __setitem__(
@@ -93,20 +92,20 @@ impl Deque {
         key: Bound<'_, PySupportsIndex>,
         value: Bound<'_, PyAny>,
     ) -> PyResult<()> {
-        self.inner_bind(key.py()).set_item(key, value)
+        self.bind(key.py()).set_item(key, value)
     }
 
     fn __delitem__(&self, key: Bound<'_, PySupportsIndex>) -> PyResult<()> {
-        self.inner_bind(key.py()).del_item(key)
+        self.bind(key.py()).del_item(key)
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner_bind(key.py()).contains(key)
+        self.bind(key.py()).contains(key)
     }
 
     fn __iadd__(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
-        let inner = slf.get().inner_bind(py);
+        let inner = slf.get().bind(py);
         let other = if value.is(slf) { inner } else { value };
         inner.iadd(other)?;
         Ok(())
@@ -114,12 +113,12 @@ impl Deque {
 
     fn __add__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         try_cast! {
             match value {
                 CaseExact::Deque(d) => inner
                     .as_sequence()
-                    .concat(d.get().inner_bind(py).as_sequence())
+                    .concat(d.get().bind(py).as_sequence())
                     .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
                     .and_then(Self::wrap),
                 Case::PyDeque(pyd) => inner
@@ -133,7 +132,7 @@ impl Deque {
     }
 
     fn __mul__<'py>(&self, value: Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
-        self.inner_bind(value.py())
+        self.bind(value.py())
             .mul(value)
             .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
             .and_then(Self::wrap)
@@ -142,16 +141,16 @@ impl Deque {
         self.__mul__(value)
     }
     fn __imul__(&self, value: Bound<'_, PyInt>) -> PyResult<()> {
-        self.inner_bind(value.py()).imul(value)?;
+        self.bind(value.py()).imul(value)?;
         Ok(())
     }
 
     fn __lt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         try_cast! {
             match value {
-                CaseExact::Deque(d) => inner.lt(d.get().inner_bind(py)),
+                CaseExact::Deque(d) => inner.lt(d.get().bind(py)),
                 Case::PyDeque(pyd) => inner.lt(pyd),
                 _ => Err(PyTypeError::new_err("")),
             }
@@ -160,10 +159,10 @@ impl Deque {
 
     fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         try_cast! {
             match value {
-                CaseExact::Deque(d) => inner.le(d.get().inner_bind(py)),
+                CaseExact::Deque(d) => inner.le(d.get().bind(py)),
                 Case::PyDeque(pyd) => inner.le(pyd),
                 _ => Err(PyTypeError::new_err("")),
             }
@@ -172,10 +171,10 @@ impl Deque {
 
     fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         try_cast! {
             match value {
-                CaseExact::Deque(d) => inner.gt(d.get().inner_bind(py)),
+                CaseExact::Deque(d) => inner.gt(d.get().bind(py)),
                 Case::PyDeque(pyd) => inner.gt(pyd),
                 _ => Err(PyTypeError::new_err("")),
             }
@@ -184,10 +183,10 @@ impl Deque {
 
     fn __ge__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         try_cast! {
             match value {
-                CaseExact::Deque(d) => inner.ge(d.get().inner_bind(d.py())),
+                CaseExact::Deque(d) => inner.ge(d.get().bind(d.py())),
                 Case::PyDeque(pyd) => inner.ge(pyd),
                 _ => Err(PyTypeError::new_err("")),
             }
@@ -196,45 +195,45 @@ impl Deque {
 
     fn __eq__<'py>(&self, value: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
         let py = value.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         try_cast! {
             match value {
-                CaseExact::Deque(d) => inner.eq(d.get().inner_bind(py)).map(Either::Left),
+                CaseExact::Deque(d) => inner.eq(d.get().bind(py)).map(Either::Left),
                 Case::PyDeque(pyd) => inner.eq(pyd).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
             }
         }
     }
     fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyIterator>> {
-        self.inner_bind(py).reversed()
+        self.bind(py).reversed()
     }
 
     #[getter]
     fn max_length<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner_bind(py).getattr(intern!(py, "maxlen"))
+        self.bind(py).getattr(intern!(py, "maxlen"))
     }
 
     fn append(&self, x: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(x.py()).append(x)
+        self.bind(x.py()).append(x)
     }
 
     fn append_left(&self, x: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(x.py()).append_left(x)
+        self.bind(x.py()).append_left(x)
     }
 
     fn extend(slf: &Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let inner = slf.get().inner_bind(py);
+        let inner = slf.get().bind(py);
         let other = if iterable.is(slf) { inner } else { iterable };
         inner.extend(other)
     }
 
     fn clear(&self, py: Python<'_>) -> PyResult<()> {
-        self.inner_bind(py).clear()
+        self.bind(py).clear()
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.inner_bind(py)
+        self.bind(py)
             .call_method0(intern!(py, "copy"))
             .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
             .and_then(Self::wrap)
@@ -242,24 +241,24 @@ impl Deque {
 
     fn extend_left(slf: &Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let inner = slf.get().inner_bind(py);
+        let inner = slf.get().bind(py);
         let other = if iterable.is(slf) { inner } else { iterable };
         inner.extend_left(other)
     }
 
     fn pop_left<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner_bind(py).call_method0(intern!(py, "popleft"))
+        self.bind(py).call_method0(intern!(py, "popleft"))
     }
     #[pyo3(signature = (n=1))]
     fn rotate(slf: Bound<'_, Self>, n: isize) -> PyResult<Bound<'_, Self>> {
-        slf.get().inner_bind(slf.py()).rotate(n).map(|()| slf)
+        slf.get().bind(slf.py()).rotate(n).map(|()| slf)
     }
 
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(value.py()).insert(index, value)
+        self.bind(value.py()).insert(index, value)
     }
     fn count<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        self.inner_bind(value.py()).count(value)
+        self.bind(value.py()).count(value)
     }
     #[pyo3(signature = (x, start=None, stop=None, /))]
     fn index<'py>(
@@ -268,13 +267,13 @@ impl Deque {
         start: Option<&Bound<'py, PyAny>>,
         stop: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        self.inner_bind(x.py()).index(x, start, stop)
+        self.bind(x.py()).index(x, start, stop)
     }
     fn pop<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner_bind(py).pop()
+        self.bind(py).pop()
     }
     #[pyo3(signature = (value, /))]
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(value.py()).remove(value)
+        self.bind(value.py()).remove(value)
     }
 }
