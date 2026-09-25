@@ -127,6 +127,7 @@ fn bound_inner(ty: &Type) -> SynResult<&Type> {
             .path
             .segments
             .last()
+            .filter(|seg| seg.ident == "Bound")
             .and_then(|seg| match &seg.arguments {
                 PathArguments::AngleBracketed(args) => args
                     .args
