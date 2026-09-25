@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use crate::{abc, collections, core};
 use pyo3::{
     PyClass, PyTypeInfo,
@@ -7,17 +9,11 @@ use pyo3::{
 };
 use pyo3_ext::{prelude::*, types::PyDeque};
 use pyochain_macros::py_abc;
-use tap::{Pipe, Tap};
-pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync {
+use tap::prelude::*;
+pub trait PyWrapper:
+    PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync + Deref<Target = Py<Self::Wrapped>>
+{
     type Wrapped: PyTypeInfo + DerefToPyAny;
-    fn inner(&self) -> &Py<Self::Wrapped>;
-    fn inner_bind<'py>(&self, py: Python<'py>) -> &Bound<'py, Self::Wrapped> {
-        self.inner().bind(py)
-    }
-    #[inline(always)]
-    fn inner_into_bound<'py>(&self, py: Python<'py>) -> Bound<'py, Self::Wrapped> {
-        self.inner().clone_ref(py).into_bound(py)
-    }
     /// Extracts the inner type of `Self` from an arbitrary python object.\
     /// For example, if `Self` is `seq::Seq`, this will extract the inner `PyTuple` from a `seq::Seq` or a `PyTuple`.
     #[inline]
@@ -27,7 +23,7 @@ pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Syn
         let py = value.py();
         value
             .cast_exact::<Self>()
-            .map(|x| x.get().inner_bind(py))
+            .map(|x| x.get().bind(py))
             .or_else(|_| value.cast_exact::<Self::Wrapped>())
             .map_err(|_| {
                 let py = value.py();
@@ -44,10 +40,9 @@ pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Syn
         match obj.len() {
             Ok(0) => Ok(format!("{name}()")),
             Ok(_) => {
-                let elements = obj.repr()?.to_string().tap_mut(|txt| {
-                    txt.pop();
-                    txt.remove(0);
-                });
+                let mut elements = obj.repr()?.to_string();
+                elements.pop();
+                elements.remove(0);
                 Ok(format!("{name}({elements})"))
             }
             Err(err) => Err(err),
@@ -60,11 +55,6 @@ macro_rules! impl_py_wrapper {
         $(
             impl PyWrapper for $wrapper {
                 type Wrapped = $T;
-
-                #[inline(always)]
-                fn inner(&self) -> &Py<Self::Wrapped> {
-                    &self.0
-                }
             }
         )*
     };
@@ -82,14 +72,7 @@ impl_py_wrapper! {
     collections::HeapMin => types::PyList,
     collections::HeapMax => types::PyList,
     collections::Deque => PyDeque,
-}
-/// Named struct so need to implement `PyWrapper` manually.
-impl PyWrapper for core::SliceView {
-    type Wrapped = types::PySequence;
-    #[inline(always)]
-    fn inner(&self) -> &Py<Self::Wrapped> {
-        &self.inner
-    }
+    core::SliceView => types::PySequence,
 }
 macro_rules! impl_try_from_py {
     ($($py:ty => $pyochain:path),* $(,)?) => {
@@ -97,7 +80,7 @@ macro_rules! impl_try_from_py {
             impl TryFromPy<$py> for $pyochain {
                 #[inline]
                 fn try_from_py(obj: Bound<'_, $py>) -> PyResult<Bound<'_, Self>> {
-                    Bound::new(obj.py(), Self(obj.unbind()).init())
+                    Bound::new(obj.py(), obj.unbind().conv::<Self>().init())
                 }
             }
         )*
@@ -112,7 +95,9 @@ impl_try_from_py!(
     types::PyRange => core::Range,
     types::PyDict => core::Dict,
     types::PyIterator => core::iterators::Iter,
-    PyDeque => collections::Deque
+    PyDeque => collections::Deque,
+    types::PyDict => collections::StableSet,
+    types::PyDict => collections::PyoCounter,
 
 );
 #[py_abc(
@@ -203,39 +188,10 @@ impl<
     core::Dict,
     collections::PyoCounter
 )]
-pub trait FlexWrapper: PyWrapper {
+pub trait FlexWrapper: PyWrapper + TryFromPy<Self::Wrapped> {
     #[pyo3(signature = (iterable, /))]
     #[staticmethod]
-    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>>;
-}
-impl FlexWrapper for collections::StableSet {
     fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-        let py = iterable.py();
-        iterable.unbind().pipe(Self).into_bound(py)
+        iterable.try_into_py()
     }
 }
-impl FlexWrapper for collections::PyoCounter {
-    fn wrap(data: Bound<'_, types::PyDict>) -> PyResult<Bound<'_, Self>> {
-        let py = data.py();
-        data.unbind().pipe(Self).into_bound(py)
-    }
-}
-macro_rules! impl_flex_wrapper {
-    ($($ty:ty),*) => {
-        $(
-            impl FlexWrapper for $ty {
-                fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-                    iterable.try_into_py()
-                }
-            }
-        )*
-    };
-}
-impl_flex_wrapper!(
-    core::Set,
-    core::SetMut,
-    core::iterators::Iter,
-    core::PyoVec,
-    core::Seq,
-    core::Dict
-);

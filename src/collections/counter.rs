@@ -1,8 +1,9 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
     core::{PyoVec, iterators},
-    traits::{FlexWrapper, IntoInit, PyWrapper},
+    traits::{FlexWrapper, IntoInit},
 };
+use derive_more::{Deref, From};
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -24,8 +25,9 @@ enum IntoUpdate<'py> {
     Mapping(Bound<'py, PyMapping>),
     Iterable(Bound<'py, PyAny>),
 }
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.collections",frozen, generic, mapping, extends = abc::PyoMutableMapping)]
-pub struct PyoCounter(pub Py<PyDict>);
+pub struct PyoCounter(Py<PyDict>);
 #[pymethods]
 impl PyoCounter {
     #[new]
@@ -41,16 +43,16 @@ impl PyoCounter {
         Self(inner.unbind()).init().pipe(Ok)
     }
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
-        self.inner_bind(py).iter_py()
+        self.bind(py).iter_py()
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.inner_bind(py).len()
+        self.bind(py).len()
     }
 
     fn __getitem__<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         let py = key.py();
-        self.inner_bind(py).as_any().get_item(key).or_else(|err| {
+        self.bind(py).as_any().get_item(key).or_else(|err| {
             if err.matches(py, PyKeyError::type_object(py))? {
                 Ok(PyInt::new(py, 0).into_any())
             } else {
@@ -60,11 +62,11 @@ impl PyoCounter {
     }
 
     fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyInt>) -> PyResult<()> {
-        self.inner_bind(key.py()).set_item(key, value)
+        self.bind(key.py()).set_item(key, value)
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner_bind(key.py()).contains(key)
+        self.bind(key.py()).contains(key)
     }
     #[allow(unused, clippy::unused_self)]
     fn __missing__(&self, key: &Bound<'_, PyAny>) -> isize {
@@ -76,10 +78,7 @@ impl PyoCounter {
         key: Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Option<Bound<'py, PyAny>>> {
-        self.inner_bind(key.py())
-            .get_item(key)?
-            .or(default)
-            .pipe(Ok)
+        self.bind(key.py()).get_item(key)?.or(default).pipe(Ok)
     }
 
     #[pyo3(signature = (key, default, /))]
@@ -89,12 +88,12 @@ impl PyoCounter {
         default: Bound<'py, PyInt>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = key.py();
-        self.inner_bind(py)
+        self.bind(py)
             .call_method1(intern!(py, "setdefault"), (key, default))
     }
 
     fn total<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner_bind(py)
+        self.bind(py)
             .values_view()
             .iter_py()
             .pipe(|vals| pylibs::builtins::sum(&vals, &0))
@@ -105,7 +104,7 @@ impl PyoCounter {
         py: Python<'py>,
         n: Option<Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, PyoVec>> {
-        let items = self.inner_bind(py).items_view().iter_py();
+        let items = self.bind(py).items_view().iter_py();
         let getter = pylibs::operator::itemgetter(py, 1)?;
         match n {
             None => pylibs::builtins::sorted_by(&items, true, &getter)?.try_into_py(),
@@ -124,7 +123,7 @@ impl PyoCounter {
     fn elements<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
         pylibs::itertools::map_star(
             pyitertools::PyRepeat::type_object(py).into_any(),
-            self.inner_bind(py).items_view().iter_py(),
+            self.bind(py).items_view().iter_py(),
         )?
         .pipe_ref(pylibs::itertools::chain::from_iterable)?
         .try_into_py()
@@ -136,7 +135,7 @@ impl PyoCounter {
         iterable: Option<IntoUpdate<'_>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         update_counter(inner, iterable, kwargs)
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
@@ -146,19 +145,19 @@ impl PyoCounter {
         iterable: Option<IntoUpdate<'_>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         subtract_counter(inner, iterable, kwargs)
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.inner_bind(py).copy().and_then(Self::wrap)
+        self.bind(py).copy().and_then(Self::wrap)
     }
     fn __reduce__<'py>(&self, py: Python<'py>) -> (Bound<'py, PyType>, (Py<PyDict>,)) {
-        (Self::type_object(py), (self.inner().clone_ref(py),))
+        (Self::type_object(py), (self.clone_ref(py),))
     }
 
     fn __delitem__(&self, elem: Bound<'_, PyAny>) -> PyResult<()> {
-        let inner = self.inner_bind(elem.py());
+        let inner = self.bind(elem.py());
         if inner.contains(&elem)? {
             inner.del_item(elem)?;
         }
@@ -176,7 +175,7 @@ impl PyoCounter {
                 .or_else(|err| {
                     if err.is_instance_of::<PyTypeError>(py) {
                         // handle case where values are not orderable
-                        self.inner().clone_ref(py).into_bound(py).pipe(Ok)
+                        self.clone_ref(py).into_bound(py).pipe(Ok)
                     } else {
                         Err(err)
                     }
@@ -190,7 +189,7 @@ impl PyoCounter {
 
     fn __add__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         let o = other.get();
         let result = PyDict::new(py);
         for (elem, count) in inner.iter() {
@@ -199,7 +198,7 @@ impl PyoCounter {
                 result.set_item(elem, newcount)?;
             }
         }
-        for (elem, count) in o.inner_bind(py).iter() {
+        for (elem, count) in o.bind(py).iter() {
             if !inner.contains(&elem)? && count.gt(0)? {
                 result.set_item(elem, count)?;
             }
@@ -212,7 +211,7 @@ impl PyoCounter {
         py: Python<'py>,
         other: &Bound<'py, Self>,
     ) -> PyResult<Bound<'py, Self>> {
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         let o = other.get();
         let result = PyDict::new(py);
         for (elem, count) in inner.iter() {
@@ -221,7 +220,7 @@ impl PyoCounter {
                 result.set_item(elem, newcount)?;
             }
         }
-        for (elem, count) in o.inner_bind(py).iter() {
+        for (elem, count) in o.bind(py).iter() {
             if !inner.contains(&elem)? && count.lt(0)? {
                 result.set_item(elem, PyInt::new(py, 0).sub(count)?)?;
             }
@@ -233,7 +232,7 @@ impl PyoCounter {
         let py = other.py();
         let result = PyDict::new(py);
         let o = other.get();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         for (elem, count) in inner.iter() {
             let other_count = o.__getitem__(&elem)?;
             let newcount = pylibs::builtins::max_of(py, (&count, &other_count))?;
@@ -241,7 +240,7 @@ impl PyoCounter {
                 result.set_item(elem, newcount)?;
             }
         }
-        for (elem, count) in other.get().inner_bind(other.py()).iter() {
+        for (elem, count) in other.get().bind(other.py()).iter() {
             if !inner.contains(&elem)? && count.gt(0)? {
                 result.set_item(elem, count)?;
             }
@@ -253,7 +252,7 @@ impl PyoCounter {
         let py = other.py();
         let o = other.get();
         let result = PyDict::new(py);
-        for (elem, count) in self.inner_bind(py).iter() {
+        for (elem, count) in self.bind(py).iter() {
             let other_count = o.__getitem__(&elem)?;
             let newcount = pylibs::builtins::min_of(py, (&other_count, &count))?;
             if newcount.gt(0)? {
@@ -265,7 +264,7 @@ impl PyoCounter {
 
     fn __pos__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         let result = PyDict::new(py);
-        for (elem, count) in self.inner_bind(py).iter() {
+        for (elem, count) in self.bind(py).iter() {
             if count.gt(0)? {
                 result.set_item(elem, count)?;
             }
@@ -275,7 +274,7 @@ impl PyoCounter {
 
     fn __neg__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         let result = PyDict::new(py);
-        for (elem, count) in self.inner_bind(py).iter() {
+        for (elem, count) in self.bind(py).iter() {
             if count.lt(0)? {
                 result.set_item(elem, count.neg()?)?;
             }
@@ -285,7 +284,7 @@ impl PyoCounter {
 
     fn __iadd__(&self, other: &Bound<'_, PySupportsItems>) -> PyResult<()> {
         let py = other.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
             let (elem, count) = tup?;
             let new_count = self.__getitem__(&elem)?.add(count)?;
@@ -296,7 +295,7 @@ impl PyoCounter {
 
     fn __isub__(&self, other: &Bound<'_, PySupportsItems>) -> PyResult<()> {
         let py = other.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
             let (elem, count) = tup?;
             let new_count = self.__getitem__(&elem)?.sub(count)?;
@@ -307,7 +306,7 @@ impl PyoCounter {
 
     fn __ior__(&self, other: &Bound<'_, PySupportsItems>) -> PyResult<()> {
         let py = other.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
             let (elem, other_count) = tup?;
             let count = self.__getitem__(&elem)?;
@@ -320,7 +319,7 @@ impl PyoCounter {
 
     fn __iand__(&self, other: &Bound<'_, PyMapping>) -> PyResult<()> {
         let py = other.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         for (elem, count) in inner.iter() {
             let other_count = other.as_any().get_item(&elem)?;
             if other_count.lt(count)? {
@@ -333,12 +332,12 @@ impl PyoCounter {
     fn __ixor__(&self, other: &Bound<'_, Self>) -> PyResult<()> {
         let py = other.py();
         let o = other.get();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         for (elem, count) in inner.iter() {
             let new_item = count.sub(o.__getitem__(&elem)?)?.abs()?;
             inner.set_item(elem, new_item)?;
         }
-        for (elem, count) in other.get().inner_bind(py).iter() {
+        for (elem, count) in other.get().bind(py).iter() {
             if !inner.contains(&elem)? {
                 inner.set_item(elem, count.abs()?)?;
             }
@@ -347,13 +346,13 @@ impl PyoCounter {
     }
     fn __eq__<'py>(&self, other: &Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         let py = other.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         try_cast! {
             match other {
                 CaseExact::PyoCounter(counter) => {
                     let o = counter.get();
                     for c in [self, o] {
-                        for elem in c.inner_bind(py).iter_py() {
+                        for elem in c.bind(py).iter_py() {
                             let e = elem?;
                             if self.__getitem__(&e)?.eq(o.__getitem__(&e)?)? {
                                 continue;
@@ -382,7 +381,7 @@ impl PyoCounter {
         let py = other.py();
         let o = other.get();
         for c in [self, o] {
-            for elem in c.inner_bind(py).iter_py() {
+            for elem in c.bind(py).iter_py() {
                 let e = elem?;
                 if self.__getitem__(&e)?.le(o.__getitem__(&e)?)? {
                     continue;
@@ -403,7 +402,7 @@ impl PyoCounter {
         let py = other.py();
         let o = other.get();
         for c in [self, o] {
-            for elem in c.inner_bind(py).iter_py() {
+            for elem in c.bind(py).iter_py() {
                 let e = elem?;
                 if self.__getitem__(&e)?.ge(o.__getitem__(&e)?)? {
                     continue;
@@ -424,7 +423,7 @@ impl PyoCounter {
 
     fn __xor__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         let o = other.get();
         let result = PyDict::new(py);
         for (elem, count) in inner.iter() {
@@ -433,7 +432,7 @@ impl PyoCounter {
                 result.set_item(elem, newcount)?;
             }
         }
-        for (elem, count) in other.get().inner_bind(py).iter() {
+        for (elem, count) in other.get().bind(py).iter() {
             if !inner.contains(&elem)? && count.is_truthy()? {
                 result.set_item(elem, count.abs()?)?;
             }
@@ -443,7 +442,7 @@ impl PyoCounter {
 }
 impl ImplPyoReversible for PyoCounter {
     fn rev<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
-        self.inner_bind(py)
+        self.bind(py)
             .as_any()
             .pipe(pylibs::builtins::reversed)
             .try_into_py()

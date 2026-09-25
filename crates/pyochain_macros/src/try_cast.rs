@@ -174,17 +174,6 @@ fn body_uses(body: &syn::Expr, ident: &Ident) -> bool {
     binding.used
 }
 
-fn rewrite_tuple(tuple: &PatTuple) -> SynResult<(TokenStream2, Vec<Case>)> {
-    let rewritten = tuple
-        .elems
-        .iter()
-        .map(rewrite_pattern)
-        .collect::<SynResult<Vec<_>>>()?;
-    let (patterns, cases): (Vec<_>, Vec<_>) = rewritten.into_iter().unzip();
-    let cases = cases.into_iter().flatten().collect::<Vec<_>>();
-    Ok((quote!((#(#patterns),*)), cases))
-}
-
 fn rewrite_pattern(pattern: &Pat) -> SynResult<(TokenStream2, Vec<Case>)> {
     match pattern {
         Pat::Tuple(tuple) => rewrite_tuple(tuple),
@@ -192,24 +181,35 @@ fn rewrite_pattern(pattern: &Pat) -> SynResult<(TokenStream2, Vec<Case>)> {
         _ => Ok((quote!(#pattern), Vec::new())),
     }
 }
+fn rewrite_tuple(tuple: &PatTuple) -> SynResult<(TokenStream2, Vec<Case>)> {
+    let (patterns, cases): (Vec<_>, Vec<_>) = tuple
+        .elems
+        .iter()
+        .map(rewrite_pattern)
+        .collect::<SynResult<Vec<_>>>()?
+        .into_iter()
+        .unzip();
+    let cases = cases.into_iter().flatten().collect::<Vec<_>>();
+    Ok((quote!((#(#patterns),*)), cases))
+}
 
 fn rewrite_tuple_struct(tuple_struct: &PatTupleStruct) -> SynResult<(TokenStream2, Vec<Case>)> {
     match rewrite_case(tuple_struct)? {
         (pattern, cases) if !cases.is_empty() => Ok((pattern, cases)),
         _ => {
-            let rewritten = tuple_struct
+            let (patterns, cases): (Vec<_>, Vec<_>) = tuple_struct
                 .elems
                 .iter()
                 .map(rewrite_pattern)
-                .collect::<SynResult<Vec<_>>>()?;
-            let (patterns, cases): (Vec<_>, Vec<_>) = rewritten.into_iter().unzip();
+                .collect::<SynResult<Vec<_>>>()?
+                .into_iter()
+                .unzip();
             let cases = cases.into_iter().flatten().collect::<Vec<_>>();
             let path = &tuple_struct.path;
             Ok((quote!(#path(#(#patterns),*)), cases))
         }
     }
 }
-
 fn rewrite_case(pattern: &PatTupleStruct) -> SynResult<(TokenStream2, Vec<Case>)> {
     let Some(marker) = pattern.path.segments.first() else {
         return Err(syn::Error::new_spanned(pattern, INVALID_PATTERN_MSG));

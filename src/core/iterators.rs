@@ -6,8 +6,9 @@ use std::{
 use crate::{
     abc,
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
-    traits::{IntoInit, PyWrapper},
+    traits::IntoInit,
 };
+use derive_more::{Deref, From};
 use pyo3::{
     IntoPyObjectExt, PyTypeInfo,
     exceptions::{PyIndexError, PyTypeError},
@@ -844,6 +845,7 @@ impl OnceWith {
         }
     }
 }
+#[derive(From)]
 #[pyclass(module = "pyochain._iterators")]
 pub struct Tail(VecDeque<PyResult<Py<PyAny>>>);
 #[pymethods]
@@ -884,7 +886,7 @@ impl Tail {
                 data
             }
         }
-        .pipe(Self)
+        .conv::<Self>()
         .pipe(Ok)
     }
 
@@ -897,8 +899,9 @@ impl Tail {
     }
 }
 
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.core",frozen, generic, extends=abc::PyoIterator)]
-pub struct Iter(pub Py<PyIterator>);
+pub struct Iter(Py<PyIterator>);
 impl Iter {
     pub fn empty(py: Python<'_>) -> PyResult<Bound<'_, Self>> {
         PyTuple::empty(py).iter_py().try_into_py()
@@ -907,16 +910,16 @@ impl Iter {
 #[pymethods]
 impl Iter {
     fn __iter__(&self, py: Python<'_>) -> Py<PyIterator> {
-        self.inner().clone_ref(py)
+        self.clone_ref(py)
     }
 
     fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
-        self.inner_into_bound(py).next().transpose()
+        self.clone_ref(py).into_bound(py).next().transpose()
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
-        let inner_repr = self.inner_bind(py).repr()?;
+        let inner_repr = self.bind(py).repr()?;
         Ok(format!("{name}({inner_repr})"))
     }
 }

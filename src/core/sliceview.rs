@@ -1,9 +1,9 @@
-use std::sync::{Mutex, MutexGuard};
-
-use crate::{
-    abc,
-    traits::{IntoInit, PyWrapper},
+use std::{
+    ops::Deref,
+    sync::{Mutex, MutexGuard},
 };
+
+use crate::{abc, traits::IntoInit};
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -54,11 +54,16 @@ impl<'py> PyInit<'py, PySlice, SliceArgs<'py>> for PySlice {
             .map(|slice| unsafe { slice.cast_into_unchecked::<PySlice>() })
     }
 }
-
+impl Deref for SliceView {
+    type Target = Py<PySequence>;
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
 #[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct SliceView {
     #[pyo3(get)]
-    pub inner: Py<PySequence>,
+    inner: Py<PySequence>,
     range: Mutex<Either<Py<PyRange>, OpenRange>>,
 }
 impl SliceView {
@@ -74,16 +79,7 @@ impl SliceView {
     fn current_range<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyRange>> {
         self.get_range()
             .as_ref()
-            .map_right(|r| {
-                r.resolve(
-                    py,
-                    self.inner()
-                        .clone_ref(py)
-                        .into_bound(py)
-                        .len()?
-                        .cast_signed(),
-                )
-            })
+            .map_right(|r| r.resolve(py, self.clone_ref(py).into_bound(py).len()?.cast_signed()))
             .map_left(|r| Ok(r.clone_ref(py).into_bound(py)))
             .into_inner()
     }
@@ -123,19 +119,19 @@ impl SliceView {
         .pipe(Ok)
     }
     fn __iter__(&self, py: Python<'_>) -> PyResult<SliceViewIterator> {
-        SliceViewIterator::new(self.current_range(py)?, self.inner().clone_ref(py))
+        SliceViewIterator::new(self.current_range(py)?, self.clone_ref(py))
     }
     fn __contains__(slf: &Bound<'_, Self>, item: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.try_iter().unwrap().try_any(|el| item.eq(el?))
     }
 
     fn __reversed__(&self, py: Python<'_>) -> PyResult<SliceViewReverseIterator> {
-        SliceViewReverseIterator::new(self.current_range(py)?, self.inner().clone_ref(py))
+        SliceViewReverseIterator::new(self.current_range(py)?, self.clone_ref(py))
     }
 
     fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = other.py();
-        let seq = self.inner_bind(py);
+        let seq = self.bind(py);
         other.cast_into::<PySequence>().map_or(Ok(false), |o| {
             let elem_eq = self
                 .current_range(py)?
@@ -149,7 +145,7 @@ impl SliceView {
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
-        let repr = self.inner_bind(py).repr()?;
+        let repr = self.bind(py).repr()?;
         let cr = self.current_range(py)?;
         Ok(format!(
             "{}({})[{}:{}:{}]",
@@ -170,7 +166,7 @@ impl SliceView {
         index: &Bound<'py, PyAny>,
     ) -> PyResult<Either<Bound<'py, Self>, Bound<'py, PyAny>>> {
         let py = index.py();
-        let inner = self.inner().clone_ref(py);
+        let inner = self.clone_ref(py);
         let current_range = self.current_range(py)?;
         if let Ok(slice) = index.cast_exact::<PySlice>() {
             // Compose slices using Python's range slicing — O(1), exact.
@@ -205,7 +201,7 @@ impl SliceView {
     fn __setitem__(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = index.py();
 
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         let cr = self.current_range(py)?;
         try_cast! {
             match (inner, index) {
@@ -264,7 +260,7 @@ impl SliceView {
     fn advance(slf: Bound<'_, Self>, n: isize) -> PyResult<Bound<'_, Self>> {
         let py = slf.py();
         let slf_get = slf.get();
-        let b_len = slf_get.inner_bind(py).len()?.cast_signed();
+        let b_len = slf_get.bind(py).len()?.cast_signed();
         let cr = slf_get.current_range(py)?;
         let new_start = (cr.start()? + n).clamp(0, b_len);
         let delta = new_start - cr.start()?;

@@ -3,6 +3,7 @@ use crate::{
     core::iterators,
     traits::PyWrapper,
 };
+use derive_more::{Deref, From};
 use pyo3::{
     exceptions::PyKeyError,
     intern,
@@ -11,9 +12,9 @@ use pyo3::{
 };
 use pyo3_ext::{prelude::*, pylibs, types::PopResult};
 use tap::Pipe;
-
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.core",frozen, generic, extends=abc::PyoMutableMapping)]
-pub struct Dict(pub Py<PyDict>);
+pub struct Dict(Py<PyDict>);
 #[pymethods]
 impl Dict {
     #[allow(unused_variables)]
@@ -33,37 +34,37 @@ impl Dict {
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        self.inner_bind(py).as_any().pipe(Self::get_repr)
+        self.bind(py).as_any().pipe(Self::get_repr)
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
-        self.inner_bind(py).iter_py()
+        self.bind(py).iter_py()
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner_bind(key.py()).contains(key)
+        self.bind(key.py()).contains(key)
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.inner_bind(py).len()
+        self.bind(py).len()
     }
 
     fn __getitem__<'py>(&self, key: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner_bind(key.py()).as_any().get_item(key)
+        self.bind(key.py()).as_any().get_item(key)
     }
 
     fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(key.py()).set_item(key, value)
+        self.bind(key.py()).set_item(key, value)
     }
 
     fn __delitem__(&self, key: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(key.py()).del_item(key)
+        self.bind(key.py()).del_item(key)
     }
 
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
         let py = other.py();
         Self::extract_union(other)
-            .and_then(|r| self.inner_bind(py).eq(r))
+            .and_then(|r| self.bind(py).eq(r))
             .unwrap_or(false)
     }
 
@@ -74,7 +75,7 @@ impl Dict {
     fn __ror__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         Self::extract_union(value)
-            .and_then(|r| r.bitor(self.inner_bind(py)))
+            .and_then(|r| r.bitor(self.bind(py)))
             .and_then(|new| unsafe { new.cast_into_unchecked::<PyDict>() }.try_into_py())
     }
 
@@ -90,7 +91,7 @@ impl Dict {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.inner_bind(py).copy().and_then(Bound::try_into_py)
+        self.bind(py).copy().and_then(Bound::try_into_py)
     }
 
     #[pyo3(signature = (key, default=None, /))]
@@ -100,7 +101,7 @@ impl Dict {
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = key.py();
-        match self.inner_bind(py).pop_or_err(key) {
+        match self.bind(py).pop_or_err(key) {
             PopResult::Ok(v) => Ok(v),
             PopResult::Err(e) => Err(e),
             PopResult::KeyMissing => default.ok_or_else(|| PyKeyError::new_err(key.to_string())),
@@ -110,7 +111,7 @@ impl Dict {
     fn union<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let rhs = Self::extract_union(other)?;
-        self.inner_bind(py)
+        self.bind(py)
             .bitor(rhs)
             .and_then(|new| unsafe { new.cast_into_unchecked::<PyDict>() }.try_into_py())
     }
@@ -120,22 +121,19 @@ impl Dict {
         other: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let lhs = slf.get().inner_bind(py);
+        let lhs = slf.get().bind(py);
         other
             .cast_exact::<Self>()
-            .map_or_else(
-                |_| lhs.ior(other),
-                |x| lhs.ior(x.get().inner_bind(py).as_any()),
-            )
+            .map_or_else(|_| lhs.ior(other), |x| lhs.ior(x.get().bind(py).as_any()))
             .map(|_| slf)
     }
 
     fn popitem<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyTuple>> {
-        self.inner_bind(py).popitem()
+        self.bind(py).popitem()
     }
 
     fn clear(&self, py: Python<'_>) {
-        self.inner_bind(py).clear();
+        self.bind(py).clear();
     }
     #[pyo3(signature = (m=None, /, **kwargs))]
     fn update(
@@ -145,9 +143,9 @@ impl Dict {
     ) -> PyResult<()> {
         match (m, kwargs) {
             (None, None) => Ok(()),
-            (None, Some(kwargs)) => self.inner_bind(kwargs.py()).update(kwargs.as_mapping()),
+            (None, Some(kwargs)) => self.bind(kwargs.py()).update(kwargs.as_mapping()),
             (Some(m), _) => self
-                .inner_bind(m.py())
+                .bind(m.py())
                 .call_method(intern!(m.py(), "update"), (m,), kwargs)
                 .map(|_| ()),
         }
@@ -159,13 +157,13 @@ impl Dict {
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = key.py();
-        self.inner_bind(py)
+        self.bind(py)
             .call_method1(intern!(py, "setdefault"), (key, default))
     }
 }
 impl ImplPyoReversible for Dict {
     fn rev<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
-        self.inner_bind(py)
+        self.bind(py)
             .as_any()
             .pipe(pylibs::builtins::reversed)
             .try_into_py()

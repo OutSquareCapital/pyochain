@@ -5,12 +5,12 @@ use pyo3::{
 };
 use pyo3_ext::{prelude::*, types::PyIterable};
 use pyochain_macros::{py_abc, try_cast_into};
-use tap::Pipe;
+use tap::prelude::*;
 
 use crate::{
     collections,
     core::{Dict, PyoVec, Seq, Set, SetMut, iterators},
-    traits::{IntoInit, PyWrapper},
+    traits::IntoInit,
 };
 #[pyclass(frozen, generic)]
 pub struct FromIter;
@@ -84,7 +84,7 @@ impl FromPyIter for collections::StableSet {
     fn from_iter(iterable: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
         PyDict::from_keys(&iterable)?
             .unbind()
-            .pipe(Self)
+            .conv::<Self>()
             .into_bound(iterable.py())
     }
 }
@@ -105,7 +105,7 @@ impl FromPyKwargs for Dict {
             }
         }
         .unbind()
-        .pipe(Self)
+        .conv::<Self>()
         .init()
         .pipe(Ok)
     }
@@ -125,7 +125,7 @@ impl FromPyArgs for iterators::Iter {
             _ => elements.iter_py(),
         }
         .unbind()
-        .pipe(Self)
+        .conv::<Self>()
         .init()
         .pipe(Ok)
     }
@@ -138,14 +138,14 @@ impl FromPyArgs for Seq {
         let py = elements.py();
         match elements.len() {
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                CaseExact::Self(inner) => inner.get().inner_into_bound(py),
+                CaseExact::Self(inner) => inner.get().clone_ref(py).into_bound(py),
                 Case::PyIterable(iterable) => iterable.try_into_py::<PyTuple>()?,
                 any => tuple!(any)?,
             }},
             _ => elements,
         }
         .unbind()
-        .pipe(Self)
+        .conv::<Self>()
         .init()
         .pipe(Ok)
     }
@@ -165,7 +165,7 @@ impl FromPyArgs for PyoVec {
             _ => elements.to_list(),
         }
         .unbind()
-        .pipe(Self)
+        .conv::<Self>()
         .init()
         .pipe(Ok)
     }
@@ -190,7 +190,7 @@ impl FromPyArgs for collections::StableSet {
             _ => PyDict::from_keys(elements.as_any())?,
         }
         .unbind()
-        .pipe(Self)
+        .conv::<Self>()
         .init()
         .pipe(Ok)
     }
@@ -199,7 +199,7 @@ impl FromPyArgs for collections::StableSet {
             .as_any()
             .pipe(PyDict::from_keys)
             .map(Bound::unbind)
-            .map(Self)
+            .map(Conv::conv::<Self>)
             .and_then(|slf| slf.into_bound(elements.py()))
     }
 }
@@ -209,14 +209,14 @@ impl FromPyArgs for Set {
         match elements.len() {
             0 => PyFrozenSet::empty(py)?,
             1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                CaseExact::Self(inner) => inner.get().inner_into_bound(py),
+                CaseExact::Self(inner) => inner.get().clone_ref(py).into_bound(py),
                 Case::PyIterable(iterable) => iterable.try_into_py::<PyFrozenSet>()?,
                 any => [any].into_iter().collect_bound(py)?,
             }},
             _ => elements.into_iter().collect_bound::<PyFrozenSet>(py)?,
         }
         .unbind()
-        .pipe(Self)
+        .conv::<Self>()
         .init()
         .pipe(Ok)
     }
@@ -240,7 +240,7 @@ impl FromPyArgs for SetMut {
             _ => elements.into_iter().collect_bound::<PySet>(py)?,
         }
         .unbind()
-        .pipe(Self)
+        .conv::<Self>()
         .init()
         .pipe(Ok)
     }
