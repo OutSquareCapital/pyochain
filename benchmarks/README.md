@@ -122,13 +122,16 @@ or with autosave:
 For these benchmarks in particular, run the following command:
 
 ```shell
+uv run maturin develop --release --uv;
+uv run pytest;
 uv run pytest benchmarks/test_sorted.py::<test_name> `
     --benchmark-only `
     --benchmark-warmup=true `
     --benchmark-disable-gc `
     --benchmark-group-by=param:size `
     --benchmark-autosave `
-    --benchmark-storage=file://.benchmarks/sortedlist/
+    --benchmark-storage=file://.benchmarks/sortedlist/;
+uv run scripts/bench_plots.py <name>
 ```
 
 ---
