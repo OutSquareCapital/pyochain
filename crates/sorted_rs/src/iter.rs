@@ -26,8 +26,8 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
             None
         } else {
             let data = self.data.read_or_inner();
-            let item = data.values.loc(&self.bounds.min).clone_ref(py);
             let loc = &mut self.bounds.min;
+            let item = data.values.loc(loc).clone_ref(py);
             if loc.pos + 1 < data.values.len() && loc.idx + 1 >= data.values.loc_len(loc) {
                 loc.pos += 1;
                 loc.idx = 0;
@@ -50,7 +50,7 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
                 loc.pos -= 1;
                 loc.idx = data.values.loc_len(loc) - 1;
             }
-            Some(data.values.loc(&self.bounds.max).clone_ref(py))
+            Some(data.values.loc(loc).clone_ref(py))
         }
     }
 }
