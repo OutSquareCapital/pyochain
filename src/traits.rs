@@ -95,7 +95,9 @@ impl_try_from_py!(
     types::PyRange => core::Range,
     types::PyDict => core::Dict,
     types::PyIterator => core::iterators::Iter,
-    PyDeque => collections::Deque
+    PyDeque => collections::Deque,
+    types::PyDict => collections::StableSet,
+    types::PyDict => collections::PyoCounter,
 
 );
 #[py_abc(
@@ -186,39 +188,10 @@ impl<
     core::Dict,
     collections::PyoCounter
 )]
-pub trait FlexWrapper: PyWrapper {
+pub trait FlexWrapper: PyWrapper + TryFromPy<Self::Wrapped> {
     #[pyo3(signature = (iterable, /))]
     #[staticmethod]
-    fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>>;
-}
-impl FlexWrapper for collections::StableSet {
     fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-        let py = iterable.py();
-        iterable.unbind().conv::<Self>().into_bound(py)
+        iterable.try_into_py()
     }
 }
-impl FlexWrapper for collections::PyoCounter {
-    fn wrap(data: Bound<'_, types::PyDict>) -> PyResult<Bound<'_, Self>> {
-        let py = data.py();
-        data.unbind().conv::<Self>().into_bound(py)
-    }
-}
-macro_rules! impl_flex_wrapper {
-    ($($ty:ty),*) => {
-        $(
-            impl FlexWrapper for $ty {
-                fn wrap(iterable: Bound<'_, <Self as PyWrapper>::Wrapped>) -> PyResult<Bound<'_, Self>> {
-                    iterable.try_into_py()
-                }
-            }
-        )*
-    };
-}
-impl_flex_wrapper!(
-    core::Set,
-    core::SetMut,
-    core::iterators::Iter,
-    core::PyoVec,
-    core::Seq,
-    core::Dict
-);
