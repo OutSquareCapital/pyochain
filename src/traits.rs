@@ -72,10 +72,7 @@ impl_py_wrapper! {
     collections::HeapMin => types::PyList,
     collections::HeapMax => types::PyList,
     collections::Deque => PyDeque,
-}
-/// Named struct so need to implement `PyWrapper` manually.
-impl PyWrapper for core::SliceView {
-    type Wrapped = types::PySequence;
+    core::SliceView => types::PySequence,
 }
 macro_rules! impl_try_from_py {
     ($($py:ty => $pyochain:path),* $(,)?) => {
