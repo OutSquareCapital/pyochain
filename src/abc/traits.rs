@@ -149,7 +149,7 @@ macro_rules! impl_mapping_view {
             impl MappingView for $t {
                 type M = PyAny;
                 fn mapping(&self) -> &Py<Self::M> {
-                    &self.0
+                    &self
                 }
                 fn __len__(&self, py: Python<'_>) -> usize {
                     self.mapping().bind(py).len().expect("Mapping should have a length")

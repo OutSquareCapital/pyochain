@@ -3,6 +3,7 @@ use crate::{
     core::{PyoVec, iterators},
     traits::{IntoInit, PyWrapper},
 };
+use derive_more::{Deref, From};
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -37,7 +38,7 @@ impl IntoHeap<'_> {
             }
             Self::Vec(vec) => {
                 let py = vec.py();
-                let inner = vec.get().inner_into_bound(py);
+                let inner = vec.get().clone_ref(py).into_bound(py);
                 func(&inner)?;
                 Ok(inner)
             }
@@ -60,7 +61,7 @@ trait HeapType: PyWrapper<Wrapped = PyList> {
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
-        let repr = self.inner_bind(py).repr()?;
+        let repr = self.bind(py).repr()?;
         Ok(format!("{name}({repr})"))
     }
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
@@ -76,14 +77,14 @@ trait HeapType: PyWrapper<Wrapped = PyList> {
     #[staticmethod]
     fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>>;
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.inner_bind(py).len()
+        self.bind(py).len()
     }
 
     fn __getitem__<'py>(
         &self,
         index: Bound<'py, PyAny>,
     ) -> PyResult<Either<Bound<'py, PyoVec>, Bound<'py, PyAny>>> {
-        let list = self.inner_bind(index.py()).as_any();
+        let list = self.bind(index.py()).as_any();
         try_cast! {
             match index {
                 Case::PySlice(slice) => list
@@ -97,11 +98,11 @@ trait HeapType: PyWrapper<Wrapped = PyList> {
     }
 
     fn __setitem__(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(index.py()).as_any().set_item(index, value)
+        self.bind(index.py()).as_any().set_item(index, value)
     }
 
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(index.py()).as_any().del_item(index)
+        self.bind(index.py()).as_any().del_item(index)
     }
 
     fn __eq__<'py>(
@@ -109,10 +110,10 @@ trait HeapType: PyWrapper<Wrapped = PyList> {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Either<bool, Bound<'py, PyNotImplemented>>> {
         let py = other.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         try_cast! {
             match other {
-                CaseExact::HeapMax(x) | CaseExact::HeapMin(x) | CaseExact::PyoVec(x) => inner.eq(x.get().inner().clone_ref(py)).map(Either::Left),
+                CaseExact::HeapMax(x) | CaseExact::HeapMin(x) | CaseExact::PyoVec(x) => inner.eq(x.get().clone_ref(py)).map(Either::Left),
                 Case::PyList(list) => inner.eq(list).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
             }
@@ -120,7 +121,7 @@ trait HeapType: PyWrapper<Wrapped = PyList> {
     }
 
     fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(value.py())
+        self.bind(value.py())
             .call_method1("insert", (index, value))?;
         Ok(())
     }
@@ -134,7 +135,8 @@ trait HeapType: PyWrapper<Wrapped = PyList> {
     ) -> PyResult<Bound<'py, iterators::Iter>> {
         let py = others.py();
         let args = self
-            .inner_into_bound(py)
+            .clone_ref(py)
+            .into_bound(py)
             .into_any()
             .pipe(std::iter::once)
             .chain(others.iter())
@@ -150,8 +152,7 @@ trait HeapType: PyWrapper<Wrapped = PyList> {
         n: isize,
         key: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>> {
-        pylibs::heapq::nsmallest(n, self.inner_bind(py).as_any(), key)
-            .and_then(|x| Self::from_ref(py, x))
+        pylibs::heapq::nsmallest(n, self.bind(py).as_any(), key).and_then(|x| Self::from_ref(py, x))
     }
     #[pyo3(signature = (n, key=None))]
     fn n_largest<'py>(
@@ -160,15 +161,15 @@ trait HeapType: PyWrapper<Wrapped = PyList> {
         n: isize,
         key: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>> {
-        pylibs::heapq::nlargest(n, self.inner_bind(py).as_any(), key)
-            .and_then(|x| Self::from_ref(py, x))
+        pylibs::heapq::nlargest(n, self.bind(py).as_any(), key).and_then(|x| Self::from_ref(py, x))
     }
 }
 /// Present for typing purposes only.
 #[pyclass(module = "pyochain.collections",frozen, generic, sequence, extends = abc::PyoMutableSequence, subclass)]
 pub struct Heap;
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.collections",frozen, generic, sequence, extends = Heap)]
-pub struct HeapMin(pub Py<PyList>);
+pub struct HeapMin(Py<PyList>);
 impl HeapType for HeapMin {
     fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>> {
         data.convert(pylibs::heapq::heapify)
@@ -179,26 +180,26 @@ impl HeapType for HeapMin {
         Self(data.unbind()).into_bound(py)
     }
     fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()> {
-        pylibs::heapq::heappush(self.inner_bind(item.py()), item)
+        pylibs::heapq::heappush(self.bind(item.py()), item)
     }
     fn pop<'py>(
         &self,
         py: Python<'py>,
         _index: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::heapq::heappop(self.inner_bind(py))
+        pylibs::heapq::heappop(self.bind(py))
     }
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::heapq::heapreplace(self.inner_bind(item.py()), item)
+        pylibs::heapq::heapreplace(self.bind(item.py()), item)
     }
 
     fn push_pop<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::heapq::heappushpop(self.inner_bind(item.py()), item)
+        pylibs::heapq::heappushpop(self.bind(item.py()), item)
     }
 }
-
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.collections",frozen, generic, sequence, extends = Heap)]
-pub struct HeapMax(pub Py<PyList>);
+pub struct HeapMax(Py<PyList>);
 impl HeapType for HeapMax {
     fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>> {
         data.convert(pylibs::heapq::heapify_max)
@@ -210,7 +211,7 @@ impl HeapType for HeapMax {
     }
     fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()> {
         let py = item.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         inner.append(item)?;
         self.siftdown(py, 0, inner.len() - 1)
     }
@@ -219,7 +220,7 @@ impl HeapType for HeapMax {
         py: Python<'py>,
         _index: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         let lastelt = inner.pop(inner.len().saturating_sub(1))?;
         if inner.is_empty() {
             Ok(lastelt)
@@ -233,7 +234,7 @@ impl HeapType for HeapMax {
 
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         let py = item.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         let returnitem = inner.get_item(0)?; // raises appropriate IndexError if heap is empty
         inner.set_item(0, item)?;
         self.siftup(py, 0)?;
@@ -241,7 +242,7 @@ impl HeapType for HeapMax {
     }
     fn push_pop<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         let py = item.py();
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         if !(inner.is_empty()) && item.lt(inner.get_item(0)?)? {
             let returnitem = inner.get_item(0)?;
             inner.set_item(0, item)?;
@@ -254,7 +255,7 @@ impl HeapType for HeapMax {
 }
 impl HeapMax {
     fn siftdown(&self, py: Python<'_>, startpos: usize, mut pos: usize) -> PyResult<()> {
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         let newitem = inner.get_item(pos)?;
         // Follow the path to the root, moving parents down until finding a place
         // newitem fits.
@@ -272,7 +273,7 @@ impl HeapMax {
     }
 
     fn siftup(&self, py: Python<'_>, mut pos: usize) -> PyResult<()> {
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
         let endpos = inner.len();
         let startpos = pos;
         let newitem = inner.get_item(pos)?;

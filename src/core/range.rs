@@ -1,7 +1,5 @@
-use crate::{
-    abc,
-    traits::{IntoInit, PyWrapper},
-};
+use crate::{abc, traits::IntoInit};
+use derive_more::{Deref, From};
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -12,10 +10,10 @@ use pyo3::{
 };
 use pyo3_ext::{prelude::*, pylibs};
 use pyochain_macros::try_cast;
-use tap::Pipe;
-
+use tap::prelude::*;
+#[derive(From, Deref)]
 #[pyclass(module = "pyochain.core",frozen, sequence, extends=abc::PyoSequence)]
-pub struct Range(pub Py<PyRange>);
+pub struct Range(Py<PyRange>);
 impl Range {
     pub fn new(py: Python<'_>, start: isize, stop: isize) -> PyResult<Self> {
         PyRange::new(py, start, stop).map(Bound::unbind).map(Self)
@@ -44,14 +42,14 @@ impl Range {
             ))),
         }?;
 
-        inner.unbind().pipe(Self).init().pipe(Ok)
+        inner.unbind().conv::<Self>().init().pipe(Ok)
     }
     pub fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
-        self.inner_bind(py).iter_py()
+        self.bind(py).iter_py()
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.inner_bind(py).as_sequence().len().unwrap()
+        self.bind(py).as_sequence().len().unwrap()
     }
 
     fn __getitem__<'py>(
@@ -59,7 +57,7 @@ impl Range {
         index: &Bound<'py, PyAny>,
     ) -> PyResult<Either<Bound<'py, Self>, Bound<'py, PyAny>>> {
         let py = index.py();
-        let range = self.inner_bind(py);
+        let range = self.bind(py);
         try_cast! {
             match index {
                 Case::PySlice(slice) => range
@@ -74,29 +72,29 @@ impl Range {
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
-        let inner = self.inner_bind(py);
+        let inner = self.bind(py);
 
         let params = format!("{}, {}, {}", inner.start()?, inner.stop()?, inner.step()?);
         Ok(format!("{name}({params})"))
     }
 
     fn __eq__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner_bind(value.py()).eq(value)
+        self.bind(value.py()).eq(value)
     }
     fn __hash__(&self, py: Python<'_>) -> PyResult<isize> {
-        self.inner_bind(py).hash()
+        self.bind(py).hash()
     }
     fn __contains__(&self, key: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner_bind(key.py()).as_sequence().contains(key)
+        self.bind(key.py()).as_sequence().contains(key)
     }
     pub fn __reversed__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
-        self.inner_bind(py).pipe_as_ref(pylibs::builtins::reversed)
+        self.bind(py).pipe_as_ref(pylibs::builtins::reversed)
     }
     #[pyo3(signature = (value, /))]
     fn count<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        self.inner_bind(value.py()).count(value)
+        self.bind(value.py()).count(value)
     }
     fn index<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        self.inner_bind(value.py()).index(value)
+        self.bind(value.py()).index(value)
     }
 }

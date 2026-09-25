@@ -1,11 +1,12 @@
 use crate::{InnerData, prelude::*, types::VecPy};
+use derive_more::{Deref, DerefMut};
 use pyo3::{
     prelude::*,
     types::{PyDict, PySet},
 };
 use std::ops::{Deref, DerefMut};
 
-#[derive(Default)]
+#[derive(Default, Deref, DerefMut)]
 pub struct ListsData(pub(super) InnerData);
 pub struct KeysListsData(pub(super) InnerData, pub Vec<VecPy>, pub(super) Py<PyAny>);
 pub struct SetData<T: ListsDataMethods>(pub(super) T, pub Py<PySet>);
@@ -26,21 +27,16 @@ impl<T: ListsDataMethods> ListDataOwner for T {
         self
     }
 }
-
-macro_rules! impl_inner_getter {
-    ($name:ident) => {
-        impl std::ops::Deref for $name {
-            type Target = InnerData;
-            fn deref(&self) -> &Self::Target {
-                &self.0
-            }
-        }
-        impl std::ops::DerefMut for $name {
-            fn deref_mut(&mut self) -> &mut Self::Target {
-                &mut self.0
-            }
-        }
-    };
+impl std::ops::Deref for KeysListsData {
+    type Target = InnerData;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl std::ops::DerefMut for KeysListsData {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 macro_rules! impl_getters {
@@ -68,7 +64,5 @@ macro_rules! impl_getters {
     };
 }
 
-impl_inner_getter!(ListsData);
-impl_inner_getter!(KeysListsData);
 impl_getters!(SetData);
 impl_getters!(DictData);
