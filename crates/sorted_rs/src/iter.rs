@@ -21,6 +21,7 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
     pub fn new(data: Arc<RwLock<T>>, bounds: Bounds) -> Self {
         Self { data, bounds }
     }
+    #[inline]
     pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
         let data = self.data.read_or_inner();
         let loc = &mut self.bounds.min;
@@ -38,6 +39,7 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
             Some(item)
         }
     }
+    #[inline]
     pub fn next_back(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
         let data = self.data.read_or_inner();
         let loc = &mut self.bounds.max;
@@ -70,7 +72,7 @@ impl<T: Deref<Target = InnerData>> Full<T> {
         drop(data_ref);
         Self { data, loc }
     }
-
+    #[inline]
     pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
         let data = self.data.read_or_inner();
         let loc = &mut self.loc;
@@ -88,6 +90,7 @@ impl<T: Deref<Target = InnerData>> Full<T> {
             Some(item)
         }
     }
+    #[inline]
     pub fn next_back(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
         let data = self.data.read_or_inner();
         let loc = &mut self.loc;
