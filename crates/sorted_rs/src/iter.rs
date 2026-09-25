@@ -22,13 +22,14 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
         Self { data, bounds }
     }
     pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        if self.bounds.min == self.bounds.max {
+        let data = self.data.read_or_inner();
+        let loc = &mut self.bounds.min;
+        if loc == &self.bounds.max {
             None
         } else {
-            let data = self.data.read_or_inner();
-            let loc = &mut self.bounds.min;
-            let item = data.values.loc(loc).clone_ref(py);
-            if loc.pos + 1 < data.values.len() && loc.idx + 1 >= data.values.loc_len(loc) {
+            let v = &data.values[loc.pos];
+            let item = v[loc.idx].clone_ref(py);
+            if loc.pos + 1 < data.values.len() && loc.idx + 1 >= v.len() {
                 loc.pos += 1;
                 loc.idx = 0;
             } else {
@@ -38,12 +39,11 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
         }
     }
     pub fn next_back(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        if self.bounds.min == self.bounds.max {
+        let data = self.data.read_or_inner();
+        let loc = &mut self.bounds.max;
+        if &self.bounds.min == loc {
             None
         } else {
-            let data = self.data.read_or_inner();
-            let loc = &mut self.bounds.max;
-
             if loc.idx > 0 {
                 loc.idx -= 1;
             } else {
@@ -77,8 +77,9 @@ impl<T: Deref<Target = InnerData>> Full<T> {
         if loc.pos == data.values.len() {
             None
         } else {
-            let item = data.values.loc(loc).clone_ref(py);
-            if loc.idx + 1 == data.values.loc_len(loc) {
+            let v = &data.values[loc.pos];
+            let item = v[loc.idx].clone_ref(py);
+            if loc.idx + 1 == v.len() {
                 loc.pos += 1;
                 loc.idx = 0;
             } else {
@@ -95,9 +96,10 @@ impl<T: Deref<Target = InnerData>> Full<T> {
         } else {
             if loc.idx == 0 {
                 loc.pos -= 1;
-                loc.idx = data.values.loc_len(loc);
+                loc.idx = data.values.loc_len(loc) - 1;
+            } else {
+                loc.idx -= 1;
             }
-            loc.idx -= 1;
             Some(data.values.loc(loc).clone_ref(py))
         }
     }
