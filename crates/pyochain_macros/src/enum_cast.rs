@@ -3,15 +3,23 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     Attribute, Data, DeriveInput, Fields, GenericArgument, Ident, LitStr, PathArguments, Type,
-    punctuated::Punctuated, token,
+    Variant,
 };
 pub(crate) fn generate_from_input(input: DeriveInput) -> TokenStream {
-    get_variants(&input)
-        .and_then(|variants| get_arms_and_names(&variants))
-        .map_or_else(syn::Error::into_compile_error, |(arms, names)| {
-            gen_impl(input, &arms, names.as_slice())
-        })
-        .into()
+    match &input.data {
+        Data::Enum(data_enum) => data_enum
+            .variants
+            .iter()
+            .map(get_arm_and_name)
+            .collect::<SynResult<(TokensVec, Vec<String>)>>()
+            .map(|(arms, names)| gen_impl(input, &arms, &names)),
+        _ => Err(syn::Error::new_spanned(
+            &input.ident,
+            "BoundFromAny only supports enums",
+        )),
+    }
+    .unwrap_or_else(syn::Error::into_compile_error)
+    .into()
 }
 
 fn gen_impl(input: DeriveInput, arms: &TokensVec, names: &[String]) -> proc_macro2::TokenStream {
@@ -43,33 +51,31 @@ fn gen_impl(input: DeriveInput, arms: &TokensVec, names: &[String]) -> proc_macr
     }
 }
 
-fn get_arms_and_names(
-    variants: &Punctuated<syn::Variant, token::Comma>,
-) -> SynResult<(TokensVec, Vec<String>)> {
-    variants
-        .iter()
-        .map(|variant| {
-            let field = match &variant.fields {
-                Fields::Unnamed(f) if f.unnamed.len() == 1 => Ok(f.unnamed.iter().next().unwrap()),
-                _ => Err(syn::Error::new_spanned(
-                    variant,
-                    "variants must contain exactly one field",
-                )),
-            }?;
+fn get_arm_and_name(variant: &Variant) -> SynResult<(proc_macro2::TokenStream, String)> {
+    let field = match &variant.fields {
+        Fields::Unnamed(f) if f.unnamed.len() == 1 => Ok(f.unnamed.iter().next().unwrap()),
+        _ => Err(syn::Error::new_spanned(
+            variant,
+            "variants must contain exactly one field",
+        )),
+    }?;
 
-            let ty = &field.ty;
-            let inner = bound_inner(ty)?;
-            let name = match inner {
-                Type::Path(p) => p.path.segments.last().unwrap().ident.to_string(),
-                _ => quote!(#inner).to_string(),
-            };
-            let arm = Mode::new(&field.attrs).gen_arm(&variant.ident, inner);
+    let ty = &field.ty;
+    let mode = Mode::new(&field.attrs);
 
-            Ok((arm, name))
-        })
-        .collect()
+    let inner = match mode {
+        Mode::Extract => ty,
+        Mode::Cast | Mode::CastExact => bound_inner(ty)?,
+    };
+
+    let name = match inner {
+        Type::Path(p) => p.path.segments.last().unwrap().ident.to_string(),
+        _ => quote!(#inner).to_string(),
+    };
+    let arm = mode.gen_arm(&variant.ident, inner);
+
+    Ok((arm, name))
 }
-
 #[derive(Copy, Clone)]
 enum Mode {
     Cast,
@@ -79,27 +85,31 @@ enum Mode {
 
 impl Mode {
     fn new(attrs: &[Attribute]) -> Self {
-        let has = |name| attrs.iter().any(|a| a.path().is_ident(name));
-
-        if has("cast_exact") {
-            Self::CastExact
-        } else if has("extract") {
-            Self::Extract
-        } else {
-            Self::Cast
-        }
+        attrs
+            .iter()
+            .map(Attribute::path)
+            .find_map(|a| {
+                if a.is_ident("cast_exact") {
+                    Some(Self::CastExact)
+                } else if a.is_ident("extract") {
+                    Some(Self::Extract)
+                } else {
+                    None
+                }
+            })
+            .unwrap_or(Self::Cast)
     }
 
     fn gen_arm(self, ident: &Ident, inner: &Type) -> proc_macro2::TokenStream {
         match self {
             Self::Cast => quote! {
-                if let Ok(v) = obj.cast::<#inner>() {
-                    return Ok(Self::#ident(v.to_owned()));
+                if obj.is_instance_of::<#inner>() {
+                    return Ok(Self::#ident(unsafe {obj.to_owned().cast_into_unchecked::<#inner>()}));
                 }
             },
             Self::CastExact => quote! {
-                if let Ok(v) = obj.cast_exact::<#inner>() {
-                    return Ok(Self::#ident(v.to_owned()));
+                if obj.is_exact_instance_of::<#inner>() {
+                    return Ok(Self::#ident(unsafe {obj.to_owned().cast_into_unchecked::<#inner>()}));
                 }
             },
             Self::Extract => quote! {
@@ -110,15 +120,6 @@ impl Mode {
         }
     }
 }
-fn get_variants(input: &DeriveInput) -> SynResult<Punctuated<syn::Variant, token::Comma>> {
-    match &input.data {
-        Data::Enum(data_enum) => Ok(data_enum.variants.clone()),
-        _ => Err(syn::Error::new_spanned(
-            &input.ident,
-            "BoundFromAny only supports enums",
-        )),
-    }
-}
 
 fn bound_inner(ty: &Type) -> SynResult<&Type> {
     match ty {
@@ -126,7 +127,6 @@ fn bound_inner(ty: &Type) -> SynResult<&Type> {
             .path
             .segments
             .last()
-            .filter(|seg| seg.ident == "Bound") // Fix: seg.ident == "Bound"
             .and_then(|seg| match &seg.arguments {
                 PathArguments::AngleBracketed(args) => args
                     .args
