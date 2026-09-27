@@ -119,15 +119,21 @@ or with autosave:
 
 ### sortedcontainers vs pyochain
 
-For these benchmarks in particular, run the following command:
+For these benchmarks in particular, run the following command.
+
+`<test_name>` is the name of the test function you want to run, and `<name>` is the function with prefix `test_` stripped off, e.g `test_init` and `init` respectively.
 
 ```shell
+uv run maturin develop --release --uv;
+uv run pytest;
 uv run pytest benchmarks/test_sorted.py::<test_name> `
     --benchmark-only `
     --benchmark-warmup=true `
     --benchmark-disable-gc `
     --benchmark-group-by=param:size `
-    --benchmark-storage=file://.benchmarks/sortedlist/
+    --benchmark-autosave `
+    --benchmark-storage=file://.benchmarks/sortedlist/;
+uv run scripts/bench_plots.py <name>
 ```
 
 ---

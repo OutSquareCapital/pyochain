@@ -1,7 +1,6 @@
 use std::{
     cmp::Ordering,
     ops::{Deref, DerefMut},
-    sync::MutexGuard,
 };
 
 use crate::{
@@ -12,6 +11,7 @@ use crate::{
     types::{IntOrSlice, ListOrAny, VecPy},
 };
 use either::Either;
+use parking_lot::RwLockReadGuard;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
@@ -49,7 +49,7 @@ impl<T> NestedVec<T> for [Vec<T>] {
 }
 pub enum ListAdd<'py, T> {
     Identity,
-    Sorted(MutexGuard<'py, T>),
+    Sorted(RwLockReadGuard<'py, T>),
     Iterator(Bound<'py, PyIterator>),
 }
 pub trait ListsDataMethods: Deref<Target = InnerData> + DerefMut + PyRepr + Sized {
@@ -82,6 +82,7 @@ pub trait ListsDataMethods: Deref<Target = InnerData> + DerefMut + PyRepr + Size
     ) -> PyResult<usize>;
     fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
+    #[inline]
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.find(value).map(|x| x.is_some())
     }

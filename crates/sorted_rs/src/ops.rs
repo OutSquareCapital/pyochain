@@ -15,9 +15,11 @@ pub(super) enum Maxes {
     BisectErr(PyErr),
 }
 impl Maxes {
+    #[inline(always)]
     pub fn left(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
         Self::new(maxes, value, Bisect::bisect_left)
     }
+    #[inline(always)]
     pub fn right(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
         Self::new(maxes, value, Bisect::bisect_right)
     }

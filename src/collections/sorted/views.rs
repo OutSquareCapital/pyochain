@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::Arc;
 
 use crate::{
     abc,
@@ -7,6 +7,7 @@ use crate::{
 };
 use derive_more::From;
 
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use pyo3::{PyClass, PyTypeInfo, prelude::*};
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
@@ -15,7 +16,7 @@ use sorted_rs::{
 };
 use std_tools::prelude::*;
 use tap::prelude::*;
-type DictRef<T> = Arc<Mutex<DictData<T>>>;
+type DictRef<T> = Arc<RwLock<DictData<T>>>;
 
 macro_rules! impl_base_sorted_view {
     ($($l:ty:$name:ty => [$($getitem:path => $t:ident),* $(,)?] );* $(;)?) => {
@@ -29,11 +30,14 @@ macro_rules! impl_base_sorted_view {
                 impl SortedViewMethods for $t {
                         type L = $l;
                         type M = $name;
-                        fn mapping(&self) -> MutexGuard<'_, DictData<Self::L>> {
-                            self.0.try_into_inner()
+                        fn mapping(&self) -> RwLockReadGuard<'_, DictData<Self::L>> {
+                            self.0.read()
+                        }
+                        fn mapping_mut(&self) -> RwLockWriteGuard<'_, DictData<Self::L>> {
+                            self.0.write()
                         }
                         fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                            $getitem(&mut self.mapping(), index).and_then_left(|x|x.try_into_py())
+                            $getitem(&mut self.mapping_mut(), index).and_then_left(|x|x.try_into_py())
                         }
                 }
             )*
@@ -84,7 +88,9 @@ where
     type L: ListsDataMethods;
     type M: PyTypeInfo;
     #[skip]
-    fn mapping(&self) -> MutexGuard<'_, DictData<Self::L>>;
+    fn mapping(&self) -> RwLockReadGuard<'_, DictData<Self::L>>;
+    #[skip]
+    fn mapping_mut(&self) -> RwLockWriteGuard<'_, DictData<Self::L>>;
     fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
     fn __len__(&self, py: Python<'_>) -> usize {
         self.mapping().__len__(py)
@@ -95,6 +101,6 @@ where
         Ok(format!("{name}({values})"))
     }
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
-        views::delitem(&mut self.mapping(), index)
+        views::delitem(&mut self.mapping_mut(), index)
     }
 }

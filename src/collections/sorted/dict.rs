@@ -10,17 +10,18 @@ use crate::{
     },
     traits::IntoInit,
 };
+use parking_lot::RwLock;
 use pyo3::{
     prelude::*,
     types::{PyDict, PyMapping},
 };
 use pyochain_macros::py_abc;
 use sorted_rs::{DictData, KeysListsData, ListsData};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tap::prelude::*;
 
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends= abc::PyoMutableMapping, mapping)]
-pub struct SortedDict(pub(super) Arc<Mutex<DictData<ListsData>>>);
+pub struct SortedDict(pub(super) Arc<RwLock<DictData<ListsData>>>);
 
 #[pymethods]
 impl SortedDict {
@@ -43,7 +44,7 @@ impl SortedDictMethods for SortedDict {
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableMapping, mapping)]
 
-pub struct SortedKeyDict(pub(super) Arc<Mutex<DictData<KeysListsData>>>);
+pub struct SortedKeyDict(pub(super) Arc<RwLock<DictData<KeysListsData>>>);
 
 #[pymethods]
 impl SortedKeyDict {
@@ -103,10 +104,10 @@ pub(super) trait SortedDictMethods:
         self.lock().get_item(key)
     }
     fn __delitem__(&self, key: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.lock().del_item(key)
+        self.write().del_item(key)
     }
     fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.lock().set_item(key, value)
+        self.write().set_item(key, value)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
@@ -122,7 +123,7 @@ pub(super) trait SortedDictMethods:
         self.lock().ror(value)?.conv::<Self>().into_bound(py)
     }
     fn clear(&self, py: Python<'_>) {
-        self.lock().clear(py);
+        self.write().clear(py);
     }
     #[staticmethod]
     #[pyo3(signature = (iterable, value = None, /))]
@@ -140,7 +141,7 @@ pub(super) trait SortedDictMethods:
         key: &Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        self.lock().pop(key, default)
+        self.write().pop(key, default)
     }
     #[pyo3(signature = (index = -1))]
     fn popitem<'py>(
@@ -148,7 +149,7 @@ pub(super) trait SortedDictMethods:
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        self.lock().popitem(py, index)
+        self.write().popitem(py, index)
     }
     #[pyo3(signature = (index = -1))]
     fn peekitem<'py>(
@@ -156,7 +157,7 @@ pub(super) trait SortedDictMethods:
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        self.lock().peekitem(py, index)
+        self.write().peekitem(py, index)
     }
     #[pyo3(signature = (key, default = None, /))]
     fn setdefault<'py>(
@@ -164,7 +165,7 @@ pub(super) trait SortedDictMethods:
         key: Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Option<Bound<'py, PyAny>>> {
-        self.lock().setdefault(key, default)
+        self.write().setdefault(key, default)
     }
     #[pyo3(signature = (m = None, /, **kwargs))]
     fn update(
@@ -173,6 +174,6 @@ pub(super) trait SortedDictMethods:
         m: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        self.lock().update(py, m, kwargs)
+        self.write().update(py, m, kwargs)
     }
 }

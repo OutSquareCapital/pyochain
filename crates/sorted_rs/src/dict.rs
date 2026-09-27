@@ -38,7 +38,7 @@ impl<T: ListsDataMethods> DictData<T> {
         self.0.get_item(int.py(), int.extract::<isize>()?)
     }
 
-    pub fn or(&mut self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
+    pub fn or(&self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
         let py = value.py();
         let dict = self.1.bind(py).as_any();
         self.0
@@ -49,7 +49,7 @@ impl<T: ListsDataMethods> DictData<T> {
             .pipe(|x| self.copy_from_iter(py, x))
     }
 
-    pub fn ror(&mut self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
+    pub fn ror(&self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
         let py = value.py();
         let dict = self.1.bind(py).as_any();
         value
@@ -63,7 +63,7 @@ impl<T: ListsDataMethods> DictData<T> {
             )
             .pipe(|x| self.copy_from_iter(py, x))
     }
-    pub fn copy(&mut self, py: Python<'_>) -> PyResult<Self> {
+    pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         let dict = self.1.bind(py).as_any();
         self.0
             .iter()

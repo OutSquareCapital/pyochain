@@ -187,10 +187,10 @@ impl ListsDataMethods for ListsData {
             ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(None),
             ops::Maxes::LenNEPos(mut loc) => {
                 loc.idx = self.values[loc.pos].bisect_left(value)?;
-                if self.values.loc(&loc).bind(value.py()).eq(value)? {
-                    Ok(Some(loc))
-                } else {
-                    Ok(None)
+                match self.values.loc(&loc).bind(value.py()).eq(value) {
+                    Ok(true) => Ok(Some(loc)),
+                    Ok(false) => Ok(None),
+                    Err(err) => Err(err),
                 }
             }
         }

@@ -1,6 +1,6 @@
 use std::{
     ops::{Deref, DerefMut},
-    sync::{Arc, Mutex, MutexGuard},
+    sync::Arc,
 };
 
 use crate::{
@@ -9,24 +9,28 @@ use crate::{
     core::iterators,
     traits::IntoInit,
 };
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use pyo3::{PyClass, prelude::*};
 use sorted_rs::{
     Bounds, DictData, InnerData, KeysListsData, ListsData, SetData, iter as rsiter, prelude::*,
 };
-use std_tools::prelude::*;
 use tap::Conv;
 pub trait ListGetter:
-    Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<Mutex<Self::T>>>
+    Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<RwLock<Self::T>>>
 {
     type L: ListsDataMethods;
     type T: Deref<Target = InnerData> + DerefMut + ListDataOwner<List = Self::L> + PyRepr;
     type I: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
-    type IRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::BoundedRev<Self::T>>;
+    type IRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
     type IFull: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
-    type IFullRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::FullRev<Self::T>>;
+    type IFullRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
     #[inline(always)]
-    fn lock(&self) -> MutexGuard<'_, Self::T> {
-        self.as_ref().try_into_inner()
+    fn lock(&self) -> RwLockReadGuard<'_, Self::T> {
+        self.as_ref().read()
+    }
+    #[inline(always)]
+    fn write(&self) -> RwLockWriteGuard<'_, Self::T> {
+        self.as_ref().write()
     }
     fn iter_bounds<'py>(
         &self,
@@ -36,7 +40,7 @@ pub trait ListGetter:
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         match (bounds, reverse) {
             (None, _) => iterators::Iter::empty(py).map(Bound::into_super),
-            (Some(bounds), true) => rsiter::BoundedRev::new(self.as_ref().clone(), bounds)
+            (Some(bounds), true) => rsiter::Bounded::new(self.as_ref().clone(), bounds)
                 .conv::<Self::IRev>()
                 .into_bound(py)
                 .map(Bound::into_super),
@@ -51,8 +55,8 @@ pub trait ListGetter:
 macro_rules! impl_arc_as_ref {
     ($($t:ty),* $(,)?) => {
         $(
-            impl AsRef<Arc<Mutex<<$t as ListGetter>::T>>> for $t {
-                fn as_ref(&self) -> &Arc<Mutex<<$t as ListGetter>::T>> {
+            impl AsRef<Arc<RwLock<<$t as ListGetter>::T>>> for $t {
+                fn as_ref(&self) -> &Arc<RwLock<<$t as ListGetter>::T>> {
                     &self.0
                 }
             }
