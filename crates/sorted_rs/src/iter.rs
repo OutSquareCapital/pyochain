@@ -1,21 +1,25 @@
+use crate::{Bounds, Loc, inner::InnerData, traits::NestedVec};
 use derive_more::Constructor;
 use parking_lot::RwLock;
 use pyo3::prelude::*;
 use std::{ops::Deref, sync::Arc};
-
-use crate::{Bounds, Loc, inner::InnerData, traits::NestedVec};
-
 #[derive(Constructor)]
 pub struct Bounded<T> {
     data: Arc<RwLock<T>>,
     bounds: Bounds,
 }
-pub struct Full<T> {
-    data: Arc<RwLock<T>>,
-    loc: Loc,
-}
-
 impl<T: Deref<Target = InnerData>> Bounded<T> {
+    pub fn full(data: Arc<RwLock<T>>) -> Self {
+        let data_ref = data.read();
+        let max = data_ref.values.last().map_or(Loc::default(), |v| {
+            Loc::new(data_ref.values.len() - 1, v.len())
+        });
+        drop(data_ref);
+        Self {
+            data,
+            bounds: Bounds::new(Loc::default(), max),
+        }
+    }
     #[inline]
     pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
         let data = self.data.read();
@@ -46,57 +50,6 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
             } else {
                 loc.pos -= 1;
                 loc.idx = data.values.loc_len(loc) - 1;
-            }
-            Some(data.values.loc(loc).clone_ref(py))
-        }
-    }
-}
-impl<T: Deref<Target = InnerData>> Full<T> {
-    pub fn new(data: Arc<RwLock<T>>) -> Self {
-        Self {
-            data,
-            loc: Loc::default(),
-        }
-    }
-    pub fn new_rev(data: Arc<RwLock<T>>) -> Self {
-        let data_ref = data.read();
-        let loc = Loc::new(
-            data_ref.values.len().saturating_sub(1),
-            data_ref.values.last().map_or(0, Vec::len),
-        );
-        drop(data_ref);
-        Self { data, loc }
-    }
-    #[inline]
-    pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let data = self.data.read();
-        let loc = &mut self.loc;
-        if loc.pos == data.values.len() {
-            None
-        } else {
-            let v = &data.values[loc.pos];
-            let item = v[loc.idx].clone_ref(py);
-            if loc.idx + 1 == v.len() {
-                loc.pos += 1;
-                loc.idx = 0;
-            } else {
-                loc.idx += 1;
-            }
-            Some(item)
-        }
-    }
-    #[inline]
-    pub fn next_back(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let data = self.data.read();
-        let loc = &mut self.loc;
-        if loc.pos == 0 && loc.idx == 0 {
-            None
-        } else {
-            if loc.idx == 0 {
-                loc.pos -= 1;
-                loc.idx = data.values.loc_len(loc) - 1;
-            } else {
-                loc.idx -= 1;
             }
             Some(data.values.loc(loc).clone_ref(py))
         }

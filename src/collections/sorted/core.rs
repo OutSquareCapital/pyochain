@@ -5,7 +5,7 @@ use crate::{
     traits::IntoInit,
 };
 use either::Either;
-use pyo3::prelude::*;
+use pyo3::{PyClass, prelude::*};
 use pyochain_macros::py_abc;
 use sorted_rs::{Bounds, KeysListsData, bisect::Bisect, iter as rsiter, prelude::*};
 
@@ -24,25 +24,27 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         self.lock().repr::<Self>(py)
     }
+    fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        self.as_iter::<Self::I>(py)
+    }
+    fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        self.as_iter::<Self::IRev>(py)
+    }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.write().list_mut().bisect_left(value)
     }
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.write().list_mut().bisect_right(value)
     }
-    fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    #[skip]
+    fn as_iter<'py, T>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>>
+    where
+        T: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>,
+    {
         self.as_ref()
             .clone()
-            .pipe(rsiter::Full::new)
-            .conv::<Self::IFull>()
-            .into_bound(py)
-            .map(Bound::into_super)
-    }
-    fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.as_ref()
-            .clone()
-            .pipe(rsiter::Full::new_rev)
-            .conv::<Self::IFullRev>()
+            .pipe(rsiter::Bounded::full)
+            .conv::<T>()
             .into_bound(py)
             .map(Bound::into_super)
     }

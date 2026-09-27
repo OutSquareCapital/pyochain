@@ -22,8 +22,6 @@ pub trait ListGetter:
     type T: Deref<Target = InnerData> + DerefMut + ListDataOwner<List = Self::L> + PyRepr;
     type I: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
     type IRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
-    type IFull: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
-    type IFullRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
     #[inline(always)]
     fn lock(&self) -> RwLockReadGuard<'_, Self::T> {
         self.as_ref().read()
@@ -76,46 +74,34 @@ impl ListGetter for sorted::SortedList {
     type L = ListsData;
     type I = iter::PyBounded;
     type IRev = iter::PyBoundedRev;
-    type IFull = iter::PyFull;
-    type IFullRev = iter::PyFullRev;
 }
 impl ListGetter for sorted::SortedKeyList {
     type T = KeysListsData;
     type L = KeysListsData;
     type I = iter::PyBoundedKey;
     type IRev = iter::PyBoundedKeyRev;
-    type IFull = iter::PyFullKey;
-    type IFullRev = iter::PyFullKeyRev;
 }
 impl ListGetter for sorted::SortedSet {
     type T = SetData<ListsData>;
     type L = ListsData;
     type I = iter::PySetBounded;
     type IRev = iter::PySetBoundedRev;
-    type IFull = iter::PySetFull;
-    type IFullRev = iter::PySetFullRev;
 }
 impl ListGetter for sorted::SortedKeySet {
     type T = SetData<KeysListsData>;
     type L = KeysListsData;
     type I = iter::PySetBoundedKey;
     type IRev = iter::PySetBoundedKeyRev;
-    type IFull = iter::PySetFullKey;
-    type IFullRev = iter::PySetFullKeyRev;
 }
 impl ListGetter for sorted::SortedDict {
     type T = DictData<ListsData>;
     type L = ListsData;
     type I = iter::PyDictBounded;
     type IRev = iter::PyDictBoundedRev;
-    type IFull = iter::PyDictFull;
-    type IFullRev = iter::PyDictFullRev;
 }
 impl ListGetter for sorted::SortedKeyDict {
     type T = DictData<KeysListsData>;
     type L = KeysListsData;
     type I = iter::PyDictBoundedKey;
     type IRev = iter::PyDictBoundedKeyRev;
-    type IFull = iter::PyDictFullKey;
-    type IFullRev = iter::PyDictFullKeyRev;
 }

@@ -2,10 +2,7 @@ use parking_lot::RwLock;
 
 use crate::abc;
 use pyo3::prelude::*;
-use sorted_rs::{
-    DictData, KeysListsData, ListsData, SetData,
-    iter::{Bounded, Full},
-};
+use sorted_rs::{DictData, KeysListsData, ListsData, SetData, iter::Bounded};
 macro_rules! impl_sorted_iter {
     ($($t:ty => { $($iter:ident => $method:expr => $name:ident),+ $(,)? }),+ $(,)?) => {
         $($(
@@ -30,37 +27,25 @@ impl_sorted_iter! {
     ListsData => {
         Bounded => Bounded::next => PyBounded,
         Bounded => Bounded::next_back => PyBoundedRev,
-        Full => Full::next => PyFull,
-        Full => Full::next_back =>  PyFullRev,
     },
     KeysListsData => {
         Bounded  => Bounded::next => PyBoundedKey,
         Bounded  => Bounded::next_back => PyBoundedKeyRev,
-        Full  =>Full::next=> PyFullKey,
-        Full  => Full::next_back=> PyFullKeyRev,
     },
     SetData<ListsData> => {
         Bounded  => Bounded::next => PySetBounded,
         Bounded  => Bounded::next_back => PySetBoundedRev,
-        Full => Full::next => PySetFull,
-        Full => Full::next_back => PySetFullRev,
     },
     SetData<KeysListsData> => {
         Bounded  => Bounded::next => PySetBoundedKey,
-        Bounded  => Bounded::next_back => PySetBoundedKeyRev,
-        Full  => Full::next=> PySetFullKey,
-        Full => Full::next_back => PySetFullKeyRev,
+        Bounded  => Bounded::next_back => PySetBoundedKeyRev
     },
     DictData<ListsData> => {
         Bounded  => Bounded::next => PyDictBounded,
-        Bounded => Bounded::next_back => PyDictBoundedRev,
-        Full => Full::next => PyDictFull,
-        Full => Full::next_back => PyDictFullRev,
+        Bounded => Bounded::next_back => PyDictBoundedRev
     },
     DictData<KeysListsData> => {
         Bounded  => Bounded::next=> PyDictBoundedKey,
-        Bounded => Bounded::next_back => PyDictBoundedKeyRev,
-        Full => Full::next => PyDictFullKey,
-        Full  => Full::next_back=> PyDictFullKeyRev,
+        Bounded => Bounded::next_back => PyDictBoundedKeyRev
     },
 }
