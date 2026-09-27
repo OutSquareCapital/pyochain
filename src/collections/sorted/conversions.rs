@@ -1,5 +1,6 @@
+use parking_lot::RwLock;
 use sorted_rs::{DictData, KeysListsData, ListsData, SetData};
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use crate::collections::sorted;
 macro_rules! impl_from_data {

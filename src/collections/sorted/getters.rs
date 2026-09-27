@@ -1,6 +1,6 @@
 use std::{
     ops::{Deref, DerefMut},
-    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+    sync::Arc,
 };
 
 use crate::{
@@ -9,11 +9,11 @@ use crate::{
     core::iterators,
     traits::IntoInit,
 };
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use pyo3::{PyClass, prelude::*};
 use sorted_rs::{
     Bounds, DictData, InnerData, KeysListsData, ListsData, SetData, iter as rsiter, prelude::*,
 };
-use std_tools::prelude::*;
 use tap::Conv;
 pub trait ListGetter:
     Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<RwLock<Self::T>>>
@@ -26,11 +26,11 @@ pub trait ListGetter:
     type IFullRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
     #[inline(always)]
     fn lock(&self) -> RwLockReadGuard<'_, Self::T> {
-        self.as_ref().read_or_inner()
+        self.as_ref().read()
     }
     #[inline(always)]
     fn write(&self) -> RwLockWriteGuard<'_, Self::T> {
-        self.as_ref().write_or_inner()
+        self.as_ref().write()
     }
     fn iter_bounds<'py>(
         &self,

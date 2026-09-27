@@ -1,7 +1,6 @@
 use std::{
     cmp::Ordering,
     ops::{Deref, DerefMut},
-    sync::RwLockReadGuard,
 };
 
 use crate::{
@@ -12,6 +11,7 @@ use crate::{
     types::{IntOrSlice, ListOrAny, VecPy},
 };
 use either::Either;
+use parking_lot::RwLockReadGuard;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,

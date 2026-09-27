@@ -777,6 +777,7 @@ dependencies = [
  "color-eyre",
  "derive_more",
  "either",
+ "parking_lot",
  "pyderive",
  "pyo3",
  "pyo3_ext",
@@ -1095,6 +1096,7 @@ version = "0.1.0"
 dependencies = [
  "derive_more",
  "either",
+ "parking_lot",
  "pyo3",
  "pyo3_ext",
  "pyochain_macros",

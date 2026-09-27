@@ -10,13 +10,14 @@ use crate::{
     },
     traits::IntoInit,
 };
+use parking_lot::RwLock;
 use pyo3::{
     prelude::*,
     types::{PyDict, PyMapping},
 };
 use pyochain_macros::py_abc;
 use sorted_rs::{DictData, KeysListsData, ListsData};
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use tap::prelude::*;
 
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends= abc::PyoMutableMapping, mapping)]

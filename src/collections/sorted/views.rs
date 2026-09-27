@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::Arc;
 
 use crate::{
     abc,
@@ -7,6 +7,7 @@ use crate::{
 };
 use derive_more::From;
 
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use pyo3::{PyClass, PyTypeInfo, prelude::*};
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
@@ -30,10 +31,10 @@ macro_rules! impl_base_sorted_view {
                         type L = $l;
                         type M = $name;
                         fn mapping(&self) -> RwLockReadGuard<'_, DictData<Self::L>> {
-                            self.0.read_or_inner()
+                            self.0.read()
                         }
                         fn mapping_mut(&self) -> RwLockWriteGuard<'_, DictData<Self::L>> {
-                            self.0.write_or_inner()
+                            self.0.write()
                         }
                         fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
                             $getitem(&mut self.mapping_mut(), index).and_then_left(|x|x.try_into_py())

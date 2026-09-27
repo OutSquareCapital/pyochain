@@ -1,10 +1,6 @@
-use std::{
-    ops::Deref,
-    sync::{Arc, RwLock},
-};
-
+use parking_lot::RwLock;
 use pyo3::prelude::*;
-use std_tools::prelude::*;
+use std::{ops::Deref, sync::Arc};
 
 use crate::{Bounds, Loc, inner::InnerData, traits::NestedVec};
 pub struct Bounded<T> {
@@ -23,7 +19,7 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
     }
     #[inline]
     pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let data = self.data.read_or_inner();
+        let data = self.data.read();
         let loc = &mut self.bounds.min;
         if loc == &self.bounds.max {
             None
@@ -41,7 +37,7 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
     }
     #[inline]
     pub fn next_back(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let data = self.data.read_or_inner();
+        let data = self.data.read();
         let loc = &mut self.bounds.max;
         if &self.bounds.min == loc {
             None
@@ -64,7 +60,7 @@ impl<T: Deref<Target = InnerData>> Full<T> {
         }
     }
     pub fn new_rev(data: Arc<RwLock<T>>) -> Self {
-        let data_ref = data.read_or_inner();
+        let data_ref = data.read();
         let loc = Loc::new(
             data_ref.values.len().saturating_sub(1),
             data_ref.values.last().map_or(0, Vec::len),
@@ -74,7 +70,7 @@ impl<T: Deref<Target = InnerData>> Full<T> {
     }
     #[inline]
     pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let data = self.data.read_or_inner();
+        let data = self.data.read();
         let loc = &mut self.loc;
         if loc.pos == data.values.len() {
             None
@@ -92,7 +88,7 @@ impl<T: Deref<Target = InnerData>> Full<T> {
     }
     #[inline]
     pub fn next_back(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let data = self.data.read_or_inner();
+        let data = self.data.read();
         let loc = &mut self.loc;
         if loc.pos == 0 && loc.idx == 0 {
             None

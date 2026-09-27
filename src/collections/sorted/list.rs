@@ -6,6 +6,7 @@ use crate::{
     },
     traits::IntoInit,
 };
+use parking_lot::RwLock;
 use pyo3::{exceptions::PyNotImplementedError, prelude::*};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
@@ -14,7 +15,7 @@ use sorted_rs::{
     prelude::*,
     types::{IntOrSlice, SeqOrAny},
 };
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std_tools::prelude::*;
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]

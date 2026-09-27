@@ -9,6 +9,7 @@ name = "sorted_rs"
 [dependencies]
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut", "from"] }
 either = "1.16.0"
+parking_lot = "0.12.5"
 pyo3 = {
   version = ">=0.29",
   features = [

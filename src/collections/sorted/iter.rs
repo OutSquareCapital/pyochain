@@ -1,4 +1,4 @@
-use std::sync::RwLock;
+use parking_lot::RwLock;
 
 use crate::abc;
 use pyo3::prelude::*;
@@ -6,7 +6,6 @@ use sorted_rs::{
     DictData, KeysListsData, ListsData, SetData,
     iter::{Bounded, Full},
 };
-use std_tools::prelude::*;
 macro_rules! impl_sorted_iter {
     ($($t:ty => { $($iter:ident => $method:expr => $name:ident),+ $(,)? }),+ $(,)?) => {
         $($(
@@ -20,7 +19,7 @@ macro_rules! impl_sorted_iter {
             #[pymethods]
             impl $name {
                 fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
-                    $method(&mut self.0.write_or_inner(), py)
+                    $method(&mut self.0.write(), py)
                 }
             }
         )+)+
