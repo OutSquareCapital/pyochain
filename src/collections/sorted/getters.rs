@@ -36,7 +36,7 @@ pub trait ListGetter:
     ) -> IterRes<'py> {
         self.as_ref()
             .clone()
-            .pipe(|x| rsiter::Bounded::new(x, bounds.unwrap_or_default(), reverse))
+            .pipe(|x| rsiter::Bounded::new(x, bounds.unwrap_or_default().into(), reverse))
             .conv::<Self::I>()
             .into_bound(py)
             .map(Bound::into_super)

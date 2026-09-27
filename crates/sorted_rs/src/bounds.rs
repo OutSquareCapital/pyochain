@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use derive_more::Constructor;
 use pyo3::prelude::*;
 
@@ -104,5 +106,38 @@ impl Bounds {
                 Ok(Some(Bounds { min, max }))
             }
         }
+    }
+}
+#[derive(Constructor)]
+pub struct AtomicLoc {
+    pub(super) pos: AtomicUsize,
+    pub(super) idx: AtomicUsize,
+}
+impl AtomicLoc {
+    #[inline]
+    pub fn load(&self) -> (usize, usize) {
+        (
+            self.pos.load(Ordering::Relaxed),
+            self.idx.load(Ordering::Relaxed),
+        )
+    }
+    pub fn store(&self, pos: usize, idx: usize) {
+        self.pos.store(pos, Ordering::Relaxed);
+        self.idx.store(idx, Ordering::Relaxed);
+    }
+}
+impl From<Loc> for AtomicLoc {
+    fn from(loc: Loc) -> Self {
+        Self::new(loc.pos.into(), loc.idx.into())
+    }
+}
+#[derive(Constructor)]
+pub struct AtomicBounds {
+    pub(super) min: AtomicLoc,
+    pub(super) max: AtomicLoc,
+}
+impl From<Bounds> for AtomicBounds {
+    fn from(bounds: Bounds) -> Self {
+        Self::new(bounds.min.into(), bounds.max.into())
     }
 }
