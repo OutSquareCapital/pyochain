@@ -9,19 +9,16 @@ impl<T> ArcExtMethods for sync::Arc<T> {
 }
 
 pub trait MutexExtMethods<T> {
+    /// Tries to acquire the lock and returns the inner value.\
+    /// If the lock is poisoned, it will return the inner value of the poisoned lock.
+    /// If the lock is already held by another thread, it will panic.
     fn lock_or_inner(&self) -> sync::MutexGuard<'_, T>;
 }
 
 impl<T> MutexExtMethods<T> for sync::Mutex<T> {
-    /// Tries to acquire the lock and returns the inner value.\
-    /// If the lock is poisoned, it will return the inner value of the poisoned lock.
-    /// If the lock is already held by another thread, it will panic.
     #[inline(always)]
     fn lock_or_inner(&self) -> sync::MutexGuard<'_, T> {
-        #[cfg(debug_assertions)]
-        return ok_or_block(self.try_lock());
-        #[cfg(not(debug_assertions))]
-        return self.lock().unwrap();
+        ok_or_block(self.try_lock())
     }
 }
 pub trait RwLockExtMethods<T> {
@@ -37,20 +34,13 @@ pub trait RwLockExtMethods<T> {
 impl<T> RwLockExtMethods<T> for sync::RwLock<T> {
     #[inline(always)]
     fn read_or_inner(&self) -> sync::RwLockReadGuard<'_, T> {
-        #[cfg(debug_assertions)]
-        return self.read().unwrap_or_else(sync::PoisonError::into_inner);
-        #[cfg(not(debug_assertions))]
-        return self.read().unwrap();
+        self.read().unwrap_or_else(sync::PoisonError::into_inner)
     }
     #[inline(always)]
     fn write_or_inner(&self) -> sync::RwLockWriteGuard<'_, T> {
-        #[cfg(debug_assertions)]
-        return ok_or_block(self.try_write());
-        #[cfg(not(debug_assertions))]
-        return self.write().unwrap();
+        ok_or_block(self.try_write())
     }
 }
-#[cfg(debug_assertions)]
 #[inline(always)]
 fn ok_or_block<T>(res: Result<T, sync::TryLockError<T>>) -> T {
     match res {
