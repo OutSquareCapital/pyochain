@@ -34,7 +34,7 @@ pub trait RwLockExtMethods<T> {
 impl<T> RwLockExtMethods<T> for sync::RwLock<T> {
     #[inline(always)]
     fn read_or_inner(&self) -> sync::RwLockReadGuard<'_, T> {
-        self.read().unwrap_or_else(sync::PoisonError::into_inner)
+        ok_or_block(self.try_read())
     }
     #[inline(always)]
     fn write_or_inner(&self) -> sync::RwLockWriteGuard<'_, T> {
