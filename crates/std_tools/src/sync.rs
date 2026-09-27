@@ -18,7 +18,11 @@ pub trait MutexExtMethods<T> {
 impl<T> MutexExtMethods<T> for sync::Mutex<T> {
     #[inline(always)]
     fn lock_or_inner(&self) -> sync::MutexGuard<'_, T> {
-        ok_or_block(self.try_lock())
+        match self.try_lock() {
+            Ok(guard) => guard,
+            Err(sync::TryLockError::Poisoned(poisoned)) => poisoned.into_inner(),
+            Err(sync::TryLockError::WouldBlock) => panic!("data already locked - reentrant bug"),
+        }
     }
 }
 pub trait RwLockExtMethods<T> {
@@ -27,25 +31,16 @@ pub trait RwLockExtMethods<T> {
     fn read_or_inner(&self) -> sync::RwLockReadGuard<'_, T>;
     /// Tries to acquire the write lock and returns the inner value.\
     /// If the lock is poisoned, it will return the inner value of the poisoned lock.
-    /// If the lock is already held (by this or another thread), it will panic.
     fn write_or_inner(&self) -> sync::RwLockWriteGuard<'_, T>;
 }
 
 impl<T> RwLockExtMethods<T> for sync::RwLock<T> {
     #[inline(always)]
     fn read_or_inner(&self) -> sync::RwLockReadGuard<'_, T> {
-        ok_or_block(self.try_read())
+        self.read().unwrap_or_else(sync::PoisonError::into_inner)
     }
     #[inline(always)]
     fn write_or_inner(&self) -> sync::RwLockWriteGuard<'_, T> {
-        ok_or_block(self.try_write())
-    }
-}
-#[inline(always)]
-fn ok_or_block<T>(res: Result<T, sync::TryLockError<T>>) -> T {
-    match res {
-        Ok(guard) => guard,
-        Err(sync::TryLockError::Poisoned(poisoned)) => poisoned.into_inner(),
-        Err(sync::TryLockError::WouldBlock) => panic!("data already locked - reentrant bug"),
+        self.write().unwrap_or_else(sync::PoisonError::into_inner)
     }
 }
