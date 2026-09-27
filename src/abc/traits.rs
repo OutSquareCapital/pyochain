@@ -50,17 +50,11 @@ pub trait ImplPyoReversible {
     iterators::Unzip,
     iterators::GroupBy,
     sorted::iter::PyBounded,
-    sorted::iter::PyBoundedRev,
     sorted::iter::PyBoundedKey,
-    sorted::iter::PyBoundedKeyRev,
     sorted::iter::PySetBounded,
-    sorted::iter::PySetBoundedRev,
     sorted::iter::PySetBoundedKey,
-    sorted::iter::PySetBoundedKeyRev,
     sorted::iter::PyDictBounded,
-    sorted::iter::PyDictBoundedRev,
-    sorted::iter::PyDictBoundedKey,
-    sorted::iter::PyDictBoundedKeyRev
+    sorted::iter::PyDictBoundedKey
 )]
 pub trait ImplPyoIterator: Sized {
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {

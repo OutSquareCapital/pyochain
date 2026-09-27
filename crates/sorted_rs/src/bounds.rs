@@ -1,7 +1,7 @@
 use derive_more::Constructor;
 use pyo3::prelude::*;
 
-use crate::{bisect::Bisect, types::VecPy};
+use crate::{InnerData, bisect::Bisect, types::VecPy};
 
 #[derive(PartialEq, Eq, Default, Clone, Copy, Constructor)]
 pub struct Loc {
@@ -25,6 +25,14 @@ pub struct Bounds {
     pub max: Loc,
 }
 impl Bounds {
+    #[must_use]
+    pub fn from_full_iter(data: &InnerData) -> Self {
+        let max = data
+            .values
+            .last()
+            .map_or(Loc::default(), |v| Loc::new(data.values.len() - 1, v.len()));
+        Self::new(Loc::default(), max)
+    }
     pub fn from_sorted(
         lists: &[VecPy],
         maxes: &[Py<PyAny>],

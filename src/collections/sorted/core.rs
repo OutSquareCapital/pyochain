@@ -5,13 +5,13 @@ use crate::{
     traits::IntoInit,
 };
 use either::Either;
-use pyo3::{PyClass, prelude::*};
+use pyo3::prelude::*;
 use pyochain_macros::py_abc;
 use sorted_rs::{Bounds, KeysListsData, bisect::Bisect, iter as rsiter, prelude::*};
 
 use tap::prelude::*;
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyoVec>, Bound<'py, PyAny>>>;
-
+pub(super) type IterRes<'py> = PyResult<Bound<'py, abc::PyoIterator>>;
 #[py_abc(
     sorted::SortedList,
     sorted::SortedKeyList,
@@ -24,11 +24,11 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         self.lock().repr::<Self>(py)
     }
-    fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.as_iter::<Self::I>(py)
+    fn __iter__<'py>(&self, py: Python<'py>) -> IterRes<'py> {
+        self.as_iter(py, false)
     }
-    fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        self.as_iter::<Self::IRev>(py)
+    fn __reversed__<'py>(&self, py: Python<'py>) -> IterRes<'py> {
+        self.as_iter(py, true)
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.write().list_mut().bisect_left(value)
@@ -37,14 +37,11 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         self.write().list_mut().bisect_right(value)
     }
     #[skip]
-    fn as_iter<'py, T>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>>
-    where
-        T: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>,
-    {
+    fn as_iter<'py>(&self, py: Python<'py>, reversed: bool) -> IterRes<'py> {
         self.as_ref()
             .clone()
-            .pipe(rsiter::Bounded::full)
-            .conv::<T>()
+            .pipe(|x| rsiter::Bounded::full(x, reversed))
+            .conv::<Self::I>()
             .into_bound(py)
             .map(Bound::into_super)
     }
@@ -65,7 +62,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
         reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    ) -> IterRes<'py> {
         let bounds = self
             .lock()
             .list()
@@ -79,7 +76,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    ) -> IterRes<'py> {
         let bounds = self.write().get_islice_specs(py, start, stop)?;
         self.iter_bounds(py, bounds, reverse)
     }
@@ -101,7 +98,7 @@ where
         max_key: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
         reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    ) -> IterRes<'py> {
         let data = self.lock();
         let list = data.list();
         let bounds = Bounds::from_sorted(&list.1, &list.maxes, min_key, max_key, inclusive)?;
