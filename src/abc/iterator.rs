@@ -8,7 +8,7 @@ use pyo3::{
         PyTuple, PyType,
     },
 };
-use tap::Pipe;
+use tap::prelude::*;
 
 use crate::{
     abc::{PyoIterable, traits::ImplPyoIterator},
@@ -67,7 +67,8 @@ impl PyoIterator {
         first: Bound<'py, PyAny>,
         succ: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        iterators::Successors::new(first, succ).pipe(|x| iterator_into_iter(x, cls.py()))
+        iterators::Successors::new(first.unbind(), succ.unbind())
+            .pipe(|x| iterator_into_iter(x, cls.py()))
     }
     #[classmethod]
     #[pyo3(signature = (start=0, step=1))]
@@ -884,7 +885,7 @@ impl PyoIterator {
         predicate: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| iterators::FilterStar::new(x, predicate))
+            .map(|x| iterators::FilterStar::new(x.unbind(), predicate.unbind()))
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
     #[pyo3(signature = (func=None))]
@@ -901,7 +902,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| iterators::FilterMap::new(x, func))
+            .map(|x| iterators::FilterMap::new(x.unbind(), func.unbind()))
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
     fn filter_map_star<'py>(
@@ -909,7 +910,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| iterators::FilterMapStar::new(x, func))
+            .map(|x| iterators::FilterMapStar::new(x.unbind(), func.unbind()))
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
     fn find_map<'py>(
@@ -972,7 +973,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| iterators::MapWhile::new(x, func))
+            .map(|x| iterators::MapWhile::new(x.unbind(), func.unbind()))
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
 
@@ -1043,7 +1044,7 @@ impl PyoIterator {
     fn peekable<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Peekable>> {
         slf.try_iter()?
             .unbind()
-            .pipe(iterators::Peekable::new)
+            .conv::<iterators::Peekable>()
             .into_bound(slf.py())
     }
     fn partition<'py>(
@@ -1087,7 +1088,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| iterators::Scan::new(x, initial, func))
+            .map(|x| iterators::Scan::new(x.unbind(), initial.unbind(), func.unbind()))
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
     #[pyo3(signature = (start=None, stop=None, step=None))]
@@ -1170,8 +1171,8 @@ impl PyoIterator {
         func.call_concat((&unpacked, args), kwargs)
     }
     fn unique<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(iterators::UniqueIdentity::new)
+        slf.try_iter()?
+            .try_conv::<iterators::UniqueIdentity>()
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
     fn unique_by<'py>(
@@ -1198,9 +1199,9 @@ impl PyoIterator {
             })
     }
     fn with_position<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .map(|x| iterators::WithPosition::new(x))
-            .and_then(|x| iterator_into_iter(x, slf.py()))
+        slf.try_iter()?
+            .conv::<iterators::WithPosition>()
+            .pipe(|x| iterator_into_iter(x, slf.py()))
     }
     #[pyo3(signature = (*others, strict=false))]
     fn zip<'py>(

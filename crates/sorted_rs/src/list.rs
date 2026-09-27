@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use tap::Pipe;
+use tap::prelude::*;
 
 use crate::{
     ListsData,

@@ -12,7 +12,7 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use std_tools::prelude::*;
-use tap::Pipe;
+use tap::prelude::*;
 #[derive(From, Deref)]
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSized)]
 pub struct PyoMappingView(Py<PyAny>);

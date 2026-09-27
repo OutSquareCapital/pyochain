@@ -7,7 +7,7 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::try_cast;
-use tap::Pipe;
+use tap::prelude::*;
 #[derive(From, Deref)]
 #[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct Seq(pub Py<PyTuple>);

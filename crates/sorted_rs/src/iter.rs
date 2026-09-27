@@ -1,22 +1,21 @@
+use derive_more::Constructor;
 use parking_lot::RwLock;
 use pyo3::prelude::*;
 use std::{ops::Deref, sync::Arc};
 
 use crate::{Bounds, Loc, inner::InnerData, traits::NestedVec};
+
+#[derive(Constructor)]
 pub struct Bounded<T> {
     data: Arc<RwLock<T>>,
     bounds: Bounds,
 }
-
 pub struct Full<T> {
     data: Arc<RwLock<T>>,
     loc: Loc,
 }
 
 impl<T: Deref<Target = InnerData>> Bounded<T> {
-    pub fn new(data: Arc<RwLock<T>>, bounds: Bounds) -> Self {
-        Self { data, bounds }
-    }
     #[inline]
     pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
         let data = self.data.read();

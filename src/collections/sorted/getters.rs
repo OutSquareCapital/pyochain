@@ -14,7 +14,7 @@ use pyo3::{PyClass, prelude::*};
 use sorted_rs::{
     Bounds, DictData, InnerData, KeysListsData, ListsData, SetData, iter as rsiter, prelude::*,
 };
-use tap::Conv;
+use tap::prelude::*;
 pub trait ListGetter:
     Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<RwLock<Self::T>>>
 {

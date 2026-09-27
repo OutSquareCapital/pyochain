@@ -13,7 +13,7 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use pyochain_macros::try_cast;
-use tap::Pipe;
+use tap::prelude::*;
 #[derive(From, Deref)]
 #[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]
 pub struct PyoVec(Py<PyList>);

@@ -16,7 +16,7 @@ use pyo3_ext::{
     types::{FromCmp, PyIterable},
 };
 use pyochain_macros::{BoundFromAny, py_abc, try_cast};
-use tap::Pipe;
+use tap::prelude::*;
 /// Enum used to convert various types into a `PyList` for heap operations.
 #[derive(BoundFromAny)]
 enum IntoHeap<'py> {

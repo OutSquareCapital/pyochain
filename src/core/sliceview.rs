@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::{abc, traits::IntoInit};
+use derive_more::Constructor;
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -19,15 +20,12 @@ use pyo3_ext::{
 use pyochain_macros::try_cast;
 use std_tools::prelude::*;
 use tap::prelude::*;
-
+#[derive(Constructor)]
 struct OpenRange {
     start: isize,
     step: isize,
 }
 impl OpenRange {
-    fn new(start: isize, step: isize) -> Self {
-        Self { start, step }
-    }
     /// Return a concrete range clamped to the current base length.
     fn resolve<'py>(&self, py: Python<'py>, b_len: isize) -> PyResult<Bound<'py, PyRange>> {
         let stop = if self.step > 0 { b_len } else { -1 };

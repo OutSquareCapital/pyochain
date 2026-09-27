@@ -17,7 +17,7 @@ use sorted_rs::{
 };
 use std::sync::Arc;
 use std_tools::prelude::ResultExt;
-use tap::{Conv, Pipe};
+use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedSet(pub(super) Arc<RwLock<SetData<ListsData>>>);
 #[pymethods]

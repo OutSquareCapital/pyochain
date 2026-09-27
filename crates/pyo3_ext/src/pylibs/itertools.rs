@@ -6,7 +6,7 @@ use pyo3::{
     sync::PyOnceLock,
     types::{PyDict, PyInt, PyIterator, PyNone, PyTuple},
 };
-use tap::Pipe;
+use tap::prelude::*;
 
 use crate::args::{ArgsConcat, CallConcat};
 

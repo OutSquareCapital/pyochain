@@ -11,7 +11,7 @@ use pyo3_ext::{
     types::{FromCmp, PyAbstractSet, PyCmpOut},
 };
 use pyochain_macros::{BoundFromAny, try_cast};
-use tap::Pipe;
+use tap::prelude::*;
 /// Accepted types for set operations.
 /// In the case of pyochain types, we extract the inner sets.
 /// For python builtins, we directly work with them and call the corresponding numeric operators

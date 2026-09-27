@@ -1,5 +1,5 @@
 use crate::{InnerData, prelude::*, types::VecPy};
-use derive_more::{Deref, DerefMut};
+use derive_more::{Constructor, Deref, DerefMut};
 use pyo3::{
     prelude::*,
     types::{PyDict, PySet},
@@ -10,6 +10,7 @@ use std::ops::{Deref, DerefMut};
 pub struct ListsData(pub(super) InnerData);
 pub struct KeysListsData(pub(super) InnerData, pub Vec<VecPy>, pub(super) Py<PyAny>);
 pub struct SetData<T: ListsDataMethods>(pub(super) T, pub Py<PySet>);
+#[derive(Constructor)]
 pub struct DictData<T: ListsDataMethods>(pub(super) T, pub Py<PyDict>);
 pub trait ListDataOwner {
     type List: ListsDataMethods;

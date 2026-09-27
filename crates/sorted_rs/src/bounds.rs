@@ -1,17 +1,14 @@
+use derive_more::Constructor;
 use pyo3::prelude::*;
 
 use crate::{bisect::Bisect, types::VecPy};
 
-#[derive(PartialEq, Eq, Default, Clone, Copy)]
+#[derive(PartialEq, Eq, Default, Clone, Copy, Constructor)]
 pub struct Loc {
     pub pos: usize,
     pub idx: usize,
 }
 impl Loc {
-    #[must_use]
-    pub fn new(pos: usize, idx: usize) -> Self {
-        Self { pos, idx }
-    }
     #[must_use]
     pub fn with_idx(idx: usize) -> Self {
         Self { pos: 0, idx }
@@ -22,19 +19,12 @@ impl Loc {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Constructor)]
 pub struct Bounds {
     pub min: Loc,
     pub max: Loc,
 }
 impl Bounds {
-    #[must_use]
-    pub fn new(min_pos: usize, min_idx: usize, max_pos: usize, max_idx: usize) -> Self {
-        Self {
-            min: Loc::new(min_pos, min_idx),
-            max: Loc::new(max_pos, max_idx),
-        }
-    }
     pub fn from_sorted(
         lists: &[VecPy],
         maxes: &[Py<PyAny>],

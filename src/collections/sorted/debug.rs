@@ -8,7 +8,7 @@ use crate::collections::{
 use pyo3::prelude::*;
 use pyo3_ext::types::BoundedEither;
 use sorted_rs::debug;
-use tap::Pipe;
+use tap::prelude::*;
 
 #[pyfunction]
 pub fn check_sorted_dict(data: BoundedEither<'_, SortedDict, SortedKeyDict>) -> PyResult<()> {
