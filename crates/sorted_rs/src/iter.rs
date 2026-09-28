@@ -19,20 +19,19 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
     #[inline]
     pub fn next(&self, py: Python<'_>) -> Option<Py<PyAny>> {
         let data = self.data.read();
-        let b = &self.bounds;
-        let (min_pos, min_idx) = b.min.load();
-        let (max_pos, max_idx) = b.max.load();
+        let (min_pos, min_idx) = self.bounds.min.load();
+        let (max_pos, max_idx) = self.bounds.max.load();
         if min_pos == max_pos && min_idx == max_idx {
             None
         } else if self.reversed {
             let (new_pos, new_idx) = if max_idx > 0 {
                 (max_pos, max_idx - 1)
             } else {
-                let p = max_pos - 1;
-                (p, data.values[p].len() - 1)
+                let pos = max_pos - 1;
+                (pos, data.values[pos].len() - 1)
             };
             let item = data.values[new_pos][new_idx].clone_ref(py);
-            b.max.store(new_pos, new_idx);
+            self.bounds.max.store(new_pos, new_idx);
             Some(item)
         } else {
             let item = data.values[min_pos][min_idx].clone_ref(py);
@@ -42,7 +41,7 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
             } else {
                 (min_pos, min_idx + 1)
             };
-            b.min.store(new_pos, new_idx);
+            self.bounds.min.store(new_pos, new_idx);
             Some(item)
         }
     }
