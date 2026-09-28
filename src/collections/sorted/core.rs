@@ -40,7 +40,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     fn as_iter<'py>(&self, py: Python<'py>, reversed: bool) -> IterRes<'py> {
         self.as_ref()
             .clone()
-            .pipe(|x| rsiter::Bounded::full(x, reversed))
+            .pipe(|x| rsiter::Iter::full(x, reversed))
             .conv::<Self::I>()
             .into_bound(py)
             .map(Bound::into_super)

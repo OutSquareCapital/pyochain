@@ -19,7 +19,7 @@ pub trait ListGetter:
 {
     type L: ListsDataMethods;
     type T: Deref<Target = InnerData> + DerefMut + ListDataOwner<List = Self::L> + PyRepr;
-    type I: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
+    type I: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Iter<Self::T>>;
     #[inline(always)]
     fn lock(&self) -> RwLockReadGuard<'_, Self::T> {
         self.as_ref().read()
@@ -36,7 +36,7 @@ pub trait ListGetter:
     ) -> IterRes<'py> {
         self.as_ref()
             .clone()
-            .pipe(|x| rsiter::Bounded::new(x, bounds.unwrap_or_default().into(), reverse))
+            .pipe(|x| rsiter::Iter::bounded(x, bounds.unwrap_or_default().into(), reverse))
             .conv::<Self::I>()
             .into_bound(py)
             .map(Bound::into_super)
