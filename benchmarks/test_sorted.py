@@ -87,6 +87,14 @@ def test_iter(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
+def test_iter_collect(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
+    r = Range(size)
+    sl = cls(r)
+    _ = benchmark(tuple, sl)
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
 def test_count(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
     r = Range(size)
     sl = cls(r)
