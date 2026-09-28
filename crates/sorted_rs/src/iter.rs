@@ -3,7 +3,8 @@ use derive_more::Constructor;
 use parking_lot::RwLock;
 use pyo3::prelude::*;
 use std::{ops::Deref, sync::Arc};
-#[derive(Constructor)]
+
+#[derive(Constructor, Debug)]
 pub struct Bounded<T> {
     data: Arc<RwLock<T>>,
     bounds: AtomicBounds,

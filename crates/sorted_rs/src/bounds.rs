@@ -108,7 +108,7 @@ impl Bounds {
         }
     }
 }
-#[derive(Constructor)]
+#[derive(Constructor, Debug)]
 pub struct AtomicLoc {
     pub(super) pos: AtomicUsize,
     pub(super) idx: AtomicUsize,
@@ -131,7 +131,7 @@ impl From<Loc> for AtomicLoc {
         Self::new(loc.pos.into(), loc.idx.into())
     }
 }
-#[derive(Constructor)]
+#[derive(Constructor, Debug)]
 pub struct AtomicBounds {
     pub(super) min: AtomicLoc,
     pub(super) max: AtomicLoc,
