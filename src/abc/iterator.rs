@@ -19,6 +19,22 @@ use pyo3_ext::{prelude::*, pylibs, types::pyitertools};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoIterator;
 
+fn flatten_nested(obj: &Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {
+    let py = obj.py();  
+    let mut out = Vec::new();
+
+    for item in obj.try_iter()? {
+        let item = item?;
+        if let Ok(iter) = item.try_iter() {
+            // pass the iterable item directly into flatten_nested recursively
+            out.extend(flatten_nested(&iter.into_any())?);
+        } else {
+            out.push(item.unbind());
+        }
+    }
+    Ok(out)
+}
+
 #[pymethods]
 impl PyoIterator {
     #[staticmethod]
@@ -934,15 +950,48 @@ impl PyoIterator {
         slf: &Bound<'py, Self>,
         func: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::map(func, &x))
-            .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
-            .and_then(pyiterator_into_iter)
+        let py = slf.py();
+        let mut out = Vec::new();
+
+        for item in slf.try_iter()? {
+            let item = item?;
+            let mapped = func.call1((item.unbind(),))?;
+            let mapped_py = mapped.unbind();
+            let mapped_any = mapped_py.bind(py);
+
+            if let Ok(iter) = mapped_any.try_iter() {
+                for inner in iter {
+                    let inner = inner?;
+                    let inner_py = inner.unbind();
+                    let inner_any = inner_py.bind(py);
+
+                    if let Ok(nested) = inner_any.try_iter() {
+                        out.extend(flatten_nested(py, &nested)?);
+                    } else {
+                        out.push(inner_any.clone().unbind());
+                    }
+                }
+            } else {
+                out.push(mapped_any.clone().unbind());
+            }
+        }
+
+        let list = PyList::new(py, out)?;
+        let iter = list
+            .as_any()
+            .call_method0("__iter__")?
+            .cast_into::<PyIterator>()?;
+        pyiterator_into_iter(iter)
     }
     fn flatten<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
-            .and_then(pyiterator_into_iter)
+        let py = slf.py();
+        let flat = flatten_nested(py, slf)?;
+        let list = PyList::new(py, flat)?;
+        let iter = list
+            .as_any()
+            .call_method0("__iter__")?
+            .cast_into::<PyIterator>()?;
+        pyiterator_into_iter(iter)
     }
     fn map<'py>(slf: &Bound<'py, Self>, func: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
