@@ -25,25 +25,25 @@ class Lib(StrEnum):
     SortedContainers = auto()
 
 
-def main(group: str) -> None:
+def main(group: str, *, show: bool = True) -> None:
     """Read benchmark data for one method, compute ratios, and generate plots."""
     df = _get_df(group)
     ratios = _get_ratios(df)
-    df.show(-1)
-    ratios.show(-1)
-    _absolute_plot(df, group)
-    _relative_plot(ratios, group)
+    by_run = _get_aggs(ratios.lazy())
+    by_run.show(-1)
+    if show:
+        _absolute_plot(df, group)
+        _relative_plot(pl.concat((ratios, by_run)), group)
 
 
 def _absolute_plot(df: pl.DataFrame, group: str) -> None:
-    return px.bar(  # pyright: ignore[reportUnknownMemberType]
+    return px.line(  # pyright: ignore[reportUnknownMemberType]
         df,
         title=f"{group}: pyochain vs sortedcontainers across runs",
         x="run",
         y="median",
         color="lib",
         facet_col="size",
-        barmode="group",
         log_y=True,
         template="plotly_dark",
     ).show()
@@ -52,12 +52,11 @@ def _absolute_plot(df: pl.DataFrame, group: str) -> None:
 def _relative_plot(ratios: pl.DataFrame, group: str) -> None:
     return (
         px
-        .bar(  # pyright: ignore[reportUnknownMemberType]
+        .line(  # pyright: ignore[reportUnknownMemberType]
             ratios,
             title=f"{group}: speedup of pyochain vs sortedcontainers across runs",
             x="run",
             y="speedup",
-            barmode="group",
             color="size",
             template="plotly_dark",
         )
@@ -126,6 +125,20 @@ def _get_ratios(df: pl.DataFrame) -> pl.DataFrame:
             .round(3)
             .alias("speedup"),
         )
+    )
+
+
+def _get_aggs(ratios: pl.LazyFrame) -> pl.DataFrame:
+    speedup = pl.col("speedup")
+    return (
+        ratios
+        .group_by("run", maintain_order=True)
+        .agg(
+            pl.lit("aggregate").alias("size"),
+            pl.col("method").first(),
+            speedup.median().alias("speedup"),
+        )
+        .collect()
     )
 
 
