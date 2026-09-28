@@ -34,8 +34,8 @@ impl<T: Deref<Target = InnerData>> Bounded<T> {
             self.bounds.max.store(new_pos, new_idx);
             Some(item)
         } else {
-            let item = data.values[min_pos][min_idx].clone_ref(py);
             let v = &data.values[min_pos];
+            let item = v[min_idx].clone_ref(py);
             let (new_pos, new_idx) = if min_pos + 1 < data.values.len() && min_idx + 1 >= v.len() {
                 (min_pos + 1, 0)
             } else {
