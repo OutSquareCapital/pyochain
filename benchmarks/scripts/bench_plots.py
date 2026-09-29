@@ -155,7 +155,7 @@ def _get_df(method: str) -> pl.DataFrame:
         .select(
             Cols.Run,
             param.first().cast(Sizes).alias(Cols.Size),
-            "median",
+            "min",
             param.last().cast(Lib).alias(Cols.Lib),
         )
         .collect()
@@ -170,6 +170,6 @@ def _get_df(method: str) -> pl.DataFrame:
             .round(3)
             .alias(Cols.Relative),
         )
-        .sort(Cols.Size, Cols.Run)
+        .sort(Cols.Run, Cols.Size)
         .collect()
     )
