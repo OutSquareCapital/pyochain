@@ -124,7 +124,7 @@ uv run maturin develop --uv
 For benchmarking (optimized, slower compile):
 
 ```bash
-uv run maturin develop --release --uv
+uv run maturin develop --uv --profile profiling
 ```
 
 Prior to a release, to check correct documentation generation, run the build tool:

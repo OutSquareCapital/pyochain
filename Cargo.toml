@@ -55,13 +55,13 @@ build-docs = []
 [lints]
 workspace = true
 
-[profile.bench]
-inherits = "release"
-debug = "line-tables-only"
-strip = "none"
-
 [profile.release]
 opt-level = 3
 lto = true
 panic = "abort"
 codegen-units = 1
+
+[profile.profiling]
+inherits = "release"
+debug = "line-tables-only"
+strip = "none"
