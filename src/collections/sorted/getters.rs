@@ -4,22 +4,27 @@ use std::{
 };
 
 use crate::{
-    abc,
     collections::sorted::{self, core::IterRes, iter},
     traits::IntoInit,
 };
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use pyo3::{PyClass, prelude::*};
 use sorted_rs::{
-    Bounds, DictData, InnerData, KeysListsData, ListsData, SetData, iter as rsiter, prelude::*,
+    DictData, InnerData, KeysListsData, ListsData, SetData,
+    iter::{Iter, IterBounded, IterBoundedRev, IterKind, IterRev},
+    prelude::*,
 };
 use tap::prelude::*;
 pub trait ListGetter:
     Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<RwLock<Self::T>>>
 {
     type L: ListsDataMethods;
-    type T: Deref<Target = InnerData> + DerefMut + ListDataOwner<List = Self::L> + PyRepr;
-    type I: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Iter<Self::T>>;
+    type T: Deref<Target = InnerData>
+        + DerefMut
+        + ListDataOwner<List = Self::L>
+        + PyRepr
+        + Send
+        + Sync;
     #[inline(always)]
     fn lock(&self) -> RwLockReadGuard<'_, Self::T> {
         self.as_ref().read()
@@ -28,21 +33,30 @@ pub trait ListGetter:
     fn write(&self) -> RwLockWriteGuard<'_, Self::T> {
         self.as_ref().write()
     }
-    fn iter_bounds<'py>(
-        &self,
-        py: Python<'py>,
-        bounds: Option<Bounds>,
-        reverse: bool,
-    ) -> IterRes<'py> {
-        self.as_ref()
-            .clone()
-            .pipe(|x| rsiter::Iter::bounded(x, bounds.unwrap_or_default().into(), reverse))
-            .conv::<Self::I>()
-            .into_bound(py)
-            .map(Bound::into_super)
+    #[inline(always)]
+    fn build_iter<'py>(&self, py: Python<'py>, kind: IterKind) -> IterRes<'py> {
+        self.as_ref().clone().pipe(|x| match kind {
+            IterKind::Fwd => x
+                .conv::<Iter>()
+                .conv::<iter::SortedIter>()
+                .into_bound(py)
+                .map(Bound::into_super),
+            IterKind::Rev => x
+                .conv::<IterRev>()
+                .conv::<iter::SortedIterRev>()
+                .into_bound(py)
+                .map(Bound::into_super),
+            IterKind::Bounded(bounds) => IterBounded::new(x, bounds)
+                .conv::<iter::SortedIterBounded>()
+                .into_bound(py)
+                .map(Bound::into_super),
+            IterKind::BoundedRev(bounds) => IterBoundedRev::new(x, bounds)
+                .conv::<iter::SortedIterBoundedRev>()
+                .into_bound(py)
+                .map(Bound::into_super),
+        })
     }
 }
-
 macro_rules! impl_arc_as_ref {
     ($($t:ty),* $(,)?) => {
         $(
@@ -65,30 +79,24 @@ impl_arc_as_ref!(
 impl ListGetter for sorted::SortedList {
     type T = ListsData;
     type L = ListsData;
-    type I = iter::PyBounded;
 }
 impl ListGetter for sorted::SortedKeyList {
     type T = KeysListsData;
     type L = KeysListsData;
-    type I = iter::PyBoundedKey;
 }
 impl ListGetter for sorted::SortedSet {
     type T = SetData<ListsData>;
     type L = ListsData;
-    type I = iter::PySetBounded;
 }
 impl ListGetter for sorted::SortedKeySet {
     type T = SetData<KeysListsData>;
     type L = KeysListsData;
-    type I = iter::PySetBoundedKey;
 }
 impl ListGetter for sorted::SortedDict {
     type T = DictData<ListsData>;
     type L = ListsData;
-    type I = iter::PyDictBounded;
 }
 impl ListGetter for sorted::SortedKeyDict {
     type T = DictData<KeysListsData>;
     type L = KeysListsData;
-    type I = iter::PyDictBoundedKey;
 }

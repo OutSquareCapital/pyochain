@@ -116,12 +116,10 @@ fn populate_collections(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<collections::sorted::SortedValuesView>()?;
     m.add_class::<collections::sorted::SortedItemsView>()?;
     let py = m.py();
-    collections::sorted::iter::PyBounded::install_iternext(py);
-    collections::sorted::iter::PyBoundedKey::install_iternext(py);
-    collections::sorted::iter::PySetBounded::install_iternext(py);
-    collections::sorted::iter::PySetBoundedKey::install_iternext(py);
-    collections::sorted::iter::PyDictBounded::install_iternext(py);
-    collections::sorted::iter::PyDictBoundedKey::install_iternext(py);
+    collections::sorted::iter::SortedIter::install_iternext(py);
+    collections::sorted::iter::SortedIterRev::install_iternext(py);
+    collections::sorted::iter::SortedIterBounded::install_iternext(py);
+    collections::sorted::iter::SortedIterBoundedRev::install_iternext(py);
     Ok(())
 }
 fn populate_sorted(m: &Bound<'_, PyModule>) -> PyResult<()> {

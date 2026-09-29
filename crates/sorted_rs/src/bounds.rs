@@ -3,9 +3,9 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use derive_more::Constructor;
 use pyo3::prelude::*;
 
-use crate::{InnerData, bisect::Bisect, types::VecPy};
+use crate::{bisect::Bisect, types::VecPy};
 
-#[derive(PartialEq, Eq, Default, Clone, Copy, Constructor)]
+#[derive(PartialEq, Eq, Default, Clone, Copy, Constructor, Debug)]
 pub struct Loc {
     pub pos: usize,
     pub idx: usize,
@@ -13,28 +13,20 @@ pub struct Loc {
 impl Loc {
     #[must_use]
     pub fn with_idx(idx: usize) -> Self {
-        Self { pos: 0, idx }
+        Self::new(0, idx)
     }
     #[must_use]
     pub fn with_pos(pos: usize) -> Self {
-        Self { pos, idx: 0 }
+        Self::new(pos, 0)
     }
 }
 
-#[derive(Default, Constructor)]
+#[derive(PartialEq, Eq, Default, Constructor, Clone, Copy)]
 pub struct Bounds {
     pub min: Loc,
     pub max: Loc,
 }
 impl Bounds {
-    #[must_use]
-    pub fn from_full_iter(data: &InnerData) -> Self {
-        let max = data
-            .values
-            .last()
-            .map_or(Loc::default(), |v| Loc::new(data.values.len() - 1, v.len()));
-        Self::new(Loc::default(), max)
-    }
     pub fn from_sorted(
         lists: &[VecPy],
         maxes: &[Py<PyAny>],
@@ -103,12 +95,12 @@ impl Bounds {
             if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
                 Ok(None)
             } else {
-                Ok(Some(Bounds { min, max }))
+                Ok(Some(Self::new(min, max)))
             }
         }
     }
 }
-#[derive(Constructor, Debug)]
+#[derive(Constructor, Debug, Default)]
 pub struct AtomicLoc {
     pub(super) pos: AtomicUsize,
     pub(super) idx: AtomicUsize,
@@ -129,15 +121,5 @@ impl AtomicLoc {
 impl From<Loc> for AtomicLoc {
     fn from(loc: Loc) -> Self {
         Self::new(loc.pos.into(), loc.idx.into())
-    }
-}
-#[derive(Constructor, Debug)]
-pub struct AtomicBounds {
-    pub(super) min: AtomicLoc,
-    pub(super) max: AtomicLoc,
-}
-impl From<Bounds> for AtomicBounds {
-    fn from(bounds: Bounds) -> Self {
-        Self::new(bounds.min.into(), bounds.max.into())
     }
 }
