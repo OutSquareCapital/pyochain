@@ -58,4 +58,5 @@ workspace = true
 [profile.release]
 opt-level = 3
 lto = true
+panic = "abort"
 codegen-units = 1

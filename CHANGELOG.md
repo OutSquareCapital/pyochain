@@ -63,6 +63,11 @@ See below for the benchmark results, with the number of `args` in the left colum
 
 - Many changes to the internal rust structure to improve readability and reduce code-gen (and by extension, compile time).
 
+### 📦 Build system
+
+- Added `x86_64` modern compilations targets. Should improve performance.
+- Added `panic="abort"` flag on release builds to reduce binary size and improve performance.
+
 ### 🛠️ Other improvements
 
 - **Website**: The return sections of the functions/methods docstrings is now correctly rendered thanks to @tecnolgd contribution in [#95](https://github.com/OutSquareCapital/pyochain/pull/95)
