@@ -121,6 +121,8 @@ def _get_ratios(df: pl.DataFrame) -> pl.DataFrame:
             "method",
             pl
             .col(Lib.SortedContainers)
+            .median()
+            .over("size")
             .truediv(Lib.Pyochain)
             .round(3)
             .alias("speedup"),
