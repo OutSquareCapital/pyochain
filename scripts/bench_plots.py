@@ -25,21 +25,21 @@ class Lib(StrEnum):
     SortedContainers = auto()
 
 
-def main(group: str, *, show: bool = True) -> None:
+def main(method: str, *, plot: bool = True) -> None:
     """Read benchmark data for one method, compute ratios, and generate plots."""
-    df = _get_df(group)
+    df = _get_df(method)
     ratios = _get_ratios(df)
     by_run = _get_aggs(ratios.lazy())
     by_run.show(-1)
-    if show:
-        _absolute_plot(df, group)
-        _relative_plot(pl.concat((ratios, by_run)), group)
+    if plot:
+        _absolute_plot(df, method)
+        _relative_plot(pl.concat((ratios, by_run)), method)
 
 
-def _absolute_plot(df: pl.DataFrame, group: str) -> None:
+def _absolute_plot(df: pl.DataFrame, method: str) -> None:
     return px.line(  # pyright: ignore[reportUnknownMemberType]
         df,
-        title=f"{group}: pyochain vs sortedcontainers across runs",
+        title=f"{method}: pyochain vs sortedcontainers across runs",
         x="run",
         y="median",
         color="lib",
@@ -49,12 +49,12 @@ def _absolute_plot(df: pl.DataFrame, group: str) -> None:
     ).show()
 
 
-def _relative_plot(ratios: pl.DataFrame, group: str) -> None:
+def _relative_plot(ratios: pl.DataFrame, method: str) -> None:
     return (
         px
         .line(  # pyright: ignore[reportUnknownMemberType]
             ratios,
-            title=f"{group}: speedup of pyochain vs sortedcontainers across runs",
+            title=f"{method}: speedup of pyochain vs sortedcontainers across runs",
             x="run",
             y="speedup",
             color="size",
@@ -65,7 +65,7 @@ def _relative_plot(ratios: pl.DataFrame, group: str) -> None:
     )
 
 
-def _get_df(group: str) -> pl.DataFrame:
+def _get_df(method: str) -> pl.DataFrame:
     benchmark = pl.col("benchmarks").list.explode().struct.field
     stat = benchmark("stats").struct.field
     param = pl.col("param").str.split("-").list
@@ -103,7 +103,7 @@ def _get_df(group: str) -> pl.DataFrame:
             param.first().cast(pl.UInt32()).alias("size"),
             param.last().cast(Lib).alias("lib"),
         )
-        .filter(pl.col("method") == group)
+        .filter(pl.col("method") == method)
         .sort("size", "run", "lib")
         .collect()
     )
@@ -142,7 +142,3 @@ def _get_aggs(ratios: pl.LazyFrame) -> pl.DataFrame:
         )
         .collect()
     )
-
-
-if __name__ == "__main__":
-    main(sys.argv[1])

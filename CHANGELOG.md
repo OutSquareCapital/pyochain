@@ -72,6 +72,8 @@ See below for the benchmark results, with the number of `args` in the left colum
 
 - **Website**: The return sections of the functions/methods docstrings is now correctly rendered thanks to @tecnolgd contribution in [#95](https://github.com/OutSquareCapital/pyochain/pull/95)
 
+- **Internal scripts**: Added a dedicated typer app to handle, analyze and plot benchmark results. Currently focused on `sortedcontainers` comparison, but can be extended to more in the future.
+
 ## [0.28.0] - 2026-08-31
 
 ### 🏆 Highlights

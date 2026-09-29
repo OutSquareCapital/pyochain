@@ -9,6 +9,9 @@ dependencies = []
 
 classifiers = ["License :: OSI Approved :: MIT License"]
 
+[project.scripts]
+bench-plots = "scripts.__main__:app"
+
 [dependency-groups]
 dev = [
   "basedpyright>=1.39.10",
@@ -25,6 +28,7 @@ dev = [
   "sortedcontainers>=2.4.0",
   "sortedcontainers-stubs>=2.4.3",
   "tombi>=1.5.4",
+  "typer>=0.27.2",
 ]
 doc = ["mkdocstrings-python>=2.0.7", "zensical>=0.0.57"]
 
