@@ -92,7 +92,7 @@ def _get_test_funcs() -> Vec[str]:
 def _absolute_plot(df: pl.DataFrame, method: str) -> None:
     return px.line(  # pyright: ignore[reportUnknownMemberType]
         df,
-        title=f"{method}: pyochain vs sortedcontainers across runs",
+        title=f"{method}: absolute speed across runs",
         x=Cols.Run,
         y=Lib.Pyochain,
         color=Cols.Size,
