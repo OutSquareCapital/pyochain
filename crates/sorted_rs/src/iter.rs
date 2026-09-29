@@ -1,8 +1,9 @@
 use crate::{Bounds, Loc, bounds::AtomicLoc, inner::InnerData};
-use derive_more::Constructor;
-use parking_lot::RwLock;
+use derive_more::From;
+use parking_lot::{RawRwLock, lock_api::RwLockReadGuard};
 use pyo3::ffi;
-use std::{any::Any, ops::Deref, sync::Arc};
+use std::{ops::Deref, ptr};
+use tap::prelude::*;
 
 pub enum IterKind {
     Fwd,
@@ -23,32 +24,27 @@ impl IterKind {
         }
     }
 }
-
-#[derive(Constructor, Debug)]
-pub struct IterInner {
-    _owner: Arc<dyn Any + Send + Sync>,
-    data: *const InnerData,
-}
+#[derive(Debug, From)]
+pub struct IterInner(*const InnerData);
 
 unsafe impl Send for IterInner {}
 unsafe impl Sync for IterInner {}
-
-impl<T> From<Arc<RwLock<T>>> for IterInner
+impl<T> From<RwLockReadGuard<'_, RawRwLock, T>> for IterInner
 where
     T: Deref<Target = InnerData> + Send + Sync + 'static,
 {
-    fn from(owner: Arc<RwLock<T>>) -> Self {
-        let guard = owner.read();
-        let data = std::ptr::from_ref::<InnerData>(&**guard);
-        drop(guard);
-        Self::new(owner, data)
+    fn from(guard: RwLockReadGuard<'_, RawRwLock, T>) -> Self {
+        guard
+            .deref()
+            .deref()
+            .pipe(ptr::from_ref::<T::Target>)
+            .into()
     }
 }
-
 impl IterInner {
     #[inline(always)]
-    unsafe fn get(&self) -> &InnerData {
-        unsafe { &*self.data }
+    unsafe fn deref(&self) -> &InnerData {
+        unsafe { &*self.0 }
     }
 }
 
@@ -64,30 +60,26 @@ pub struct IterBounded(IterInner, AtomicLoc, Loc);
 #[derive(Debug)]
 pub struct IterBoundedRev(IterInner, Loc, AtomicLoc);
 
-impl<T> From<Arc<RwLock<T>>> for Iter
+impl<T> From<T> for Iter
 where
-    T: Deref<Target = InnerData> + Send + Sync + 'static,
+    T: Into<IterInner>,
 {
-    fn from(owner: Arc<RwLock<T>>) -> Self {
+    fn from(owner: T) -> Self {
         Self(owner.into(), AtomicLoc::default())
     }
 }
 
-impl<T> From<Arc<RwLock<T>>> for IterRev
+impl<T> From<T> for IterRev
 where
-    T: Deref<Target = InnerData> + Send + Sync + 'static,
+    T: Into<IterInner>,
 {
-    fn from(owner: Arc<RwLock<T>>) -> Self {
-        let (data, pos, idx) = {
-            let guard = owner.read();
-            let pos = guard.values.len().saturating_sub(1);
-            let idx = guard.values.last().map_or(0, Vec::len);
-            (std::ptr::from_ref::<InnerData>(&**guard), pos, idx)
-        };
-        Self(
-            IterInner::new(owner, data),
-            AtomicLoc::new(pos.into(), idx.into()),
-        )
+    fn from(owner: T) -> Self {
+        let inner = owner.into();
+        let data = unsafe { inner.deref() };
+        let pos = data.values.len().saturating_sub(1);
+        let idx = data.values.last().map_or(0, Vec::len);
+        let loc = Loc::new(pos, idx).into();
+        Self(inner, loc)
     }
 }
 
@@ -110,7 +102,7 @@ impl Iter {
     /// The caller must ensure that the Iterator is wrapped in a pyclass.
     #[inline(always)]
     pub unsafe fn next(&self) -> *mut ffi::PyObject {
-        let data = unsafe { self.0.get() };
+        let data = unsafe { self.0.deref() };
         let (pos, idx) = self.1.load();
 
         if let Some(v) = data.values.get(pos) {
@@ -125,7 +117,7 @@ impl Iter {
             }
             ptr
         } else {
-            std::ptr::null_mut()
+            ptr::null_mut()
         }
     }
 }
@@ -135,11 +127,11 @@ impl IterRev {
     /// The caller must ensure that the Iterator is wrapped in a pyclass.
     #[inline(always)]
     pub unsafe fn next(&self) -> *mut ffi::PyObject {
-        let data = unsafe { self.0.get() };
+        let data = unsafe { self.0.deref() };
         let (pos, idx) = self.1.load();
 
         if pos == 0 && idx == 0 {
-            std::ptr::null_mut()
+            ptr::null_mut()
         } else {
             let (pos, idx) = if idx == 0 {
                 let p = pos - 1;
@@ -163,12 +155,12 @@ impl IterBounded {
     /// The caller must ensure that the Iterator is wrapped in a pyclass.
     #[inline(always)]
     pub unsafe fn next(&self) -> *mut ffi::PyObject {
-        let data = unsafe { self.0.get() };
+        let data = unsafe { self.0.deref() };
         let (pos, idx) = self.1.load();
         let max = self.2;
 
         if pos == max.pos && idx == max.idx {
-            std::ptr::null_mut()
+            ptr::null_mut()
         } else {
             let v = unsafe { data.values.get_unchecked(pos) };
             let item = unsafe { v.get_unchecked(idx) };
@@ -190,12 +182,12 @@ impl IterBoundedRev {
     /// The caller must ensure that the Iterator is wrapped in a pyclass.
     #[inline(always)]
     pub unsafe fn next(&self) -> *mut ffi::PyObject {
-        let data = unsafe { self.0.get() };
+        let data = unsafe { self.0.deref() };
         let min = self.1;
         let (pos, idx) = self.2.load();
 
         if pos == min.pos && idx == min.idx {
-            std::ptr::null_mut()
+            ptr::null_mut()
         } else {
             let (pos, idx) = if idx == 0 {
                 let p = pos - 1;

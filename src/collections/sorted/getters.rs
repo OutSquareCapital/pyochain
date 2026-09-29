@@ -35,7 +35,7 @@ pub trait ListGetter:
     }
     #[inline(always)]
     fn build_iter<'py>(&self, py: Python<'py>, kind: IterKind) -> IterRes<'py> {
-        self.as_ref().clone().pipe(|x| match kind {
+        self.lock().pipe(|x| match kind {
             IterKind::Fwd => x
                 .conv::<Iter>()
                 .conv::<iter::SortedIter>()
