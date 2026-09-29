@@ -14,11 +14,12 @@ def plot(
     method: Annotated[str, tp.Argument(help="Benchmark method name, e.g. 'iter'.")],
     *,
     plot: Annotated[bool, tp.Option(help="Display interactive plots.")] = False,
+    show: Annotated[bool, tp.Option(help="Show tabular results in console.")] = False,
 ) -> None:
     """Compute ratios and render the plots for the selected group, compared to sortedcontainers."""
     from . import bench_plots
 
-    bench_plots.main(method, plot=plot)
+    bench_plots.main(method, plot=plot, show=show)
 
 
 if __name__ == "__main__":
