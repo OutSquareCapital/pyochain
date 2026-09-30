@@ -1,5 +1,5 @@
 use parking_lot::RwLock;
-use std::{cmp::Ordering, sync::Arc};
+use std::cmp::Ordering;
 
 use crate::{
     KeysListsData, ListsData, SetData,
@@ -18,12 +18,11 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use pyochain_macros::try_cast_into;
-use std_tools::prelude::*;
 use tap::prelude::*;
 pub trait PySetDataRef:
     Sync
     + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
-    + AsRef<Arc<RwLock<SetData<Self::L>>>>
+    + AsRef<RwLock<SetData<Self::L>>>
     + From<SetData<Self::L>>
 {
     type L: ListsDataMethods;
@@ -34,7 +33,7 @@ pub trait PySetDataRef:
         let slf = self.as_ref().read().get_set(py);
         try_cast_into! {
             match value {
-                CaseExact::Self(sorted) if self.as_ref().is(sorted.get().as_ref()) => {
+                CaseExact::Self(sorted) if std::ptr::eq(sorted.get(), self) => {
                     op.on_identity().pipe(Either::Left).pipe(Ok)
                 }
                 CaseExact::Self(sorted) => slf
@@ -258,7 +257,7 @@ impl<'py> Args<'py> {
             Ordering::Greater => tuple
                 .into_iter()
                 .map(|other| match other.cast_exact::<C>().map(Bound::get) {
-                    Ok(other) if left.as_ref().is(other.as_ref()) => {
+                    Ok(other) if std::ptr::eq(other, left) => {
                         left.as_ref().read().get_set(py).into_any()
                     }
                     Ok(other) => other.as_ref().read().get_set(py).into_any(),
@@ -276,7 +275,7 @@ impl<'py> Args<'py> {
     {
         let py = any.py();
         match any.cast_exact::<C>().map(Bound::get) {
-            Ok(other) if left.as_ref().is(other.as_ref()) => Self::Slf(py),
+            Ok(other) if std::ptr::eq(other, left) => Self::Slf(py),
             Ok(other) => Self::Any(other.as_ref().read().get_set(py).into_any()),
             Err(_) => Self::Any(any),
         }

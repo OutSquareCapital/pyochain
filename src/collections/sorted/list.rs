@@ -15,11 +15,10 @@ use sorted_rs::{
     prelude::*,
     types::{IntOrSlice, SeqOrAny},
 };
-use std::sync::Arc;
 use std_tools::prelude::*;
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
-pub struct SortedList(pub(super) Arc<RwLock<ListsData>>);
+pub struct SortedList(pub(super) RwLock<ListsData>);
 
 #[pymethods]
 impl SortedList {
@@ -35,7 +34,7 @@ impl SortedList {
 }
 
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
-pub struct SortedKeyList(pub(super) Arc<RwLock<KeysListsData>>);
+pub struct SortedKeyList(pub(super) RwLock<KeysListsData>);
 
 #[pymethods]
 impl SortedKeyList {
@@ -154,23 +153,14 @@ pub(super) trait SortedListMethods:
     }
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let out = into_list_add(self, iterable)?;
-        match out {
-            ListAdd::Identity => {
-                let values = self.lock().collapse(py);
-                self.write().extend(py, values)
-            }
-            ListAdd::Sorted(list) => {
-                let values = list.collapse(py);
-                self.write().extend(py, values)
-            }
-            ListAdd::Iterator(it) => {
-                let values = it
-                    .map(|x| x?.unbind().pipe(Ok))
-                    .collect::<PyResult<Vec<_>>>()?;
-                self.write().extend(py, values)
-            }
-        }
+        let values = match into_list_add(self, iterable)? {
+            ListAdd::Identity => self.lock().collapse(py),
+            ListAdd::Sorted(list) => list.collapse(py),
+            ListAdd::Iterator(it) => it
+                .map(|x| x?.unbind().pipe(Ok))
+                .collect::<PyResult<Vec<_>>>()?,
+        };
+        self.write().extend(py, values)
     }
     #[allow(unused_variables)]
     fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
@@ -190,12 +180,12 @@ pub(super) trait SortedListMethods:
     }
 }
 
-fn into_list_add<'py, T: SortedListMethods>(
-    left: &T,
-    right: &'py Bound<'py, PyAny>,
-) -> PyResult<ListAdd<'py, T::L>> {
+fn into_list_add<'py, T>(left: &T, right: &'py Bound<'py, PyAny>) -> PyResult<ListAdd<'py, T::L>>
+where
+    T: SortedListMethods,
+{
     match right.cast_exact::<T>().map(Bound::get) {
-        Ok(slf) if left.as_ref().is(slf.as_ref()) => ListAdd::Identity.pipe(Ok),
+        Ok(list) if std::ptr::eq(list, left) => ListAdd::Identity.pipe(Ok),
         Ok(list) => list.lock().pipe(ListAdd::Sorted).pipe(Ok),
         Err(_) => right.try_iter().map(ListAdd::Iterator),
     }

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     abc,
     collections::sorted::{SortedDict, SortedKeyDict, SortedSet, core::ObjOrVec},
@@ -7,16 +5,13 @@ use crate::{
 };
 use derive_more::From;
 
-use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use parking_lot::{RwLockReadGuard, RwLockWriteGuard};
 use pyo3::{PyClass, PyTypeInfo, prelude::*};
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
-use sorted_rs::{
-    DictData, KeysListsData, ListsData, SetData, prelude::*, types::DictDataRef, views,
-};
+use sorted_rs::{DictData, KeysListsData, ListsData, SetData, prelude::*, views};
 use std_tools::prelude::*;
 use tap::prelude::*;
-type DictRef<T> = Arc<RwLock<DictData<T>>>;
 
 macro_rules! impl_base_sorted_view {
     ($($l:ty:$name:ty => [$($getitem:path => $t:ident),* $(,)?] );* $(;)?) => {
@@ -25,16 +20,16 @@ macro_rules! impl_base_sorted_view {
 
                 #[derive(From)]
                 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
-                pub struct $t(DictRef<$l>);
+                pub struct $t(Py<$name>);
 
                 impl SortedViewMethods for $t {
                         type L = $l;
                         type M = $name;
                         fn mapping(&self) -> RwLockReadGuard<'_, DictData<Self::L>> {
-                            self.0.read()
+                            self.0.get().0.read()
                         }
                         fn mapping_mut(&self) -> RwLockWriteGuard<'_, DictData<Self::L>> {
-                            self.0.write()
+                            self.0.get().0.write()
                         }
                         fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
                             $getitem(&mut self.mapping_mut(), index).and_then_left(|x|x.try_into_py())
@@ -44,7 +39,6 @@ macro_rules! impl_base_sorted_view {
         )*
     };
 }
-
 impl_base_sorted_view!(
     ListsData: SortedDict => [
         views::get_item_for_items => SortedItemsView,
@@ -81,12 +75,13 @@ trait FromIterable {
     SortedByKeyValuesView
 )]
 pub trait SortedViewMethods:
-    PyClass<BaseType = abc::PyoSequence> + From<DictDataRef<Self::L>>
+    PyClass<BaseType = abc::PyoSequence, Frozen = pyo3::pyclass::boolean_struct::True>
+    + From<Py<Self::M>>
 where
     DictData<Self::L>: PyRepr,
 {
     type L: ListsDataMethods;
-    type M: PyTypeInfo;
+    type M: PyTypeInfo + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>;
     #[skip]
     fn mapping(&self) -> RwLockReadGuard<'_, DictData<Self::L>>;
     #[skip]

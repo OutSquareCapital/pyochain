@@ -1,6 +1,5 @@
 use parking_lot::RwLock;
 use sorted_rs::{DictData, KeysListsData, ListsData, SetData};
-use std::sync::Arc;
 
 use crate::collections::sorted;
 macro_rules! impl_from_data {
@@ -8,7 +7,7 @@ macro_rules! impl_from_data {
         $(
             impl From<$from> for $into {
                 fn from(inner: $from) -> Self {
-                    Self(Arc::new(RwLock::new(inner)))
+                    Self(RwLock::new(inner))
                 }
             }
         )+

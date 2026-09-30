@@ -1,7 +1,4 @@
-use std::{
-    ops::{Deref, DerefMut},
-    sync::Arc,
-};
+use std::ops::{Deref, DerefMut};
 
 use crate::{
     collections::sorted::{self, core::IterRes, iter},
@@ -16,7 +13,7 @@ use sorted_rs::{
 };
 use tap::prelude::*;
 pub trait ListGetter:
-    Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<RwLock<Self::T>>>
+    Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<RwLock<Self::T>>
 {
     type L: ListsDataMethods;
     type T: Deref<Target = InnerData>
@@ -60,8 +57,8 @@ pub trait ListGetter:
 macro_rules! impl_arc_as_ref {
     ($($t:ty),* $(,)?) => {
         $(
-            impl AsRef<Arc<RwLock<<$t as ListGetter>::T>>> for $t {
-                fn as_ref(&self) -> &Arc<RwLock<<$t as ListGetter>::T>> {
+            impl AsRef<RwLock<<$t as ListGetter>::T>> for $t {
+                fn as_ref(&self) -> &RwLock<<$t as ListGetter>::T> {
                     &self.0
                 }
             }
