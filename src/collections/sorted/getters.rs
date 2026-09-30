@@ -5,16 +5,15 @@ use crate::{
     traits::IntoInit,
 };
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use pyo3::{PyClass, prelude::*};
+use pyo3::prelude::*;
+use pyo3_ext::prelude::*;
 use sorted_rs::{
     DictData, InnerData, KeysListsData, ListsData, SetData,
     iter::{Iter, IterBounded, IterBoundedRev, IterKind, IterRev},
     prelude::*,
 };
 use tap::prelude::*;
-pub trait ListGetter:
-    Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<RwLock<Self::T>>
-{
+pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> {
     type L: ListsDataMethods;
     type T: Deref<Target = InnerData>
         + DerefMut

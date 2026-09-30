@@ -6,7 +6,7 @@ use crate::{
 use derive_more::From;
 
 use parking_lot::{RwLockReadGuard, RwLockWriteGuard};
-use pyo3::{PyClass, PyTypeInfo, prelude::*};
+use pyo3::{PyClass, prelude::*};
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
 use sorted_rs::{DictData, KeysListsData, ListsData, SetData, prelude::*, views};
@@ -75,13 +75,12 @@ trait FromIterable {
     SortedByKeyValuesView
 )]
 pub trait SortedViewMethods:
-    PyClass<BaseType = abc::PyoSequence, Frozen = pyo3::pyclass::boolean_struct::True>
-    + From<Py<Self::M>>
+    PyClass<BaseType = abc::PyoSequence> + PyFrozenClass + From<Py<Self::M>>
 where
     DictData<Self::L>: PyRepr,
 {
     type L: ListsDataMethods;
-    type M: PyTypeInfo + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>;
+    type M: PyFrozenClass;
     #[skip]
     fn mapping(&self) -> RwLockReadGuard<'_, DictData<Self::L>>;
     #[skip]

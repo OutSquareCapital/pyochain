@@ -8,7 +8,6 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    PyClass,
     basic::CompareOp,
     prelude::*,
     types::{PyBool, PyList, PyNotImplemented, PySet, PyTuple},
@@ -20,10 +19,7 @@ use pyo3_ext::{
 use pyochain_macros::try_cast_into;
 use tap::prelude::*;
 pub trait PySetDataRef:
-    Sync
-    + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
-    + AsRef<RwLock<SetData<Self::L>>>
-    + From<SetData<Self::L>>
+    PyFrozenClass + AsRef<RwLock<SetData<Self::L>>> + From<SetData<Self::L>>
 {
     type L: ListsDataMethods;
 

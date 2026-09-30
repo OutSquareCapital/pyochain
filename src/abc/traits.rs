@@ -6,7 +6,7 @@ use crate::{
     },
 };
 use pyo3::{
-    PyClass, PyTypeInfo,
+    PyTypeInfo,
     prelude::*,
     types::{DerefToPyAny, PyDict, PyTuple},
 };
@@ -102,14 +102,7 @@ trait TapMethod: PyTypeInfo {
     abc::PyoValuesView,
     abc::PyoItemsView
 )]
-pub trait MappingView:
-    Sized
-    + PyTypeInfo
-    + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
-    + Send
-    + Sync
-    + DerefToPyAny
-{
+pub trait MappingView: PyFrozenClass + DerefToPyAny {
     type M: Sized;
     #[skip]
     fn mapping(&self) -> &Py<Self::M>;

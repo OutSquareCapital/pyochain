@@ -9,7 +9,7 @@ pub use super::ext_methods::{
 pub use super::iter::{CollectBoundIterator, FromBoundIterator, TryFromBoundIterator};
 pub use super::pyany::PyAnyExtMethods;
 pub use super::types::{
-    ItemsViewMethods, PyDequeMethods, PyMutableSequenceMethods, PyMutableSetMethods,
+    ItemsViewMethods, PyDequeMethods, PyFrozenClass, PyMutableSequenceMethods, PyMutableSetMethods,
     PySupportsIndexMethods, PySupportsItemsMethods,
 };
 pub use crate::{list, tuple};

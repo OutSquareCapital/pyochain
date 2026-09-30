@@ -12,10 +12,10 @@ use crate::{
 };
 use parking_lot::RwLock;
 use pyo3::{
-    PyClass, PyTypeInfo,
     prelude::*,
     types::{PyDict, PyMapping},
 };
+use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
 use sorted_rs::{DictData, KeysListsData, ListsData};
 use tap::prelude::*;
@@ -74,8 +74,7 @@ pub(super) trait SortedDictMethods:
     + ListGetter<T = DictData<<Self as ListGetter>::L>>
     + IntoInit
     + From<DictData<<Self as ListGetter>::L>>
-    + PyTypeInfo
-    + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+    + PyFrozenClass
 {
     type KView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;
     type VView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;

@@ -10,9 +10,7 @@ use pyo3::{
 use pyo3_ext::{prelude::*, types::PyDeque};
 use pyochain_macros::py_abc;
 use tap::prelude::*;
-pub trait PyWrapper:
-    PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync + Deref<Target = Py<Self::Wrapped>>
-{
+pub trait PyWrapper: PyFrozenClass + Deref<Target = Py<Self::Wrapped>> {
     type Wrapped: PyTypeInfo + DerefToPyAny;
     /// Extracts the inner type of `Self` from an arbitrary python object.\
     /// For example, if `Self` is `seq::Seq`, this will extract the inner `PyTuple` from a `seq::Seq` or a `PyTuple`.
