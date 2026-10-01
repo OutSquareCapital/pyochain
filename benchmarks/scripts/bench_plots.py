@@ -15,7 +15,6 @@ from ._common import GET_PATH, PREFIX, Lib, Method, PlEnum
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from pathlib import Path
 
 Sizes: Final[pl.Enum] = SIZES.iter().map(str).collect(pl.Enum)
 
@@ -74,7 +73,12 @@ def _get_df(method: str) -> pl.DataFrame:
     cols = _selected_cols()
     return (
         Iter(GET_PATH.glob("*.json"))
-        .map(lambda path: _extract_json(path).select(cols))
+        .enumerate()
+        .map_star(
+            lambda idx, path: (
+                pl.read_json(path).lazy().select(*cols, pl.lit(idx).alias(Cols.Run))
+            )
+        )
         .collect(pl.concat)
         .filter(
             pl
@@ -112,19 +116,8 @@ def _get_df(method: str) -> pl.DataFrame:
     )
 
 
-def _extract_json(path: Path) -> pl.LazyFrame:
-    splitted = path.stem.split("_")
-    return (
-        pl
-        .read_json(path)
-        .lazy()
-        .with_columns(
-            pl.lit(splitted[0]).alias(Cols.Run), pl.lit(splitted[1]).alias(Cols.Commit)
-        )
-    )
-
-
 def _selected_cols() -> Sequence[pl.Expr]:
+    commit_infos = pl.col("commit_info").struct.field
     benchmark = pl.col("benchmarks").list.explode().struct.field
     stat = benchmark("stats").struct.field
     return (
@@ -137,5 +130,5 @@ def _selected_cols() -> Sequence[pl.Expr]:
         stat("stddev"),
         stat("total"),
         Cols.Run.pl(),
-        Cols.Commit.pl(),
+        commit_infos("id").alias(Cols.Commit),
     )
