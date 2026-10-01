@@ -9,7 +9,8 @@ from rich.console import Console
 from rich.text import Text
 
 from pyochain import Err, Iter, Ok, Result, Vec
-from tests.test_extern import test_sorted
+
+from .. import test_sorted
 
 CONSOLE = Console()
 PLATFORM_DIR: Final[str] = (
