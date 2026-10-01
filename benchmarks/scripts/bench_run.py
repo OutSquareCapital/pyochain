@@ -13,24 +13,31 @@ if TYPE_CHECKING:
 
 UV_RUN = ("uv", "run")
 
+# NOTE: good use case to how extend Result and Exception handling capabilites.
+
 
 def run_many(commits: PyoIterable[str], method: Method, repeat: int) -> None:
-    return (
-        commits
-        .iter()
-        .map(_setup_and_test_commit)
-        .try_for_each(lambda _: run(method, repeat, calibrate=False))
-        .map(
-            lambda _: CONSOLE.print(
-                f"Benchmarks for {method} completed successfully.", style="bold green"
-            )
+    start = subprocess.run(
+        ("git", "rev-parse", "--abbrev-ref", "HEAD"),
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    try:
+        return (
+            commits
+            .iter()
+            .map(_setup_and_test_commit)
+            .try_for_each(lambda _: run(method, repeat, calibrate=False))
+            .map(lambda _: CONSOLE.print(...))
+            .unwrap()
         )
-        .unwrap()
-    )
+    finally:
+        _ = subprocess.run(("git", "switch", start), check=True)
 
 
 def _setup_and_test_commit(commit: str) -> None:
-    _ = subprocess.run(("git", "switch", commit), check=True)
+    _ = subprocess.run(("git", "switch", "--detach", commit), check=True)
     _ = subprocess.run((*UV_RUN, "maturin", "develop", "--release"), check=True)
     _ = subprocess.run((*UV_RUN, "pytest"), check=True)
 
