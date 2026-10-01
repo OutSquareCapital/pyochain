@@ -9,12 +9,33 @@ import typer as tp
 app = tp.Typer(name="bench", help="Run pytest-benchmark and analyze the results.")
 
 MethodArg = Annotated[str, tp.Argument(help="Benchmark method name")]
+RepeatArg = Annotated[int, tp.Option(help="How many time the benchmark is run")]
+
+
+@app.command()
+def run_on_commits(
+    commits: Annotated[list[str], tp.Argument(help="Commit IDs to benchmark.")],
+    method: MethodArg,
+    repeat: RepeatArg = 1,
+) -> None:
+    """Run build, tests and benchmark on each given commit."""
+
+    from pyochain import Vec
+
+    from . import bench_run
+    from ._common import check_method
+
+    return (
+        check_method(method)
+        .map(lambda m: bench_run.run_many(Vec.wrap(commits), m, repeat))
+        .unwrap()
+    )
 
 
 @app.command()
 def run(
     method: MethodArg,
-    repeat: Annotated[int, tp.Option(help="How many time the benchmark is run")] = 1,
+    repeat: RepeatArg = 1,
     *,
     calibrate: Annotated[
         bool,

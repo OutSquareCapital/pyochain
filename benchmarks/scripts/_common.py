@@ -6,6 +6,7 @@ from enum import StrEnum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, NewType
 
+import typer as tp
 from rich.console import Console
 from rich.text import Text
 
@@ -50,20 +51,16 @@ class Lib(PlEnum):
     SortedContainers = auto()
 
 
-def check_method(method: str) -> Result[Method, ValueError]:
+def check_method(method: str) -> Result[Method, tp.BadParameter]:
     available_methods = _get_test_funcs()
     if not available_methods.contains(method):
         methods = available_methods.iter().map(str).map(lambda m: " - " + m).join("\n")
-        txt = (
-            Text(
-                f"Error: Method '{method}' not found in benchmark tests.\n",
-                style="bold red",
-            )
-            .append("\nAvailable methods:\n", style="bold yellow")
-            .append(methods, style="bold green")
+        txt = Text("\nAvailable methods:\n", style="bold yellow").append(
+            methods, style="bold green"
         )
         CONSOLE.print(txt)
-        return Err(ValueError(""))
+        msg = f"Error: Method '{method}' not found in benchmark tests."
+        return Err(tp.BadParameter(msg))
     else:
         return Ok(Method(method))
 

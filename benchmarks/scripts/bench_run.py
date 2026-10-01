@@ -1,10 +1,38 @@
 from __future__ import annotations
 
 import subprocess
+from typing import TYPE_CHECKING
 
 from pyochain import Err, Ok, Result
 
-from ._common import RUN_PATH, SAVE_PATH, Lib, Method
+from ._common import CONSOLE, RUN_PATH, SAVE_PATH, Lib, Method
+
+if TYPE_CHECKING:
+    from pyochain.abc import PyoIterable
+
+
+UV_RUN = ("uv", "run")
+
+
+def run_many(commits: PyoIterable[str], method: Method, repeat: int) -> None:
+    return (
+        commits
+        .iter()
+        .map(_setup_and_test_commit)
+        .try_for_each(lambda _: run(method, repeat, calibrate=False))
+        .map(
+            lambda _: CONSOLE.print(
+                f"Benchmarks for {method} completed successfully.", style="bold green"
+            )
+        )
+        .unwrap()
+    )
+
+
+def _setup_and_test_commit(commit: str) -> None:
+    _ = subprocess.run(("git", "switch", commit), check=True)
+    _ = subprocess.run((*UV_RUN, "maturin", "develop", "--release"), check=True)
+    _ = subprocess.run((*UV_RUN, "pytest"), check=True)
 
 
 def run(method: Method, repeat: int, *, calibrate: bool) -> Result[None, ValueError]:
