@@ -29,8 +29,7 @@ def run(
 
     If don't already have saved results for it, make sur to use the `--calibrate` option.
     """
-    from . import bench_run
-    from ._common import check_method
+    from .cli import bench_run, check_method
 
     return (
         check_method(method)
@@ -47,8 +46,7 @@ def plot(
     show: Annotated[bool, tp.Option(help="Show tabular results in console.")] = False,
 ) -> None:
     """Compute ratios and render the plots for the selected group, compared to sortedcontainers."""
-    from . import bench_plots
-    from ._common import check_method
+    from .cli import bench_plots, check_method
 
     return (
         check_method(method)

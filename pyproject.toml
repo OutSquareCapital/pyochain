@@ -9,10 +9,6 @@ dependencies = []
 
 classifiers = ["License :: OSI Approved :: MIT License"]
 
-[project.scripts]
-bench = "benchmarks.scripts.__main__:app"
-profile = "scripts.__main__:app"
-
 [dependency-groups]
 dev = [
   "basedpyright>=1.39.10",

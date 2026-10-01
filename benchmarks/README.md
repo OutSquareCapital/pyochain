@@ -125,7 +125,7 @@ With autosave:
 
 ### sortedcontainers vs pyochain
 
-For these benchmarks in particular, run `uv run bench-plots`, and add `--help` for more informations.
+For these benchmarks in particular, run `uv run -m benchmarks`, and add `--help` for more informations.
 
 ---
 
