@@ -40,16 +40,18 @@ pub trait PySortedIter<T>: PyFrozenClass + Deref<Target = T>
 where
     T: SortedNext,
 {
-    /// The method that is effectively called by Python as the `tp_iternext` body.
+    /// The method that is effectively called by Python as the `tp_iternext` body.\
+    /// We use `Option::unwrap_unchecked` to make `Borrowed::from_ptr_or_opt` act like `Borrowed::from_ptr_unchecked`, which is a private `Pyo3` method.
     /// # Safety
     /// The caller must ensure that:
-    /// - the Iterator is wrapped in a pyclass
-    /// - the function is called strictly from a context with a valid Python interpreter
+    /// - the Iterator is wrapped in a valid pyclass
+    /// - the function is called strictly from a context with a valid Python interpreter, from said pyclass.
     #[inline(always)]
     unsafe extern "C" fn tp_iternext(obj: *mut ffi::PyObject) -> *mut ffi::PyObject {
         unsafe {
             let py = Python::assume_attached();
-            Borrowed::from_ptr(py, obj)
+            Borrowed::from_ptr_or_opt(py, obj)
+                .unwrap_unchecked()
                 .cast_unchecked::<Self>()
                 .get()
                 .next()
