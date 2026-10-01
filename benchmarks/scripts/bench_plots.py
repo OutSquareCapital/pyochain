@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from enum import auto
 from typing import TYPE_CHECKING, Final
 
@@ -15,6 +14,7 @@ from .._utils import SIZES
 from ._common import GET_PATH, PREFIX, Lib, Method, PlEnum
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
 
 Sizes: Final[pl.Enum] = SIZES.iter().map(str).collect(pl.Enum)
