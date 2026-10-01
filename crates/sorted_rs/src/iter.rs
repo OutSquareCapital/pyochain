@@ -1,10 +1,10 @@
 use crate::{Bounds, Loc, bounds::AtomicLoc, inner::InnerData};
 use derive_more::From;
 use parking_lot::{RawRwLock, lock_api::RwLockReadGuard};
-use pyo3::ffi;
+use pyo3::{ffi, prelude::*};
+use pyo3_ext::prelude::*;
 use std::{ops::Deref, ptr};
 use tap::prelude::*;
-
 pub enum IterKind {
     Fwd,
     Rev,
@@ -24,6 +24,49 @@ impl IterKind {
         }
     }
 }
+/// Common iterator interface for all sorted iterators.
+/// # Safety
+/// All implementers must ensure that all pointers are correctly managed,\
+/// and that all call sites are restricted to contexts with a valid Python interpreter.
+pub unsafe trait SortedNext {
+    /// Concrete logic of the python `Iterator`.
+    /// # Safety
+    /// The caller must ensure that the Iterator is wrapped in a pyclass.
+    unsafe fn next(&self) -> *mut ffi::PyObject;
+}
+/// Trait for the Pyclasses that effectively wrap implementors of `SortedNext`.\
+/// You can consider `SortedNext` as the "logic provider" from rust and `PySortedIter` as the "interface provider" for Python.
+pub trait PySortedIter<T>: PyFrozenClass + Deref<Target = T>
+where
+    T: SortedNext,
+{
+    /// The method that is effectively called by Python as the `tp_iternext` body.
+    /// # Safety
+    /// The caller must ensure that:
+    /// - the Iterator is wrapped in a pyclass
+    /// - the function is called strictly from a context with a valid Python interpreter
+    #[inline(always)]
+    unsafe extern "C" fn tp_iternext(obj: *mut ffi::PyObject) -> *mut ffi::PyObject {
+        unsafe {
+            let py = Python::assume_attached();
+            Borrowed::from_ptr(py, obj)
+                .cast_unchecked::<Self>()
+                .get()
+                .next()
+        }
+    }
+    fn install(py: Python<'_>) {
+        unsafe {
+            let ty = Self::type_object_raw(py);
+            (*ty).tp_iternext = Some(Self::tp_iternext);
+            ffi::PyType_Modified(ty);
+        }
+    }
+}
+
+/// Wrapper type to hold a pointer to the inner data of a sorted collection.
+/// Allow fast iteration without `RwLock` overhead.\
+/// This is (as of now) the only way to even COMPETE with sortedcontainers iterator.
 #[derive(Debug, From)]
 pub struct IterInner(*const InnerData);
 
@@ -97,11 +140,9 @@ impl IterBoundedRev {
     }
 }
 
-impl Iter {
-    /// # Safety
-    /// The caller must ensure that the Iterator is wrapped in a pyclass.
+unsafe impl SortedNext for Iter {
     #[inline(always)]
-    pub unsafe fn next(&self) -> *mut ffi::PyObject {
+    unsafe fn next(&self) -> *mut ffi::PyObject {
         let data = unsafe { self.0.deref() };
         let (pos, idx) = self.1.load();
 
@@ -122,11 +163,9 @@ impl Iter {
     }
 }
 
-impl IterRev {
-    /// # Safety
-    /// The caller must ensure that the Iterator is wrapped in a pyclass.
+unsafe impl SortedNext for IterRev {
     #[inline(always)]
-    pub unsafe fn next(&self) -> *mut ffi::PyObject {
+    unsafe fn next(&self) -> *mut ffi::PyObject {
         let data = unsafe { self.0.deref() };
         let (pos, idx) = self.1.load();
 
@@ -150,11 +189,9 @@ impl IterRev {
     }
 }
 
-impl IterBounded {
-    /// # Safety
-    /// The caller must ensure that the Iterator is wrapped in a pyclass.
+unsafe impl SortedNext for IterBounded {
     #[inline(always)]
-    pub unsafe fn next(&self) -> *mut ffi::PyObject {
+    unsafe fn next(&self) -> *mut ffi::PyObject {
         let data = unsafe { self.0.deref() };
         let (pos, idx) = self.1.load();
         let max = self.2;
@@ -177,11 +214,9 @@ impl IterBounded {
     }
 }
 
-impl IterBoundedRev {
-    /// # Safety
-    /// The caller must ensure that the Iterator is wrapped in a pyclass.
+unsafe impl SortedNext for IterBoundedRev {
     #[inline(always)]
-    pub unsafe fn next(&self) -> *mut ffi::PyObject {
+    unsafe fn next(&self) -> *mut ffi::PyObject {
         let data = unsafe { self.0.deref() };
         let min = self.1;
         let (pos, idx) = self.2.load();
