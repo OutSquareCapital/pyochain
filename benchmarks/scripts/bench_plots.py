@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import StrEnum, auto
+from enum import auto
 from typing import Final
 
 import plotly.express as px
@@ -11,17 +11,9 @@ import polars as pl
 from pyochain import Iter
 
 from .._utils import SIZES
-from ._common import GET_PATH, PREFIX, Method
+from ._common import GET_PATH, PREFIX, Lib, Method, PlEnum
 
 Sizes: Final[pl.Enum] = SIZES.iter().map(str).collect(pl.Enum)
-
-
-class PlEnum(StrEnum):
-    """Base class for enums that can be used as polars expressions."""
-
-    def pl(self) -> pl.Expr:
-        """Return a polars expression for the enum value."""
-        return pl.col(self.value)
 
 
 class Cols(PlEnum):
@@ -31,13 +23,6 @@ class Cols(PlEnum):
     Run = auto()
     Relative = auto()
     Lib = auto()
-
-
-class Lib(PlEnum):
-    """Libraries used in the benchmarks."""
-
-    Pyochain = auto()
-    SortedContainers = auto()
 
 
 def main(method: Method, *, plot: bool, show: bool) -> None:

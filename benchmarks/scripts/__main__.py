@@ -15,12 +15,28 @@ MethodArg = Annotated[str, tp.Argument(help="Benchmark method name")]
 def run(
     method: MethodArg,
     repeat: Annotated[int, tp.Option(help="How many time the benchmark is run")] = 1,
+    *,
+    calibrate: Annotated[
+        bool,
+        tp.Option(
+            help="Run original sortedcontainers with pyochain for relative comparison"
+        ),
+    ] = False,
 ) -> None:
-    """Run a benchmark x time."""
+    """Run a benchmark x time.
+
+    The relative speed is compared to a median value across runs for `sortedcontainers`.
+
+    If don't already have saved results for it, make sur to use the `--calibrate` option.
+    """
     from . import bench_run
     from ._common import check_method
 
-    return check_method(method).and_then(lambda m: bench_run.run(m, repeat)).unwrap()
+    return (
+        check_method(method)
+        .and_then(lambda m: bench_run.run(m, repeat, calibrate=calibrate))
+        .unwrap()
+    )
 
 
 @app.command()
