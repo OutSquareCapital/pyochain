@@ -27,7 +27,7 @@ def run(
 
     The relative speed is compared to a median value across runs for `sortedcontainers`.
 
-    If don't already have saved results for it, make sur to use the `--calibrate` option.
+    If you don't already have saved results for it, make sure to use the `--calibrate` option.
     """
     from . import bench_run
     from ._common import check_method
