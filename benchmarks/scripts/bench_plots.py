@@ -133,6 +133,5 @@ def _selected_cols() -> Sequence[pl.Expr]:
         stat("median"),
         stat("stddev"),
         stat("total"),
-        Cols.Run.pl(),
         commit_infos("id").alias(Cols.Commit),
     )
