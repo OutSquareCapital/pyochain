@@ -14,7 +14,7 @@ MethodArg = Annotated[str, tp.Argument(help="Benchmark method name")]
 @app.command()
 def run(
     method: MethodArg,
-    repeat: Annotated[int, tp.Option(help="How many time the benchmark is run")] = 1,
+    repeat: Annotated[int, tp.Option(help="How many times the benchmark is run")] = 1,
     *,
     calibrate: Annotated[
         bool,
