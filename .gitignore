@@ -24,3 +24,5 @@ target/
 t.py
 # Ignore pytest-benchmark's generated files
 .benchmarks/
+# flamegraph generated files
+profile.json.gz
