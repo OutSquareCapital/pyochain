@@ -35,7 +35,8 @@ ignore = [
   "unnecessary-map",
   "lambda-assignment",
   "p-print",
-  "boolean-positional-value-in-call"
+  "boolean-positional-value-in-call",
+  "start-process-with-partial-path"
 ]
 
 preview = true
