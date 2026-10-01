@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import auto
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import plotly.express as px
 import polars as pl
@@ -12,6 +13,9 @@ from pyochain import Iter
 
 from .._utils import SIZES
 from ._common import GET_PATH, PREFIX, Lib, Method, PlEnum
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 Sizes: Final[pl.Enum] = SIZES.iter().map(str).collect(pl.Enum)
 
@@ -23,6 +27,7 @@ class Cols(PlEnum):
     Run = auto()
     Relative = auto()
     Lib = auto()
+    Commit = auto()
 
 
 def main(method: Method, *, plot: bool, show: bool) -> None:
@@ -40,7 +45,7 @@ def _absolute_plot(df: pl.DataFrame, method: str) -> None:
     return px.line(  # pyright: ignore[reportUnknownMemberType]
         df,
         title=f"{method}: absolute speed across runs",
-        x=Cols.Run,
+        x=Cols.Commit,
         y=Lib.Pyochain,
         color=Cols.Size,
         log_y=True,
@@ -54,7 +59,7 @@ def _relative_plot(df: pl.DataFrame, method: str) -> None:
         .line(  # pyright: ignore[reportUnknownMemberType]
             df,
             title=f"{method}: speedup of pyochain vs sortedcontainers across runs",
-            x=Cols.Run,
+            x=Cols.Commit,
             y=Cols.Relative,
             color=Cols.Size,
             template="plotly_dark",
@@ -65,31 +70,11 @@ def _relative_plot(df: pl.DataFrame, method: str) -> None:
 
 
 def _get_df(method: str) -> pl.DataFrame:
-    benchmark = pl.col("benchmarks").list.explode().struct.field
-    stat = benchmark("stats").struct.field
     param = pl.col("param").str.split("-").list
-    selected_cols = (
-        benchmark("fullname"),
-        benchmark("name"),
-        benchmark("param"),
-        stat("min"),
-        stat("max"),
-        stat("median"),
-        stat("stddev"),
-        stat("total"),
-    )
+    cols = _selected_cols()
     return (
         Iter(GET_PATH.glob("*.json"))
-        .sort_by(lambda path: path.stat().st_mtime)
-        .iter()
-        .map(
-            lambda path: (
-                pl
-                .read_json(path)
-                .lazy()
-                .select(*selected_cols, pl.lit(path.stem.split("_")[0]).alias(Cols.Run))
-            )
-        )
+        .map(lambda path: _extract_json(path).select(cols))
         .collect(pl.concat)
         .filter(
             pl
@@ -104,10 +89,13 @@ def _get_df(method: str) -> pl.DataFrame:
             param.first().cast(Sizes).alias(Cols.Size),
             "min",
             param.last().cast(Lib).alias(Cols.Lib),
+            Cols.Commit,
         )
-        .collect()
-        .pivot(Cols.Lib, index=(Cols.Run, Cols.Size))
-        .lazy()
+        .pivot(
+            Cols.Lib,
+            (Lib.SortedContainers, Lib.Pyochain),
+            index=(Cols.Run, Cols.Size, Cols.Commit),
+        )
         .with_columns(
             Lib.SortedContainers
             .pl()
@@ -118,5 +106,36 @@ def _get_df(method: str) -> pl.DataFrame:
             .alias(Cols.Relative),
         )
         .sort(Cols.Run, Cols.Size)
+        .group_by(Cols.Commit, Cols.Size, maintain_order=True)
+        .agg(pl.selectors.numeric().median().name.keep())
         .collect()
+    )
+
+
+def _extract_json(path: Path) -> pl.LazyFrame:
+    splitted = path.stem.split("_")
+    return (
+        pl
+        .read_json(path)
+        .lazy()
+        .with_columns(
+            pl.lit(splitted[0]).alias(Cols.Run), pl.lit(splitted[1]).alias(Cols.Commit)
+        )
+    )
+
+
+def _selected_cols() -> Sequence[pl.Expr]:
+    benchmark = pl.col("benchmarks").list.explode().struct.field
+    stat = benchmark("stats").struct.field
+    return (
+        benchmark("fullname"),
+        benchmark("name"),
+        benchmark("param"),
+        stat("min"),
+        stat("max"),
+        stat("median"),
+        stat("stddev"),
+        stat("total"),
+        Cols.Run.pl(),
+        Cols.Commit.pl(),
     )
