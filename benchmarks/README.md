@@ -3,6 +3,12 @@
 This folder contains `pytest-benchmark`-based micro-benchmarks for the public
 Python API.
 
+Before running any benchmark, ensure you have built the project with the dedicated profile:
+
+```shell
+uv run maturin develop --uv --profile profiling
+```
+
 ## Pytest
 
 ### Useful commands
@@ -100,16 +106,16 @@ uv run pytest-benchmark compare `
 
 ### Saved format
 
-Saved runs go under `.benchmarks/<platform-python>/` by default, for example:
+With specific name:
 
 ```text
-.benchmarks/Windows-CPython-3.14-64bit/0001_iter-sizes.json
+.benchmarks/<platform-python>/<prefix_id>_<name>.json
 ```
 
-or with autosave:
+With autosave:
 
 ```text
-.benchmarks/Windows-CPython-3.14-64bit/0001_<commit>_<timestamp>.json
+.benchmarks/<platform-python>/<prefix_id>_<commit>_<timestamp>.json
 ```
 
 - `--benchmark-save` and `--benchmark-autosave` save JSON benchmark reports
@@ -119,22 +125,7 @@ or with autosave:
 
 ### sortedcontainers vs pyochain
 
-For these benchmarks in particular, run the following command.
-
-`<test_name>` is the name of the test function you want to run, and `<name>` is the function with prefix `test_` stripped off, e.g `test_init` and `init` respectively.
-
-```shell
-uv run maturin develop --release --uv;
-uv run pytest;
-uv run pytest benchmarks/test_sorted.py::<test_name> `
-    --benchmark-only `
-    --benchmark-warmup=true `
-    --benchmark-disable-gc `
-    --benchmark-group-by=param:size `
-    --benchmark-autosave `
-    --benchmark-storage=file://.benchmarks/sortedlist/;
-uv run scripts/bench_plots.py <name>
-```
+For these benchmarks in particular, run `uv run bench-plots`, and add `--help` for more informations.
 
 ---
 

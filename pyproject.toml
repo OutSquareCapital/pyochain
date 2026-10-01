@@ -10,7 +10,7 @@ dependencies = []
 classifiers = ["License :: OSI Approved :: MIT License"]
 
 [project.scripts]
-bench-plots = "benchmarks.scripts.__main__:app"
+bench = "benchmarks.scripts.__main__:app"
 profile = "scripts.__main__:app"
 
 [dependency-groups]

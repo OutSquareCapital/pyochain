@@ -1,29 +1,19 @@
 """Benchmark plotting script."""
 
-import platform
-import sys
+from __future__ import annotations
+
 from enum import StrEnum, auto
-from pathlib import Path
 from typing import Final
 
 import plotly.express as px
 import polars as pl
-from rich.console import Console
-from rich.text import Text
 
-from pyochain import Iter, Vec
+from pyochain import Iter
 
-from .. import test_sorted
 from .._utils import SIZES
+from ._common import GET_PATH, PREFIX, Method
 
-CONSOLE = Console()
-PLATFORM_DIR: Final[str] = (
-    f"{platform.system()}-CPython-{sys.version_info.major}.{sys.version_info.minor}-{platform.architecture()[0]}"
-)
-PATH: Final[Path] = Path(".benchmarks", "sortedlist", PLATFORM_DIR)
-"""Path to the benchmark results directory."""
 Sizes: Final[pl.Enum] = SIZES.iter().map(str).collect(pl.Enum)
-PREFIX = "test_"
 
 
 class PlEnum(StrEnum):
@@ -50,9 +40,8 @@ class Lib(PlEnum):
     SortedContainers = auto()
 
 
-def main(method: str, *, plot: bool, show: bool) -> None:
+def main(method: Method, *, plot: bool, show: bool) -> None:
     """Read benchmark data for one method, compute ratios, and generate plots."""
-    method = _check_method(method)
     df = _get_df(method)
     if show:
         _ = pl.Config().set_tbl_hide_column_data_types(True)
@@ -60,33 +49,6 @@ def main(method: str, *, plot: bool, show: bool) -> None:
     if plot:
         _absolute_plot(df, method)
         _relative_plot(df, method)
-
-
-def _check_method(method: str) -> str:
-    available_methods = _get_test_funcs()
-    if not available_methods.contains(method):
-        methods = available_methods.iter().map(str).map(lambda m: " - " + m).join("\n")
-        txt = (
-            Text(
-                f"Error: Method '{method}' not found in benchmark tests.\n",
-                style="bold red",
-            )
-            .append("\nAvailable methods:\n", style="bold yellow")
-            .append(methods, style="bold green")
-        )
-        CONSOLE.print(txt)
-        sys.exit(1)
-    else:
-        return method
-
-
-def _get_test_funcs() -> Vec[str]:
-    return (
-        Iter(test_sorted.__dict__)
-        .filter(lambda name: name.startswith(PREFIX))
-        .map(lambda name: name.removeprefix(PREFIX))
-        .sort()
-    )
 
 
 def _absolute_plot(df: pl.DataFrame, method: str) -> None:
@@ -132,7 +94,7 @@ def _get_df(method: str) -> pl.DataFrame:
         stat("total"),
     )
     return (
-        Iter(PATH.glob("*.json"))
+        Iter(GET_PATH.glob("*.json"))
         .sort_by(lambda path: path.stat().st_mtime)
         .iter()
         .map(
