@@ -76,7 +76,11 @@ def _get_df(method: str) -> pl.DataFrame:
         .enumerate()
         .map_star(
             lambda idx, path: (
-                pl.read_json(path).lazy().select(*cols, pl.lit(idx).alias(Cols.Run))
+                pl
+                .read_json(path)
+                .lazy()
+                .select(cols)
+                .with_columns(pl.lit(idx).alias(Cols.Run))
             )
         )
         .collect(pl.concat)
