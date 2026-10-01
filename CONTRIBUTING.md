@@ -83,6 +83,15 @@ uv run pytest
 
 If you need a quick compile check, you can run `cargo clippy --workspace`, but unless it's for sharing it to an agent, it's not useful, since it won't be runnable.
 
+Each commit should be prefixed with one of the following tags:
+
+- `enh` => enhancement, improved typing, API documentation, etc...
+- `fix` => bug fix, logical error correction, typo, etc...
+- `refactor` => code refactoring, no functional change
+- `feat` => new feature
+- `chore` => maintenance task, CI, build, dev documentation, etc...
+- `perf` => performance improvement, no behavior change
+
 ## Tests and quality checks
 
 Before any pull request, or commit to the master branch, you need to ensure that all checks pass. You can run them once with the following command:
