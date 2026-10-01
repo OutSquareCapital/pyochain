@@ -1,10 +1,7 @@
-use std::{
-    ops::Deref,
-    sync::{Mutex, MutexGuard},
-};
+use std::sync::{Mutex, MutexGuard};
 
 use crate::{abc, traits::IntoInit};
-use derive_more::Constructor;
+use derive_more::{Constructor, Deref};
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -46,21 +43,16 @@ type SliceArgs<'py> = (
 );
 impl<'py> PyInit<'py, PySlice, SliceArgs<'py>> for PySlice {
     fn init(py: Python<'py>, args: SliceArgs<'py>) -> PyResult<Bound<'py, Self>> {
-        let (start, stop, step) = args;
-        PySlice::type_object(py)
-            .call1((start, stop, step))
-            .map(|slice| unsafe { slice.cast_into_unchecked::<PySlice>() })
+        Self::type_object(py)
+            .call1(args)
+            .map(|slice| unsafe { slice.cast_into_unchecked::<Self>() })
     }
 }
-impl Deref for SliceView {
-    type Target = Py<PySequence>;
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-#[derive(Constructor)]
+
+#[derive(Constructor, Deref)]
 #[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct SliceView {
+    #[deref]
     #[pyo3(get)]
     inner: Py<PySequence>,
     range: Mutex<Either<Py<PyRange>, OpenRange>>,
