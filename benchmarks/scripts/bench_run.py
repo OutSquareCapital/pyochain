@@ -32,7 +32,7 @@ def _inner_run(method: Method, *, calibrate: bool) -> None:
         _bench_arg("autosave"),
         _bench_arg(f"storage=file://{SAVE_PATH.as_posix()}"),
     ]
-    if calibrate:
+    if not calibrate:
         args.extend(("-k", Lib.Pyochain))
     _ = subprocess.run(args, check=True)
 
