@@ -6,6 +6,8 @@ This document outlines the repository structure, coding standards, and contribut
 
 ## Repository overview
 
+NOTE: The project evolve quickly, so this section is often outdated. It can be useful as a rough idea when first exploring the repository, but for accurate information, refer to the actual source code, or raise an issue if you find something unclear/deserves to be clearly documented.
+
 ### Python API and typing
 
 All the stubs are located in the `pyochain` folder.
@@ -41,49 +43,6 @@ The actual source code implementation lives in the `src` folder, with the follow
 - [ruff.toml](ruff.toml) — Ruff linting and formatting configuration.
 - [zensical.toml](zensical.toml) — documentation site configuration.
 
-## Stubs Docstrings
-
-docstrings should follow the format below.
-
-The code in the `examples` section will be automatically part of the test suite.
-
-We use code blocks instead of doctests, so write them just like you would in a classic pytest file, i.e assertions.
-
-````python
-def my_function(param1: int, param2: str) -> bool:
-    """One liner description of what the function does.
-
-    Additional explanations if needed.
-
-    List of points:
-        - Point 1
-        - Point 2
-        - Point 3
-
-    Args:
-        param1 (int): Description.
-        param2 (str): Description.
-
-    Warning:
-        Description of the warning.
-
-    Note:
-        Description of the note.
-
-    Tip:
-        Description of the tip.
-
-    Returns:
-        bool: Description of the return value.
-
-    Examples:
-        ```python
-        assert my_function(5, "test")
-        ```
-    """
-    return True
-````
-
 ## Setup
 
 After cloning the repo, set up the development environment (the project uses `uv` for both Python and Rust).
@@ -113,54 +72,23 @@ Example of my current Zed setup:
   },
 ```
 
-### Building the Rust extension
+### Usual workflow
 
-For development mode (fast compile, no optimizations):
-
-```bash
-uv run maturin develop --uv
-```
-
-For benchmarking (optimized, slower compile):
+The command you will run most often is the following, which will build the package in development mode and run the tests:
 
 ```bash
-uv run maturin develop --uv --profile profiling
+uv run maturin develop --uv;
+uv run pytest
 ```
 
-Prior to a release, to check correct documentation generation, run the build tool:
-
-```bash
-.\target\release\pyochain-build.exe
-```
-
-If you are working on the build tool itself, you can build/run it directly with cargo:
-
-```bash
-cargo run -p pyochain-build
-cargo run --release -p pyochain-build
-cargo build -p pyochain-build
-cargo build --release -p pyochain-build
-```
-
-To force a complete rebuild (clears all Rust artifacts):
-
-```bash
-cargo clean
-uv run maturin develop --uv
-```
+If you need a quick compile check, you can run `cargo clippy --workspace`, but unless it's for sharing it to an agent, it's not useful, since it won't be runnable.
 
 ## Tests and quality checks
 
-Before committing, ensure all checks pass.
-
-### type checking/linting/formatting
-
-If `uv run -m scripts.check_docstrings` fails, don't worry.
-
-`sdsort` will re-order the python stubs depending on various rules, so don't be surprised if your code moves around a bit.
+Before any pull request, or commit to the master branch, you need to ensure that all checks pass. You can run them once with the following command:
 
 ```bash
-uv run cargo clippy --fix --allow-dirty --allow-staged --workspace;
+cargo clippy --fix --allow-dirty --allow-staged --workspace;
 cargo fmt --all;
 uv run sdsort . --stubs;
 uv run ruff check . --fix --unsafe-fixes;
@@ -172,24 +100,46 @@ uv run pydoclint pyochain/**/*.pyi;
 cargo run --release -p pyochain-build
 ```
 
+Note that `sdsort` will re-order the python stubs depending on various rules, so don't be surprised if your code moves around a bit.
+
 If you need to fix a single lint rule for rust:
 
-```shell
+```bash
 uv run cargo clippy --fix --allow-dirty --workspace -- -A clippy::all -A clippy::pedantic -W clippy::<rule_name>
 ```
 
-### tests
+Since clippy is in pedantic mode, I recommend to use it instead of cargo for rust-analyzer.
+
+## Documentation
+
+### Stubs Docstrings
+
+docstrings should follow the google format. See more information on [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings).
+
+The code in the `examples` section will be automatically part of the test suite.
+
+We use code blocks instead of doctests, which means that the whole pytest ecosystem is available, which can be handy for expected failures.
+
+See [this file](pyochain/abc/_iterator.pyi) for a practical reference for documentation style.
+
+### Automatic generation
+
+Prior to a release, to check correct documentation generation, or to build the tool itself, you can run the following commands:
 
 ```bash
-uv run pytest
+cargo run -p pyochain-build
+cargo run --release -p pyochain-build
+cargo build -p pyochain-build
+cargo build --release -p pyochain-build
 ```
 
-### Building docs
+### Website build
 
 To build and serve the documentation locally, run the command below.
+
 Note that the `-c` flag is necessary, has `zensical` still has various issues with caching and will give inconsistent results with it.
 
-```shell
+```bash
 uv run zensical build -c
 ```
 
@@ -197,19 +147,14 @@ Then open your browser with the [site](site/index.html) to view the generated do
 
 ### Benchmarks
 
-Benchmarks are located in [tests/benchmarks/](tests/benchmarks) and use `pytest-benchmark`.
-See [tests/benchmarks/README.md](tests/benchmarks/README.md) for details on running and interpreting benchmarks.
-
-```shell
-uv run pytest tests/benchmarks --benchmark-only --benchmark-warmup=True --benchmark-group-by=<name, param:<size>, group>
-```
+See [the readme](benchmarks/README.md) for more information on running and saving benchmarks.
 
 ## Contributing workflow
 
 - Create a branch per feature/fix and keep commits focused and descriptive.
 - Run all quality checks locally before opening a pull request.
 - Include tests or doctest examples for behavior changes whenever possible.
-- For Rust changes, consider adding benchmarks to verify performance impact.
+- For Rust changes, consider adding benchmarks to verify performance impact when pertinent.
 
 ## Release process
 
