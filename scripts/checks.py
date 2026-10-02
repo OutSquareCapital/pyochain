@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import StrEnum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Self
 
 from rich.console import Console
 from rich.text import Text
 
-from pyochain import Err, Null, Ok, Option, Result, Seq, Some, Vec
+from pyochain import Err, Iter, Null, Ok, Option, Result, Some, Vec
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -19,19 +20,7 @@ if TYPE_CHECKING:
 
 CACHE: Final[Path] = Path(".cache", "pyochain-check")
 CONSOLE: Final[Console] = Console()
-
-
-@dataclass(slots=True)
-class Command:
-    """A command to run: base args, plus the flags specific to check mode and fix mode."""
-
-    base: str
-    check_flags: str = ""
-    fix_flags: str = ""
-
-    def command(self, *, fix: bool) -> Seq[str]:  # ruff: ignore[undocumented-public-method]
-        flags = self.fix_flags if fix else self.check_flags
-        return Seq(*self.base.split(), *flags.split())
+STUBS_PATH: Final[Path] = Path("pyochain")
 
 
 def run(*, fix: bool, slow: bool) -> int:
@@ -42,9 +31,9 @@ def run(*, fix: bool, slow: bool) -> int:
     """
     start = int(CACHE.read_text(encoding="utf-8")) if CACHE.exists() else 0
     return (
-        _commands(slow=slow)
+        _all_commands(slow=slow)
         .iter()
-        .map(lambda cmd: cmd.command(fix=fix))
+        .map(lambda cmd: cmd.build(fix=fix))
         .enumerate()
         .skip(start)
         .find_map(_run_tool)
@@ -75,27 +64,72 @@ def _run_tool(args: tuple[int, PyoSequence[str]]) -> Option[Result[None, str]]:
             return Some(Err(str(index)))
 
 
-def _commands(*, slow: bool) -> PyoSequence[Command]:
+def _all_commands(*, slow: bool) -> PyoSequence[_CommandBuilder]:
     commands = _fast_commands()
     if slow:
         commands.extend(_slow_commands())
     return commands
 
 
-def _fast_commands() -> Vec[Command]:
+def _fast_commands() -> Vec[_CommandBuilder]:
+    # NOTE: pydoclint next release will handle stubs files natively.
+    stubs_files = Iter(STUBS_PATH.rglob("*.pyi")).map(str)
     return Vec(
-        Command("cargo fmt --all", check_flags="-- --check"),
-        Command("uv run sdsort . --stubs", check_flags="--check"),
-        Command("uv run ruff check .", fix_flags="--fix --unsafe-fixes"),
-        Command("uv run ruff format . --preview", check_flags="--check"),
-        Command("uv run pydoclint pyochain/**/*.pyi"),
-        Command("uv run tombi format", check_flags="--check"),
-        Command("uv run tombi lint"),
+        _Tools.FMT.do("--all").check_args("--", "--check"),
+        _Tools.SDSORT.do(".", "--stubs").check_args("--check"),
+        _Tools.RUFF.do("check", ".").fix_args("--fix", "--unsafe-fixes"),
+        _Tools.RUFF.do("format", ".", "--preview").check_args("--check"),
+        _Tools.PYDOCLINT.do(*stubs_files),
+        _Tools.TOMBI.do("format").check_args("--check"),
+        _Tools.TOMBI.do("lint"),
     )
 
 
-def _slow_commands() -> Sequence[Command]:
+def _slow_commands() -> Sequence[_CommandBuilder]:
     return (
-        Command("cargo clippy --workspace", fix_flags="--fix --allow-dirty"),
-        Command("uv run basedpyright ."),
+        _Tools.CLIPPY.do("--workspace").fix_args("--fix", "--allow-dirty"),
+        _Tools.BASEDPYRIGHT.do("."),
     )
+
+
+@dataclass(slots=True)
+class _CommandBuilder:
+    """A command to run."""
+
+    args: Vec[str]
+    """Arguments always passed."""
+    _check_args: Vec[str] = field(default_factory=Vec[str])
+    """Arguments passed when running in check mode."""
+    _fix_args: Vec[str] = field(default_factory=Vec[str])
+    """Arguments passed when running in fix mode."""
+
+    def check_args(self, *args: str) -> Self:
+        self._check_args.extend(args)
+        return self
+
+    def fix_args(self, *args: str) -> Self:
+        self._fix_args.extend(args)
+        return self
+
+    def build(self, *, fix: bool) -> PyoSequence[str]:
+        self.args.extend(self._fix_args if fix else self._check_args)
+        return self.args
+
+
+class _Tools(StrEnum):
+    """Tools used for code checks."""
+
+    RUFF = auto()
+    PYDOCLINT = auto()
+    TOMBI = auto()
+    SDSORT = auto()
+    BASEDPYRIGHT = auto()
+    FMT = auto()
+    CLIPPY = auto()
+
+    def do(self, *args: str) -> _CommandBuilder:
+        match self:
+            case self.FMT | self.CLIPPY:
+                return _CommandBuilder(Vec("cargo", self, *args))
+            case py_tool:
+                return _CommandBuilder(Vec("uv", "run", py_tool, *args))
