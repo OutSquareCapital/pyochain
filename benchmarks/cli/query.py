@@ -1,17 +1,14 @@
-"""Benchmark plotting script."""
-
 from __future__ import annotations
 
 from enum import auto
 from typing import TYPE_CHECKING, Final
 
-import plotly.express as px
 import polars as pl
 
 from pyochain import Iter
 
 from .._utils import SIZES
-from ._common import GET_PATH, PREFIX, Lib, Method, PlEnum
+from ._common import GET_PATH, PREFIX, Lib, PlEnum
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -29,46 +26,7 @@ class Cols(PlEnum):
     Commit = auto()
 
 
-def main(method: Method, *, plot: bool, show: bool) -> None:
-    """Read benchmark data for one method, compute ratios, and generate plots."""
-    df = _get_df(method)
-    if show:
-        _ = pl.Config().set_tbl_hide_column_data_types(True)
-        df.show(-1)
-    if plot:
-        _absolute_plot(df, method)
-        _relative_plot(df, method)
-
-
-def _absolute_plot(df: pl.DataFrame, method: str) -> None:
-    return px.line(  # pyright: ignore[reportUnknownMemberType]
-        df,
-        title=f"{method}: absolute speed across runs",
-        x=Cols.Commit,
-        y=Lib.Pyochain,
-        color=Cols.Size,
-        log_y=True,
-        template="plotly_dark",
-    ).show()
-
-
-def _relative_plot(df: pl.DataFrame, method: str) -> None:
-    return (
-        px
-        .line(  # pyright: ignore[reportUnknownMemberType]
-            df,
-            title=f"{method}: speedup of pyochain vs sortedcontainers across runs",
-            x=Cols.Commit,
-            y=Cols.Relative,
-            color=Cols.Size,
-            template="plotly_dark",
-        )
-        .add_hline(y=1)
-        .show()
-    )
-
-
-def _get_df(method: str) -> pl.DataFrame:
+def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
     param = pl.col("param").str.split("-").list
     cols = _selected_cols()
     return (
@@ -80,7 +38,7 @@ def _get_df(method: str) -> pl.DataFrame:
                 .read_json(path)
                 .lazy()
                 .select(cols)
-                .with_columns(pl.lit(idx).alias(Cols.Run))
+                .with_columns(pl.lit(idx, pl.String).alias(Cols.Run))
             )
         )
         .collect(pl.concat)
@@ -114,9 +72,14 @@ def _get_df(method: str) -> pl.DataFrame:
             .alias(Cols.Relative),
         )
         .sort(Cols.Run, Cols.Size)
-        .group_by(Cols.Commit, Cols.Size, maintain_order=True)
-        .agg(pl.selectors.numeric().median().name.keep())
+        .pipe(lambda lf: _group_by_commit(lf) if agg_by_commit else lf)
         .collect()
+    )
+
+
+def _group_by_commit(lf: pl.LazyFrame) -> pl.LazyFrame:
+    return lf.group_by(Cols.Commit, Cols.Size, maintain_order=True).agg(
+        pl.selectors.numeric().median().name.keep()
     )
 
 

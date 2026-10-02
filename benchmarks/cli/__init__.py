@@ -1,6 +1,6 @@
 """Benchmarks scripts for pyochain."""
 
-from . import bench_plots, bench_run
+from . import bench_run, plots, query
 from ._common import check_method
 
-__all__ = ["bench_plots", "bench_run", "check_method"]
+__all__ = ["bench_run", "check_method", "plots", "query"]

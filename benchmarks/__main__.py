@@ -9,6 +9,7 @@ import typer as tp
 app = tp.Typer(name="bench", help="Run pytest-benchmark and analyze the results.")
 
 MethodArg = Annotated[str, tp.Argument(help="Benchmark method name")]
+GroupByCommitArg = Annotated[bool, tp.Option(help="Group results by commit`.")]
 
 
 @app.command()
@@ -39,20 +40,26 @@ def run(
 
 
 @app.command()
-def plot(
-    method: MethodArg,
-    *,
-    plot: Annotated[bool, tp.Option(help="Display interactive plots.")] = False,
-    show: Annotated[bool, tp.Option(help="Show tabular results in console.")] = False,
-) -> None:
-    """Compute ratios and render the plots for the selected group, compared to sortedcontainers."""
-    from .cli import bench_plots, check_method
+def plot(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> None:
+    """Plot the benchmark results with `plotly` for a given method."""
+    from .cli import check_method, plots, query
 
-    return (
-        check_method(method)
-        .map(lambda m: bench_plots.main(m, plot=plot, show=show))
-        .unwrap()
-    )
+    df = check_method(method).map(query.run, group_by_commit).unwrap()
+    x_axis = query.Cols.Commit if group_by_commit else query.Cols.Run
+    plots.absolute(df, method, x_axis)
+    plots.relative(df, method, x_axis)
+
+
+@app.command()
+def show(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> None:
+    """Show the benchmark results in the terminal for a given method."""
+    import polars as pl
+
+    from .cli import check_method, query
+
+    _ = pl.Config().set_tbl_hide_column_data_types(True)
+
+    return check_method(method).map(query.run, group_by_commit).unwrap().show(-1)
 
 
 if __name__ == "__main__":
