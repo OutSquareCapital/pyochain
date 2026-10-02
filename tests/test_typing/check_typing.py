@@ -83,9 +83,19 @@ def check_and_then_result() -> None:
     _ = assert_type(e, Result[Result[int, int], Result[int, int]])
 
 
-def _fn_str(x: Result[str, str]) -> Result[Result[str, str], Any]:
+def check_and_then_changes_error() -> None:
+    r = assert_type(Err(ValueError("")), Result[Any, ValueError])
+    out = r.and_then(_fn_changes_error)
+    _ = assert_type(out, Result[Dog, ValueError | KeyError])
+
+
+def _fn_str(x: Result[str, str]) -> Result[Result[str, str], Result[str, str]]:
     return Ok(x)
 
 
-def _fn_int(x: Result[int, int]) -> Result[Result[int, int], Any]:
+def _fn_int(x: Result[int, int]) -> Result[Result[int, int], Result[int, int]]:
     return Ok(x)
+
+
+def _fn_changes_error(_x: int) -> Result[Dog, KeyError]:
+    return Ok(Dog())

@@ -694,23 +694,16 @@ class ResultType[T, E](Pipe, Protocol):
     @overload
     def and_then[**P, T1, E1, E2, R](
         self: Result[T1, E1],
-        fn: Callable[Concatenate[T1, P], Result[R, E1]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Result[R, E1]: ...
-    @overload
-    def and_then[**P, T1, E1, E2, R](
-        self: Result[T1, E1],
         fn: Callable[Concatenate[T1, P], Result[R, E2]],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> Result[R, E2]: ...
+    ) -> Result[R, E1 | E2]: ...
     def and_then[**P, T1, E1, E2, R](
         self: Result[T1, E1],
         fn: Callable[Concatenate[T1, P], Result[R, E2]] | type[ResultType[Any, Any]],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> Result[R, E2]:
+    ) -> Result[R, E1 | E2]:
         """Calls `fn` if the result is [`Ok`], otherwise returns the [`Err`] value of `self`.
 
         This function can be used for control flow based on `Result` values.
