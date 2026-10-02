@@ -66,14 +66,15 @@ See below for the benchmark results, with the number of `args` in the left colum
 
 ### 📦 Build system
 
-- Added `x86_64` modern compilations targets. Should improve performance.
 - Added `panic="abort"` flag on release builds to reduce binary size and improve performance.
+- Improved caching of CI workflows for performance.
 
 ### 🛠️ Other improvements
 
 - **Website**: The return sections of the functions/methods docstrings is now correctly rendered thanks to @tecnolgd contribution in [#95](https://github.com/OutSquareCapital/pyochain/pull/95)
 
-- **Internal scripts**: Added a dedicated typer app to handle, analyze and plot benchmark results. Currently focused on `sortedcontainers` comparison, but can be extended to more in the future.
+- **Profiler scripts**: Added a dedicated typer app to handle, analyze and plot benchmark results. Currently focused on `sortedcontainers` comparison, but can be extended to more in the future.
+- **Dev check scripts**: Centralised the linting/formatting/etc... commands in a single entry point.
 
 ## [0.28.0] - 2026-08-31
 

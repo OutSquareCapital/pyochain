@@ -6,7 +6,7 @@ from typing import Annotated
 
 import typer as tp
 
-app = tp.Typer(name="profile", help="Profile a Python script with samply.")
+app = tp.Typer(name="profile", help="General dev tools.")
 
 
 # BUG: need to kill the terminal manually after the script is done. CTRL + C won't work otherwise.
@@ -26,6 +26,25 @@ def profile(
     from .profiler import profiler
 
     profiler(script, args or [])
+
+
+@app.command()
+def ci(
+    *,
+    fix: Annotated[
+        bool, tp.Option(help="apply autofixes instead of check-only")
+    ] = False,
+    slow: Annotated[
+        bool,
+        tp.Option(
+            help="run rust linting with clippy and python type checking with basedpyright"
+        ),
+    ] = False,
+) -> None:
+    """Run CI checks, with caching of the last failed step."""
+    from . import checks
+
+    checks.run(fix=fix, slow=slow)
 
 
 if __name__ == "__main__":

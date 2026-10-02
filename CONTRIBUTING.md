@@ -81,43 +81,13 @@ uv run maturin develop --uv;
 uv run pytest
 ```
 
-If you need a quick compile check, you can run `cargo clippy --workspace`, but unless it's for sharing it to an agent, it's not useful, since it won't be runnable.
+## linting/formatting/type checking
 
-Each commit should be prefixed with one of the following tags:
-
-- `enh` => enhancement, improved typing, API documentation, etc...
-- `fix` => bug fix, logical error correction, typo, etc...
-- `refactor` => code refactoring, no functional change
-- `feat` => new feature
-- `chore` => maintenance task, CI, build, dev documentation, etc...
-- `perf` => performance improvement, no behavior change
-
-## Tests and quality checks
-
-Before any pull request, or commit to the master branch, you need to ensure that all checks pass. You can run them once with the following command:
+Before any pull request, or commit to the master branch, you need to ensure that all checks pass. Run the following command for more informations:
 
 ```bash
-cargo clippy --fix --allow-dirty --allow-staged --workspace;
-cargo fmt --all;
-uv run sdsort . --stubs;
-uv run ruff check . --fix --unsafe-fixes;
-uv run ruff format . --preview;
-uv run tombi format;
-uv run tombi lint;
-uv run basedpyright .;
-uv run pydoclint pyochain/**/*.pyi;
-cargo run --release -p pyochain-build
+uv run -m scripts ci -help
 ```
-
-Note that `sdsort` will re-order the python stubs depending on various rules, so don't be surprised if your code moves around a bit.
-
-If you need to fix a single lint rule for rust:
-
-```bash
-uv run cargo clippy --fix --allow-dirty --workspace -- -A clippy::all -A clippy::pedantic -W clippy::<rule_name>
-```
-
-Since clippy is in pedantic mode, I recommend to use it instead of cargo for rust-analyzer.
 
 ## Documentation
 
@@ -133,7 +103,7 @@ See [this file](pyochain/abc/_iterator.pyi) for a practical reference for docume
 
 ### Automatic generation
 
-Prior to a release, to check correct documentation generation, or to build the tool itself, you can run the following commands:
+Prior to a release, to check correct documentation generation, or to build the tool itself, you can run one of the following commands:
 
 ```bash
 cargo run -p pyochain-build
@@ -164,6 +134,15 @@ See [the readme](benchmarks/README.md) for more information on running and savin
 - Run all quality checks locally before opening a pull request.
 - Include tests or doctest examples for behavior changes whenever possible.
 - For Rust changes, consider adding benchmarks to verify performance impact when pertinent.
+
+Each commit should be prefixed with one of the following tags:
+
+- `enh` => enhancement, improved typing, API documentation, etc...
+- `fix` => bug fix, logical error correction, typo, etc...
+- `refactor` => code refactoring, no functional change
+- `feat` => new feature
+- `chore` => maintenance task, CI, build, dev documentation, etc...
+- `perf` => performance improvement, no behavior change
 
 ## Release process
 
