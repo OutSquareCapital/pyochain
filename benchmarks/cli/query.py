@@ -38,7 +38,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
                 .read_json(path)
                 .lazy()
                 .select(cols)
-                .with_columns(pl.lit(idx, pl.String).alias(Cols.Run))
+                .with_columns(pl.lit(idx).alias(Cols.Run))
             )
         )
         .collect(pl.concat)
@@ -73,6 +73,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         )
         .sort(Cols.Run, Cols.Size)
         .pipe(lambda lf: _group_by_commit(lf) if agg_by_commit else lf)
+        .cast({Cols.Run: pl.String})
         .collect()
     )
 

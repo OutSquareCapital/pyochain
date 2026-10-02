@@ -86,7 +86,7 @@ uv run pytest
 Before any pull request, or commit to the master branch, you need to ensure that all checks pass. Run the following command for more informations:
 
 ```bash
-uv run -m scripts ci -help
+uv run -m scripts ci --help
 ```
 
 ## Documentation
