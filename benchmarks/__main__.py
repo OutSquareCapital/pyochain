@@ -9,7 +9,7 @@ import typer as tp
 app = tp.Typer(name="bench", help="Run pytest-benchmark and analyze the results.")
 
 MethodArg = Annotated[str, tp.Argument(help="Benchmark method name")]
-GroupByCommitArg = Annotated[bool, tp.Option(help="Group results by commit`.")]
+GroupByCommitArg = Annotated[bool, tp.Option(help="Group results by commit.")]
 
 
 @app.command()

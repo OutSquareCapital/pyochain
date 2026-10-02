@@ -34,8 +34,12 @@ class Command:
         return Seq(*self.base.split(), *flags.split())
 
 
-def run(*, fix: bool, slow: bool) -> None:
-    """Run all code checks in order, stopping at the first failure and caching the index of the failed check."""
+def run(*, fix: bool, slow: bool) -> int:
+    """Run all code checks in order, stopping at the first failure and caching the index of the failed check.
+
+    Returns:
+        int: 0 if all checks pass, 1 if a check fails.
+    """
     start = int(CACHE.read_text(encoding="utf-8")) if CACHE.exists() else 0
     return (
         _commands(slow=slow)
@@ -49,13 +53,15 @@ def run(*, fix: bool, slow: bool) -> None:
     )
 
 
-def _handle_result(result: Result[Option[None], str]) -> None:
+def _handle_result(result: Result[Option[None], str]) -> int:
     match result:
         case Err(index):
             CACHE.parent.mkdir(exist_ok=True)
             _ = CACHE.write_text(index, encoding="utf-8")
+            return 1
         case Ok(_):
             CACHE.unlink(missing_ok=True)
+            return 0
 
 
 def _run_tool(args: tuple[int, PyoSequence[str]]) -> Option[Result[None, str]]:

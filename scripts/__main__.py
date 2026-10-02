@@ -41,10 +41,14 @@ def ci(
         ),
     ] = False,
 ) -> None:
-    """Run CI checks, with caching of the last failed step."""
+    """Run CI checks, with caching of the last failed step.
+
+    Raises:
+        Exit: If a check fails or all checks pass, with the corresponding exit code.
+    """
     from . import checks
 
-    checks.run(fix=fix, slow=slow)
+    raise tp.Exit(checks.run(fix=fix, slow=slow))
 
 
 if __name__ == "__main__":
