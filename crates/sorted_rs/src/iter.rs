@@ -1,7 +1,7 @@
 use crate::{Bounds, Loc, bounds::AtomicLoc, inner::InnerData};
 use derive_more::Constructor;
 use parking_lot::{RawRwLock, lock_api::RwLockReadGuard};
-use pyo3::{ffi, prelude::*};
+use pyo3::{ffi, prelude::*, types::PyIterator};
 use pyo3_ext::prelude::*;
 use std::{ops::Deref, ptr};
 use tap::prelude::*;
@@ -62,6 +62,17 @@ where
             let ty = Self::type_object_raw(py);
             (*ty).tp_iternext = Some(Self::tp_iternext);
             ffi::PyType_Modified(ty);
+        }
+    }
+    #[inline(always)]
+    #[must_use]
+    /// Descriptor to wrap in `__next__` method of the pyclass.\
+    /// Note that this will only be called if you do `iter(list).__next__()`, not in hot loops or via `next(it)`.
+    fn py_next(slf: Bound<'_, Self>) -> Option<Bound<'_, PyAny>> {
+        unsafe {
+            slf.cast_into_unchecked::<PyIterator>()
+                .next()
+                .map(|res| res.unwrap_unchecked())
         }
     }
 }

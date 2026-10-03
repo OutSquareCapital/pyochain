@@ -10,6 +10,12 @@ macro_rules! impl_sorted_iter {
             #[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
             pub struct $pyiter($iter);
             impl iter::PySortedIter<$iter> for $pyiter {}
+            #[pymethods]
+            impl $pyiter {
+                fn __next__(slf: Bound<'_, Self>) -> Option<Bound<'_, PyAny>> {
+                    iter::PySortedIter::<$iter>::py_next(slf)
+                }
+            }
         )+
     };
 }
