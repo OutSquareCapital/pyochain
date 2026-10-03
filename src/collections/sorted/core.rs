@@ -22,11 +22,11 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         self.lock().repr::<Self>(py)
     }
-    fn __iter__<'py>(&self, py: Python<'py>) -> IterRes<'py> {
-        self.build_iter(py, IterKind::Fwd)
+    fn __iter__<'py>(slf: &Bound<'py, Self>) -> IterRes<'py> {
+        Self::build_iter(slf, IterKind::Fwd)
     }
-    fn __reversed__<'py>(&self, py: Python<'py>) -> IterRes<'py> {
-        self.build_iter(py, IterKind::Rev)
+    fn __reversed__<'py>(slf: &Bound<'py, Self>) -> IterRes<'py> {
+        Self::build_iter(slf, IterKind::Rev)
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.write().list_mut().bisect_left(value)
@@ -45,29 +45,28 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     }
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
-        &self,
-        py: Python<'py>,
+        slf: &Bound<'py, Self>,
         minimum: Option<Bound<'py, PyAny>>,
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
         reverse: bool,
     ) -> IterRes<'py> {
-        let bounds = self
+        let bounds = slf
+            .get()
             .lock()
             .list()
-            .irange_specs(py, minimum, maximum, inclusive)?;
-        self.build_iter(py, IterKind::from_bounds(bounds, reverse))
+            .irange_specs(slf.py(), minimum, maximum, inclusive)?;
+        Self::build_iter(slf, IterKind::from_bounds(bounds, reverse))
     }
     #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
     fn islice<'py>(
-        &self,
-        py: Python<'py>,
+        slf: &Bound<'py, Self>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
     ) -> IterRes<'py> {
-        let bounds = self.write().get_islice_specs(py, start, stop)?;
-        self.build_iter(py, IterKind::from_bounds(bounds, reverse))
+        let bounds = slf.get().write().get_islice_specs(slf.py(), start, stop)?;
+        Self::build_iter(slf, IterKind::from_bounds(bounds, reverse))
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.write().list_mut().reset(py, load)
@@ -81,17 +80,16 @@ where
 {
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(
-        &self,
-        py: Python<'py>,
+        slf: &Bound<'py, Self>,
         min_key: Option<Bound<'py, PyAny>>,
         max_key: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
         reverse: bool,
     ) -> IterRes<'py> {
-        let data = self.lock();
+        let data = slf.get().lock();
         let list = data.list();
         let bounds = Bounds::from_sorted(&list.1, &list.maxes, min_key, max_key, inclusive)?;
-        self.build_iter(py, IterKind::from_bounds(bounds, reverse))
+        Self::build_iter(slf, IterKind::from_bounds(bounds, reverse))
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.write().list_mut().bisect(key, Bisect::bisect_left)

@@ -1,5 +1,5 @@
 use crate::{Bounds, Loc, bounds::AtomicLoc, inner::InnerData};
-use derive_more::From;
+use derive_more::Constructor;
 use parking_lot::{RawRwLock, lock_api::RwLockReadGuard};
 use pyo3::{ffi, prelude::*};
 use pyo3_ext::prelude::*;
@@ -69,27 +69,32 @@ where
 /// Wrapper type to hold a pointer to the inner data of a sorted collection.
 /// Allow fast iteration without `RwLock` overhead.\
 /// This is (as of now) the only way to even COMPETE with sortedcontainers iterator.
-#[derive(Debug, From)]
-pub struct IterInner(*const InnerData);
+#[derive(Debug, Constructor)]
+pub struct IterInner {
+    /// Pointer to the `InnerData` of the sorted collection.
+    data: *const InnerData,
+    /// Keeps the collection alive so `data` stays valid.
+    _owner: Py<PyAny>,
+}
 
 unsafe impl Send for IterInner {}
 unsafe impl Sync for IterInner {}
-impl<T> From<RwLockReadGuard<'_, RawRwLock, T>> for IterInner
+impl<T> From<(RwLockReadGuard<'_, RawRwLock, T>, Py<PyAny>)> for IterInner
 where
     T: Deref<Target = InnerData> + Send + Sync + 'static,
 {
-    fn from(guard: RwLockReadGuard<'_, RawRwLock, T>) -> Self {
+    fn from((guard, owner): (RwLockReadGuard<'_, RawRwLock, T>, Py<PyAny>)) -> Self {
         guard
             .deref()
             .deref()
             .pipe(ptr::from_ref::<T::Target>)
-            .into()
+            .pipe(|data| Self::new(data, owner))
     }
 }
 impl IterInner {
     #[inline(always)]
     unsafe fn deref(&self) -> &InnerData {
-        unsafe { &*self.0 }
+        unsafe { &*self.data }
     }
 }
 

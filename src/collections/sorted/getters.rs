@@ -30,8 +30,9 @@ pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> {
         self.as_ref().write()
     }
     #[inline(always)]
-    fn build_iter<'py>(&self, py: Python<'py>, kind: IterKind) -> IterRes<'py> {
-        self.lock().pipe(|x| match kind {
+    fn build_iter<'py>(slf: &Bound<'py, Self>, kind: IterKind) -> IterRes<'py> {
+        let py = slf.py();
+        (slf.get().lock(), slf.clone().into_any().unbind()).pipe(|x| match kind {
             IterKind::Fwd => x
                 .conv::<Iter>()
                 .conv::<iter::SortedIter>()
