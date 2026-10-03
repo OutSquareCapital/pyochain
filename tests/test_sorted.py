@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pyochain import Range
-from pyochain.collections import SortedKeySet, SortedSet
+from pyochain.collections import SortedKeySet, SortedList, SortedSet
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -114,3 +114,10 @@ def test_empty_mut[T](
     _ = method(a)
     _ = pymethod(b)
     assert a == b
+
+
+def test_iterator_pointer() -> None:
+    # Can crash if we don't correctly handle references with unsafe impls
+    it = Range(10).pipe(SortedList).iter()
+    _ = it.collect(tuple)
+    _ = Range(10).pipe(SortedList).iter().collect(tuple)
