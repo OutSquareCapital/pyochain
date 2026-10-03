@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import multiprocessing
 from collections.abc import Callable, Iterable, Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import pytest
 from sortedcontainers import SortedList as SortedListPy
@@ -15,7 +15,18 @@ if TYPE_CHECKING:
     from _pytest.mark import ParameterSet
 
 type IntoIter[T] = Callable[[T], Iterator[object]]
-type IntoBoundedIter[T] = Callable[[T, int, int], Iterator[object]]
+
+
+class SliceFn[T](Protocol):
+    def __call__(
+        self,
+        it: T,
+        start: int,
+        stop: int,
+        reverse: bool = False,  # ruff: ignore[boolean-default-value-positional-argument]
+    ) -> Iterator[object]: ...
+
+
 type List = list[int] | SortedList[int] | SortedListPy[int]
 LIST_CLASSES = pytest.mark.parametrize(
     "cls",
@@ -31,6 +42,14 @@ def _method_param[T](cls: type[T], f: Callable[[T], object]) -> ParameterSet:
     return pytest.param(cls, f, id=f"{cls.__module__}.{cls.__name__}.{f.__name__}")
 
 
+def _list_slice(
+    lst: list[int], start: int, stop: int, *, reverse: bool = False
+) -> Iterator[int]:
+    it = iter(lst) if not reverse else reversed(lst)
+    return itertools.islice(it, start, stop)
+
+
+REVERSE_PARAM = pytest.mark.parametrize("reverse", (False, True))
 BOUNDED_PARAMS = pytest.mark.parametrize(
     ("cls", "f"),
     ((
@@ -38,7 +57,7 @@ BOUNDED_PARAMS = pytest.mark.parametrize(
         _method_param(SortedListPy, SortedListPy[int].islice),
         _method_param(SortedList, SortedList[int].irange),
         _method_param(SortedList, SortedList[int].islice),
-        pytest.param(list, itertools.islice),
+        pytest.param(list, _list_slice),
     )),
 )
 
@@ -71,17 +90,6 @@ def test_clear[T: List](cls: type[T], into_iter: IntoIter[T]) -> None:
         _ = next(it)
 
 
-@BOUNDED_PARAMS
-def test_bounded_clear[T: List](cls: type[T], f: IntoBoundedIter[T]) -> None:
-    length = 10
-    sl = cls(Range(length).iter().map(lambda i: 10**9 + i))
-    it = f(sl, 0, 10**9 + length)
-    _ = next(it)
-    sl.clear()
-    with pytest.raises(StopIteration):
-        _ = next(it)
-
-
 @LIST_CLASSES
 @INTO_ITER_PARAMS
 def test_pop[T: List](cls: type[T], into_iter: IntoIter[T]) -> None:
@@ -108,13 +116,26 @@ def test_clear_then_update[T: List](cls: type[T], into_iter: IntoIter[T]) -> Non
         _ = next(it)
 
 
+@REVERSE_PARAM
+@BOUNDED_PARAMS
+def test_bounded_clear[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
+    length = 10
+    sl = cls(Range(length).iter().map(lambda i: 10**9 + i))
+    it = f(sl, 0, 10**9 + length, reverse=reverse)
+    _ = next(it)
+    sl.clear()
+    with pytest.raises(StopIteration):
+        _ = next(it)
+
+
+@REVERSE_PARAM
 @BOUNDED_PARAMS
 def test_bounded_clear_then_update[T: List](
-    cls: type[T], f: IntoBoundedIter[T]
+    cls: type[T], f: SliceFn[T], *, reverse: bool
 ) -> None:
     length = 10
     sl = cls(Range(length).iter().map(lambda i: 10**9 + i))
-    it = f(sl, 0, 10**9 + length)
+    it = f(sl, 0, 10**9 + length, reverse=reverse)
     _ = next(it)
     sl.clear()
     _update(sl, [10**9 + length])
