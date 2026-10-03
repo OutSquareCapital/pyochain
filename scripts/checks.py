@@ -29,9 +29,10 @@ def run(*, fix: bool, slow: bool) -> int:
     Returns:
         int: 0 if all checks pass, 1 if a check fails.
     """
-    start = int(CACHE.read_text(encoding="utf-8")) if CACHE.exists() else 0
+    commands = _all_commands(slow=slow)
+    start = _start_index(commands.len())
     return (
-        _all_commands(slow=slow)
+        commands
         .iter()
         .map(lambda cmd: cmd.build(fix=fix))
         .enumerate()
@@ -40,6 +41,18 @@ def run(*, fix: bool, slow: bool) -> int:
         .transpose()
         .pipe(_handle_result)
     )
+
+
+def _start_index(commands_nb: int) -> int:
+    if not CACHE.exists():
+        return 0
+    else:
+        cached = int(CACHE.read_text(encoding="utf-8"))
+        if cached < commands_nb:
+            _ = CACHE.unlink(missing_ok=True)
+            return cached
+        else:
+            return 0
 
 
 def _handle_result(result: Result[Option[None], str]) -> int:

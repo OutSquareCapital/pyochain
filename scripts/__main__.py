@@ -32,16 +32,21 @@ def profile(
 def ci(
     *,
     fix: Annotated[
-        bool, tp.Option(help="apply autofixes instead of check-only")
+        bool, tp.Option(help="Apply autofixes instead of check-only")
     ] = False,
     slow: Annotated[
         bool,
         tp.Option(
-            help="run rust linting with clippy and python type checking with basedpyright"
+            help="""Run check flagged as slow (several seconds to run).\n
+            Changing this between two runs will reset the cache index."""
         ),
     ] = False,
 ) -> None:
     """Run CI checks, with caching of the last failed step.
+
+    Switching from `--slow` to `--no-slow` (or vice versa) will reset the cache index.
+
+    Note that the caching is strictly for local development convenience. Adding new commands in it will invalidate the cache index.
 
     Raises:
         Exit: If a check fails or all checks pass, with the corresponding exit code.
