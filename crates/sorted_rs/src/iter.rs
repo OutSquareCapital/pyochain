@@ -3,7 +3,10 @@ use derive_more::Constructor;
 use parking_lot::{RawRwLock, lock_api::RwLockReadGuard};
 use pyo3::{ffi, prelude::*, types::PyIterator};
 use pyo3_ext::prelude::*;
-use std::{ops::Deref, ptr};
+use std::{
+    ops::{Deref, Not},
+    ptr,
+};
 use tap::prelude::*;
 pub enum IterKind {
     Fwd,
@@ -165,8 +168,8 @@ unsafe impl SortedNext for Iter {
         unsafe { self.0.deref() }
             .values
             .get(pos)
-            .map_or_else(ptr::null_mut, |v| {
-                let ptr = unsafe { v.get_unchecked(idx) }.as_ptr();
+            .and_then(|v| Some((v, v.get(idx)?.as_ptr())))
+            .map_or_else(ptr::null_mut, |(v, ptr)| {
                 unsafe { ffi::Py_INCREF(ptr) };
                 if idx + 1 < v.len() {
                     self.1.store(pos, idx + 1);
@@ -183,27 +186,29 @@ unsafe impl SortedNext for IterRev {
     unsafe fn next(&self) -> *mut ffi::PyObject {
         let data = unsafe { self.0.deref() };
         let (pos, idx) = self.1.load();
+        (pos == 0 && idx == 0)
+            .then(|| data.values.get(pos))
+            .flatten()
+            .filter(|v| idx > v.len())
+            .map_or_else(ptr::null_mut, |_| {
+                let (pos, idx) = if idx == 0 {
+                    let p = pos - 1;
+                    (p, unsafe { data.values.get_unchecked(p) }.len() - 1)
+                } else {
+                    (pos, idx - 1)
+                };
 
-        if pos == 0 && idx == 0 {
-            ptr::null_mut()
-        } else {
-            let (pos, idx) = if idx == 0 {
-                let p = pos - 1;
-                (p, unsafe { data.values.get_unchecked(p) }.len() - 1)
-            } else {
-                (pos, idx - 1)
-            };
-
-            let item = unsafe { data.values.get_unchecked(pos).get_unchecked(idx) };
-            let ptr = item.as_ptr();
-            unsafe { ffi::Py_INCREF(ptr) };
-
-            self.1.store(pos, idx);
-            ptr
-        }
+                let ptr = unsafe {
+                    data.values
+                        .get_unchecked(pos)
+                        .get_unchecked(idx)
+                        .pipe(|x| inc_ref_get(x))
+                };
+                self.1.store(pos, idx);
+                ptr
+            })
     }
 }
-
 unsafe impl SortedNext for IterBounded {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
@@ -211,13 +216,12 @@ unsafe impl SortedNext for IterBounded {
         let (pos, idx) = self.1.load();
         let max = self.2;
 
-        if pos == max.pos && idx == max.idx {
+        if (pos == max.pos && idx == max.idx) || data.values.get(pos).is_none_or(|v| idx >= v.len())
+        {
             ptr::null_mut()
         } else {
             let v = unsafe { data.values.get_unchecked(pos) };
-            let item = unsafe { v.get_unchecked(idx) };
-            let ptr = item.as_ptr();
-            unsafe { ffi::Py_INCREF(ptr) };
+            let ptr = unsafe { v.get_unchecked(idx).pipe(|x| inc_ref_get(x)) };
 
             if idx + 1 >= v.len() && pos < max.pos {
                 self.1.store(pos + 1, 0);
@@ -236,7 +240,8 @@ unsafe impl SortedNext for IterBoundedRev {
         let min = self.1;
         let (pos, idx) = self.2.load();
 
-        if pos == min.pos && idx == min.idx {
+        if (pos == min.pos && idx == min.idx) || data.values.get(pos).is_none_or(|v| idx > v.len())
+        {
             ptr::null_mut()
         } else {
             let (pos, idx) = if idx == 0 {
@@ -254,4 +259,10 @@ unsafe impl SortedNext for IterBoundedRev {
             ptr
         }
     }
+}
+
+unsafe fn inc_ref_get(item: &Py<PyAny>) -> *mut ffi::PyObject {
+    let ptr = item.as_ptr();
+    unsafe { ffi::Py_INCREF(ptr) };
+    ptr
 }
