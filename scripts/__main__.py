@@ -11,21 +11,20 @@ app = tp.Typer(name="profile", help="General dev tools.")
 
 # BUG: need to kill the terminal manually after the script is done. CTRL + C won't work otherwise.
 @app.command()
-def profile(
-    script: Annotated[str, tp.Argument(help="Python script to profile.")],
-    args: Annotated[
-        list[str] | None, tp.Argument(help="Arguments passed to the Python script.")
-    ] = None,
-) -> None:
-    """Run a Python script and profile it with samply.
+def profile() -> None:
+    """Profile `t.py` with `samply`, for performance analysis of Rust calls from Python.
 
     Needed on Windows because it's not possible to attach samply directly to the running process.
+
+    Make sure to set up `time.sleep(x)` with a few seconds at the top of the script.
+
+    It gives you the time to accept the pop-up asking to give the permission to `samply` to modify things.
 
     Without this, it's needed to manually handle two terminal at once.
     """
     from .profiler import profiler
 
-    profiler(script, args or [])
+    profiler()
 
 
 @app.command()
