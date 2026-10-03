@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import multiprocessing
 from collections.abc import Iterable
 from collections.abc import Set as AbstractSet
 from operator import neg
@@ -117,7 +118,16 @@ def test_empty_mut[T](
 
 
 def test_iterator_pointer() -> None:
-    # Can crash if we don't correctly handle references with unsafe impls
-    it = Range(10).pipe(SortedList).iter()
-    _ = it.collect(tuple)
-    _ = Range(10).pipe(SortedList).iter().collect(tuple)
+    """Can crash if we don't correctly handle references with unsafe impls.
+
+    A crash kills the pytest process silently, hence the child process.
+    """
+    # .
+    proc = multiprocessing.Process(target=_consume_orphan_iter)
+    proc.start()
+    proc.join()
+    assert proc.exitcode == 0
+
+
+def _consume_orphan_iter() -> None:
+    _ = Range(10).pipe(SortedList).iter().collect(list)
