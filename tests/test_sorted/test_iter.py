@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 import multiprocessing
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 
 import pytest
 from sortedcontainers import SortedList as SortedListPy
@@ -11,9 +11,8 @@ from pyochain import Range, Seq
 from pyochain.collections import SortedList
 
 type IntoIter[T] = Callable[[T], Iterator[object]]
-
-type SList = SortedList[int] | SortedListPy[int]
-type AnyList = list[int] | SList
+type IntoBoundedIter[T] = Callable[[T, int, int], Iterator[object]]
+type List = list[int] | SortedList[int] | SortedListPy[int]
 LIST_CLASSES = pytest.mark.parametrize(
     "cls",
     (
@@ -23,6 +22,16 @@ LIST_CLASSES = pytest.mark.parametrize(
     ),
 )
 INTO_ITER_PARAMS = pytest.mark.parametrize("into_iter", (iter, reversed))
+BOUNDED_PARAMS = pytest.mark.parametrize(
+    ("cls", "f"),
+    ((
+        pytest.param(SortedListPy, SortedListPy[int].irange, id="pyirange"),
+        pytest.param(SortedListPy, SortedListPy[int].islice, id="pyislice"),
+        pytest.param(SortedList, SortedList[int].irange, id="rustirange"),
+        pytest.param(SortedList, SortedList[int].islice, id="rustislice"),
+        pytest.param(list, itertools.islice),
+    )),
+)
 
 
 def test_iterator_pointer() -> None:
@@ -42,7 +51,7 @@ def _consume_orphan_iter() -> None:
 
 @LIST_CLASSES
 @INTO_ITER_PARAMS
-def test_clear_during_iter[T: AnyList](cls: type[T], into_iter: IntoIter[T]) -> None:
+def test_clear[T: List](cls: type[T], into_iter: IntoIter[T]) -> None:
     sl = cls((1, 2, 3))
     it = into_iter(sl)
     sl.clear()
@@ -50,19 +59,8 @@ def test_clear_during_iter[T: AnyList](cls: type[T], into_iter: IntoIter[T]) -> 
         _ = next(it)
 
 
-@pytest.mark.parametrize(
-    ("cls", "f"),
-    ((
-        pytest.param(SortedListPy, SortedListPy[int].irange, id="pyirange"),
-        pytest.param(SortedListPy, SortedListPy[int].islice, id="pyislice"),
-        pytest.param(SortedList, SortedList[int].irange, id="rustirange"),
-        pytest.param(SortedList, SortedList[int].islice, id="rustislice"),
-        pytest.param(list, itertools.islice),
-    )),
-)
-def test_bounded_clear_during_iter[T: SList](
-    cls: type[T], f: Callable[[T, int, int], Iterator[object]]
-) -> None:
+@BOUNDED_PARAMS
+def test_bounded_clear[T: List](cls: type[T], f: IntoBoundedIter[T]) -> None:
     length = 10
     sl = cls(Range(length).iter().map(lambda i: 10**9 + i))
     it = f(sl, 0, length)
@@ -74,7 +72,7 @@ def test_bounded_clear_during_iter[T: SList](
 
 @LIST_CLASSES
 @INTO_ITER_PARAMS
-def test_pop_during_iter[T: AnyList](cls: type[T], into_iter: IntoIter[T]) -> None:
+def test_pop[T: List](cls: type[T], into_iter: IntoIter[T]) -> None:
     data = Seq(1, 2, 3, 4, 5)
     sl = cls(data)
     it = into_iter(sl)
@@ -84,3 +82,35 @@ def test_pop_during_iter[T: AnyList](cls: type[T], into_iter: IntoIter[T]) -> No
         _ = sl.pop()
     with pytest.raises(StopIteration):
         _ = next(it)
+
+
+@LIST_CLASSES
+@INTO_ITER_PARAMS
+def test_clear_then_update[T: List](cls: type[T], into_iter: IntoIter[T]) -> None:
+    sl = cls((1, 2, 3))
+    it = into_iter(sl)
+    _ = next(it)
+    sl.clear()
+    _update(sl, [4])
+    _ = tuple(it)
+
+
+@BOUNDED_PARAMS
+def test_bounded_clear_then_update[T: List](
+    cls: type[T], f: IntoBoundedIter[T]
+) -> None:
+    length = 10
+    sl = cls(Range(length).iter().map(lambda i: 10**9 + i))
+    it = f(sl, 0, length)
+    _ = next(it)
+    sl.clear()
+    _update(sl, [10**9 + length])
+    _ = tuple(it)
+
+
+def _update(sl: List, values: Iterable[int]) -> None:
+    match sl:
+        case list() | SortedList():
+            sl.extend(values)
+        case _:
+            sl.update(values)
