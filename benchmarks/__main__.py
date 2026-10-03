@@ -53,13 +53,15 @@ def plot(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> Non
 @app.command()
 def show(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> None:
     """Show the benchmark results in the terminal for a given method."""
-    import polars as pl
 
     from .cli import check_method, query
 
-    _ = pl.Config().set_tbl_hide_column_data_types(True)
-
-    return check_method(method).map(query.run, group_by_commit).unwrap().show(-1)
+    return (
+        check_method(method)
+        .map(query.run, group_by_commit)
+        .unwrap()
+        .show(-1, tbl_hide_column_data_types=True, fmt_str_lengths=200)
+    )
 
 
 if __name__ == "__main__":
