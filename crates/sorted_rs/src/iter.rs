@@ -161,23 +161,20 @@ impl IterBoundedRev {
 unsafe impl SortedNext for Iter {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        let data = unsafe { self.0.deref() };
         let (pos, idx) = self.1.load();
-
-        if let Some(v) = data.values.get(pos) {
-            let item = unsafe { v.get_unchecked(idx) };
-            let ptr = item.as_ptr();
-            unsafe { ffi::Py_INCREF(ptr) };
-
-            if idx + 1 < v.len() {
-                self.1.store(pos, idx + 1);
-            } else {
-                self.1.store(pos + 1, 0);
-            }
-            ptr
-        } else {
-            ptr::null_mut()
-        }
+        unsafe { self.0.deref() }
+            .values
+            .get(pos)
+            .map_or_else(ptr::null_mut, |v| {
+                let ptr = unsafe { v.get_unchecked(idx) }.as_ptr();
+                unsafe { ffi::Py_INCREF(ptr) };
+                if idx + 1 < v.len() {
+                    self.1.store(pos, idx + 1);
+                } else {
+                    self.1.store(pos + 1, 0);
+                }
+                ptr
+            })
     }
 }
 
