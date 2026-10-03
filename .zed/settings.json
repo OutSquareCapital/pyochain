@@ -1,0 +1,18 @@
+{
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "check": {
+          "command": "clippy",
+          "workspace": false,
+        },
+        "cargo": {
+          "allTargets": false,
+          "extraEnv": {
+            "PYO3_PYTHON": "C:\\Users\\stett\\Documents\\python\\pyochain\\.venv\\Scripts\\python.exe",
+          },
+        },
+      },
+    },
+  },
+}

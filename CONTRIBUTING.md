@@ -54,23 +54,11 @@ uv sync --dev
 uv sync --all-groups
 ```
 
-If your IDE struggles with the venv environnement, you surely need to add the `PYO3_PYTHON` environment variable to your IDE's settings.
+A `zed` config file is present to set clippy and compile only current crate for `rust-analyzer`.
 
-Example of my current Zed setup:
+More convenient for local development.
 
-```json
-  "lsp": {
-    "rust-analyzer": {
-      "initialization_options": {
-        "cargo": {
-          "extraEnv": {
-            "PYO3_PYTHON": "C:\\Users\\stett\\Documents\\python\\pyochain\\.venv\\Scripts\\python.exe",
-          },
-        },
-      },
-    },
-  },
-```
+I don't use VScode anymore but it should be easy to set up a similar configuration. Open for PR suggestions on any editor.
 
 ### Usual workflow
 
