@@ -7,6 +7,7 @@ from operator import neg
 from typing import TYPE_CHECKING
 
 import pytest
+from sortedcontainers import SortedList as SortedListPy
 
 from pyochain import Range
 from pyochain.collections import SortedKeySet, SortedList, SortedSet
@@ -17,6 +18,9 @@ if TYPE_CHECKING:
     from _pytest.mark import ParameterSet
 
     from pyochain.collections._sorted import BaseSortedSet
+
+type SList = SortedList[int] | SortedListPy[int]
+type AnyList = list[int] | SList
 type UpdateFn1[T] = Callable[[SortedSet[int], Iterable[int]], T]
 type PyUpdateFn1[*A, T] = Callable[[set[int], *A], T]
 type UpdateVarFn[*A, T] = Callable[[SortedSet[int], *A], T]
@@ -122,7 +126,6 @@ def test_iterator_pointer() -> None:
 
     A crash kills the pytest process silently, hence the child process.
     """
-    # .
     proc = multiprocessing.Process(target=_consume_orphan_iter)
     proc.start()
     proc.join()
@@ -131,3 +134,37 @@ def test_iterator_pointer() -> None:
 
 def _consume_orphan_iter() -> None:
     _ = Range(10).pipe(SortedList).iter().collect(list)
+
+
+S_LIST_PARAMS = (
+    pytest.param(SortedListPy, id="sortedcontainers"),
+    pytest.param(SortedList, id="rust"),
+)
+LIST_CLASSES = pytest.mark.parametrize("cls", (pytest.param(list), *S_LIST_PARAMS))
+
+
+@LIST_CLASSES
+def test_pop_during_iter(cls: type[AnyList]) -> None:
+    sl = cls([1, 2, 3, 4, 5])
+    it = iter(sl)
+    assert next(it) == 1
+    for _ in range(4):
+        _ = sl.pop()
+    assert next(it, None) is None
+
+
+@LIST_CLASSES
+def test_rev_clear_during_iter(cls: type[AnyList]) -> None:
+    sl = cls([1, 2, 3])
+    it = reversed(sl)
+    sl.clear()
+    assert next(it, None) is None
+
+
+@pytest.mark.parametrize("cls", S_LIST_PARAMS)
+def test_bounded_clear_during_iter(cls: type[SList]) -> None:
+    sl = cls(10**9 + i for i in range(10))
+    it = sl.islice(0, 10)
+    _ = next(it)
+    sl.clear()
+    assert next(it, None) is None
