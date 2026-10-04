@@ -60,7 +60,7 @@ def show(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> Non
         check_method(method)
         .map(query.run, group_by_commit)
         .unwrap()
-        .show(-1, tbl_hide_column_data_types=True, fmt_str_lengths=200)
+        .show(None, tbl_hide_column_data_types=True, fmt_str_lengths=200)
     )
 
 
