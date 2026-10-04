@@ -9,16 +9,16 @@ from sortedcontainers import SortedList as SortedListPy
 from pyochain import Range
 from pyochain.collections import SortedList
 
-from ._utils import List, assert_stop_iter, stop_iter_or_unsupported, update_list
+from ._utils import (
+    List,
+    assert_stop_iter,
+    method_param,
+    stop_iter_or_unsupported,
+    update_list,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
-
-    from _pytest.mark import ParameterSet
-
-
-def _method_param[T](cls: type[T], f: Callable[[T], object]) -> ParameterSet:
-    return pytest.param(cls, f, id=f"{cls.__module__}.{cls.__name__}.{f.__name__}")
+    from collections.abc import Iterator
 
 
 def _list_slice(
@@ -32,10 +32,10 @@ REVERSE_PARAM = pytest.mark.parametrize("reverse", (False, True))
 BOUNDED_PARAMS = pytest.mark.parametrize(
     ("cls", "f"),
     ((
-        _method_param(SortedListPy, SortedListPy[int].irange),
-        _method_param(SortedListPy, SortedListPy[int].islice),
-        _method_param(SortedList, SortedList[int].irange),
-        _method_param(SortedList, SortedList[int].islice),
+        method_param(SortedListPy, SortedListPy[int].irange),
+        method_param(SortedListPy, SortedListPy[int].islice),
+        method_param(SortedList, SortedList[int].irange),
+        method_param(SortedList, SortedList[int].islice),
         pytest.param(list, _list_slice),
     )),
 )

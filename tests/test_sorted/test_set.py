@@ -6,6 +6,7 @@ from operator import neg
 from typing import TYPE_CHECKING
 
 import pytest
+from sortedcontainers import SortedSet as PySortedSet
 
 from pyochain import Range
 from pyochain.collections import SortedKeySet, SortedSet
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
     from _pytest.mark import ParameterSet
 
     from pyochain.collections._sorted import BaseSortedSet
+    from tests.test_sorted._utils import AnySet
 
 type UpdateFn1[T] = Callable[[SortedSet[int], Iterable[int]], T]
 type PyUpdateFn1[*A, T] = Callable[[set[int], *A], T]
@@ -115,3 +117,30 @@ def test_empty_mut[T](
     _ = method(a)
     _ = pymethod(b)
     assert a == b
+
+
+@pytest.mark.parametrize(
+    "cls",
+    (
+        pytest.param(set, id="std"),
+        pytest.param(SortedSet, id="pyochain"),
+        pytest.param(PySortedSet, id="sortedcontainers"),
+    ),
+)
+def test_remove_and_iter(cls: type[AnySet]) -> None:
+    """`sortedcontainers` issue # 36.
+
+    https://github.com/grantjenks/python-sortedcontainers/issues/36"""
+
+    match cls([1, 2, 3, 4, 5, 6]):
+        case set() as pyset:
+            with pytest.raises(RuntimeError):
+                _iter_remove(pyset)
+        case sortedset:
+            _iter_remove(sortedset)
+            assert tuple(sortedset) == (2, 4, 6)
+
+
+def _iter_remove(anyset: AnySet) -> None:
+    for i in anyset:
+        anyset.remove(i)  # ruff: ignore[loop-iterator-mutation]
