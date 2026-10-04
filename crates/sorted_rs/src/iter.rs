@@ -195,12 +195,7 @@ unsafe impl SortedNext for IterRev {
                     (pos, idx - 1)
                 };
 
-                let ptr = unsafe {
-                    data.values
-                        .get_unchecked(pos)
-                        .get_unchecked(idx)
-                        .pipe(|x| inc_ref_get(x))
-                };
+                let ptr = unsafe { data.values.get_unchecked(pos).pipe(|v| inc_ref_get(v, idx)) };
                 self.1.store(pos, idx);
                 ptr
             })
@@ -213,20 +208,20 @@ unsafe impl SortedNext for IterBounded {
         let (pos, idx) = self.1.load();
         let max = self.2;
 
-        if (pos == max.pos && idx == max.idx) || data.values.get(pos).is_none_or(|v| idx >= v.len())
-        {
-            ptr::null_mut()
-        } else {
-            let v = unsafe { data.values.get_unchecked(pos) };
-            let ptr = unsafe { v.get_unchecked(idx).pipe(|x| inc_ref_get(x)) };
+        (pos != max.pos || idx != max.idx)
+            .then(|| data.values.get(pos))
+            .flatten()
+            .filter(|v| idx < v.len())
+            .map_or_else(ptr::null_mut, |v| {
+                let ptr = unsafe { inc_ref_get(v, idx) };
 
-            if idx + 1 >= v.len() && pos < max.pos {
-                self.1.store(pos + 1, 0);
-            } else {
-                self.1.store(pos, idx + 1);
-            }
-            ptr
-        }
+                if idx + 1 >= v.len() && pos < max.pos {
+                    self.1.store(pos + 1, 0);
+                } else {
+                    self.1.store(pos, idx + 1);
+                }
+                ptr
+            })
     }
 }
 
@@ -237,29 +232,27 @@ unsafe impl SortedNext for IterBoundedRev {
         let min = self.1;
         let (pos, idx) = self.2.load();
 
-        if (pos == min.pos && idx == min.idx) || data.values.get(pos).is_none_or(|v| idx > v.len())
-        {
-            ptr::null_mut()
-        } else {
-            let (pos, idx) = if idx == 0 {
-                let p = pos - 1;
-                (p, unsafe { data.values.get_unchecked(p) }.len() - 1)
-            } else {
-                (pos, idx - 1)
-            };
+        (pos != min.pos || idx != min.idx)
+            .then(|| data.values.get(pos))
+            .flatten()
+            .filter(|v| idx <= v.len())
+            .map_or_else(ptr::null_mut, |_| {
+                let (pos, idx) = if idx == 0 {
+                    let p = pos - 1;
+                    (p, unsafe { data.values.get_unchecked(p) }.len() - 1)
+                } else {
+                    (pos, idx - 1)
+                };
 
-            let item = unsafe { data.values.get_unchecked(pos).get_unchecked(idx) };
-            let ptr = item.as_ptr();
-            unsafe { ffi::Py_INCREF(ptr) };
-
-            self.2.store(pos, idx);
-            ptr
-        }
+                let ptr = unsafe { data.values.get_unchecked(pos).pipe(|v| inc_ref_get(v, idx)) };
+                self.2.store(pos, idx);
+                ptr
+            })
     }
 }
-
-unsafe fn inc_ref_get(item: &Py<PyAny>) -> *mut ffi::PyObject {
-    let ptr = item.as_ptr();
+#[inline]
+unsafe fn inc_ref_get(v: &[Py<PyAny>], idx: usize) -> *mut ffi::PyObject {
+    let ptr = unsafe { v.get_unchecked(idx) }.as_ptr();
     unsafe { ffi::Py_INCREF(ptr) };
     ptr
 }
