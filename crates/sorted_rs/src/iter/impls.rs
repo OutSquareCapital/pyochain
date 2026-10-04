@@ -123,7 +123,7 @@ unsafe impl SortedNext for IterBounded {
         let (pos, idx) = self.1.load();
         let max = self.2;
 
-        (pos != max.pos || idx != max.idx)
+        (pos < max.pos || (pos == max.pos && idx < max.idx))
             .then(|| data.values.get(pos))
             .flatten()
             .filter(|v| idx < v.len())
@@ -145,7 +145,7 @@ unsafe impl SortedNext for IterBoundedRev {
         let min = self.1;
         let (pos, idx) = self.2.load();
 
-        (pos != min.pos || idx != min.idx)
+        (pos > min.pos || (pos == min.pos && idx > min.idx))
             .then(|| data.values.get(pos))
             .flatten()
             .filter(|v| idx <= v.len())
