@@ -464,13 +464,13 @@ impl Drain {
         start: Option<usize>,
         end: Option<usize>,
     ) -> PyResult<Self> {
-        let s = start.unwrap_or_default();
-        let e = end.unwrap_or(vec.len()?);
+        let start = start.unwrap_or_default();
+        let end = end.unwrap_or(vec.len()?);
         Self {
             vec: vec.unbind(),
-            start: s,
-            current: s,
-            end: e,
+            start,
+            current: start,
+            end,
             done: false,
         }
         .pipe(Ok)
@@ -754,15 +754,24 @@ impl GroupBy {
         &self,
         py: Python<'py>,
     ) -> PyResult<Option<(Bound<'py, PyAny>, Bound<'py, Iter>)>> {
-        match self.0.clone_ref(py).into_bound(py).next() {
-            Some(item) => unsafe {
-                let tup = item?.cast_into_unchecked::<PyTuple>();
-                let (key, group) = (tup.get_item_unchecked(0), tup.get_item_unchecked(1));
-
-                Ok(Some((key, group.try_iter().unwrap().try_into_py()?)))
-            },
-            None => Ok(None),
-        }
+        self.0
+            .clone_ref(py)
+            .into_bound(py)
+            .next()
+            .map_or(Ok(None), |item| unsafe {
+                item.map(|x| x.cast_into_unchecked::<PyTuple>())
+                    .map(|tup| {
+                        let key = tup.get_item_unchecked(0);
+                        let group = tup
+                            .get_item_unchecked(1)
+                            .try_iter()
+                            .unwrap()
+                            .try_into_py()
+                            .unwrap();
+                        (key, group)
+                    })
+                    .map(Some)
+            })
     }
 }
 #[pyclass(module = "pyochain._iterators")]
@@ -941,15 +950,16 @@ impl From<Py<PyIterator>> for Peekable {
 #[pymethods]
 impl Peekable {
     fn __next__<'py>(&mut self, py: Python<'py>) -> NextOk<'py> {
-        match self.peeked.take() {
-            Some(value) => Ok(Some(value.into_bound(py))),
-            None => self
-                .iterator
-                .clone_ref(py)
-                .into_bound(py)
-                .next()
-                .transpose(),
-        }
+        self.peeked.take().map_or_else(
+            || {
+                self.iterator
+                    .clone_ref(py)
+                    .into_bound(py)
+                    .next()
+                    .transpose()
+            },
+            |value| Ok(Some(value.into_bound(py))),
+        )
     }
 
     fn __bool__(&mut self, py: Python<'_>) -> bool {
@@ -1064,13 +1074,8 @@ impl SequenceIterator {
                 self.i += 1;
                 Ok(Some(value))
             }
-            Err(err) => {
-                if err.is_instance_of::<PyIndexError>(py) {
-                    Ok(None)
-                } else {
-                    Err(err)
-                }
-            }
+            Err(err) if err.is_instance_of::<PyIndexError>(py) => Ok(None),
+            Err(err) => Err(err),
         }
     }
 }
@@ -1096,19 +1101,23 @@ impl SequenceReverseIterator {
             .transpose()
     }
 }
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._iterators", generic)]
 pub struct ValuesViewIterator {
     iterator: Py<PyIterator>,
     mapping: Py<PyAny>,
 }
+impl TryFrom<Bound<'_, PyAny>> for ValuesViewIterator {
+    type Error = PyErr;
+    fn try_from(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
+        Ok(Self::new(mapping.try_iter()?.unbind(), mapping.unbind()))
+    }
+}
 #[pymethods]
 impl ValuesViewIterator {
     #[new]
-    pub fn new(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(Self {
-            iterator: mapping.try_iter()?.unbind(),
-            mapping: mapping.unbind(),
-        })
+    fn py_new(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
+        mapping.try_into()
     }
 
     fn __next__<'py>(&'py mut self, py: Python<'py>) -> NextOk<'py> {
@@ -1120,19 +1129,24 @@ impl ValuesViewIterator {
             .transpose()
     }
 }
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._iterators", generic)]
 pub struct ItemsViewIterator {
     iterator: Py<PyIterator>,
     mapping: Py<PyAny>,
 }
+
+impl TryFrom<Bound<'_, PyAny>> for ItemsViewIterator {
+    type Error = PyErr;
+    fn try_from(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
+        Ok(Self::new(mapping.try_iter()?.unbind(), mapping.unbind()))
+    }
+}
 #[pymethods]
 impl ItemsViewIterator {
     #[new]
-    pub fn new(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(Self {
-            iterator: mapping.try_iter()?.unbind(),
-            mapping: mapping.unbind(),
-        })
+    fn py_new(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
+        mapping.try_into()
     }
 
     fn __next__<'py>(
