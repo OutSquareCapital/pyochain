@@ -18,6 +18,7 @@ def terminal(df: pl.DataFrame) -> None:
     _ = (
         df
         .lazy()
+        .drop(Cols.TimeStamp)
         .group_by(Cols.Size, maintain_order=True)
         .agg(pl.selectors.numeric().median())
         .collect()
