@@ -4,7 +4,7 @@ import subprocess
 
 from pyochain import Err, Ok, Result
 
-from ._common import RUN_PATH, SAVE_PATH, Lib, Method
+from ._common import CONSOLE, RUN_PATH, SAVE_PATH, Lib, Method
 
 UV_RUN = ("uv", "run")
 
@@ -17,7 +17,8 @@ def run(method: Method, repeat: int, *, calibrate: bool) -> Result[None, ValueEr
         case 1:
             return Ok(_inner_run(method, calibrate=calibrate))
         case _:
-            for _ in range(repeat):
+            for i in range(repeat):
+                CONSOLE.rule(f"Run {i + 1}/{repeat}", style="bold yellow")
                 _ = _inner_run(method, calibrate=calibrate)
             return Ok(None)
 
@@ -30,6 +31,7 @@ def _inner_run(method: Method, *, calibrate: bool) -> None:
         _bench_arg("warmup=true"),
         _bench_arg("disable-gc"),
         _bench_arg("autosave"),
+        _bench_arg("quiet"),
         _bench_arg(f"storage=file://{SAVE_PATH.as_posix()}"),
     ]
     if not calibrate:
