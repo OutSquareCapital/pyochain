@@ -20,6 +20,7 @@ inline_always = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 pedantic = { level = "warn", priority = -1 }
+redundant_field_names = "allow"  # Temporary clippy issue
 similar_names = "allow"
 wildcard_imports = "allow"
 

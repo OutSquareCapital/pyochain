@@ -3,10 +3,7 @@ use derive_more::Constructor;
 use parking_lot::{RawRwLock, lock_api::RwLockReadGuard};
 use pyo3::{ffi, prelude::*, types::PyIterator};
 use pyo3_ext::prelude::*;
-use std::{
-    ops::{Deref, Not},
-    ptr,
-};
+use std::{ops::Deref, ptr};
 use tap::prelude::*;
 pub enum IterKind {
     Fwd,
