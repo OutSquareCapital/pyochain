@@ -25,7 +25,10 @@ def _list_slice(
     lst: list[int], start: int, stop: int, *, reverse: bool = False
 ) -> Iterator[int]:
     it = iter(lst) if not reverse else reversed(lst)
-    return itertools.islice(it, start, stop)
+    bounds = (
+        (start, stop) if not reverse else (max(len(lst) - stop, 0), len(lst) - start)
+    )
+    return itertools.islice(it, *bounds)
 
 
 REVERSE_PARAM = pytest.mark.parametrize("reverse", (False, True))
