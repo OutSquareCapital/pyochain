@@ -63,7 +63,13 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
             .alias(Cols.Relative),
         )
         .sort(Cols.TimeStamp, Cols.Size)
-        .pipe(lambda lf: _group_by_commit(lf) if agg_by_commit else lf)
+        .pipe(
+            lambda lf: (
+                _group_by_commit(lf)
+                if agg_by_commit
+                else lf.with_columns(Cols.TimeStamp.pl().cum_count().over(Cols.Size))
+            )
+        )
         .collect()
     )
 
