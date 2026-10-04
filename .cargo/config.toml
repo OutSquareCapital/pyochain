@@ -1,0 +1,2 @@
+[env]
+PYO3_PYTHON = { value = ".venv//Scripts//python.exe", relative = true }

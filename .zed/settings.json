@@ -8,9 +8,6 @@
         },
         "cargo": {
           "allTargets": false,
-          "extraEnv": {
-            "PYO3_PYTHON": "C:\\Users\\stett\\Documents\\python\\pyochain\\.venv\\Scripts\\python.exe",
-          },
         },
       },
     },
