@@ -26,3 +26,5 @@ t.py
 .benchmarks/
 # flamegraph generated files
 profile.json.gz
+# local cargo config
+.cargo/config.toml
