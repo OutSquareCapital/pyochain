@@ -45,7 +45,11 @@ The actual source code implementation lives in the `src` folder, with the follow
 
 ## Setup
 
-After cloning the repo, set up the development environment (the project uses `uv` for both Python and Rust).
+This project uses `uv` to manage everything python-related.
+
+After cloning the repo, adapt the [cargo config example](.cargo\config.toml.example) to your platform specifics to set-up the python path for it.
+
+Then you can sync the venv with `uv`.
 
 `--all-groups` will also install the dependencies necessary for the website documentation.
 
@@ -54,11 +58,11 @@ uv sync --dev
 uv sync --all-groups
 ```
 
-A `zed` config file is present to set clippy and compile only current crate for `rust-analyzer`.
+A `zed` config file is present to set clippy and per-crate compilation for `rust-analyzer` for more convenient local development.
 
-More convenient for local development.
+I don't use `VScode` anymore but it should be easy to set up a similar configuration.
 
-I don't use VScode anymore but it should be easy to set up a similar configuration. Open for PR suggestions on any editor.
+Open for PR's for linux/mac cargo config examples, as well as others editors configs.
 
 ### Usual workflow
 
