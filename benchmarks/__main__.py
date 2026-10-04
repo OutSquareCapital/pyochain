@@ -45,7 +45,7 @@ def plot(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> Non
     from .cli import check_method, plots, query
 
     df = check_method(method).map(query.run, group_by_commit).unwrap()
-    x_axis = query.Cols.Commit if group_by_commit else query.Cols.Run
+    x_axis = query.Cols.Commit if group_by_commit else query.Cols.TimeStamp
     plots.absolute(df, method, x_axis)
     plots.relative(df, method, x_axis)
 

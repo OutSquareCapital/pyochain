@@ -20,7 +20,7 @@ class Cols(PlEnum):
     """Column names used in the benchmarks."""
 
     Size = auto()
-    Run = auto()
+    TimeStamp = auto()
     Relative = auto()
     Lib = auto()
     Commit = auto()
@@ -31,16 +31,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
     cols = _selected_cols()
     return (
         Iter(GET_PATH.glob("*.json"))
-        .enumerate()
-        .map_star(
-            lambda idx, path: (
-                pl
-                .read_json(path)
-                .lazy()
-                .select(cols)
-                .with_columns(pl.lit(idx).alias(Cols.Run))
-            )
-        )
+        .map(lambda path: pl.read_json(path).lazy().select(cols))
         .collect(pl.concat)
         .filter(
             pl
@@ -51,7 +42,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
             .eq(method)
         )
         .select(
-            Cols.Run,
+            Cols.TimeStamp,
             param.first().cast(Sizes).alias(Cols.Size),
             "min",
             param.last().cast(Lib).alias(Cols.Lib),
@@ -60,7 +51,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         .pivot(
             Cols.Lib,
             (Lib.SortedContainers, Lib.Pyochain),
-            index=(Cols.Run, Cols.Size, Cols.Commit),
+            index=(Cols.TimeStamp, Cols.Size, Cols.Commit),
         )
         .with_columns(
             Lib.SortedContainers
@@ -71,9 +62,8 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
             .round(3)
             .alias(Cols.Relative),
         )
-        .sort(Cols.Run, Cols.Size)
+        .sort(Cols.TimeStamp, Cols.Size)
         .pipe(lambda lf: _group_by_commit(lf) if agg_by_commit else lf)
-        .cast({Cols.Run: pl.String})
         .collect()
     )
 
@@ -98,4 +88,5 @@ def _selected_cols() -> Sequence[pl.Expr]:
         stat("stddev"),
         stat("total"),
         commit_infos("id").alias(Cols.Commit),
+        pl.col("datetime").cast(pl.Datetime("ms")).alias(Cols.TimeStamp),
     )
