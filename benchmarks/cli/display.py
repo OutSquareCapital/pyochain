@@ -1,20 +1,22 @@
 import plotly.express as px
 import polars as pl
+from rich.markdown import Markdown
 
 from ._common import CONSOLE, Lib
 from .query import Cols
 
-
-@pl.Config(
+cfg = pl.Config(
+    tbl_formatting="MARKDOWN",
     tbl_hide_column_data_types=True,
     fmt_str_lengths=200,
     tbl_hide_dataframe_shape=True,
     set_tbl_rows=1000,
 )
-def terminal(df: pl.DataFrame) -> None:
-    CONSOLE.rule("All results details")
-    CONSOLE.print(df)
-    CONSOLE.rule("Aggregated results")
+
+
+@cfg
+def terminal(df: pl.DataFrame, *, raw: bool) -> None:
+    _show(df, "All results details", raw=raw)
     _ = (
         df
         .lazy()
@@ -22,8 +24,17 @@ def terminal(df: pl.DataFrame) -> None:
         .group_by(Cols.Size, maintain_order=True)
         .agg(pl.selectors.numeric().median())
         .collect()
-        .pipe(CONSOLE.print)
+        .pipe(_show, "Aggregated results", raw=raw)
     )
+
+
+def _show(df: pl.DataFrame, title: str, *, raw: bool) -> None:
+    CONSOLE.rule(title)
+    df_repr = str(df)
+    if raw:
+        return CONSOLE.print(df_repr)
+    else:
+        return CONSOLE.print(Markdown(df_repr))
 
 
 def absolute(df: pl.DataFrame, method: str, x_axis: Cols) -> None:

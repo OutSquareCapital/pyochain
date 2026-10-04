@@ -51,7 +51,15 @@ def plot(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> Non
 
 
 @app.command()
-def show(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> None:
+def show(
+    method: MethodArg,
+    *,
+    group_by_commit: GroupByCommitArg = False,
+    raw: Annotated[
+        bool,
+        tp.Option(help="Render the table as raw markdown instead of pretty printing"),
+    ] = False,
+) -> None:
     """Show the benchmark results in the terminal for a given method."""
 
     from .cli import check_method, display, query
@@ -59,7 +67,7 @@ def show(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> Non
     return (
         check_method(method)
         .map(query.run, group_by_commit)
-        .map(display.terminal)
+        .map(display.terminal, raw=raw)
         .unwrap()
     )
 
