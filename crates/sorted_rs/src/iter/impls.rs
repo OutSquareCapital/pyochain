@@ -111,10 +111,8 @@ unsafe impl SortedNext for IterRev {
                 } else {
                     (pos, idx - 1)
                 };
-
-                let ptr = unsafe { data.values.get_unchecked(pos).pipe(|v| inc_ref_get(v, idx)) };
                 self.1.store(pos, idx);
-                ptr
+                unsafe { data.values.get_unchecked(pos).pipe(|v| inc_ref_get(v, idx)) }
             })
     }
 }
@@ -130,14 +128,12 @@ unsafe impl SortedNext for IterBounded {
             .flatten()
             .filter(|v| idx < v.len())
             .map_or_else(ptr::null_mut, |v| {
-                let ptr = unsafe { inc_ref_get(v, idx) };
-
                 if idx + 1 >= v.len() && pos < max.pos {
                     self.1.store(pos + 1, 0);
                 } else {
                     self.1.store(pos, idx + 1);
                 }
-                ptr
+                unsafe { inc_ref_get(v, idx) }
             })
     }
 }
