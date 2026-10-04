@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Protocol
 import pytest
 from sortedcontainers import SortedList as SortedListPy
 
-from pyochain import Range
+from pyochain import Iter, Range, Seq
 from pyochain.collections import SortedList
 
 from ._utils import (
@@ -95,3 +95,22 @@ def test_pop[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
                 _ = next(it)
         case _:
             assert_stop_iter(it)
+
+
+@BOUNDED_PARAMS
+def test_remove_below_lower_bound[T: List](cls: type[T], f: SliceFn[T]) -> None:
+    start = 900
+    stop = 3000
+    expected = Range(stop - 1, start - 1, -1)
+    sl = cls(range(stop))
+    it = f(sl, start, stop, reverse=True)
+    for value in range(100):
+        sl.remove(value)
+    take = Iter(it).take(expected.len() + 1)
+    match sl:
+        case SortedListPy():
+            with pytest.raises(IndexError):
+                _ = take.last()
+        case _:
+            got = take.collect(Seq)
+            assert got == expected.iter().take(got.len()).collect(Seq)
