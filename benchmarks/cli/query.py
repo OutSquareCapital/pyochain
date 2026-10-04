@@ -61,6 +61,8 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
             .truediv(Lib.Pyochain)
             .round(3)
             .alias(Cols.Relative),
+            Lib.Pyochain.pl().mul(1000000),  # Convert seconds to microseconds
+            Lib.SortedContainers.pl().mul(1000000),
         )
         .sort(Cols.TimeStamp, Cols.Size)
         .pipe(

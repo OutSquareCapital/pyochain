@@ -42,25 +42,25 @@ def run(
 @app.command()
 def plot(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> None:
     """Plot the benchmark results with `plotly` for a given method."""
-    from .cli import check_method, plots, query
+    from .cli import check_method, display, query
 
     df = check_method(method).map(query.run, group_by_commit).unwrap()
     x_axis = query.Cols.Commit if group_by_commit else query.Cols.TimeStamp
-    plots.absolute(df, method, x_axis)
-    plots.relative(df, method, x_axis)
+    display.absolute(df, method, x_axis)
+    display.relative(df, method, x_axis)
 
 
 @app.command()
 def show(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> None:
     """Show the benchmark results in the terminal for a given method."""
 
-    from .cli import check_method, query
+    from .cli import check_method, display, query
 
     return (
         check_method(method)
         .map(query.run, group_by_commit)
+        .map(display.terminal)
         .unwrap()
-        .show(None, tbl_hide_column_data_types=True, fmt_str_lengths=200)
     )
 
 
