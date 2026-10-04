@@ -9,7 +9,7 @@ from sortedcontainers import SortedList as SortedListPy
 from pyochain import Range
 from pyochain.collections import SortedList
 
-from ._utils import List, update_list
+from ._utils import List, assert_stop_iter, stop_iter_or_unsupported, update_list
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -53,19 +53,18 @@ class SliceFn[T](Protocol):
 
 @REVERSE_PARAM
 @BOUNDED_PARAMS
-def test_bounded_clear[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
+def test_clear[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
     length = 10
     sl = cls(Range(length).iter().map(lambda i: 10**9 + i))
     it = f(sl, 0, 10**9 + length, reverse=reverse)
     _ = next(it)
     sl.clear()
-    with pytest.raises(StopIteration):
-        _ = next(it)
+    stop_iter_or_unsupported(sl, it)
 
 
 @REVERSE_PARAM
 @BOUNDED_PARAMS
-def test_bounded_clear_then_update[T: List](
+def test_clear_then_update[T: List](
     cls: type[T], f: SliceFn[T], *, reverse: bool
 ) -> None:
     length = 10
@@ -74,18 +73,22 @@ def test_bounded_clear_then_update[T: List](
     _ = next(it)
     sl.clear()
     update_list(sl, [10**9 + length])
-    with pytest.raises(StopIteration):
-        _ = next(it)
+    stop_iter_or_unsupported(sl, it)
 
 
 @REVERSE_PARAM
 @BOUNDED_PARAMS
-def test_bounded_pop[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
+def test_pop[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
     length = 10
     sl = cls(Range(length).iter().map(lambda i: 10**9 + i))
     it = f(sl, 0, 10**9 + length, reverse=reverse)
     _ = next(it)
     for _ in range(length - 1):
         _ = sl.pop()
-    with pytest.raises(StopIteration):
-        _ = next(it)
+    match sl:
+        case SortedListPy():
+            # sortedcontainers will try to access a non-existing index, which raises IndexError instead of StopIteration.
+            with pytest.raises(IndexError):
+                _ = next(it)
+        case _:
+            assert_stop_iter(it)

@@ -8,7 +8,13 @@ from sortedcontainers import SortedList as SortedListPy
 from pyochain import Range, Seq
 from pyochain.collections import SortedList
 
-from ._utils import IntoIter, List, update_list
+from ._utils import (
+    IntoIter,
+    List,
+    assert_stop_iter,
+    stop_iter_or_unsupported,
+    update_list,
+)
 
 LIST_CLASSES = pytest.mark.parametrize(
     "cls",
@@ -44,8 +50,7 @@ def test_clear[T: List](cls: type[T], into_iter: IntoIter[T]) -> None:
     sl = cls((1, 2, 3))
     it = into_iter(sl)
     sl.clear()
-    with pytest.raises(StopIteration):
-        _ = next(it)
+    assert_stop_iter(it)
 
 
 @LIST_CLASSES
@@ -58,8 +63,7 @@ def test_pop[T: List](cls: type[T], into_iter: IntoIter[T]) -> None:
     assert elem == data[0] or elem == data[-1]
     for _ in range(data.len() - 1):
         _ = sl.pop()
-    with pytest.raises(StopIteration):
-        _ = next(it)
+    assert_stop_iter(it)
 
 
 @LIST_CLASSES
@@ -70,5 +74,4 @@ def test_clear_then_update[T: List](cls: type[T], into_iter: IntoIter[T]) -> Non
     _ = next(it)
     sl.clear()
     update_list(sl, [4])
-    with pytest.raises(StopIteration):
-        _ = next(it)
+    stop_iter_or_unsupported(sl, it)
