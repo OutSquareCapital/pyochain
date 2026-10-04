@@ -183,10 +183,10 @@ unsafe impl SortedNext for IterRev {
     unsafe fn next(&self) -> *mut ffi::PyObject {
         let data = unsafe { self.0.deref() };
         let (pos, idx) = self.1.load();
-        (pos == 0 && idx == 0)
+        (pos != 0 || idx != 0)
             .then(|| data.values.get(pos))
             .flatten()
-            .filter(|v| idx > v.len())
+            .filter(|v| idx <= v.len())
             .map_or_else(ptr::null_mut, |_| {
                 let (pos, idx) = if idx == 0 {
                     let p = pos - 1;
