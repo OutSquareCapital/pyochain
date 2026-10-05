@@ -1,9 +1,7 @@
-use std::{
-    ops::Deref,
-    sync::{Mutex, MutexGuard},
-};
+use std::sync::{Mutex, MutexGuard};
 
 use crate::{abc, traits::IntoInit};
+use derive_more::{Constructor, Deref};
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -19,15 +17,12 @@ use pyo3_ext::{
 use pyochain_macros::try_cast;
 use std_tools::prelude::*;
 use tap::prelude::*;
-
+#[derive(Constructor)]
 struct OpenRange {
     start: isize,
     step: isize,
 }
 impl OpenRange {
-    fn new(start: isize, step: isize) -> Self {
-        Self { start, step }
-    }
     /// Return a concrete range clamped to the current base length.
     fn resolve<'py>(&self, py: Python<'py>, b_len: isize) -> PyResult<Bound<'py, PyRange>> {
         let stop = if self.step > 0 { b_len } else { -1 };
@@ -48,24 +43,21 @@ type SliceArgs<'py> = (
 );
 impl<'py> PyInit<'py, PySlice, SliceArgs<'py>> for PySlice {
     fn init(py: Python<'py>, args: SliceArgs<'py>) -> PyResult<Bound<'py, Self>> {
-        let (start, stop, step) = args;
-        PySlice::type_object(py)
-            .call1((start, stop, step))
-            .map(|slice| unsafe { slice.cast_into_unchecked::<PySlice>() })
+        Self::type_object(py)
+            .call1(args)
+            .map(|slice| unsafe { slice.cast_into_unchecked::<Self>() })
     }
 }
-impl Deref for SliceView {
-    type Target = Py<PySequence>;
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
+
+#[derive(Constructor, Deref)]
 #[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct SliceView {
+    #[deref]
     #[pyo3(get)]
     inner: Py<PySequence>,
     range: Mutex<Either<Py<PyRange>, OpenRange>>,
 }
+
 impl SliceView {
     fn get_range(&self) -> MutexGuard<'_, Either<Py<PyRange>, OpenRange>> {
         self.range
@@ -88,7 +80,7 @@ impl SliceView {
 impl SliceView {
     #[pyo3(signature = (base, start=None, stop=None, step=None))]
     #[new]
-    fn new(
+    fn py_new(
         base: Bound<'_, PySequence>,
         start: Option<Bound<'_, PyAny>>,
         stop: Option<Bound<'_, PyAny>>,
@@ -111,22 +103,17 @@ impl SliceView {
                 .pipe(Either::Left)
         };
 
-        Self {
-            inner: base.unbind(),
-            range: Mutex::new(range),
-        }
-        .init()
-        .pipe(Ok)
+        Self::new(base.unbind(), Mutex::new(range)).init().pipe(Ok)
     }
     fn __iter__(&self, py: Python<'_>) -> PyResult<SliceViewIterator> {
-        SliceViewIterator::new(self.current_range(py)?, self.clone_ref(py))
+        SliceViewIterator::py_new(self.current_range(py)?, self.clone_ref(py))
     }
     fn __contains__(slf: &Bound<'_, Self>, item: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.try_iter().unwrap().try_any(|el| item.eq(el?))
     }
 
     fn __reversed__(&self, py: Python<'_>) -> PyResult<SliceViewReverseIterator> {
-        SliceViewReverseIterator::new(self.current_range(py)?, self.clone_ref(py))
+        SliceViewReverseIterator::py_new(self.current_range(py)?, self.clone_ref(py))
     }
 
     fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -175,12 +162,9 @@ impl SliceView {
                 .map(|r| unsafe { r.cast_into_unchecked::<PyRange>() })?
                 .unbind()
                 .pipe(Either::Left);
-            Self {
-                inner,
-                range: Mutex::new(range),
-            }
-            .into_bound(py)
-            .map(Either::Left)
+            Self::new(inner, Mutex::new(range))
+                .into_bound(py)
+                .map(Either::Left)
         } else {
             let length = current_range.len()?.cast_signed();
             let mut idx = index.call_method0("__index__")?.extract::<isize>()?;
@@ -273,6 +257,7 @@ impl SliceView {
         Ok(slf)
     }
 }
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._sliceview", generic)]
 pub(crate) struct SliceViewIterator {
     current_index: usize,
@@ -283,14 +268,9 @@ pub(crate) struct SliceViewIterator {
 #[pymethods]
 impl SliceViewIterator {
     #[new]
-    fn new(range: Bound<'_, PyRange>, seq: Py<PySequence>) -> PyResult<Self> {
+    fn py_new(range: Bound<'_, PyRange>, seq: Py<PySequence>) -> PyResult<Self> {
         let length = range.len()?;
-        Ok(Self {
-            current_index: 0,
-            length,
-            range: range.unbind(),
-            seq,
-        })
+        Ok(Self::new(0, length, range.unbind(), seq))
     }
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
         if slf.current_index >= slf.length {
@@ -308,7 +288,7 @@ impl SliceViewIterator {
         }
     }
 }
-
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._sliceview", generic)]
 pub(crate) struct SliceViewReverseIterator {
     current_index: usize,
@@ -319,14 +299,9 @@ pub(crate) struct SliceViewReverseIterator {
 #[pymethods]
 impl SliceViewReverseIterator {
     #[new]
-    fn new(range: Bound<'_, PyRange>, seq: Py<PySequence>) -> PyResult<Self> {
+    fn py_new(range: Bound<'_, PyRange>, seq: Py<PySequence>) -> PyResult<Self> {
         let length = range.len()?;
-        Ok(Self {
-            current_index: 0,
-            length,
-            range: range.unbind(),
-            seq,
-        })
+        Ok(Self::new(0, length, range.unbind(), seq))
     }
 
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {

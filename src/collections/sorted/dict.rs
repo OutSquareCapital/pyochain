@@ -15,13 +15,13 @@ use pyo3::{
     prelude::*,
     types::{PyDict, PyMapping},
 };
+use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
 use sorted_rs::{DictData, KeysListsData, ListsData};
-use std::sync::Arc;
 use tap::prelude::*;
 
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends= abc::PyoMutableMapping, mapping)]
-pub struct SortedDict(pub(super) Arc<RwLock<DictData<ListsData>>>);
+pub struct SortedDict(pub(super) RwLock<DictData<ListsData>>);
 
 #[pymethods]
 impl SortedDict {
@@ -44,7 +44,7 @@ impl SortedDictMethods for SortedDict {
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableMapping, mapping)]
 
-pub struct SortedKeyDict(pub(super) Arc<RwLock<DictData<KeysListsData>>>);
+pub struct SortedKeyDict(pub(super) RwLock<DictData<KeysListsData>>);
 
 #[pymethods]
 impl SortedKeyDict {
@@ -74,10 +74,11 @@ pub(super) trait SortedDictMethods:
     + ListGetter<T = DictData<<Self as ListGetter>::L>>
     + IntoInit
     + From<DictData<<Self as ListGetter>::L>>
+    + PyFrozenClass
 {
-    type KView: SortedViewMethods<L = <Self as ListGetter>::L>;
-    type VView: SortedViewMethods<L = <Self as ListGetter>::L>;
-    type IView: SortedViewMethods<L = <Self as ListGetter>::L>;
+    type KView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;
+    type VView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;
+    type IView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.lock().contains(value)
     }
@@ -85,14 +86,17 @@ pub(super) trait SortedDictMethods:
     fn get_dict<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
         self.lock().1.clone_ref(py).into_bound(py)
     }
-    fn keys<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::KView>> {
-        self.as_ref().clone().conv::<Self::KView>().into_bound(py)
+    fn keys(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::KView>> {
+        let py = slf.py();
+        slf.unbind().conv::<Self::KView>().into_bound(py)
     }
-    fn items<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::IView>> {
-        self.as_ref().clone().conv::<Self::IView>().into_bound(py)
+    fn items(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::IView>> {
+        let py = slf.py();
+        slf.unbind().conv::<Self::IView>().into_bound(py)
     }
-    fn values<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self::VView>> {
-        self.as_ref().clone().conv::<Self::VView>().into_bound(py)
+    fn values(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::VView>> {
+        let py = slf.py();
+        slf.unbind().conv::<Self::VView>().into_bound(py)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.lock().copy(py)?.conv::<Self>().into_bound(py)

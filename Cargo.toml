@@ -20,6 +20,7 @@ inline_always = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 pedantic = { level = "warn", priority = -1 }
+redundant_field_names = "allow"  # Temporary clippy issue
 similar_names = "allow"
 wildcard_imports = "allow"
 
@@ -29,7 +30,7 @@ name = "pyochain"
 
 [dependencies]
 color-eyre = "0.6.5"
-derive_more = { version = "2.1.1", features = ["deref", "deref_mut", "from"] }
+derive_more = { version = "2.1.1", features = ["constructor", "deref", "deref_mut", "from"] }
 either = "1.16.0"
 parking_lot = "0.12.5"
 pyderive = "0.9"
@@ -58,4 +59,10 @@ workspace = true
 [profile.release]
 opt-level = 3
 lto = true
+panic = "abort"
 codegen-units = 1
+
+[profile.profiling]
+inherits = "release"
+debug = "line-tables-only"
+strip = "none"

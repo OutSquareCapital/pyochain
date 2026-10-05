@@ -1,40 +1,33 @@
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use derive_more::Constructor;
 use pyo3::prelude::*;
+use tap::{Conv, Pipe};
 
 use crate::{bisect::Bisect, types::VecPy};
 
-#[derive(PartialEq, Eq, Default, Clone, Copy)]
+#[derive(PartialEq, Eq, Default, Clone, Copy, Constructor, Debug)]
 pub struct Loc {
     pub pos: usize,
     pub idx: usize,
 }
 impl Loc {
     #[must_use]
-    pub fn new(pos: usize, idx: usize) -> Self {
-        Self { pos, idx }
-    }
-    #[must_use]
     pub fn with_idx(idx: usize) -> Self {
-        Self { pos: 0, idx }
+        Self::new(0, idx)
     }
     #[must_use]
     pub fn with_pos(pos: usize) -> Self {
-        Self { pos, idx: 0 }
+        Self::new(pos, 0)
     }
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Eq, Default, Constructor, Clone, Copy)]
 pub struct Bounds {
     pub min: Loc,
     pub max: Loc,
 }
 impl Bounds {
-    #[must_use]
-    pub fn new(min_pos: usize, min_idx: usize, max_pos: usize, max_idx: usize) -> Self {
-        Self {
-            min: Loc::new(min_pos, min_idx),
-            max: Loc::new(max_pos, max_idx),
-        }
-    }
     pub fn from_sorted(
         lists: &[VecPy],
         maxes: &[Py<PyAny>],
@@ -103,8 +96,38 @@ impl Bounds {
             if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
                 Ok(None)
             } else {
-                Ok(Some(Bounds { min, max }))
+                Ok(Some(Self::new(min, max)))
             }
         }
+    }
+}
+#[derive(Debug, Default)]
+pub struct AtomicLoc(AtomicU64);
+impl AtomicLoc {
+    #[allow(clippy::cast_possible_truncation)]
+    #[inline(always)]
+    pub fn load(&self) -> (u64, usize, usize) {
+        let at = self.0.load(Ordering::Relaxed);
+        (
+            at,
+            (at >> u32::BITS) as usize,
+            (at & u64::from(u32::MAX)) as usize,
+        )
+    }
+    #[inline(always)]
+    pub fn store(&self, at: u64) {
+        self.0.store(at, Ordering::Relaxed);
+    }
+}
+
+impl From<Loc> for u64 {
+    fn from(loc: Loc) -> Self {
+        (loc.pos as Self) << u32::BITS | loc.idx as Self
+    }
+}
+
+impl From<Loc> for AtomicLoc {
+    fn from(loc: Loc) -> Self {
+        loc.conv::<u64>().conv::<AtomicU64>().pipe(Self)
     }
 }

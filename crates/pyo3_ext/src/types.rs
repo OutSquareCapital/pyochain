@@ -1,7 +1,7 @@
 use crate::pyobject_native_type_named;
 use either::Either;
 use pyo3::{
-    BoundObject, PyTypeInfo,
+    BoundObject, PyClass, PyTypeInfo,
     exceptions::{PyKeyError, PyTypeError},
     ffi, intern,
     prelude::*,
@@ -618,4 +618,13 @@ pub mod pyitertools {
 fn false_and_write(err: PyErr, object: &Bound<'_, PyAny>) -> bool {
     err.write_unraisable(object.py(), Some(object));
     false
+}
+/// Trait alias for pyclasses that are `safe`, i.e Frozen + Send + Sync.
+pub trait PyFrozenClass:
+    Send + Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+{
+}
+impl<T> PyFrozenClass for T where
+    T: Send + Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+{
 }

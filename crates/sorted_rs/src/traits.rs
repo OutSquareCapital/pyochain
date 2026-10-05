@@ -52,7 +52,9 @@ pub enum ListAdd<'py, T> {
     Sorted(RwLockReadGuard<'py, T>),
     Iterator(Bound<'py, PyIterator>),
 }
-pub trait ListsDataMethods: Deref<Target = InnerData> + DerefMut + PyRepr + Sized {
+pub trait ListsDataMethods:
+    Deref<Target = InnerData> + DerefMut + PyRepr + Sized + Send + Sync
+{
     fn irange_specs<'py>(
         &self,
         py: Python<'py>,

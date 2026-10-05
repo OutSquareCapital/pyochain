@@ -1,6 +1,6 @@
 use anstream::ColorChoice;
 use std::{path::PathBuf, process::ExitCode};
-use tap::Pipe;
+use tap::prelude::*;
 
 fn main() -> ExitCode {
     ColorChoice::Always.write_global();

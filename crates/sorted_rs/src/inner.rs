@@ -18,7 +18,7 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use std_tools::prelude::*;
-use tap::{Conv, Pipe};
+use tap::prelude::*;
 pub struct InnerData {
     pub(super) values: Vec<VecPy>,
     pub maxes: VecPy,

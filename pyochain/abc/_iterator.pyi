@@ -2507,7 +2507,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert res == Seq((0, 0), (2, 1))
             ```
         """
-
+    # TODO: Can give false negatives ATM for typing (silence incorrect inputs)
     @overload
     def map_star[T1, R](
         self: Iterator[tuple[T1]], func: Callable[[T1], R]

@@ -52,6 +52,7 @@ See below for the benchmark results, with the number of `args` in the left colum
 
 - **typing**: Relaxed the _collector_ input type of `PyoIterator::collect`. The constraint on the return type `R: Collection[Any]` was artificial, and was preventing to use `collect` on functions or types who indeed consume the `Iterator`, but weren't strictly speaking a `Collection` (e.g polars DataFrames). In python, the `FromIterator` equivalent is simply `Callable[[Iterator[T]], Any]`, and this is now reflected in the typing of `collect`.
 - **typing**: `Option::{is_some, is_none, unwrap, unwrap_or, unwrap_or_none}` now have overloads to statically return the narrowed type when the variant is already known.
+- **typing**: `Result::and_then` handles a change of Error type in the closure, and returns the correct `Result` type. i.e `Result[T, E].and_then(f: Callable[[T], Result[U, F]]) -> Result[U, E | F]`.
 
 ### 🐞 Bug fixes
 
@@ -63,9 +64,17 @@ See below for the benchmark results, with the number of `args` in the left colum
 
 - Many changes to the internal rust structure to improve readability and reduce code-gen (and by extension, compile time).
 
+### 📦 Build system
+
+- Added `panic="abort"` flag on release builds to reduce binary size and improve performance.
+- Improved caching of CI workflows for performance.
+
 ### 🛠️ Other improvements
 
 - **Website**: The return sections of the functions/methods docstrings is now correctly rendered thanks to @tecnolgd contribution in [#95](https://github.com/OutSquareCapital/pyochain/pull/95)
+
+- **Profiler scripts**: Added a dedicated typer app to handle, analyze and plot benchmark results. Currently focused on `sortedcontainers` comparison, but can be extended to more in the future.
+- **Dev check scripts**: Centralised the linting/formatting/etc... commands in a single entry point.
 
 ## [0.28.0] - 2026-08-31
 

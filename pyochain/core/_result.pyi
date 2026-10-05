@@ -692,29 +692,29 @@ class ResultType[T, E](Pipe, Protocol):
         self: Result[T1, E1], fn: type[ResultType[Any, Any]]
     ) -> Result[T1, E1]: ...
     @overload
-    def and_then[**P, T1, E1, R](
+    def and_then[**P, T1, E1, E2, R](
         self: Result[T1, E1],
-        fn: Callable[Concatenate[T1, P], Result[R, E1]],
+        fn: Callable[Concatenate[T1, P], Result[R, E2]],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> Result[R, E1]: ...
-    def and_then[**P, T1, E1, R](
+    ) -> Result[R, E1 | E2]: ...
+    def and_then[**P, T1, E1, E2, R](
         self: Result[T1, E1],
-        fn: Callable[Concatenate[T1, P], Result[R, E1]] | type[ResultType[Any, Any]],
+        fn: Callable[Concatenate[T1, P], Result[R, E2]] | type[ResultType[Any, Any]],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> Result[R, E1]:
+    ) -> Result[R, E1 | E2]:
         """Calls `fn` if the result is [`Ok`], otherwise returns the [`Err`] value of `self`.
 
         This function can be used for control flow based on `Result` values.
 
         Args:
-            fn (Callable[Concatenate[T1, P], Result[R, E1]] | type[ResultType[Any, Any]]): The function to call with the `Ok` value.
+            fn (Callable[Concatenate[T1, P], Result[R, E2]] | type[ResultType[Any, Any]]): The function to call with the `Ok` value.
             *args (P.args): Additional positional arguments to pass to fn.
             **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
-            Result[R, E1]: The result of calling `fn` if the original result is `Ok`, otherwise the original `Err`.
+            Result[R, E1 | E2]: The result of calling `fn` if the original result is `Ok`, otherwise the original `Err`.
 
         Examples:
             ```python

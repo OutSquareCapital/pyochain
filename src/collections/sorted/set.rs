@@ -15,11 +15,10 @@ use pyochain_macros::py_abc;
 use sorted_rs::{
     KeysListsData, ListsData, PySetDataRef, SetData, SetOp, SetPred, types::IntOrSlice,
 };
-use std::sync::Arc;
 use std_tools::prelude::ResultExt;
-use tap::{Conv, Pipe};
+use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedSet(pub(super) Arc<RwLock<SetData<ListsData>>>);
+pub struct SortedSet(pub(super) RwLock<SetData<ListsData>>);
 #[pymethods]
 impl SortedSet {
     #[new]
@@ -35,7 +34,7 @@ impl SortedSet {
     }
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedKeySet(pub(super) Arc<RwLock<SetData<KeysListsData>>>);
+pub struct SortedKeySet(pub(super) RwLock<SetData<KeysListsData>>);
 #[pymethods]
 impl SortedKeySet {
     #[new]

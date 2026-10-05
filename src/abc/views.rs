@@ -12,7 +12,7 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use std_tools::prelude::*;
-use tap::Pipe;
+use tap::prelude::*;
 #[derive(From, Deref)]
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSized)]
 pub struct PyoMappingView(Py<PyAny>);
@@ -49,7 +49,7 @@ impl PyoValuesView {
             .mapping()
             .clone_ref(py)
             .into_bound(py)
-            .pipe(iterators::ValuesViewIterator::new)
+            .try_conv::<iterators::ValuesViewIterator>()
     }
 }
 #[derive(From, Deref)]
@@ -165,7 +165,7 @@ impl PyoItemsView {
             .mapping()
             .clone_ref(py)
             .into_bound(py)
-            .pipe(iterators::ItemsViewIterator::new)
+            .try_conv::<iterators::ItemsViewIterator>()
     }
 
     fn intersection<'py>(

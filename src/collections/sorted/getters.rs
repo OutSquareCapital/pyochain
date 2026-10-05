@@ -1,29 +1,26 @@
-use std::{
-    ops::{Deref, DerefMut},
-    sync::Arc,
-};
+use std::ops::{Deref, DerefMut};
 
 use crate::{
-    abc,
-    collections::sorted::{self, iter},
-    core::iterators,
+    collections::sorted::{self, core::IterRes, iter},
     traits::IntoInit,
 };
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use pyo3::{PyClass, prelude::*};
+use pyo3::prelude::*;
+use pyo3_ext::prelude::*;
 use sorted_rs::{
-    Bounds, DictData, InnerData, KeysListsData, ListsData, SetData, iter as rsiter, prelude::*,
+    DictData, InnerData, KeysListsData, ListsData, SetData,
+    iter::{Iter, IterBounded, IterBoundedRev, IterKind, IterRev},
+    prelude::*,
 };
-use tap::Conv;
-pub trait ListGetter:
-    Sync + Send + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + AsRef<Arc<RwLock<Self::T>>>
-{
+use tap::prelude::*;
+pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> {
     type L: ListsDataMethods;
-    type T: Deref<Target = InnerData> + DerefMut + ListDataOwner<List = Self::L> + PyRepr;
-    type I: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
-    type IRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Bounded<Self::T>>;
-    type IFull: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
-    type IFullRev: IntoInit + PyClass<BaseType = abc::PyoIterator> + From<rsiter::Full<Self::T>>;
+    type T: Deref<Target = InnerData>
+        + DerefMut
+        + ListDataOwner<List = Self::L>
+        + PyRepr
+        + Send
+        + Sync;
     #[inline(always)]
     fn lock(&self) -> RwLockReadGuard<'_, Self::T> {
         self.as_ref().read()
@@ -32,31 +29,36 @@ pub trait ListGetter:
     fn write(&self) -> RwLockWriteGuard<'_, Self::T> {
         self.as_ref().write()
     }
-    fn iter_bounds<'py>(
-        &self,
-        py: Python<'py>,
-        bounds: Option<Bounds>,
-        reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        match (bounds, reverse) {
-            (None, _) => iterators::Iter::empty(py).map(Bound::into_super),
-            (Some(bounds), true) => rsiter::Bounded::new(self.as_ref().clone(), bounds)
-                .conv::<Self::IRev>()
+    #[inline(always)]
+    fn build_iter<'py>(slf: &Bound<'py, Self>, kind: IterKind) -> IterRes<'py> {
+        let py = slf.py();
+        (slf.get().lock(), slf.clone().into_any().unbind()).pipe(|x| match kind {
+            IterKind::Fwd => x
+                .conv::<Iter>()
+                .conv::<iter::SortedIter>()
                 .into_bound(py)
                 .map(Bound::into_super),
-            (Some(bounds), false) => rsiter::Bounded::new(self.as_ref().clone(), bounds)
-                .conv::<Self::I>()
+            IterKind::Rev => x
+                .conv::<IterRev>()
+                .conv::<iter::SortedIterRev>()
                 .into_bound(py)
                 .map(Bound::into_super),
-        }
+            IterKind::Bounded(bounds) => IterBounded::new(x, bounds)
+                .conv::<iter::SortedIterBounded>()
+                .into_bound(py)
+                .map(Bound::into_super),
+            IterKind::BoundedRev(bounds) => IterBoundedRev::new(x, bounds)
+                .conv::<iter::SortedIterBoundedRev>()
+                .into_bound(py)
+                .map(Bound::into_super),
+        })
     }
 }
-
 macro_rules! impl_arc_as_ref {
     ($($t:ty),* $(,)?) => {
         $(
-            impl AsRef<Arc<RwLock<<$t as ListGetter>::T>>> for $t {
-                fn as_ref(&self) -> &Arc<RwLock<<$t as ListGetter>::T>> {
+            impl AsRef<RwLock<<$t as ListGetter>::T>> for $t {
+                fn as_ref(&self) -> &RwLock<<$t as ListGetter>::T> {
                     &self.0
                 }
             }
@@ -74,48 +76,24 @@ impl_arc_as_ref!(
 impl ListGetter for sorted::SortedList {
     type T = ListsData;
     type L = ListsData;
-    type I = iter::PyBounded;
-    type IRev = iter::PyBoundedRev;
-    type IFull = iter::PyFull;
-    type IFullRev = iter::PyFullRev;
 }
 impl ListGetter for sorted::SortedKeyList {
     type T = KeysListsData;
     type L = KeysListsData;
-    type I = iter::PyBoundedKey;
-    type IRev = iter::PyBoundedKeyRev;
-    type IFull = iter::PyFullKey;
-    type IFullRev = iter::PyFullKeyRev;
 }
 impl ListGetter for sorted::SortedSet {
     type T = SetData<ListsData>;
     type L = ListsData;
-    type I = iter::PySetBounded;
-    type IRev = iter::PySetBoundedRev;
-    type IFull = iter::PySetFull;
-    type IFullRev = iter::PySetFullRev;
 }
 impl ListGetter for sorted::SortedKeySet {
     type T = SetData<KeysListsData>;
     type L = KeysListsData;
-    type I = iter::PySetBoundedKey;
-    type IRev = iter::PySetBoundedKeyRev;
-    type IFull = iter::PySetFullKey;
-    type IFullRev = iter::PySetFullKeyRev;
 }
 impl ListGetter for sorted::SortedDict {
     type T = DictData<ListsData>;
     type L = ListsData;
-    type I = iter::PyDictBounded;
-    type IRev = iter::PyDictBoundedRev;
-    type IFull = iter::PyDictFull;
-    type IFullRev = iter::PyDictFullRev;
 }
 impl ListGetter for sorted::SortedKeyDict {
     type T = DictData<KeysListsData>;
     type L = KeysListsData;
-    type I = iter::PyDictBoundedKey;
-    type IRev = iter::PyDictBoundedKeyRev;
-    type IFull = iter::PyDictFullKey;
-    type IFullRev = iter::PyDictFullKeyRev;
 }

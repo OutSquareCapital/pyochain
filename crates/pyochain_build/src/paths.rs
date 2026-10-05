@@ -2,7 +2,7 @@ use std::{
     fs,
     path::{Components, Display, Path, PathBuf},
 };
-use tap::Pipe;
+use tap::prelude::*;
 use walkdir::WalkDir;
 #[derive(Clone, Debug, Eq)]
 pub(super) struct Normalized {

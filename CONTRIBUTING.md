@@ -2,32 +2,11 @@
 
 Thank you for your interest in contributing to pyochain!
 
-This document outlines the repository structure, coding standards, and contribution workflow to help you get started.
+This document covers environment setup, the commands to run, and how to commit and release.
+
+For the architecture and coding conventions, see [AGENTS.md](./AGENTS.md). It is destined for any developer, wether human or machine.
 
 ## Repository overview
-
-### Python API and typing
-
-All the stubs are located in the `pyochain` folder.
-
-The stub packages follow the public Rust module hierarchy, but the mapping is not strictly one-to-one: package initializers, grouped stubs, and private Rust helper modules do not always have a matching file.
-
-### Rust and PyO3 implementation
-
-The actual source code implementation lives in the `src` folder, with the following structure:
-
-- [src/lib.rs](src/lib.rs) — initializes the `pyochain` PyO3 module and registers the `core`, `abc`, `collections`, and `collections._sorted` submodules.
-- [src/core/](src/core/) — implements the core types.
-- [src/abc/](src/abc/) — implements the abstract base classes, mixins, and shared ABC traits.
-- [src/collections/](src/collections/) — implements concrete collections such as `Deque`, `HeapMax`, `HeapMin`, `StableSet` etc...
-- [src/collections/sorted/](src/collections/sorted/) — implements sorted collections, views, iterators, and their internal support modules.
-- [src/traits.rs](src/traits.rs) — defines shared wrapper, conversion, and initialization traits.
-
-### Internal crates
-
-- [crates/pyo3_ext/](crates/pyo3_ext/) — internal PyO3 extensions and utility traits.
-- [crates/pyochain_macros/](crates/pyochain_macros/) — procedural macros used by the Rust implementation.
-- [crates/pyochain_build/](crates/pyochain_build/) — build tool for generating documentation and validating the repository.
 
 ### Tests, documentation, and tooling
 
@@ -37,56 +16,18 @@ The actual source code implementation lives in the `src` folder, with the follow
 - [scripts/](scripts/) — documentation generation and repository validation scripts.
 - [Cargo.toml](Cargo.toml) — Rust workspace and dependency configuration.
 - [pyproject.toml](pyproject.toml) — Python package metadata, maturin configuration, and development dependencies.
-- [pyrefly.toml](pyrefly.toml) — Pyrefly configuration.
+- [pyrefly.toml](pyrefly.toml) and [ty.toml](ty.toml) — Pyrefly and ty configuration.
 - [ruff.toml](ruff.toml) — Ruff linting and formatting configuration.
 - [zensical.toml](zensical.toml) — documentation site configuration.
-
-## Stubs Docstrings
-
-docstrings should follow the format below.
-
-The code in the `examples` section will be automatically part of the test suite.
-
-We use code blocks instead of doctests, so write them just like you would in a classic pytest file, i.e assertions.
-
-````python
-def my_function(param1: int, param2: str) -> bool:
-    """One liner description of what the function does.
-
-    Additional explanations if needed.
-
-    List of points:
-        - Point 1
-        - Point 2
-        - Point 3
-
-    Args:
-        param1 (int): Description.
-        param2 (str): Description.
-
-    Warning:
-        Description of the warning.
-
-    Note:
-        Description of the note.
-
-    Tip:
-        Description of the tip.
-
-    Returns:
-        bool: Description of the return value.
-
-    Examples:
-        ```python
-        assert my_function(5, "test")
-        ```
-    """
-    return True
-````
+- [.github/workflows/](.github/workflows/) — CI, release and documentation workflows.
 
 ## Setup
 
-After cloning the repo, set up the development environment (the project uses `uv` for both Python and Rust).
+This project uses `uv` to manage everything python-related.
+
+After cloning the repo, copy the [cargo config example](.cargo/config.toml.example) to `.cargo/config.toml` (git-ignored) and adapt it to your platform to set-up the python path for PyO3.
+
+Then you can sync the venv with `uv`.
 
 `--all-groups` will also install the dependencies necessary for the website documentation.
 
@@ -95,45 +36,50 @@ uv sync --dev
 uv sync --all-groups
 ```
 
-If your IDE struggles with the venv environnement, you surely need to add the `PYO3_PYTHON` environment variable to your IDE's settings.
+A `zed` config file is present to set clippy and per-crate compilation for `rust-analyzer` for more convenient local development.
 
-Example of my current Zed setup:
+I don't use `VScode` anymore but it should be easy to set up a similar configuration.
 
-```json
-  "lsp": {
-    "rust-analyzer": {
-      "initialization_options": {
-        "cargo": {
-          "extraEnv": {
-            "PYO3_PYTHON": "C:\\Users\\stett\\Documents\\python\\pyochain\\.venv\\Scripts\\python.exe",
-          },
-        },
-      },
-    },
-  },
-```
+Open for PR's for linux/mac cargo config examples, as well as others editors configs.
 
-### Building the Rust extension
+### Usual workflow
 
-For development mode (fast compile, no optimizations):
+The command you will run most often is the following, which will build the package in development mode and run the tests:
 
 ```bash
-uv run maturin develop --uv
+uv run maturin develop --uv;
+uv run pytest
 ```
 
-For benchmarking (optimized, slower compile):
+## linting/formatting/type checking
+
+Before any pull request, or commit to the master branch, you need to ensure that all checks pass. Run the following command for more informations:
 
 ```bash
-uv run maturin develop --release --uv
+uv run -m scripts ci --help
 ```
 
-Prior to a release, to check correct documentation generation, run the build tool:
+## Documentation
 
-```bash
-.\target\release\pyochain-build.exe
-```
+### Stubs Docstrings
 
-If you are working on the build tool itself, you can build/run it directly with cargo:
+docstrings should follow the google format. See more information on [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings).
+
+The code in the `examples` section will be automatically part of the test suite (`pytest-docflex`, which also collects `README.md` and `docs/`).
+
+Every function in a stub needs a docstring with at least one closed `python` code block, this is checked by `pyochain-build` (see below).
+
+We use code blocks instead of doctests, which means that the whole pytest ecosystem is available, which can be handy for expected failures.
+
+See [this file](pyochain/abc/_iterator.pyi) for a practical reference for documentation style.
+
+### Automatic generation
+
+Prior to a release, run the tool to check the coherence between the stubs and the Rust source, generate the pages of `docs/reference`, and validate the navigation of `zensical.toml`.
+
+A new class page must also be added to the `nav` of `zensical.toml`.
+
+You can run one of the following commands:
 
 ```bash
 cargo run -p pyochain-build
@@ -142,54 +88,13 @@ cargo build -p pyochain-build
 cargo build --release -p pyochain-build
 ```
 
-To force a complete rebuild (clears all Rust artifacts):
-
-```bash
-cargo clean
-uv run maturin develop --uv
-```
-
-## Tests and quality checks
-
-Before committing, ensure all checks pass.
-
-### type checking/linting/formatting
-
-If `uv run -m scripts.check_docstrings` fails, don't worry.
-
-`sdsort` will re-order the python stubs depending on various rules, so don't be surprised if your code moves around a bit.
-
-```bash
-uv run cargo clippy --fix --allow-dirty --allow-staged --workspace;
-cargo fmt --all;
-uv run sdsort . --stubs;
-uv run ruff check . --fix --unsafe-fixes;
-uv run ruff format . --preview;
-uv run tombi format;
-uv run tombi lint;
-uv run basedpyright .;
-uv run pydoclint pyochain/**/*.pyi;
-cargo run --release -p pyochain-build
-```
-
-If you need to fix a single lint rule for rust:
-
-```shell
-uv run cargo clippy --fix --allow-dirty --workspace -- -A clippy::all -A clippy::pedantic -W clippy::<rule_name>
-```
-
-### tests
-
-```bash
-uv run pytest
-```
-
-### Building docs
+### Website build
 
 To build and serve the documentation locally, run the command below.
+
 Note that the `-c` flag is necessary, has `zensical` still has various issues with caching and will give inconsistent results with it.
 
-```shell
+```bash
 uv run zensical build -c
 ```
 
@@ -197,21 +102,29 @@ Then open your browser with the [site](site/index.html) to view the generated do
 
 ### Benchmarks
 
-Benchmarks are located in [tests/benchmarks/](tests/benchmarks) and use `pytest-benchmark`.
-See [tests/benchmarks/README.md](tests/benchmarks/README.md) for details on running and interpreting benchmarks.
-
-```shell
-uv run pytest tests/benchmarks --benchmark-only --benchmark-warmup=True --benchmark-group-by=<name, param:<size>, group>
-```
+See [the readme](benchmarks/README.md) for more information on running and saving benchmarks.
 
 ## Contributing workflow
 
 - Create a branch per feature/fix and keep commits focused and descriptive.
 - Run all quality checks locally before opening a pull request.
 - Include tests or doctest examples for behavior changes whenever possible.
-- For Rust changes, consider adding benchmarks to verify performance impact.
+- For Rust changes, consider adding benchmarks to verify performance impact when pertinent.
+
+Each commit should be prefixed with one of the following tags:
+
+- `enh` => enhancement, improved typing, API documentation, etc...
+- `fix` => bug fix, logical error correction, typo, etc...
+- `refactor` => code refactoring, no functional change
+- `feat` => new feature
+- `chore` => maintenance task, CI, build, dev documentation, etc...
+- `perf` => performance improvement, no behavior change
 
 ## Release process
+
+Publishing a GitHub release triggers two workflows: `publish.yml` (Pypi package) and `docs.yml` (builds the website and deploys it to GitHub Pages).
+
+The version to release is the one in `pyproject.toml`.
 
 ### Changelogs and release template
 

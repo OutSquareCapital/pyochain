@@ -1,1 +1,1 @@
-"""Misc scripts for pyochain."""
+"""Scripts for pyochain development."""

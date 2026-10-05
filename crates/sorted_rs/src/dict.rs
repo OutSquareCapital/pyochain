@@ -6,7 +6,7 @@ use pyo3::{
 use pyo3_ext::prelude::*;
 use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
-use tap::Pipe;
+use tap::prelude::*;
 
 use crate::{DictData, ListsData, prelude::*};
 
@@ -28,9 +28,6 @@ impl DictData<ListsData> {
     }
 }
 impl<T: ListsDataMethods> DictData<T> {
-    pub fn new(list: T, dict: Py<PyDict>) -> Self {
-        Self(list, dict)
-    }
     pub fn __len__(&self, py: Python<'_>) -> usize {
         self.1.bind(py).len()
     }

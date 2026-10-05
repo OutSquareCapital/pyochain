@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use syn::{Expr, Item, Lit, Meta, spanned::Spanned, visit::Visit};
-use tap::Pipe;
+use tap::prelude::*;
 
 use crate::paths;
 

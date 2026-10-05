@@ -11,7 +11,7 @@ from pyochain.collections import SortedList as PyoSortedList
 from ._utils import SIZES
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     from ._utils import BenchFixture
 
@@ -83,6 +83,23 @@ def test_iter(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
     r = Range(size)
     sl = cls(r)
     benchmark(f, sl)
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_iter_collect(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
+    r = Range(size)
+    sl = cls(r)
+    _ = benchmark(tuple, sl)
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_iter_rev_collect(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
+    def f(lst: Sequence[int]) -> Sequence[int]:
+        return tuple(reversed(lst))
+
+    _ = benchmark(f, cls(Range(size)))
 
 
 @CLS_PARAMS

@@ -7,7 +7,7 @@ edition = "2024"
 name = "sorted_rs"
 
 [dependencies]
-derive_more = { version = "2.1.1", features = ["deref", "deref_mut", "from"] }
+derive_more = { version = "2.1.1", features = ["constructor", "deref", "deref_mut", "from"] }
 either = "1.16.0"
 parking_lot = "0.12.5"
 pyo3 = {

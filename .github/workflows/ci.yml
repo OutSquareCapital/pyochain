@@ -8,26 +8,14 @@ on:
 
 permissions:
   contents: read
+
 env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
   static-analysis:
-    name: Static analysis - ${{ matrix.check }}
+    name: Static analysis
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        check:
-          - rust-clippy
-          - rust-format
-          - ruff-lint
-          - ruff-format
-          - tombi-format
-          - tombi-lint
-          - stub-order
-          - stub-docstrings
-          - basedpyright
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -37,46 +25,14 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
       - name: Sync development environment
         run: uv sync --dev
 
-      - name: Check Rust with Clippy
-        run: uv run cargo clippy --workspace
-        if: matrix.check == 'rust-clippy'
-
-      - name: Check Rust formatting
-        run: cargo fmt --all -- --check
-        if: matrix.check == 'rust-format'
-
-      - name: Check Python with Ruff
-        run: uv run ruff check .
-        if: matrix.check == 'ruff-lint'
-
-      - name: Check formatting with Ruff
-        run: uv run ruff format --check --preview .
-        if: matrix.check == 'ruff-format'
-
-      - name: Check TOML formatting with Tombi
-        run: uv run tombi format --check
-        if: matrix.check == 'tombi-format'
-
-      - name: Check TOML linting with Tombi
-        run: uv run tombi lint
-        if: matrix.check == 'tombi-lint'
-
-      - name: Check stub ordering
-        run: uv run sdsort . --stubs --check
-        if: matrix.check == 'stub-order'
-
-      - name: Check stub docstrings
-        run: |
-          shopt -s globstar
-          uv run pydoclint pyochain/**/*.pyi
-        if: matrix.check == 'stub-docstrings'
-
-      - name: Check Python types with basedpyright
-        run: uv run basedpyright .
-        if: matrix.check == 'basedpyright'
+      - name: Run checks
+        run: uv run -m scripts ci --slow
 
   tests:
     name: Tests - ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -93,6 +49,14 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ runner.os }}
+          cache-on-failure: true
 
       - name: Sync test environment
         run: uv sync --python ${{ matrix.python-version }} --dev

@@ -1,0 +1,5 @@
+# copy-paste the content below to a new file without the .example extension to use it.
+# Path showed is what's work on Windows. Adapt it to your OS if needed.
+
+# [env]
+# PYO3_PYTHON = { value = ".venv//Scripts//python.exe", relative = true }

@@ -5,7 +5,7 @@ use crate::{
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
     traits::IntoInit,
 };
-use derive_more::{Deref, From};
+use derive_more::{Constructor, Deref, From};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::{
     IntoPyObjectExt, PyTypeInfo,
@@ -58,10 +58,9 @@ pub struct UniqueIdentity {
     seen: Py<PySet>,
 }
 
-#[pymethods]
-impl UniqueIdentity {
-    #[new]
-    pub fn new(data: Bound<'_, PyIterator>) -> PyResult<Self> {
+impl TryFrom<Bound<'_, PyIterator>> for UniqueIdentity {
+    type Error = PyErr;
+    fn try_from(data: Bound<'_, PyIterator>) -> PyResult<Self> {
         let py = data.py();
         Self {
             iter: data.unbind(),
@@ -69,7 +68,10 @@ impl UniqueIdentity {
         }
         .pipe(Ok)
     }
+}
 
+#[pymethods]
+impl UniqueIdentity {
     fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
         let mut iter = self.iter.clone_ref(py).into_bound(py);
         let seen = self.seen.bind(py);
@@ -283,6 +285,7 @@ fn move_window(vec: &mut WindowVec, item: Py<PyAny>) {
     let last = vec.len() - 1;
     vec[last] = item;
 }
+#[derive(Constructor)]
 #[pyclass(frozen, module = "pyochain._iterators")]
 pub struct FilterMap {
     iter: Py<PyIterator>,
@@ -290,14 +293,6 @@ pub struct FilterMap {
 }
 #[pymethods]
 impl FilterMap {
-    #[new]
-    pub fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> Self {
-        Self {
-            iter: data.unbind(),
-            func: func.unbind(),
-        }
-    }
-
     fn __next__(&self, py: Python<'_>) -> PyResult<Option<Py<PyAny>>> {
         let func = self.func.bind(py);
         self.iter.clone_ref(py).into_bound(py).try_find_map(|item| {
@@ -309,6 +304,7 @@ impl FilterMap {
         })
     }
 }
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._iterators", frozen)]
 pub struct FilterMapStar {
     iter: Py<PyIterator>,
@@ -316,13 +312,6 @@ pub struct FilterMapStar {
 }
 #[pymethods]
 impl FilterMapStar {
-    #[new]
-    pub fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> Self {
-        Self {
-            iter: data.unbind(),
-            func: func.unbind(),
-        }
-    }
     fn __next__(&self, py: Python<'_>) -> PyResult<Option<Py<PyAny>>> {
         let func = self.func.bind(py);
         self.iter.clone_ref(py).into_bound(py).try_find_map(|item| {
@@ -334,7 +323,7 @@ impl FilterMapStar {
         })
     }
 }
-
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._iterators")]
 pub struct Scan {
     iter: Py<PyIterator>,
@@ -343,18 +332,6 @@ pub struct Scan {
 }
 #[pymethods]
 impl Scan {
-    #[new]
-    pub fn new(
-        data: Bound<'_, PyIterator>,
-        initial: Bound<'_, PyAny>,
-        func: Bound<'_, PyAny>,
-    ) -> Self {
-        Self {
-            iter: data.unbind(),
-            initial: initial.unbind(),
-            func: func.unbind(),
-        }
-    }
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
         let func = slf.func.bind(py);
@@ -378,7 +355,7 @@ impl Scan {
         }
     }
 }
-
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._iterators", frozen)]
 pub struct MapWhile {
     iter: Py<PyIterator>,
@@ -386,13 +363,6 @@ pub struct MapWhile {
 }
 #[pymethods]
 impl MapWhile {
-    #[new]
-    pub fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> Self {
-        Self {
-            iter: data.unbind(),
-            func: func.unbind(),
-        }
-    }
     fn __next__(&self, py: Python<'_>) -> PyResult<Option<Py<PyAny>>> {
         // NOTE: It's better to "manually" match here instead of a chain of `transpose()` and `map` calls, since we need to return early on `None` and `Err` cases.
         match self.iter.clone_ref(py).into_bound(py).next() {
@@ -494,13 +464,13 @@ impl Drain {
         start: Option<usize>,
         end: Option<usize>,
     ) -> PyResult<Self> {
-        let s = start.unwrap_or_default();
-        let e = end.unwrap_or(vec.len()?);
+        let start = start.unwrap_or_default();
+        let end = end.unwrap_or(vec.len()?);
         Self {
             vec: vec.unbind(),
-            start: s,
-            current: s,
-            end: e,
+            start,
+            current: start,
+            end,
             done: false,
         }
         .pipe(Ok)
@@ -617,20 +587,14 @@ impl Drop for ExtractIf {
         });
     }
 }
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._iterators")]
 pub struct Successors {
-    succ: Py<PyAny>,
     current: Py<PyAny>,
+    succ: Py<PyAny>,
 }
 #[pymethods]
 impl Successors {
-    #[new]
-    pub fn new(start: Bound<'_, PyAny>, succ: Bound<'_, PyAny>) -> Self {
-        Self {
-            current: start.unbind(),
-            succ: succ.unbind(),
-        }
-    }
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
         let curr = slf.current.clone_ref(py);
@@ -644,6 +608,7 @@ impl Successors {
         }
     }
 }
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._iterators", frozen)]
 pub struct FilterStar {
     iter: Py<PyIterator>,
@@ -652,14 +617,6 @@ pub struct FilterStar {
 
 #[pymethods]
 impl FilterStar {
-    #[new]
-    pub fn new(data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> Self {
-        Self {
-            iter: data.unbind(),
-            predicate: predicate.unbind(),
-        }
-    }
-
     fn __next__<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyTuple>>> {
         let predicate = self.predicate.bind(py);
         self.iter
@@ -705,16 +662,17 @@ pub struct WithPosition {
     did_iter: bool,
     peeked: Option<Py<PyAny>>,
 }
-#[pymethods]
-impl WithPosition {
-    #[new]
-    pub fn new(data: Bound<'_, PyIterator>) -> Self {
+impl From<Bound<'_, PyIterator>> for WithPosition {
+    fn from(data: Bound<'_, PyIterator>) -> Self {
         Self {
             iter: data.unbind(),
             did_iter: false,
             peeked: None,
         }
     }
+}
+#[pymethods]
+impl WithPosition {
     fn __next__(
         mut slf: PyRefMut<'_, Self>,
     ) -> PyResult<Option<(&Bound<'_, PyString>, Bound<'_, PyAny>)>> {
@@ -796,15 +754,24 @@ impl GroupBy {
         &self,
         py: Python<'py>,
     ) -> PyResult<Option<(Bound<'py, PyAny>, Bound<'py, Iter>)>> {
-        match self.0.clone_ref(py).into_bound(py).next() {
-            Some(item) => unsafe {
-                let tup = item?.cast_into_unchecked::<PyTuple>();
-                let (key, group) = (tup.get_item_unchecked(0), tup.get_item_unchecked(1));
-
-                Ok(Some((key, group.try_iter().unwrap().try_into_py()?)))
-            },
-            None => Ok(None),
-        }
+        self.0
+            .clone_ref(py)
+            .into_bound(py)
+            .next()
+            .map_or(Ok(None), |item| unsafe {
+                item.map(|x| x.cast_into_unchecked::<PyTuple>())
+                    .map(|tup| {
+                        let key = tup.get_item_unchecked(0);
+                        let group = tup
+                            .get_item_unchecked(1)
+                            .try_iter()
+                            .unwrap()
+                            .try_into_py()
+                            .unwrap();
+                        (key, group)
+                    })
+                    .map(Some)
+            })
     }
 }
 #[pyclass(module = "pyochain._iterators")]
@@ -972,8 +939,8 @@ pub struct Peekable {
     iterator: Py<PyIterator>,
     peeked: Option<Py<PyAny>>,
 }
-impl Peekable {
-    pub fn new(iterator: Py<PyIterator>) -> Self {
+impl From<Py<PyIterator>> for Peekable {
+    fn from(iterator: Py<PyIterator>) -> Self {
         Self {
             iterator,
             peeked: None,
@@ -983,15 +950,16 @@ impl Peekable {
 #[pymethods]
 impl Peekable {
     fn __next__<'py>(&mut self, py: Python<'py>) -> NextOk<'py> {
-        match self.peeked.take() {
-            Some(value) => Ok(Some(value.into_bound(py))),
-            None => self
-                .iterator
-                .clone_ref(py)
-                .into_bound(py)
-                .next()
-                .transpose(),
-        }
+        self.peeked.take().map_or_else(
+            || {
+                self.iterator
+                    .clone_ref(py)
+                    .into_bound(py)
+                    .next()
+                    .transpose()
+            },
+            |value| Ok(Some(value.into_bound(py))),
+        )
     }
 
     fn __bool__(&mut self, py: Python<'_>) -> bool {
@@ -1086,15 +1054,19 @@ pub struct SequenceIterator {
     i: usize,
     sequence: Py<PySequence>,
 }
-#[pymethods]
-impl SequenceIterator {
-    #[new]
-    pub fn new(sequence: Bound<'_, PySequence>) -> Self {
+impl<T> From<T> for SequenceIterator
+where
+    T: Into<Py<PySequence>>,
+{
+    fn from(sequence: T) -> Self {
         Self {
             i: 0,
-            sequence: sequence.unbind(),
+            sequence: sequence.into(),
         }
     }
+}
+#[pymethods]
+impl SequenceIterator {
     fn __next__<'py>(&'py mut self, py: Python<'py>) -> NextOk<'py> {
         let v = self.sequence.bind(py).get_item(self.i);
         match v {
@@ -1102,13 +1074,8 @@ impl SequenceIterator {
                 self.i += 1;
                 Ok(Some(value))
             }
-            Err(err) => {
-                if err.is_instance_of::<PyIndexError>(py) {
-                    Ok(None)
-                } else {
-                    Err(err)
-                }
-            }
+            Err(err) if err.is_instance_of::<PyIndexError>(py) => Ok(None),
+            Err(err) => Err(err),
         }
     }
 }
@@ -1134,19 +1101,23 @@ impl SequenceReverseIterator {
             .transpose()
     }
 }
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._iterators", generic)]
 pub struct ValuesViewIterator {
     iterator: Py<PyIterator>,
     mapping: Py<PyAny>,
 }
+impl TryFrom<Bound<'_, PyAny>> for ValuesViewIterator {
+    type Error = PyErr;
+    fn try_from(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
+        Ok(Self::new(mapping.try_iter()?.unbind(), mapping.unbind()))
+    }
+}
 #[pymethods]
 impl ValuesViewIterator {
     #[new]
-    pub fn new(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(Self {
-            iterator: mapping.try_iter()?.unbind(),
-            mapping: mapping.unbind(),
-        })
+    fn py_new(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
+        mapping.try_into()
     }
 
     fn __next__<'py>(&'py mut self, py: Python<'py>) -> NextOk<'py> {
@@ -1158,19 +1129,24 @@ impl ValuesViewIterator {
             .transpose()
     }
 }
+#[derive(Constructor)]
 #[pyclass(module = "pyochain._iterators", generic)]
 pub struct ItemsViewIterator {
     iterator: Py<PyIterator>,
     mapping: Py<PyAny>,
 }
+
+impl TryFrom<Bound<'_, PyAny>> for ItemsViewIterator {
+    type Error = PyErr;
+    fn try_from(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
+        Ok(Self::new(mapping.try_iter()?.unbind(), mapping.unbind()))
+    }
+}
 #[pymethods]
 impl ItemsViewIterator {
     #[new]
-    pub fn new(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(Self {
-            iterator: mapping.try_iter()?.unbind(),
-            mapping: mapping.unbind(),
-        })
+    fn py_new(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
+        mapping.try_into()
     }
 
     fn __next__<'py>(

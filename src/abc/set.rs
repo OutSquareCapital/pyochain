@@ -13,7 +13,7 @@ use pyo3_ext::{
 };
 use pyochain_macros::{BoundFromAny, py_abc};
 use std_tools::prelude::*;
-use tap::Pipe;
+use tap::prelude::*;
 #[py_abc(
     PyoSet,
     sorted::SortedKeysView,
