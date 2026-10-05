@@ -83,12 +83,7 @@ unsafe impl SortedNext for Iter {
         values
             .get(pos)
             .and_then(|v| v.get(idx).map(|obj| (pos, idx, obj)))
-            .or_else(|| {
-                values
-                    .get(pos + 1)
-                    .and_then(|v| v.first())
-                    .map(|obj| (pos + 1, 0, obj))
-            })
+            .or_else(|| values.get(pos + 1)?.first().map(|obj| (pos + 1, 0, obj)))
             .map_or_else(ptr::null_mut, |(p, i, obj)| {
                 let ptr = obj.as_ptr();
                 unsafe { ffi::Py_INCREF(ptr) };
@@ -106,12 +101,8 @@ unsafe impl SortedNext for IterRev {
         idx.checked_sub(1)
             .map_or_else(
                 || {
-                    pos.checked_sub(1).and_then(|p| {
-                        values
-                            .get(p)
-                            .and_then(|v| v.len().checked_sub(1))
-                            .map(|i| (p, i))
-                    })
+                    pos.checked_sub(1)
+                        .and_then(|p| values.get(p)?.len().checked_sub(1).map(|i| (p, i)))
                 },
                 |i| values.get(pos).filter(|v| i < v.len()).map(|_| (pos, i)),
             )
