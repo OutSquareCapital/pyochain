@@ -6,6 +6,7 @@ use crate::{
 use pyo3::{ffi, prelude::*};
 use std::ptr;
 use tap::prelude::*;
+
 pub enum IterKind {
     Fwd,
     Rev,

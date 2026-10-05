@@ -31,15 +31,6 @@ def update_list(sl: List, values: Iterable[int]) -> None:
             sl.update(values)
 
 
-def stop_iter_or_unsupported(sl: List, it: Iterator[object]) -> None:
-    """In some cases, `sortedcontainers` have undefined behavior, whilst `pyochain` emulate Python `list`."""
-    match sl:
-        case SortedListPy():
-            _ = next(it)
-        case _:
-            assert_stop_iter(it)
-
-
 def assert_stop_iter(it: Iterator[object]) -> None:
     with pytest.raises(StopIteration):
         _ = next(it)

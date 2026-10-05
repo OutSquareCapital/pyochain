@@ -3,24 +3,17 @@ from __future__ import annotations
 import multiprocessing
 
 import pytest
-from sortedcontainers import SortedList as SortedListPy
+from sortedcontainers import SortedList as PySortedList
 
 from pyochain import Iter, Range, Seq
 from pyochain.collections import SortedList
 
-from ._utils import (
-    LOAD,
-    IntoIter,
-    List,
-    assert_stop_iter,
-    stop_iter_or_unsupported,
-    update_list,
-)
+from ._utils import LOAD, IntoIter, List, assert_stop_iter, update_list
 
 LIST_CLASSES = pytest.mark.parametrize(
     "cls",
     (
-        pytest.param(SortedListPy, id="sortedcontainers"),
+        pytest.param(PySortedList, id="sortedcontainers"),
         pytest.param(list),
         pytest.param(SortedList, id="pyochain"),
     ),
@@ -75,7 +68,11 @@ def test_clear_then_update[T: List](cls: type[T], into_iter: IntoIter[T]) -> Non
     _ = next(it)
     sl.clear()
     update_list(sl, [4])
-    stop_iter_or_unsupported(sl, it)
+    match sl:
+        case PySortedList():
+            assert next(it) == 2
+        case _:
+            assert_stop_iter(it)
 
 
 @LIST_CLASSES

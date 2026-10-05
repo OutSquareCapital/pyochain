@@ -9,14 +9,7 @@ from sortedcontainers import SortedList as PySortedList
 from pyochain import Iter, Range
 from pyochain.collections import SortedList
 
-from ._utils import (
-    LOAD,
-    List,
-    assert_stop_iter,
-    method_param,
-    stop_iter_or_unsupported,
-    update_list,
-)
+from ._utils import LOAD, List, assert_stop_iter, method_param, update_list
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -59,11 +52,17 @@ class SliceFn[T](Protocol):
 @BOUNDED_PARAMS
 def test_clear[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
     length = 10
-    sl = cls(Range(length).iter().map(lambda i: 10**9 + i))
-    it = f(sl, 0, 10**9 + length, reverse=reverse)
+    sl = cls(Range(length).iter().map(lambda i: length + i))
+    it = f(sl, 0, length * 2, reverse=reverse)
     _ = next(it)
     sl.clear()
-    stop_iter_or_unsupported(sl, it)
+    match sl, reverse:
+        case PySortedList(), True:
+            assert next(it) == length + 8
+        case PySortedList(), False:
+            assert next(it) == length + 1
+        case _:
+            assert_stop_iter(it)
 
 
 @REVERSE_PARAM
@@ -72,20 +71,26 @@ def test_clear_then_update[T: List](
     cls: type[T], f: SliceFn[T], *, reverse: bool
 ) -> None:
     length = 10
-    sl = cls(Range(length).iter().map(lambda i: 10**9 + i))
-    it = f(sl, 0, 10**9 + length, reverse=reverse)
+    sl = cls(Range(length).iter().map(lambda i: length + i))
+    it = f(sl, 0, length * 2, reverse=reverse)
     _ = next(it)
     sl.clear()
-    update_list(sl, [10**9 + length])
-    stop_iter_or_unsupported(sl, it)
+    update_list(sl, [length * 2])
+    match sl, reverse:
+        case PySortedList(), True:
+            assert next(it) == length + 8
+        case PySortedList(), False:
+            assert next(it) == length + 1
+        case _:
+            assert_stop_iter(it)
 
 
 @REVERSE_PARAM
 @BOUNDED_PARAMS
 def test_pop[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
     length = 10
-    sl = cls(Range(length).iter().map(lambda i: 10**9 + i))
-    it = f(sl, 0, 10**9 + length, reverse=reverse)
+    sl = cls(Range(length).iter().map(lambda i: length + i))
+    it = f(sl, 0, length * 2, reverse=reverse)
     _ = next(it)
     for _ in range(length - 1):
         _ = sl.pop()
