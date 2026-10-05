@@ -2,25 +2,18 @@ from __future__ import annotations
 
 import multiprocessing
 
-import pytest
-from sortedcontainers import SortedList as PySortedList
-
 from pyochain import Iter, Range, Seq
 from pyochain.collections import SortedList
 
-from ._utils import LOAD, UPDATE_PARAMS, IntoIter, List, assert_stop_iter, update_list
-
-LIST_CLASSES = pytest.mark.parametrize(
-    "cls",
-    (
-        pytest.param(PySortedList, id="sortedcontainers"),
-        pytest.param(list),
-        pytest.param(SortedList, id="pyochain"),
-    ),
+from ._utils import (
+    INTO_ITER_PARAMS,
+    LIST_CLASSES,
+    LOAD,
+    IntoIter,
+    List,
+    assert_stop_iter,
+    update_list,
 )
-
-
-INTO_ITER_PARAMS = pytest.mark.parametrize("into_iter", (iter, reversed))
 
 
 def test_iterator_pointer() -> None:
@@ -36,23 +29,6 @@ def test_iterator_pointer() -> None:
 
 def _consume_orphan_iter() -> None:
     _ = Range(10).pipe(SortedList).iter().collect(list)
-
-
-@UPDATE_PARAMS
-@LIST_CLASSES
-@INTO_ITER_PARAMS
-def test_clear[T: List](cls: type[T], into_iter: IntoIter[T], *, update: bool) -> None:
-    sl = cls((1, 2, 3))
-    it = into_iter(sl)
-    sl.clear()
-    if update:
-        update_list(sl, [4])
-    match sl, into_iter.__name__ == "iter", update:
-        case (_, _, False) | (list() | SortedList(), False, True):
-            assert_stop_iter(it)
-        case (PySortedList(), _, True) | (list() | SortedList(), True, True):
-            assert next(it) == 4
-            assert_stop_iter(it)
 
 
 @LIST_CLASSES

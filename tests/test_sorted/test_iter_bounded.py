@@ -1,81 +1,24 @@
 from __future__ import annotations
 
-import itertools
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
-import pytest
 from sortedcontainers import SortedList as PySortedList
 
 from pyochain import Iter, Range
 from pyochain.collections import SortedList
 
 from ._utils import (
+    BOUNDED_PARAMS,
     LOAD,
-    UPDATE_PARAMS,
+    REVERSE_PARAM,
     IterStop,
     List,
+    SliceFn,
     assert_stop_iter,
-    method_param,
-    update_list,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-
-
-def _list_slice(
-    lst: list[int], start: int, stop: int, *, reverse: bool = False
-) -> Iterator[int]:
-    it = iter(lst) if not reverse else reversed(lst)
-    bounds = (
-        (start, stop) if not reverse else (max(len(lst) - stop, 0), len(lst) - start)
-    )
-    return itertools.islice(it, *bounds)
-
-
-REVERSE_PARAM = pytest.mark.parametrize("reverse", (False, True))
-BOUNDED_PARAMS = pytest.mark.parametrize(
-    ("cls", "f"),
-    ((
-        method_param(PySortedList, PySortedList[int].irange),
-        method_param(PySortedList, PySortedList[int].islice),
-        method_param(SortedList, SortedList[int].irange),
-        method_param(SortedList, SortedList[int].islice),
-        pytest.param(list, _list_slice),
-    )),
-)
-
-
-class SliceFn[T](Protocol):
-    def __call__(
-        self,
-        it: T,
-        start: int,
-        stop: int,
-        reverse: bool = False,  # ruff: ignore[boolean-default-value-positional-argument]
-    ) -> Iterator[object]: ...
-
-
-@UPDATE_PARAMS
-@REVERSE_PARAM
-@BOUNDED_PARAMS
-def test_clear[T: List](
-    cls: type[T], f: SliceFn[T], *, reverse: bool, update: bool
-) -> None:
-    length = 10
-    sl = cls(Range(length).iter().map(lambda i: length + i))
-    it = f(sl, 0, length * 2, reverse=reverse)
-    _ = next(it)
-    sl.clear()
-    if update:
-        update_list(sl, [length * 2])
-    match sl, reverse:
-        case PySortedList(), True:
-            assert next(it) == length + 8
-        case PySortedList(), False:
-            assert next(it) == length + 1
-        case _:
-            assert_stop_iter(it)
 
 
 @REVERSE_PARAM
