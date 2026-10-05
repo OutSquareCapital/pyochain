@@ -9,7 +9,14 @@ from sortedcontainers import SortedList as PySortedList
 from pyochain import Iter, Range
 from pyochain.collections import SortedList
 
-from ._utils import LOAD, List, assert_stop_iter, method_param, update_list
+from ._utils import (
+    LOAD,
+    UPDATE_PARAMS,
+    List,
+    assert_stop_iter,
+    method_param,
+    update_list,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -48,7 +55,7 @@ class SliceFn[T](Protocol):
     ) -> Iterator[object]: ...
 
 
-@pytest.mark.parametrize("update", (True, False))
+@UPDATE_PARAMS
 @REVERSE_PARAM
 @BOUNDED_PARAMS
 def test_clear[T: List](

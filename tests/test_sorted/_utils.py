@@ -22,6 +22,8 @@ type Dict = dict[int, object] | SortedDict[int, object] | SortedDictPy[int, obje
 LOAD = 1000
 """Actuall load size, correspond to desired sublist size."""
 
+UPDATE_PARAMS = pytest.mark.parametrize("update", (True, False))
+
 
 def update_list(sl: List, values: Iterable[int]) -> None:
     match sl:
