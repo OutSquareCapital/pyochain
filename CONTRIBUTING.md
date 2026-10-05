@@ -2,34 +2,11 @@
 
 Thank you for your interest in contributing to pyochain!
 
-This document outlines the repository structure, coding standards, and contribution workflow to help you get started.
+This document covers environment setup, the commands to run, and how to commit and release.
+
+For the architecture, the Rust code style and the internals of the crates, see [AGENTS.md](./AGENTS.md).
 
 ## Repository overview
-
-NOTE: The project evolve quickly, so this section is often outdated. It can be useful as a rough idea when first exploring the repository, but for accurate information, refer to the actual source code, or raise an issue if you find something unclear/deserves to be clearly documented.
-
-### Python API and typing
-
-All the stubs are located in the `pyochain` folder.
-
-The stub packages follow the public Rust module hierarchy, but the mapping is not strictly one-to-one: package initializers, grouped stubs, and private Rust helper modules do not always have a matching file.
-
-### Rust and PyO3 implementation
-
-The actual source code implementation lives in the `src` folder, with the following structure:
-
-- [src/lib.rs](src/lib.rs) — initializes the `pyochain` PyO3 module and registers the `core`, `abc`, `collections`, and `collections._sorted` submodules.
-- [src/core/](src/core/) — implements the core types.
-- [src/abc/](src/abc/) — implements the abstract base classes, mixins, and shared ABC traits.
-- [src/collections/](src/collections/) — implements concrete collections such as `Deque`, `HeapMax`, `HeapMin`, `StableSet` etc...
-- [src/collections/sorted/](src/collections/sorted/) — implements sorted collections, views, iterators, and their internal support modules.
-- [src/traits.rs](src/traits.rs) — defines shared wrapper, conversion, and initialization traits.
-
-### Internal crates
-
-- [crates/pyo3_ext/](crates/pyo3_ext/) — internal PyO3 extensions and utility traits.
-- [crates/pyochain_macros/](crates/pyochain_macros/) — procedural macros used by the Rust implementation.
-- [crates/pyochain_build/](crates/pyochain_build/) — build tool for generating documentation and validating the repository.
 
 ### Tests, documentation, and tooling
 
@@ -39,15 +16,16 @@ The actual source code implementation lives in the `src` folder, with the follow
 - [scripts/](scripts/) — documentation generation and repository validation scripts.
 - [Cargo.toml](Cargo.toml) — Rust workspace and dependency configuration.
 - [pyproject.toml](pyproject.toml) — Python package metadata, maturin configuration, and development dependencies.
-- [pyrefly.toml](pyrefly.toml) — Pyrefly configuration.
+- [pyrefly.toml](pyrefly.toml) and [ty.toml](ty.toml) — Pyrefly and ty configuration.
 - [ruff.toml](ruff.toml) — Ruff linting and formatting configuration.
 - [zensical.toml](zensical.toml) — documentation site configuration.
+- [.github/workflows/](.github/workflows/) — CI, release and documentation workflows.
 
 ## Setup
 
 This project uses `uv` to manage everything python-related.
 
-After cloning the repo, adapt the [cargo config example](.cargo\config.toml.example) to your platform specifics to set-up the python path for it.
+After cloning the repo, copy the [cargo config example](.cargo/config.toml.example) to `.cargo/config.toml` (git-ignored) and adapt it to your platform to set-up the python path for PyO3.
 
 Then you can sync the venv with `uv`.
 
@@ -87,7 +65,9 @@ uv run -m scripts ci --help
 
 docstrings should follow the google format. See more information on [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings).
 
-The code in the `examples` section will be automatically part of the test suite.
+The code in the `examples` section will be automatically part of the test suite (`pytest-docflex`, which also collects `README.md` and `docs/`).
+
+Every function in a stub needs a docstring with at least one closed `python` code block, this is checked by `pyochain-build` (see below).
 
 We use code blocks instead of doctests, which means that the whole pytest ecosystem is available, which can be handy for expected failures.
 
@@ -95,7 +75,11 @@ See [this file](pyochain/abc/_iterator.pyi) for a practical reference for docume
 
 ### Automatic generation
 
-Prior to a release, to check correct documentation generation, or to build the tool itself, you can run one of the following commands:
+Prior to a release,  run the tool to check the coherence between the stubs and the Rust source, generate the pages of `docs/reference`, and validate the navigation of `zensical.toml`.
+
+A new class page must also be added to the `nav` of `zensical.toml`.
+
+You can run one of the following commands:
 
 ```bash
 cargo run -p pyochain-build
@@ -137,6 +121,10 @@ Each commit should be prefixed with one of the following tags:
 - `perf` => performance improvement, no behavior change
 
 ## Release process
+
+Publishing a GitHub release triggers two workflows: `publish.yml` (Pypi package) and `docs.yml` (builds the website and deploys it to GitHub Pages).
+
+The version to release is the one in `pyproject.toml`.
 
 ### Changelogs and release template
 
