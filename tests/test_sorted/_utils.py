@@ -19,6 +19,10 @@ type AnySet = set[int] | SortedSet[int] | SortedSetPy[int]
 type Dict = dict[int, object] | SortedDict[int, object] | SortedDictPy[int, object]
 
 
+LOAD = 1000
+"""Actuall load size, correspond to desired sublist size."""
+
+
 def update_list(sl: List, values: Iterable[int]) -> None:
     match sl:
         case list() | SortedList():

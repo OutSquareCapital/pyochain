@@ -4,12 +4,13 @@ import itertools
 from typing import TYPE_CHECKING, Protocol
 
 import pytest
-from sortedcontainers import SortedList as SortedListPy
+from sortedcontainers import SortedList as PySortedList
 
 from pyochain import Iter, Range
 from pyochain.collections import SortedList
 
 from ._utils import (
+    LOAD,
     List,
     assert_stop_iter,
     method_param,
@@ -35,8 +36,8 @@ REVERSE_PARAM = pytest.mark.parametrize("reverse", (False, True))
 BOUNDED_PARAMS = pytest.mark.parametrize(
     ("cls", "f"),
     ((
-        method_param(SortedListPy, SortedListPy[int].irange),
-        method_param(SortedListPy, SortedListPy[int].islice),
+        method_param(PySortedList, PySortedList[int].irange),
+        method_param(PySortedList, PySortedList[int].islice),
         method_param(SortedList, SortedList[int].irange),
         method_param(SortedList, SortedList[int].islice),
         pytest.param(list, _list_slice),
@@ -89,7 +90,7 @@ def test_pop[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
     for _ in range(length - 1):
         _ = sl.pop()
     match sl:
-        case SortedListPy():
+        case PySortedList():
             # sortedcontainers will try to access a non-existing index, which raises IndexError instead of StopIteration.
             with pytest.raises(IndexError):
                 _ = next(it)
@@ -99,15 +100,23 @@ def test_pop[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
 
 @BOUNDED_PARAMS
 def test_remove_below_lower_bound[T: List](cls: type[T], f: SliceFn[T]) -> None:
-    start = 900
-    stop = 3000
+    remove_range = 100
+    stop = LOAD * 3
     sl = cls(range(stop))
-    it = f(sl, start, stop, reverse=True)
-    for value in range(100):
+    it = f(sl, LOAD - remove_range, stop, reverse=True)
+    for value in range(remove_range):
         sl.remove(value)
     match sl:
-        case SortedListPy():
-            with pytest.raises(IndexError):
-                _ = Iter(it).last()
-        case _:
+        case list():
             assert_stop_iter(it)
+        case PySortedList():
+            _iter_after_removed_lower_bound(it, IndexError)
+        case SortedList():
+            _iter_after_removed_lower_bound(it, StopIteration)
+
+
+def _iter_after_removed_lower_bound(it: Iterator[object], err: type[Exception]) -> None:
+    iterator = Iter(it).skip(LOAD * 2 - 1)
+    assert iterator.next().is_some()
+    with pytest.raises(err):
+        _ = next(iterator)
