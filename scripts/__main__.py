@@ -43,9 +43,11 @@ def ci(
 ) -> None:
     """Run CI checks, with caching of the last failed step.
 
-    Switching from `--slow` to `--no-slow` (or vice versa) will reset the cache index.
+    Note that the caching is strictly for local development convenience.
 
-    Note that the caching is strictly for local development convenience. Adding new commands in it will invalidate the cache index.
+    Adding new commands, or switching options will result in undefined behavior on a pre-existing cache.
+
+    Not really a problem since once a run is successful, the cache is cleared.
 
     Raises:
         Exit: If a check fails or all checks pass, with the corresponding exit code.
