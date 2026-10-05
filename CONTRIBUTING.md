@@ -4,7 +4,7 @@ Thank you for your interest in contributing to pyochain!
 
 This document covers environment setup, the commands to run, and how to commit and release.
 
-For the architecture, the Rust code style and the internals of the crates, see [AGENTS.md](./AGENTS.md).
+For the architecture and coding conventions, see [AGENTS.md](./AGENTS.md). It is destined for any developer, wether human or machine.
 
 ## Repository overview
 
