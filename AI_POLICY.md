@@ -9,7 +9,7 @@ The following policy reflect the repo owner's stance on AI usage, and outlines s
 - PR's adressing an issue with the `Good first issue` label may not use AI for it, since those are intended either for experimented developers to get familiar with the codebase, or for coding beginners to generally learn to code and to contribute to open source software.
 - Note that the usage of `greptile` and `github copilot` for PR reviews is not contradictory, since their status is **explicit**. As such, others can directly know how to perceive the value in their claims.
 
-That's it. If you want to know *why* those guidelines exist, see the section below.
+That's it. If you want to know _why_ those guidelines exist, see the section below.
 
 ## Motivation
 
@@ -59,7 +59,7 @@ Cheating results, partial coverage and unecessary assertions are almost always p
 
 Architectural refactoring is impossible for them ATM.
 
-Worst of all, it can often *seem* like the goal was completed, and on further inspection, the underlying issues remain unresolved. For example, moving methods into free functions, renaming classes/traits, shuffling modules and their members around, in other words, purely cosmetic changes without adressing the original goal.
+Worst of all, it can often _seem_ like the goal was completed, and on further inspection, the underlying issues remain unresolved. For example, moving methods into free functions, renaming classes/traits, shuffling modules and their members around, in other words, purely cosmetic changes without adressing the original goal.
 
 Even without cosmetic changes, trading performance and readability to achieve architectural improvements is another common "solution".
 

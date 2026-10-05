@@ -75,7 +75,7 @@ See [this file](pyochain/abc/_iterator.pyi) for a practical reference for docume
 
 ### Automatic generation
 
-Prior to a release,  run the tool to check the coherence between the stubs and the Rust source, generate the pages of `docs/reference`, and validate the navigation of `zensical.toml`.
+Prior to a release, run the tool to check the coherence between the stubs and the Rust source, generate the pages of `docs/reference`, and validate the navigation of `zensical.toml`.
 
 A new class page must also be added to the `nav` of `zensical.toml`.
 
