@@ -54,7 +54,6 @@ def plot(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> Non
 def show(
     method: MethodArg,
     *,
-    group_by_commit: GroupByCommitArg = False,
     raw: Annotated[
         bool,
         tp.Option(help="Render the table as raw markdown instead of pretty printing"),
@@ -66,7 +65,7 @@ def show(
 
     return (
         check_method(method)
-        .map(query.run, group_by_commit)
+        .map(query.run, False)
         .map(display.terminal, raw=raw)
         .unwrap()
     )
