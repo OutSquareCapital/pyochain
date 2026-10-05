@@ -161,8 +161,12 @@ unsafe impl SortedNext for IterBoundedRev {
                 } else {
                     (pos, idx - 1)
                 };
-                self.2.store(pos, idx);
-                unsafe { data.values.get_unchecked(pos).pipe(|v| inc_ref_get(v, idx)) }
+                if pos < min.pos || (pos == min.pos && idx < min.idx) {
+                    ptr::null_mut()
+                } else {
+                    self.2.store(pos, idx);
+                    unsafe { data.values.get_unchecked(pos).pipe(|v| inc_ref_get(v, idx)) }
+                }
             })
     }
 }
