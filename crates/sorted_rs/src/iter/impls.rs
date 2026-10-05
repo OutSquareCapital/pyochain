@@ -54,11 +54,12 @@ where
 {
     fn from(owner: T) -> Self {
         let inner = owner.into();
-        let data = unsafe { inner.deref() };
-        let pos = data.values.len().saturating_sub(1);
-        let idx = data.values.last().map_or(0, Vec::len);
-        let loc = Loc::new(pos, idx).into();
-        Self(inner, loc)
+        let pos = unsafe { inner.deref() }
+            .values
+            .len()
+            .pipe(Loc::with_pos)
+            .into();
+        Self(inner, pos)
     }
 }
 

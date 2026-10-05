@@ -34,9 +34,9 @@ def test_iter[T: List](cls: type[T], into_iter: IntoIter[T], *, update: bool) ->
     if update:
         update_list(sl, [LOAD])
     match sl, into_iter.__name__ == "iter", update:
-        case (_, _, False) | (list() | SortedList(), False, True):
+        case (PySortedList() | SortedList() | list(), _, False) | (list(), False, True):
             assert_stop_iter(it)
-        case (PySortedList(), _, True) | (list() | SortedList(), True, True):
+        case (PySortedList() | SortedList(), _, True) | (list(), True, True):
             assert next(it) == LOAD
             assert_stop_iter(it)
 
