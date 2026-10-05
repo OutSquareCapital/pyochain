@@ -4,13 +4,14 @@ from typing import TYPE_CHECKING
 
 from sortedcontainers import SortedList as PySortedList
 
-from pyochain import Iter, Range, Some
+from pyochain import Iter, Range
 from pyochain.collections import SortedList
 
 from ._utils import (
     BOUNDED_PARAMS,
     INTO_ITER_PARAMS,
     LIST_CLASSES,
+    LOAD,
     REVERSE_PARAM,
     UPDATE_PARAMS,
     IntoIter,
@@ -20,8 +21,6 @@ from ._utils import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     from ._utils import SliceFn
 
 
@@ -33,12 +32,12 @@ def test_iter[T: List](cls: type[T], into_iter: IntoIter[T], *, update: bool) ->
     it = into_iter(sl)
     sl.clear()
     if update:
-        update_list(sl, [4])
+        update_list(sl, [LOAD])
     match sl, into_iter.__name__ == "iter", update:
         case (_, _, False) | (list() | SortedList(), False, True):
             assert_stop_iter(it)
         case (PySortedList(), _, True) | (list() | SortedList(), True, True):
-            assert next(it) == 4
+            assert next(it) == LOAD
             assert_stop_iter(it)
 
 
@@ -51,23 +50,21 @@ def test_slice[T: List](
     length = 10
     stop = length * 2
     sl = cls(Range(length).iter().map(lambda i: length + i))
-    it = f(sl, 0, stop, reverse=reverse)
+    it = Iter(f(sl, 0, stop, reverse=reverse))
     sl.clear()
     if update:
-        update_list(sl, [stop])
+        update_list(sl, [LOAD])
     match sl, reverse, update:
-        case PySortedList(), True, _:
-            assert _last_val_is_some(it, length)
-            assert_stop_iter(it)
         case PySortedList(), False, _:
-            assert _last_val_is_some(it, stop - 1)
+            assert it.next().unwrap() == length
+            assert it.skip(length - 2).next().unwrap() == stop - 1
+            assert_stop_iter(it)
+        case PySortedList(), True, _:
+            assert it.next().unwrap() == stop - 1
+            assert it.skip(length - 2).next().unwrap() == length
             assert_stop_iter(it)
         case list() | SortedList(), False, True:
-            assert next(it) == stop
+            assert it.next().unwrap() == LOAD
             assert_stop_iter(it)
         case list() | SortedList(), _, _:
             assert_stop_iter(it)
-
-
-def _last_val_is_some(it: Iterator[object], length: int) -> bool:
-    return Iter(it).skip(length - 1).next() == Some(length)
