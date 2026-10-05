@@ -1,7 +1,8 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use derive_more::Constructor;
 use pyo3::prelude::*;
+use tap::{Conv, Pipe};
 
 use crate::{bisect::Bisect, types::VecPy};
 
@@ -100,26 +101,33 @@ impl Bounds {
         }
     }
 }
-#[derive(Constructor, Debug, Default)]
-pub struct AtomicLoc {
-    pub(super) pos: AtomicUsize,
-    pub(super) idx: AtomicUsize,
-}
+#[derive(Debug, Default)]
+pub struct AtomicLoc(AtomicU64);
 impl AtomicLoc {
-    #[inline]
-    pub fn load(&self) -> (usize, usize) {
+    #[allow(clippy::cast_possible_truncation)]
+    #[inline(always)]
+    pub fn load(&self) -> (u64, usize, usize) {
+        let at = self.0.load(Ordering::Relaxed);
         (
-            self.pos.load(Ordering::Relaxed),
-            self.idx.load(Ordering::Relaxed),
+            at,
+            (at >> u32::BITS) as usize,
+            (at & u64::from(u32::MAX)) as usize,
         )
     }
-    pub fn store(&self, pos: usize, idx: usize) {
-        self.pos.store(pos, Ordering::Relaxed);
-        self.idx.store(idx, Ordering::Relaxed);
+    #[inline(always)]
+    pub fn store(&self, at: u64) {
+        self.0.store(at, Ordering::Relaxed);
     }
 }
+
+impl From<Loc> for u64 {
+    fn from(loc: Loc) -> Self {
+        (loc.pos as Self) << u32::BITS | loc.idx as Self
+    }
+}
+
 impl From<Loc> for AtomicLoc {
     fn from(loc: Loc) -> Self {
-        Self::new(loc.pos.into(), loc.idx.into())
+        loc.conv::<u64>().conv::<AtomicU64>().pipe(Self)
     }
 }
