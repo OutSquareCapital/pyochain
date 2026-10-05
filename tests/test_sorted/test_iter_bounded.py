@@ -48,34 +48,19 @@ class SliceFn[T](Protocol):
     ) -> Iterator[object]: ...
 
 
+@pytest.mark.parametrize("update", (True, False))
 @REVERSE_PARAM
 @BOUNDED_PARAMS
-def test_clear[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
-    length = 10
-    sl = cls(Range(length).iter().map(lambda i: length + i))
-    it = f(sl, 0, length * 2, reverse=reverse)
-    _ = next(it)
-    sl.clear()
-    match sl, reverse:
-        case PySortedList(), True:
-            assert next(it) == length + 8
-        case PySortedList(), False:
-            assert next(it) == length + 1
-        case _:
-            assert_stop_iter(it)
-
-
-@REVERSE_PARAM
-@BOUNDED_PARAMS
-def test_clear_then_update[T: List](
-    cls: type[T], f: SliceFn[T], *, reverse: bool
+def test_clear[T: List](
+    cls: type[T], f: SliceFn[T], *, reverse: bool, update: bool
 ) -> None:
     length = 10
     sl = cls(Range(length).iter().map(lambda i: length + i))
     it = f(sl, 0, length * 2, reverse=reverse)
     _ = next(it)
     sl.clear()
-    update_list(sl, [length * 2])
+    if update:
+        update_list(sl, [length * 2])
     match sl, reverse:
         case PySortedList(), True:
             assert next(it) == length + 8
