@@ -17,7 +17,7 @@ type IntoIter[T] = Callable[[T], Iterator[object]]
 type List = list[int] | SortedList[int] | SortedListPy[int]
 type AnySet = set[int] | SortedSet[int] | SortedSetPy[int]
 type Dict = dict[int, object] | SortedDict[int, object] | SortedDictPy[int, object]
-
+type IterStop = type[StopIteration | IndexError]
 
 LOAD = 1000
 """Actuall load size, correspond to desired sublist size."""
@@ -33,8 +33,8 @@ def update_list(sl: List, values: Iterable[int]) -> None:
             sl.update(values)
 
 
-def assert_stop_iter(it: Iterator[object]) -> None:
-    with pytest.raises(StopIteration):
+def assert_stop_iter(it: Iterator[object], err: IterStop = StopIteration) -> None:
+    with pytest.raises(err):
         _ = next(it)
 
 

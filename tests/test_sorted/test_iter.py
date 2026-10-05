@@ -52,8 +52,7 @@ def test_clear[T: List](cls: type[T], into_iter: IntoIter[T], *, update: bool) -
             assert_stop_iter(it)
         case (PySortedList(), _, True) | (list() | SortedList(), True, True):
             assert next(it) == 4
-            with pytest.raises(StopIteration):
-                _ = next(it)
+            assert_stop_iter(it)
 
 
 @LIST_CLASSES

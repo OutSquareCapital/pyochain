@@ -12,6 +12,7 @@ from pyochain.collections import SortedList
 from ._utils import (
     LOAD,
     UPDATE_PARAMS,
+    IterStop,
     List,
     assert_stop_iter,
     method_param,
@@ -88,9 +89,7 @@ def test_pop[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
         _ = sl.pop()
     match sl:
         case PySortedList():
-            # sortedcontainers will try to access a non-existing index, which raises IndexError instead of StopIteration.
-            with pytest.raises(IndexError):
-                _ = next(it)
+            assert_stop_iter(it, IndexError)
         case _:
             assert_stop_iter(it)
 
@@ -112,8 +111,7 @@ def test_remove_below_lower_bound[T: List](cls: type[T], f: SliceFn[T]) -> None:
             _iter_after_removed_lower_bound(it, StopIteration)
 
 
-def _iter_after_removed_lower_bound(it: Iterator[object], err: type[Exception]) -> None:
+def _iter_after_removed_lower_bound(it: Iterator[object], err: IterStop) -> None:
     iterator = Iter(it).skip(LOAD * 2 - 1)
     assert iterator.next().is_some()
-    with pytest.raises(err):
-        _ = next(iterator)
+    assert_stop_iter(iterator, err)
