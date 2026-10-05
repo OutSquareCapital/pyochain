@@ -24,6 +24,7 @@ class Cols(PlEnum):
     Relative = auto()
     Lib = auto()
     Commit = auto()
+    Run = auto()
 
 
 def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
@@ -69,7 +70,9 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
             lambda lf: (
                 _group_by_commit(lf)
                 if agg_by_commit
-                else lf.with_columns(Cols.TimeStamp.pl().cum_count().over(Cols.Size))
+                else lf.with_columns(
+                    Cols.TimeStamp.pl().cum_count().over(Cols.Size).alias(Cols.Run)
+                )
             )
         )
         .collect()
@@ -78,7 +81,8 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
 
 def _group_by_commit(lf: pl.LazyFrame) -> pl.LazyFrame:
     return lf.group_by(Cols.Commit, Cols.Size, maintain_order=True).agg(
-        pl.selectors.numeric().median().name.keep()
+        Cols.TimeStamp.pl().first(),
+        pl.selectors.numeric().median().name.keep(),
     )
 
 
