@@ -6,21 +6,6 @@ This document covers environment setup, the commands to run, and how to commit a
 
 For the architecture and coding conventions, see [AGENTS.md](./AGENTS.md). It is destined for any developer, wether human or machine.
 
-## Repository overview
-
-### Tests, documentation, and tooling
-
-- [tests/](tests/) — Python tests, ABC tests, external integration tests
-- [benchmarks/](benchmarks/) — Python benchmarks for performance testing.
-- [docs/](docs/) — documentation sources and API reference pages.
-- [scripts/](scripts/) — documentation generation and repository validation scripts.
-- [Cargo.toml](Cargo.toml) — Rust workspace and dependency configuration.
-- [pyproject.toml](pyproject.toml) — Python package metadata, maturin configuration, and development dependencies.
-- [pyrefly.toml](pyrefly.toml) and [ty.toml](ty.toml) — Pyrefly and ty configuration.
-- [ruff.toml](ruff.toml) — Ruff linting and formatting configuration.
-- [zensical.toml](zensical.toml) — documentation site configuration.
-- [.github/workflows/](.github/workflows/) — CI, release and documentation workflows.
-
 ## Setup
 
 This project uses `uv` to manage everything python-related.
@@ -50,6 +35,14 @@ The command you will run most often is the following, which will build the packa
 uv run maturin develop --uv;
 uv run pytest
 ```
+
+For benchmarks, you can run the following command:
+
+```bash
+uv run maturin develop --uv --profile profiling
+```
+
+See [the readme](benchmarks/README.md) for more informations.
 
 ## linting/formatting/type checking
 
@@ -99,10 +92,6 @@ uv run zensical build -c
 ```
 
 Then open your browser with the [site](site/index.html) to view the generated documentation.
-
-### Benchmarks
-
-See [the readme](benchmarks/README.md) for more information on running and saving benchmarks.
 
 ## Contributing workflow
 

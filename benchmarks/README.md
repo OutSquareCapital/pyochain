@@ -5,17 +5,15 @@ Python API.
 
 Before running any benchmark, ensure you have built the project with the dedicated profile:
 
-```shell
-uv run maturin develop --uv --profile profiling
-```
-
 ## Pytest
 
 ### Useful commands
 
-Run only benchmarks:
+Run all benchmarks at once with the following command.
 
-```shell
+In all cases, gc always disabled, warmup always enabled:
+
+```bash
 uv run pytest benchmarks/ `
 --benchmark-only `
 --benchmark-warmup=true `
@@ -24,7 +22,7 @@ uv run pytest benchmarks/ `
 
 Group output by parametrized dataset size:
 
-```shell
+```bash
 uv run pytest benchmarks/ `
 --benchmark-only `
 --benchmark-group-by=param:size `
@@ -34,7 +32,7 @@ uv run pytest benchmarks/ `
 
 Save a run with a readable name:
 
-```shell
+```bash
 uv run pytest benchmarks/ `
 --benchmark-only `
 --benchmark-warmup=true `
@@ -44,7 +42,7 @@ uv run pytest benchmarks/ `
 
 Save stats plus raw timing data:
 
-```shell
+```bash
 uv run pytest benchmarks/ `
 --benchmark-only `
 --benchmark-save-data `
@@ -53,7 +51,7 @@ uv run pytest benchmarks/ `
 
 Compare against the latest saved run:
 
-```powershell
+```powerbash
 uv run pytest benchmarks/ `
 --benchmark-only `
 --benchmark-compare
@@ -61,7 +59,7 @@ uv run pytest benchmarks/ `
 
 ### Advanced examples
 
-```shell
+```bash
 uv run pytest benchmarks/test_sequences.py::test_init `
 --benchmark-only `
 --benchmark-group-by=param:size `
@@ -77,7 +75,7 @@ Run a single test, grouped by size + name, compare against the last saved run, w
 
 Also:
 
-```shell
+```bash
 uv run pytest benchmarks/test_sequences.py::test_init `
 -k "10-" `
 --benchmark-only `
@@ -93,7 +91,7 @@ Here we add a `k` filter to only run the 10- element size, and group by name onl
 
 Comparing multiple runs:
 
-```shell
+```bash
 uv run pytest-benchmark compare `
   ".benchmarks\Windows-CPython-3.13-64bit\0055_map_juxt_dev.json" `
   ".benchmarks\Windows-CPython-3.13-64bit\0056_map_juxt_tup.json" `
@@ -133,13 +131,13 @@ For these benchmarks in particular, run `uv run -m benchmarks`, and add `--help`
 
 If you want to check import speed, you can use the builtin python command:
 
-```powershell
+```powerbash
 uv run python -X importtime -c "import pyochain"
 ```
 
 To get a table with sorted import times:
 
-```powershell
+```powerbash
 uv run python -X importtime -c "import pyochain" 2>&1 |
 Select-String "import time:" |
 Where-Object { $_ -notmatch "cumulative" } |
