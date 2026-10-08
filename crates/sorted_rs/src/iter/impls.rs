@@ -1,8 +1,12 @@
 use crate::{
     Bounds, Loc,
-    bounds::AtomicLoc,
-    iter::{core::IterInner, traits::SortedNext},
+    iter::{
+        core::{InnerIter, InnerRef},
+        cursor::Cursor,
+        traits::SortedNext,
+    },
 };
+use derive_more::From;
 use pyo3::ffi;
 use tap::prelude::*;
 
@@ -26,30 +30,30 @@ impl IterKind {
     }
 }
 
-#[derive(Debug)]
-pub struct Iter(IterInner, AtomicLoc);
+#[derive(Debug, From)]
+pub struct Iter(InnerIter);
+
+#[derive(Debug, From)]
+pub struct IterRev(InnerIter);
 
 #[derive(Debug)]
-pub struct IterRev(IterInner, AtomicLoc);
+pub struct IterBounded(InnerIter, u64);
 
 #[derive(Debug)]
-pub struct IterBounded(IterInner, AtomicLoc, u64);
-
-#[derive(Debug)]
-pub struct IterBoundedRev(IterInner, u64, AtomicLoc);
+pub struct IterBoundedRev(InnerIter, u64);
 
 impl<T> From<T> for Iter
 where
-    T: Into<IterInner>,
+    T: Into<InnerRef>,
 {
     fn from(owner: T) -> Self {
-        Self(owner.into(), AtomicLoc::default())
+        InnerIter::new(owner.into(), Cursor::default()).into()
     }
 }
 
 impl<T> From<T> for IterRev
 where
-    T: Into<IterInner>,
+    T: Into<InnerRef>,
 {
     fn from(owner: T) -> Self {
         let inner = owner.into();
@@ -58,47 +62,49 @@ where
             .len()
             .pipe(Loc::with_pos)
             .into();
-        Self(inner, pos)
+        InnerIter::new(inner, pos).into()
     }
 }
 
 impl IterBounded {
     #[inline]
-    pub fn new(owner: impl Into<IterInner>, bounds: Bounds) -> Self {
-        Self(owner.into(), bounds.min.into(), bounds.max.into())
+    pub fn new(owner: impl Into<InnerRef>, bounds: Bounds) -> Self {
+        let inner = InnerIter::new(owner.into(), bounds.min.into());
+        Self(inner, bounds.max.into())
     }
 }
 
 impl IterBoundedRev {
     #[inline]
-    pub fn new(owner: impl Into<IterInner>, bounds: Bounds) -> Self {
-        Self(owner.into(), bounds.min.into(), bounds.max.into())
+    pub fn new(owner: impl Into<InnerRef>, bounds: Bounds) -> Self {
+        let inner = InnerIter::new(owner.into(), bounds.max.into());
+        Self(inner, bounds.min.into())
     }
 }
 
 unsafe impl SortedNext for Iter {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_fwd::<false>(&self.1, 0) }
+        unsafe { self.0.next_fwd::<false>(0) }
     }
 }
 
 unsafe impl SortedNext for IterRev {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_rev(&self.1, 0) }
+        unsafe { self.0.next_rev(0) }
     }
 }
 unsafe impl SortedNext for IterBounded {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_fwd::<true>(&self.1, self.2) }
+        unsafe { self.0.next_fwd::<true>(self.1) }
     }
 }
 
 unsafe impl SortedNext for IterBoundedRev {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_rev(&self.2, self.1) }
+        unsafe { self.0.next_rev(self.1) }
     }
 }
