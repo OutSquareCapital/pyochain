@@ -15,6 +15,7 @@ from ._utils import (
     List,
     SliceFn,
     assert_stop_iter,
+    reset_list,
 )
 
 if TYPE_CHECKING:
@@ -24,11 +25,10 @@ if TYPE_CHECKING:
 @REVERSE_PARAM
 @BOUNDED_PARAMS
 def test_pop[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
-    length = 10
-    sl = cls(Range(length).iter().map(lambda i: length + i))
-    it = f(sl, 0, length * 2, reverse=reverse)
+    sl = cls(Range(LOAD).iter().map(lambda i: LOAD + i))
+    it = f(sl, 0, LOAD * 2, reverse=reverse)
     _ = next(it)
-    for _ in range(length - 1):
+    for _ in range(LOAD - 1):
         _ = sl.pop()
     match sl:
         case PySortedList():
@@ -39,9 +39,10 @@ def test_pop[T: List](cls: type[T], f: SliceFn[T], *, reverse: bool) -> None:
 
 @BOUNDED_PARAMS
 def test_remove_below_lower_bound[T: List](cls: type[T], f: SliceFn[T]) -> None:
-    remove_range = 100
+    remove_range = 2
     stop = LOAD * 3
     sl = cls(range(stop))
+    reset_list(sl)
     it = f(sl, LOAD - remove_range, stop, reverse=True)
     for value in range(remove_range):
         sl.remove(value)
