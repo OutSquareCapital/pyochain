@@ -123,7 +123,7 @@ def test_index(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
 def test_islice(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
     r = Range(size)
     sl = cls(r)
-    assert benchmark(lambda: tuple(sl.islice(start=0, stop=size, reverse=False)))
+    assert benchmark(lambda: tuple(sl.islice(start=0, stop=size - 1, reverse=False)))
 
 
 @CLS_PARAMS
