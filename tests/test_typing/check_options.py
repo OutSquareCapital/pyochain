@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from operator import add
 from typing import Any, Literal, assert_never, assert_type
 
 from pyochain import Err, Null, Ok, Option, Result, Some, option
@@ -94,6 +95,120 @@ def check_option_flatten() -> None:
     _c = assert_type(Null().flatten(), Option[Any])
     _d = assert_type(Some(Null()).flatten().map(_), Option[int])
     _e = assert_type(Some(Some(Some(10))).flatten().flatten().map(str), Option[str])
+
+
+def check_option_map() -> None:
+    opt: Option[int] = Some(10)
+    if isinstance(opt, Some):
+        _a = assert_type(opt.map(str), Some[str])
+    else:
+        _b = assert_type(opt.map(str), Null[str])
+
+
+def check_option_ok_or() -> None:
+    opt: Option[int] = Some(10)
+    if isinstance(opt, Some):
+        _a: Ok[int, str] = opt.ok_or("err")
+    else:
+        _b = assert_type(opt.ok_or("err"), Err[int, str])
+
+
+def check_option_unwrap_or_else() -> None:
+    opt: Option[int] = Some(10)
+    if isinstance(opt, Some):
+        _a = assert_type(opt.unwrap_or_else(lambda: "fallback"), int)
+    else:
+        _b = assert_type(opt.unwrap_or_else(lambda: "fallback"), str)
+
+
+def check_option_and_or() -> None:
+    opt: Option[int] = Some(10)
+    if isinstance(opt, Some):
+        _a = assert_type(opt.and_(Some("x")), Option[str])
+        _c = assert_type(opt.or_(Some("x")), Some[int])
+    else:
+        _b = assert_type(opt.and_(Some("x")), Null[str])
+        _d = assert_type(opt.or_(Some("x")), Option[str])
+
+
+def check_option_or_else() -> None:
+    opt: Option[int] = Some(10)
+    if isinstance(opt, Some):
+        _a = assert_type(opt.or_else(lambda: Some("x")), Some[int])
+    else:
+        _b = assert_type(opt.or_else(lambda: Some("x")), Option[str])
+
+
+def check_option_ok_or_else() -> None:
+    opt: Option[int] = Some(10)
+    if isinstance(opt, Some):
+        _a: Ok[int, str] = opt.ok_or_else(lambda: "err")
+    else:
+        _b = assert_type(opt.ok_or_else(lambda: "err"), Err[int, str])
+
+
+def check_option_inspect() -> None:
+    opt: Option[int] = Some(10)
+    if isinstance(opt, Some):
+        _a = assert_type(opt.inspect(print), Some[int])
+    else:
+        _b = assert_type(opt.inspect(print), Null[int])
+
+
+def check_option_unzip() -> None:
+    pair: tuple[int, str] = (1, "a")
+    opt: Option[tuple[int, str]] = Some(pair)
+    if isinstance(opt, Some):
+        # pyrefly: ignore [assert-type]
+        _a = assert_type(opt.unzip(), tuple[Some[int], Some[str]])  # pyright: ignore[reportAssertTypeFailure]  # ty: ignore[type-assertion-failure]
+    else:
+        # pyrefly: ignore [assert-type]
+        _b = assert_type(opt.unzip(), tuple[Null[int], Null[str]])  # pyright: ignore[reportAssertTypeFailure]  # ty: ignore[type-assertion-failure]
+
+
+def check_option_zip() -> None:
+    opt_int: Option[int] = Some(1)
+    opt_str: Option[str] = Some("a")
+    if isinstance(opt_int, Some) and isinstance(opt_str, Some):
+        _a = assert_type(opt_int.zip(opt_str), Some[tuple[int, str]])
+    _b = assert_type(opt_int.zip(opt_str), Option[tuple[int, str]])
+
+
+def check_option_zip_with() -> None:
+    opt_a: Option[int] = Some(1)
+    opt_b: Option[int] = Some(2)
+    if isinstance(opt_a, Some) and isinstance(opt_b, Some):
+        _a = assert_type(opt_a.zip_with(opt_b, add), Some[int])
+    _b = assert_type(opt_a.zip_with(opt_b, add), Option[int])
+
+
+def check_option_reduce() -> None:
+    def add(a: int, b: str) -> float:
+        return a + len(b)
+
+    opt_int: Option[int] = Some(1)
+    opt_str: Option[str] = Some("ab")
+    if isinstance(opt_int, Some) and isinstance(opt_str, Some):
+        _a = assert_type(opt_int.reduce(opt_str, add), Some[float])
+    if isinstance(opt_int, Some) and isinstance(opt_str, Null):
+        _b = assert_type(opt_int.reduce(opt_str, add), Some[int])
+    if isinstance(opt_int, Null) and isinstance(opt_str, Some):
+        _c = assert_type(opt_int.reduce(opt_str, add), Some[str])
+    if isinstance(opt_int, Null) and isinstance(opt_str, Null):
+        _d = assert_type(opt_int.reduce(opt_str, add), Null[float])
+
+
+def check_option_xor() -> None:
+    opt_a: Option[int] = Some(10)
+    opt_b: Option[int] = Null()
+    if isinstance(opt_a, Some) and isinstance(opt_b, Null):
+        _a = assert_type(opt_a.xor(opt_b), Some[int])
+    if isinstance(opt_a, Null) and isinstance(opt_b, Some):
+        _b = assert_type(opt_a.xor(opt_b), Some[int])
+    if isinstance(opt_a, Some) and isinstance(opt_b, Some):
+        _c = assert_type(opt_a.xor(opt_b), Null[int])
+    if isinstance(opt_a, Null) and isinstance(opt_b, Null):
+        _d = assert_type(opt_a.xor(opt_b), Null[int])
 
 
 def check_option_and_then() -> None:
