@@ -92,7 +92,7 @@ unsafe impl SortedNext for Iter {
 unsafe impl SortedNext for IterRev {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_rev(0) }
+        unsafe { self.0.next_rev::<false>(0) }
     }
 }
 unsafe impl SortedNext for IterBounded {
@@ -105,6 +105,6 @@ unsafe impl SortedNext for IterBounded {
 unsafe impl SortedNext for IterBoundedRev {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_rev(self.1) }
+        unsafe { self.0.next_rev::<true>(self.1) }
     }
 }

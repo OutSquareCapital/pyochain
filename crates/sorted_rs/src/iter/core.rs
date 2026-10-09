@@ -2,7 +2,7 @@ use std::{ops::Deref, ptr};
 
 use crate::{inner::InnerData, iter::cursor::Cursor};
 use derive_more::Constructor;
-use parking_lot::{RawRwLock, lock_api::RwLockReadGuard};
+use parking_lot::{lock_api::RwLockReadGuard, RawRwLock};
 use pyo3::{ffi, prelude::*};
 use tap::prelude::*;
 /// Wrapper type to hold a pointer to the inner data of a sorted collection.
@@ -65,7 +65,7 @@ impl InnerIter {
 
     /// Element before `cur`, or the last one of the previous sublist, if located at or after `first`.
     #[inline(always)]
-    pub(super) unsafe fn next_rev(&self, first: u64) -> *mut ffi::PyObject {
+    pub(super) unsafe fn next_rev<const BOUNDED: bool>(&self, first: u64) -> *mut ffi::PyObject {
         let values = &unsafe { self.inner.deref() }.values;
         let (at, pos, idx) = self.cursor.load();
         idx.checked_sub(1)
@@ -77,7 +77,7 @@ impl InnerIter {
                 },
                 |i| values.get(pos)?.get(i).map(|obj| (at - 1, obj)),
             )
-            .filter(|&(at, _)| at >= first)
+            .filter(|&(at, _)| !BOUNDED || at >= first)
             .map_or_else(ptr::null_mut, |(at, item)| {
                 self.cursor.store(at);
                 unsafe { yield_item(item) }
