@@ -81,26 +81,26 @@ impl IterBoundedRev {
 unsafe impl SortedNext for Iter {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_fwd::<false>(0) }
+        unsafe { self.0.next::<false, true>(0) }
     }
 }
 
 unsafe impl SortedNext for IterRev {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_rev::<false>(0) }
+        unsafe { self.0.next::<false, false>(0) }
     }
 }
 unsafe impl SortedNext for IterBounded {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_fwd::<true>(self.1) }
+        unsafe { self.0.next::<true, true>(self.1) }
     }
 }
 
 unsafe impl SortedNext for IterBoundedRev {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_rev::<true>(self.1) }
+        unsafe { self.0.next::<true, false>(self.1) }
     }
 }

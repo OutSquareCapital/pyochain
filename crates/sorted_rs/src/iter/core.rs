@@ -48,50 +48,40 @@ impl InnerIter {
         self.inner.len
     }
     #[inline(always)]
-    pub(super) unsafe fn next_fwd<const BOUNDED: bool>(&self, end: u64) -> *mut ffi::PyObject {
+    pub(super) unsafe fn next<const BOUNDED: bool, const FWD: bool>(
+        &self,
+        limit: u64,
+    ) -> *mut ffi::PyObject {
         let values = &self.inner.values;
         let (at, pos, idx) = self.cursor.load();
-        values
-            .get(pos)
-            .and_then(|v| v.get(idx))
-            .map(|obj| (at, obj))
-            .or_else(|| {
-                values
-                    .get(pos + 1)?
-                    .first()
-                    .map(|obj| (Cursor::shift_fwd(pos), obj))
-            })
-            .filter(|&(at, _)| !BOUNDED || at < end)
-            .map_or_else(ptr::null_mut, |(at, item)| {
-                self.cursor.store(at + 1);
-                unsafe { yield_item(item) }
-            })
-    }
-
-    /// Element before `cur`, or the last one of the previous sublist, if located at or after `first`.
-    #[inline(always)]
-    pub(super) unsafe fn next_rev<const BOUNDED: bool>(&self, first: u64) -> *mut ffi::PyObject {
-        let values = &self.inner.values;
-        let (at, pos, idx) = self.cursor.load();
-        idx.checked_sub(1)
-            .map_or_else(
+        if FWD {
+            values
+                .get(pos)
+                .and_then(|v| v.get(idx))
+                .map(|obj| (at + 1, obj))
+                .or_else(|| {
+                    values
+                        .get(pos + 1)?
+                        .first()
+                        .map(|obj| (((pos as u64 + 1) << u32::BITS) + 1, obj))
+                })
+        } else {
+            idx.checked_sub(1).map_or_else(
                 || {
                     let p = pos.checked_sub(1)?;
                     let v = values.get(p)?;
-                    v.last().map(|obj| (Cursor::shift_rev(p, v), obj))
+                    v.last()
+                        .map(|obj| (((p as u64) << u32::BITS) | (v.len() - 1) as u64, obj))
                 },
                 |i| values.get(pos)?.get(i).map(|obj| (at - 1, obj)),
             )
-            .filter(|&(at, _)| !BOUNDED || at >= first)
-            .map_or_else(ptr::null_mut, |(at, item)| {
-                self.cursor.store(at);
-                unsafe { yield_item(item) }
-            })
+        }
+        .filter(|&(at, _)| !BOUNDED || at == limit || (FWD && at < limit) || (!FWD && at > limit))
+        .map_or_else(ptr::null_mut, |(at, item)| {
+            self.cursor.store(at);
+            let ptr = item.as_ptr();
+            unsafe { ffi::Py_INCREF(ptr) };
+            ptr
+        })
     }
-}
-#[inline]
-unsafe fn yield_item(item: &Py<PyAny>) -> *mut ffi::PyObject {
-    let ptr = item.as_ptr();
-    unsafe { ffi::Py_INCREF(ptr) };
-    ptr
 }
