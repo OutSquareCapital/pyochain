@@ -57,11 +57,7 @@ where
 {
     fn from(owner: T) -> Self {
         let inner = owner.into();
-        let pos = unsafe { inner.deref() }
-            .values
-            .len()
-            .pipe(Loc::with_pos)
-            .into();
+        let pos = inner.values.len().pipe(Loc::with_pos).into();
         InnerIter::new(inner, pos).into()
     }
 }
