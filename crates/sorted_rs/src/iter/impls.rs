@@ -6,7 +6,7 @@ use crate::{
         traits::SortedNext,
     },
 };
-use derive_more::From;
+use derive_more::{Deref, From};
 use pyo3::ffi;
 use tap::prelude::*;
 
@@ -30,17 +30,17 @@ impl IterKind {
     }
 }
 
-#[derive(Debug, From)]
+#[derive(Debug, From, Deref)]
 pub struct Iter(InnerIter);
 
-#[derive(Debug, From)]
+#[derive(Debug, From, Deref)]
 pub struct IterRev(InnerIter);
 
-#[derive(Debug)]
-pub struct IterBounded(InnerIter, u64);
+#[derive(Debug, Deref)]
+pub struct IterBounded(#[deref] InnerIter, u64);
 
-#[derive(Debug)]
-pub struct IterBoundedRev(InnerIter, u64);
+#[derive(Debug, Deref)]
+pub struct IterBoundedRev(#[deref] InnerIter, u64);
 
 impl<T> From<T> for Iter
 where

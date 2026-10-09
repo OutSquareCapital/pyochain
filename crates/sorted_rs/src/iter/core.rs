@@ -44,6 +44,10 @@ pub struct InnerIter {
 }
 impl InnerIter {
     #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.inner.len
+    }
+    #[inline(always)]
     pub(super) unsafe fn next_fwd<const BOUNDED: bool>(&self, end: u64) -> *mut ffi::PyObject {
         let values = &self.inner.values;
         let (at, pos, idx) = self.cursor.load();
