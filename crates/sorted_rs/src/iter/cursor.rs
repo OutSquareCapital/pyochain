@@ -35,3 +35,8 @@ impl From<Loc> for Cursor {
         loc.conv::<u64>().conv::<AtomicU64>().pipe(Self)
     }
 }
+impl From<Loc> for u64 {
+    fn from(loc: Loc) -> Self {
+        (loc.pos as Self) << u32::BITS | loc.idx as Self
+    }
+}
