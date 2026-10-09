@@ -39,6 +39,70 @@ def check_result_transpose() -> None:
     _d = assert_type(d.transpose(), Option[Result[int, Option[int]]])
 
 
+def check_result_ok_err() -> None:
+    res: Result[int, str] = Ok(10)
+    if isinstance(res, Ok):
+        _a = assert_type(res.ok(), Some[int])
+        _b = assert_type(res.err(), Null[str])
+    else:
+        _c = assert_type(res.ok(), Null[int])
+        _d = assert_type(res.err(), Some[str])
+
+
+def check_result_unwrap_or_else() -> None:
+    res: Result[int, str] = Ok(10)
+    if isinstance(res, Ok):
+        _a = assert_type(res.unwrap_or_else(len), int)
+    else:
+        _b = assert_type(res.unwrap_or_else(len), int)
+
+
+def check_result_map_err() -> None:
+    res: Result[int, str] = Ok(10)
+    if isinstance(res, Ok):
+        _a = assert_type(res.map_err(len), Ok[int, int])
+    else:
+        _b = assert_type(res.map_err(len), Err[int, int])
+
+
+def check_result_inspect() -> None:
+    res: Result[int, str] = Ok(10)
+    if isinstance(res, Ok):
+        _a = assert_type(res.inspect(print), Ok[int, str])
+    else:
+        _b = assert_type(res.inspect(print), Err[int, str])
+
+
+def check_result_inspect_err() -> None:
+    res: Result[int, str] = Ok(10)
+    if isinstance(res, Ok):
+        _a = assert_type(res.inspect_err(print), Ok[int, str])
+    else:
+        _b = assert_type(res.inspect_err(print), Err[int, str])
+
+
+def check_result_and_or() -> None:
+    res: Result[int, str] = Ok(10)
+    other: Result[float, bytes] = Ok(1.5)
+    if isinstance(res, Ok):
+        _a = assert_type(res.and_(other), Result[float, bytes])
+        _c = assert_type(res.or_(other), Ok[int, bytes])
+    else:
+        _b = assert_type(res.and_(other), Err[int, bytes])
+        _d = assert_type(res.or_(other), Result[float, bytes])
+
+
+def check_result_or_else() -> None:
+    def recover(e: str) -> Result[object, float]:
+        return Ok(len(e))
+
+    res: Result[int, str] = Ok(10)
+    if isinstance(res, Ok):
+        _a = assert_type(res.or_else(recover), Ok[int, float])
+    else:
+        _b = assert_type(res.or_else(recover), Result[object, float])
+
+
 def check_result_flatten() -> None:
     """Rust equivalent who compiles (the type hints for variables have been added *last*, so they are not helping for inference):
 
@@ -49,6 +113,9 @@ def check_result_flatten() -> None:
     """
     _a = assert_type(Ok(Ok[int, int](10)).flatten(), Result[int, int])
     _b = assert_type(Ok(Err[str, str]("error")).flatten(), Result[str, str])
+    c: Result[Result[int, int], int] = Err(1)
+    if isinstance(c, Err):
+        _c = assert_type(c.flatten(), Err[int, int])
 
     _ = assert_type(Err(Err("error")), Result[Any, Result[Any, str]])  # ty: ignore[type-assertion-failure]
     # ty infer the Literal

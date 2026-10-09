@@ -10,7 +10,7 @@ from typing import (
     type_check_only,
 )
 
-from pyochain import Option
+from pyochain import Null, Option, Some
 from pyochain.abc import Pipe, PyoIterator
 
 def then_if_true[T](value: T, *, predicate: Callable[[T], bool]) -> Option[T]:
@@ -171,6 +171,10 @@ class ResultType[T, E](Pipe, Protocol):
             assert Err("error").swap().unwrap() == "error"
             ```
         """
+    @overload
+    def flatten[T1, E1](self: Ok[Result[T1, E1], E1]) -> Result[T1, E1]: ...
+    @overload
+    def flatten[T1, E1](self: Err[Result[T1, E1], E1]) -> Err[T1, E1]: ...
     def flatten[T1, E1](self: Result[Result[T1, E1], E1]) -> Result[T1, E1]:
         """Flattens a nested `Result`.
 
@@ -531,6 +535,20 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def unwrap_or_else[**P, O](
+        self: Ok[T, E],
+        fn: Callable[Concatenate[E, P], object],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> T: ...
+    @overload
+    def unwrap_or_else[**P, O](
+        self: Err[T, E],
+        fn: Callable[Concatenate[E, P], O],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> O: ...
     def unwrap_or_else[**P, O](
         self, fn: Callable[Concatenate[E, P], O], *args: P.args, **kwargs: P.kwargs
     ) -> T | O:
@@ -577,6 +595,20 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def map_err[**P, R](
+        self: Ok[T, E],
+        fn: Callable[Concatenate[E, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Ok[T, R]: ...
+    @overload
+    def map_err[**P, R](
+        self: Err[T, E],
+        fn: Callable[Concatenate[E, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Err[T, R]: ...
     def map_err[**P, R](
         self, fn: Callable[Concatenate[E, P], R], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, R]:
@@ -601,6 +633,20 @@ class ResultType[T, E](Pipe, Protocol):
             assert Err("foo").map_err(len).unwrap_err() == 3
             ```
         """
+    @overload
+    def inspect[**P](
+        self: Ok[T, E],
+        fn: Callable[Concatenate[T, P], object],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Ok[T, E]: ...
+    @overload
+    def inspect[**P](
+        self: Err[T, E],
+        fn: Callable[Concatenate[T, P], object],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Err[T, E]: ...
     def inspect[**P](
         self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, E]:
@@ -626,6 +672,20 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def inspect_err[**P](
+        self: Ok[T, E],
+        fn: Callable[Concatenate[E, P], object],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Ok[T, E]: ...
+    @overload
+    def inspect_err[**P](
+        self: Err[T, E],
+        fn: Callable[Concatenate[E, P], object],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Err[T, E]: ...
     def inspect_err[**P](
         self, fn: Callable[Concatenate[E, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, E]:
@@ -654,6 +714,10 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def and_[O, U](self: Ok[T, E], res: Result[U, O]) -> Result[U, O]: ...
+    @overload
+    def and_[O, U](self: Err[T, E], res: Result[U, O]) -> Err[T, O]: ...
     def and_[O, U](self, res: Result[U, O]) -> Result[U, E | O]:
         """Returns `res` if the result is `Ok`, otherwise returns the `Err` value.
 
@@ -774,6 +838,20 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def or_else[**P, R](
+        self: Ok[T, E],
+        fn: Callable[Concatenate[E, P], Result[object, R]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Ok[T, R]: ...
+    @overload
+    def or_else[**P, R](
+        self: Err[T, E],
+        fn: Callable[Concatenate[E, P], Result[object, R]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Result[object, R]: ...
     def or_else[**P, R](
         self,
         fn: Callable[Concatenate[E, P], Result[object, R]],
@@ -804,6 +882,10 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def ok(self: Ok[T, E]) -> Some[T]: ...
+    @overload
+    def ok(self: Err[T, E]) -> Null[T]: ...
     def ok(self) -> Option[T]:
         """Converts from `Result[T, E]` to `Option[T]`.
 
@@ -821,6 +903,10 @@ class ResultType[T, E](Pipe, Protocol):
                 ```
         """
 
+    @overload
+    def err(self: Ok[T, E]) -> Null[E]: ...
+    @overload
+    def err(self: Err[T, E]) -> Some[E]: ...
     def err(self) -> Option[E]:
         """Converts from `Result[T, E]` to `Option[E]`.
 
@@ -935,6 +1021,10 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def or_[S, F](self: Ok[T, E], res: Result[S, F]) -> Ok[T, F]: ...
+    @overload
+    def or_[S, F](self: Err[T, E], res: Result[S, F]) -> Result[S, F]: ...
     def or_[S, F](self, res: Result[S, F]) -> Result[T | S, F]:
         """Returns res if the result is `Err`, otherwise returns the `Ok` value of **self**.
 
