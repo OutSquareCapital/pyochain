@@ -15,9 +15,10 @@ pub struct InnerRef {
     /// Keeps the collection alive so `data` stays valid.
     _owner: Py<PyAny>,
 }
-impl InnerRef {
+impl Deref for InnerRef {
+    type Target = InnerData;
     #[inline(always)]
-    pub(super) unsafe fn deref(&self) -> &InnerData {
+    fn deref(&self) -> &InnerData {
         unsafe { &*self.data }
     }
 }
@@ -43,50 +44,45 @@ pub struct InnerIter {
 }
 impl InnerIter {
     #[inline(always)]
-    pub(super) unsafe fn next_fwd<const BOUNDED: bool>(&self, end: u64) -> *mut ffi::PyObject {
-        let values = &unsafe { self.inner.deref() }.values;
-        let (at, pos, idx) = self.cursor.load();
-        values
-            .get(pos)
-            .and_then(|v| v.get(idx))
-            .map(|obj| (at, obj))
-            .or_else(|| {
-                values
-                    .get(pos + 1)?
-                    .first()
-                    .map(|obj| (Cursor::shift_fwd(pos), obj))
-            })
-            .filter(|&(at, _)| !BOUNDED || at < end)
-            .map_or_else(ptr::null_mut, |(at, item)| {
-                self.cursor.store(at + 1);
-                unsafe { yield_item(item) }
-            })
+    pub fn len(&self) -> usize {
+        self.inner.len
     }
-
-    /// Element before `cur`, or the last one of the previous sublist, if located at or after `first`.
     #[inline(always)]
-    pub(super) unsafe fn next_rev(&self, first: u64) -> *mut ffi::PyObject {
-        let values = &unsafe { self.inner.deref() }.values;
+    pub(super) unsafe fn next<const BOUNDED: bool, const FWD: bool>(
+        &self,
+        limit: u64,
+    ) -> *mut ffi::PyObject {
+        let values = &self.inner.values;
         let (at, pos, idx) = self.cursor.load();
-        idx.checked_sub(1)
-            .map_or_else(
-                || {
+        let current = values.get(pos);
+        if FWD {
+            current
+                .and_then(|v| v.get(idx))
+                .map(|obj| (at + 1, obj))
+                .or_else(|| {
+                    let p = pos + 1;
+                    values
+                        .get(p)?
+                        .first()
+                        .map(|obj| (Cursor::new_pos(p) + 1, obj))
+                })
+        } else {
+            current
+                .and_then(|v| v.get(idx.checked_sub(1)?))
+                .map(|obj| (at - 1, obj))
+                .or_else(|| {
                     let p = pos.checked_sub(1)?;
                     let v = values.get(p)?;
-                    v.last().map(|obj| (Cursor::shift_rev(p, v), obj))
-                },
-                |i| values.get(pos)?.get(i).map(|obj| (at - 1, obj)),
-            )
-            .filter(|&(at, _)| at >= first)
-            .map_or_else(ptr::null_mut, |(at, item)| {
-                self.cursor.store(at);
-                unsafe { yield_item(item) }
-            })
+                    v.last()
+                        .map(|obj| (Cursor::new_pos(p) | (v.len() - 1) as u64, obj))
+                })
+        }
+        .filter(|&(at, _)| !BOUNDED || at == limit || (FWD && at < limit) || (!FWD && at > limit))
+        .map_or_else(ptr::null_mut, |(at, item)| {
+            self.cursor.store(at);
+            let ptr = item.as_ptr();
+            unsafe { ffi::Py_INCREF(ptr) };
+            ptr
+        })
     }
-}
-#[inline]
-unsafe fn yield_item(item: &Py<PyAny>) -> *mut ffi::PyObject {
-    let ptr = item.as_ptr();
-    unsafe { ffi::Py_INCREF(ptr) };
-    ptr
 }

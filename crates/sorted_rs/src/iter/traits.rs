@@ -36,6 +36,7 @@ where
                 .next()
         }
     }
+
     fn install(py: Python<'_>) {
         unsafe {
             let ty = Self::type_object_raw(py);

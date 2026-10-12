@@ -6,62 +6,41 @@ use crate::{
         traits::SortedNext,
     },
 };
-use derive_more::From;
+use derive_more::{Deref, From};
+
 use pyo3::ffi;
 use tap::prelude::*;
 
 pub enum IterKind {
     Fwd,
-    Rev,
-    Bounded(Bounds),
-    BoundedRev(Bounds),
+    Bwd,
+    Bounded(Bounds, bool),
 }
 
-impl IterKind {
-    #[inline]
-    #[must_use]
-    pub fn from_bounds(bounds: Option<Bounds>, rev: bool) -> Self {
-        let bounds = bounds.unwrap_or_default();
-        if rev {
-            Self::BoundedRev(bounds)
-        } else {
-            Self::Bounded(bounds)
-        }
-    }
-}
-
-#[derive(Debug, From)]
+#[derive(Debug, From, Deref)]
 pub struct Iter(InnerIter);
 
-#[derive(Debug, From)]
+#[derive(Debug, From, Deref)]
 pub struct IterRev(InnerIter);
 
-#[derive(Debug)]
-pub struct IterBounded(InnerIter, u64);
+#[derive(Debug, Deref)]
+pub struct IterBounded(#[deref] InnerIter, u64);
 
-#[derive(Debug)]
-pub struct IterBoundedRev(InnerIter, u64);
+#[derive(Debug, Deref)]
+pub struct IterBoundedRev(#[deref] InnerIter, u64);
 
-impl<T> From<T> for Iter
-where
-    T: Into<InnerRef>,
-{
-    fn from(owner: T) -> Self {
+impl Iter {
+    #[inline]
+    pub fn new(owner: impl Into<InnerRef>) -> Self {
         InnerIter::new(owner.into(), Cursor::default()).into()
     }
 }
 
-impl<T> From<T> for IterRev
-where
-    T: Into<InnerRef>,
-{
-    fn from(owner: T) -> Self {
+impl IterRev {
+    #[inline]
+    pub fn new(owner: impl Into<InnerRef>) -> Self {
         let inner = owner.into();
-        let pos = unsafe { inner.deref() }
-            .values
-            .len()
-            .pipe(Loc::with_pos)
-            .into();
+        let pos = inner.values.len().pipe(Loc::with_pos).into();
         InnerIter::new(inner, pos).into()
     }
 }
@@ -85,26 +64,26 @@ impl IterBoundedRev {
 unsafe impl SortedNext for Iter {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_fwd::<false>(0) }
+        unsafe { self.0.next::<false, true>(0) }
     }
 }
 
 unsafe impl SortedNext for IterRev {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_rev(0) }
+        unsafe { self.0.next::<false, false>(0) }
     }
 }
 unsafe impl SortedNext for IterBounded {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_fwd::<true>(self.1) }
+        unsafe { self.0.next::<true, true>(self.1) }
     }
 }
 
 unsafe impl SortedNext for IterBoundedRev {
     #[inline(always)]
     unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next_rev(self.1) }
+        unsafe { self.0.next::<true, false>(self.1) }
     }
 }

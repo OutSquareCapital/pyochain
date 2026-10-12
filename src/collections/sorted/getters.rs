@@ -32,26 +32,25 @@ pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> {
     #[inline(always)]
     fn build_iter<'py>(slf: &Bound<'py, Self>, kind: IterKind) -> IterRes<'py> {
         let py = slf.py();
-        (slf.get().lock(), slf.clone().into_any().unbind()).pipe(|x| match kind {
-            IterKind::Fwd => x
-                .conv::<Iter>()
+        let owner = (slf.get().lock(), slf.clone().into_any().unbind());
+        match kind {
+            IterKind::Fwd => Iter::new(owner)
                 .conv::<iter::SortedIter>()
                 .into_bound(py)
                 .map(Bound::into_super),
-            IterKind::Rev => x
-                .conv::<IterRev>()
+            IterKind::Bwd => IterRev::new(owner)
                 .conv::<iter::SortedIterRev>()
                 .into_bound(py)
                 .map(Bound::into_super),
-            IterKind::Bounded(bounds) => IterBounded::new(x, bounds)
+            IterKind::Bounded(bounds, false) => IterBounded::new(owner, bounds)
                 .conv::<iter::SortedIterBounded>()
                 .into_bound(py)
                 .map(Bound::into_super),
-            IterKind::BoundedRev(bounds) => IterBoundedRev::new(x, bounds)
+            IterKind::Bounded(bounds, true) => IterBoundedRev::new(owner, bounds)
                 .conv::<iter::SortedIterBoundedRev>()
                 .into_bound(py)
                 .map(Bound::into_super),
-        })
+        }
     }
 }
 macro_rules! impl_arc_as_ref {

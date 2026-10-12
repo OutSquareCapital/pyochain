@@ -61,7 +61,7 @@ pub trait ListsDataMethods:
         minimum: Option<Bound<'py, PyAny>>,
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
-    ) -> PyResult<Option<Bounds>>;
+    ) -> PyResult<Bounds>;
     fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
     fn expand(&mut self, py: Python<'_>, pos: usize);

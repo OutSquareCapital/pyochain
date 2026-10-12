@@ -32,8 +32,7 @@ class SliceFn[T](Protocol):
     ) -> Iterator[object]: ...
 
 
-LOAD = 1000
-"""Actuall load size, correspond to desired sublist size."""
+LOAD = 10
 
 
 def method_param[T](cls: type[T], f: Callable[[T], object]) -> ParameterSet:
@@ -89,3 +88,13 @@ def update_list(sl: List, values: Iterable[int]) -> None:
             sl.extend(values)
         case _:
             sl.update(values)
+
+
+def reset_list(sl: List) -> None:
+    match sl:
+        case list():
+            return
+        case SortedList():
+            sl.reset(LOAD)
+        case _:
+            sl._reset(LOAD)

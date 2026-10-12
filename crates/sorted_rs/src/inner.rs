@@ -300,68 +300,37 @@ impl InnerData {
         if idx < self.values[0].len().cast_signed() {
             loc.pos = 0;
             loc.idx = idx.cast_unsigned();
-            return Ok(());
-        }
-
-        if self.idx.is_empty() {
-            self.build_index();
-        }
-        let pos = self.idx.pipe_ref_mut(|index| {
-            let mut pos = 0;
-            let mut child = 1;
-            let len_index = index.len();
-
-            while child < len_index {
-                let index_child = index[child].cast_signed();
-
-                if idx < index_child {
-                    pos = child;
-                } else {
-                    idx -= index_child;
-                    pos = child + 1;
-                }
-
-                child = (pos << 1) + 1;
-            }
-            pos
-        });
-
-        loc.pos = pos - self.offset;
-        loc.idx = idx.cast_unsigned();
-        Ok(())
-    }
-
-    pub fn get_islice_specs(
-        &mut self,
-        py: Python<'_>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<Option<Bounds>> {
-        let length = self.len.cast_signed();
-        let mut bounds = Bounds::default();
-
-        if length == 0 {
-            Ok(None)
+            Ok(())
         } else {
-            //NOTE: Need to investiguate why we need to use PySlice at all. Same pattern in SliceView original code.
-            let indices =
-                PySlice::new(py, start.unwrap_or(0), stop.unwrap_or(length), 1).indices(length)?;
-
-            if indices.start >= indices.stop {
-                Ok(None)
-            } else {
-                self.set_pos(indices.start, &mut bounds.min)?;
-
-                if indices.stop == length {
-                    bounds.max.pos = self.values.len() - 1;
-                    bounds.max.idx = self.values.last().unwrap().len();
-                } else {
-                    self.set_pos(indices.stop, &mut bounds.max)?;
-                }
-                Ok(Some(bounds))
+            if self.idx.is_empty() {
+                self.build_index();
             }
+            let pos = self.idx.pipe_ref_mut(|index| {
+                let mut pos = 0;
+                let mut child = 1;
+                let len_index = index.len();
+
+                while child < len_index {
+                    let index_child = index[child].cast_signed();
+
+                    if idx < index_child {
+                        pos = child;
+                    } else {
+                        idx -= index_child;
+                        pos = child + 1;
+                    }
+
+                    child = (pos << 1) + 1;
+                }
+                pos
+            });
+
+            loc.pos = pos - self.offset;
+            loc.idx = idx.cast_unsigned();
+            Ok(())
         }
     }
+
     pub fn eq<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
         inner_cmp(self, other, CompareOp::Eq)
     }
