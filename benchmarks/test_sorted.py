@@ -8,7 +8,7 @@ from sortedcontainers import SortedList as PySortedList
 from pyochain import Range
 from pyochain.collections import SortedList as PyoSortedList
 
-from ._utils import SIZES
+from ._utils import SIZES, shuffled
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -29,48 +29,50 @@ SIZE_PARAMS = pytest.mark.parametrize("size", SIZES)
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_init(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    assert benchmark(cls, r)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
+    def f(data: Iterable[int]) -> None:
+        _ = cls(data)
+
+    assert benchmark(f, shuffled(size))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_contains(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(sl.__contains__).last())
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(sl.__contains__).last())
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_getitem(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(sl.__getitem__).last())
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(sl.__getitem__).last()) == data.last()
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_getitem_slice(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(lambda i: sl[i : i + 1]).last())
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(lambda i: sl[i : i + 1]).last())
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_bisect_left(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(sl.bisect_left).last())
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(sl.bisect_left).last()) == data.last()
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_bisect_right(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(sl.bisect_right).last())
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(sl.bisect_right).last())
 
 
 @CLS_PARAMS
@@ -80,16 +82,14 @@ def test_iter(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
         for _ in obj:
             pass
 
-    r = Range(size)
-    sl = cls(r)
+    sl = cls(range(size))
     benchmark(f, sl)
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_iter_collect(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
+    sl = cls(range(size))
     _ = benchmark(tuple, sl)
 
 
@@ -105,32 +105,30 @@ def test_iter_rev_collect(benchmark: BenchFixture, cls: SortedList, size: int) -
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_count(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(lambda i: sl.count(i) == 1).last())
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(lambda i: sl.count(i) == 1).last())
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_index(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(lambda i: sl.index(i) == i).last())
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(lambda i: sl.index(i) == i).last())
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_islice(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
+    sl = cls(range(size))
     assert benchmark(lambda: tuple(sl.islice(start=0, stop=size - 1, reverse=False)))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_irange(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
+    sl = cls(range(size))
     assert benchmark(
         lambda: tuple(
             sl.irange(
