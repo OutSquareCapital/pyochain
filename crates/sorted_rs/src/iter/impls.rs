@@ -7,27 +7,14 @@ use crate::{
     },
 };
 use derive_more::{Deref, From};
+
 use pyo3::ffi;
 use tap::prelude::*;
 
 pub enum IterKind {
     Fwd,
-    Rev,
-    Bounded(Bounds),
-    BoundedRev(Bounds),
-}
-
-impl IterKind {
-    #[inline]
-    #[must_use]
-    pub fn from_bounds(bounds: Option<Bounds>, rev: bool) -> Self {
-        let bounds = bounds.unwrap_or_default();
-        if rev {
-            Self::BoundedRev(bounds)
-        } else {
-            Self::Bounded(bounds)
-        }
-    }
+    Bwd,
+    Bounded(Bounds, bool),
 }
 
 #[derive(Debug, From, Deref)]
@@ -42,20 +29,16 @@ pub struct IterBounded(#[deref] InnerIter, u64);
 #[derive(Debug, Deref)]
 pub struct IterBoundedRev(#[deref] InnerIter, u64);
 
-impl<T> From<T> for Iter
-where
-    T: Into<InnerRef>,
-{
-    fn from(owner: T) -> Self {
+impl Iter {
+    #[inline]
+    pub fn new(owner: impl Into<InnerRef>) -> Self {
         InnerIter::new(owner.into(), Cursor::default()).into()
     }
 }
 
-impl<T> From<T> for IterRev
-where
-    T: Into<InnerRef>,
-{
-    fn from(owner: T) -> Self {
+impl IterRev {
+    #[inline]
+    pub fn new(owner: impl Into<InnerRef>) -> Self {
         let inner = owner.into();
         let pos = inner.values.len().pipe(Loc::with_pos).into();
         InnerIter::new(inner, pos).into()

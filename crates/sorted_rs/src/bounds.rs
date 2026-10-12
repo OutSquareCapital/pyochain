@@ -1,7 +1,7 @@
 use derive_more::Constructor;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PySlice};
 
-use crate::{bisect::Bisect, types::VecPy};
+use crate::{InnerData, bisect::Bisect, types::VecPy};
 
 #[derive(PartialEq, Eq, Default, Clone, Copy, Constructor, Debug)]
 pub struct Loc {
@@ -25,15 +25,15 @@ pub struct Bounds {
     pub max: Loc,
 }
 impl Bounds {
-    pub fn from_sorted(
+    pub fn from_irange(
         lists: &[VecPy],
         maxes: &[Py<PyAny>],
         minimum: Option<Bound<'_, PyAny>>,
         maximum: Option<Bound<'_, PyAny>>,
         inclusive: (bool, bool),
-    ) -> PyResult<Option<Bounds>> {
+    ) -> PyResult<Bounds> {
         if maxes.is_empty() {
-            Ok(None)
+            Ok(Self::default())
         } else {
             let min = match minimum {
                 None => Loc::default(),
@@ -42,14 +42,14 @@ impl Bounds {
                         let min_pos = maxes.bisect_left(&minimum)?;
 
                         if min_pos == maxes.len() {
-                            return Ok(None);
+                            return Ok(Self::default());
                         }
                         let min_idx = lists[min_pos].bisect_left(&minimum)?;
                         Loc::new(min_pos, min_idx)
                     } else {
                         let min_pos = maxes.bisect_right(&minimum)?;
                         if min_pos == maxes.len() {
-                            return Ok(None);
+                            return Ok(Self::default());
                         }
                         let min_idx = lists[min_pos].bisect_right(&minimum)?;
                         Loc::new(min_pos, min_idx)
@@ -91,9 +91,40 @@ impl Bounds {
             )?;
 
             if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
-                Ok(None)
+                Ok(Self::default())
             } else {
-                Ok(Some(Self::new(min, max)))
+                Ok(Self::new(min, max))
+            }
+        }
+    }
+    pub fn from_islice(
+        data: &mut InnerData,
+        py: Python<'_>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<Self> {
+        let length = data.len.cast_signed();
+
+        if length == 0 {
+            Ok(Self::default())
+        } else {
+            //NOTE: Need to investiguate why we need to use PySlice at all. Same pattern in SliceView original code.
+            let indices =
+                PySlice::new(py, start.unwrap_or(0), stop.unwrap_or(length), 1).indices(length)?;
+
+            if indices.start >= indices.stop {
+                Ok(Self::default())
+            } else {
+                let mut bounds = Self::default();
+                data.set_pos(indices.start, &mut bounds.min)?;
+
+                if indices.stop == length {
+                    bounds.max.pos = data.values.len() - 1;
+                    bounds.max.idx = data.values.last().unwrap().len();
+                } else {
+                    data.set_pos(indices.stop, &mut bounds.max)?;
+                }
+                Ok(bounds)
             }
         }
     }

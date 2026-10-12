@@ -331,37 +331,6 @@ impl InnerData {
         Ok(())
     }
 
-    pub fn get_islice_specs(
-        &mut self,
-        py: Python<'_>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<Option<Bounds>> {
-        let length = self.len.cast_signed();
-        let mut bounds = Bounds::default();
-
-        if length == 0 {
-            Ok(None)
-        } else {
-            //NOTE: Need to investiguate why we need to use PySlice at all. Same pattern in SliceView original code.
-            let indices =
-                PySlice::new(py, start.unwrap_or(0), stop.unwrap_or(length), 1).indices(length)?;
-
-            if indices.start >= indices.stop {
-                Ok(None)
-            } else {
-                self.set_pos(indices.start, &mut bounds.min)?;
-
-                if indices.stop == length {
-                    bounds.max.pos = self.values.len() - 1;
-                    bounds.max.idx = self.values.last().unwrap().len();
-                } else {
-                    self.set_pos(indices.stop, &mut bounds.max)?;
-                }
-                Ok(Some(bounds))
-            }
-        }
-    }
     pub fn eq<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
         inner_cmp(self, other, CompareOp::Eq)
     }
