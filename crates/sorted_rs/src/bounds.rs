@@ -1,5 +1,5 @@
 use derive_more::Constructor;
-use pyo3::{prelude::*, types::PySlice};
+use pyo3::prelude::*;
 
 use crate::{InnerData, bisect::Bisect, types::VecPy};
 
@@ -99,7 +99,6 @@ impl Bounds {
     }
     pub fn from_islice(
         data: &mut InnerData,
-        py: Python<'_>,
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<Self> {
@@ -108,21 +107,27 @@ impl Bounds {
         if length == 0 {
             Ok(Self::default())
         } else {
-            //NOTE: Need to investiguate why we need to use PySlice at all. Same pattern in SliceView original code.
-            let indices =
-                PySlice::new(py, start.unwrap_or(0), stop.unwrap_or(length), 1).indices(length)?;
-
-            if indices.start >= indices.stop {
+            let normalize_bound = |mut val: isize| {
+                if val < 0 {
+                    val += length;
+                    val.max(0)
+                } else {
+                    val.min(length)
+                }
+            };
+            let start = start.map_or(0, normalize_bound);
+            let stop = stop.map_or(length, normalize_bound);
+            if start >= stop {
                 Ok(Self::default())
             } else {
                 let mut bounds = Self::default();
-                data.set_pos(indices.start, &mut bounds.min)?;
+                data.set_pos(start, &mut bounds.min)?;
 
-                if indices.stop == length {
+                if stop == length {
                     bounds.max.pos = data.values.len() - 1;
                     bounds.max.idx = data.values.last().unwrap().len();
                 } else {
-                    data.set_pos(indices.stop, &mut bounds.max)?;
+                    data.set_pos(stop, &mut bounds.max)?;
                 }
                 Ok(bounds)
             }
