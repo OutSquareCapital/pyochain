@@ -6,7 +6,7 @@ from typing import Final, Protocol
 
 import pytest
 
-from pyochain import Seq
+from pyochain import Seq, Vec
 
 type BenchFn = Callable[[int], object]
 
@@ -68,5 +68,5 @@ WINDOW_CASES: Final = pytest.mark.parametrize(
 
 
 @cache
-def shuffled(size: int) -> Seq[int]:
-    return Seq(random.Random(0).sample(range(size), size))
+def shuffled(size: int) -> Vec[int]:
+    return Vec.wrap(random.Random(0).sample(range(size), size))
