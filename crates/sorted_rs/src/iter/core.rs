@@ -54,27 +54,28 @@ impl InnerIter {
     ) -> *mut ffi::PyObject {
         let values = &self.inner.values;
         let (at, pos, idx) = self.cursor.load();
+        let current = values.get(pos);
         if FWD {
-            values
-                .get(pos)
+            current
                 .and_then(|v| v.get(idx))
                 .map(|obj| (at + 1, obj))
                 .or_else(|| {
+                    let p = pos + 1;
                     values
-                        .get(pos + 1)?
+                        .get(p)?
                         .first()
-                        .map(|obj| (((pos as u64 + 1) << u32::BITS) + 1, obj))
+                        .map(|obj| (Cursor::new_pos(p) + 1, obj))
                 })
         } else {
-            idx.checked_sub(1).map_or_else(
-                || {
+            current
+                .and_then(|v| v.get(idx.checked_sub(1)?))
+                .map(|obj| (at - 1, obj))
+                .or_else(|| {
                     let p = pos.checked_sub(1)?;
                     let v = values.get(p)?;
                     v.last()
-                        .map(|obj| (((p as u64) << u32::BITS) | (v.len() - 1) as u64, obj))
-                },
-                |i| values.get(pos)?.get(i).map(|obj| (at - 1, obj)),
-            )
+                        .map(|obj| (Cursor::new_pos(p) | (v.len() - 1) as u64, obj))
+                })
         }
         .filter(|&(at, _)| !BOUNDED || at == limit || (FWD && at < limit) || (!FWD && at > limit))
         .map_or_else(ptr::null_mut, |(at, item)| {

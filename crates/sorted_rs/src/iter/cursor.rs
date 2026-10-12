@@ -10,15 +10,17 @@ impl Cursor {
     #[inline(always)]
     pub fn load(&self) -> (u64, usize, usize) {
         let at = self.0.load(Ordering::Relaxed);
-        (
-            at,
-            (at >> u32::BITS) as usize,
-            (at & u64::from(u32::MAX)) as usize,
-        )
+        let pos = (at >> u32::BITS) as usize;
+        let idx = (at & u64::from(u32::MAX)) as usize;
+        (at, pos, idx)
     }
     #[inline(always)]
     pub fn store(&self, at: u64) {
         self.0.store(at, Ordering::Relaxed);
+    }
+    #[inline(always)]
+    pub fn new_pos(pos: usize) -> u64 {
+        (pos as u64) << u32::BITS
     }
 }
 
