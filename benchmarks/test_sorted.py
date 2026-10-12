@@ -29,8 +29,8 @@ SIZE_PARAMS = pytest.mark.parametrize("size", SIZES)
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_init(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    def f(data: Iterable[int]) -> None:
-        _ = cls(data)
+    def f(x: Iterable[int]) -> Sequence[int]:
+        return cls(x)
 
     assert benchmark(f, shuffled(size))
 

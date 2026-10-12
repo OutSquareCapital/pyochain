@@ -39,7 +39,7 @@ class Sizes(IntEnum):
     SIZE_4096 = 4096
 
 
-SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000, 1_000_000, 10_000_000)
+SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000, 1_000_000)
 
 
 class VariantGroups(StrEnum):
