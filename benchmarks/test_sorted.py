@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
     from ._utils import BenchFixture
 
-type List = type[SortedList[int] | PySortedList[int]]
+type List = SortedList[int] | PySortedList[int]
 type KeyList = type[SortedKeyList[int, int] | PySortedKeyList[int, int]]
 CLS_PARAMS = pytest.mark.parametrize(
     "cls",
@@ -28,9 +28,10 @@ CLS_PARAMS = pytest.mark.parametrize(
 SIZE_PARAMS = pytest.mark.parametrize("size", SIZES)
 
 
+# NOTE: mostly test the "empty maxes" path in `update` method.
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_init(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_init(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     def f(x: Iterable[int]) -> Sequence[int]:
         return cls(x)
 
@@ -65,7 +66,7 @@ def test_contains(benchmark: BenchFixture, cls: List, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_getitem(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_getitem(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(sl.__getitem__).last()) == data.last()
@@ -73,7 +74,7 @@ def test_getitem(benchmark: BenchFixture, cls: List, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_getitem_slice(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_getitem_slice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(lambda i: sl[i : i + 1]).last())
@@ -81,7 +82,7 @@ def test_getitem_slice(benchmark: BenchFixture, cls: List, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_bisect_left(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_bisect_left(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(sl.bisect_left).last()) == data.last()
@@ -89,7 +90,7 @@ def test_bisect_left(benchmark: BenchFixture, cls: List, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_bisect_right(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_bisect_right(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(sl.bisect_right).last())
@@ -97,7 +98,7 @@ def test_bisect_right(benchmark: BenchFixture, cls: List, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_iter(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_iter(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     def f(obj: Iterable[int]) -> None:
         for _ in obj:
             pass
@@ -108,14 +109,14 @@ def test_iter(benchmark: BenchFixture, cls: List, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_iter_collect(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_iter_collect(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     sl = cls(range(size))
     _ = benchmark(tuple, sl)
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_iter_rev_collect(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_iter_rev_collect(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     def f(lst: Sequence[int]) -> Sequence[int]:
         return tuple(reversed(lst))
 
@@ -124,7 +125,7 @@ def test_iter_rev_collect(benchmark: BenchFixture, cls: List, size: int) -> None
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_count(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_count(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(lambda i: sl.count(i) == 1).last())
@@ -132,7 +133,7 @@ def test_count(benchmark: BenchFixture, cls: List, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_index(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_index(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(lambda i: sl.index(i) == i).last())
@@ -140,14 +141,14 @@ def test_index(benchmark: BenchFixture, cls: List, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_islice(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_islice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     sl = cls(range(size))
     assert benchmark(lambda: tuple(sl.islice(start=0, stop=size - 1, reverse=False)))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_irange(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_irange(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     sl = cls(range(size))
     assert benchmark(
         lambda: tuple(
@@ -160,7 +161,7 @@ def test_irange(benchmark: BenchFixture, cls: List, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_add_pop(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_add_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     r = Range(size)
     sl = cls()
     assert benchmark(lambda: r.iter().map(sl.add).map(lambda _: sl.pop(-1)).last())
