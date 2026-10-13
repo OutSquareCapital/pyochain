@@ -107,7 +107,7 @@ impl PyoCounter {
         let items = self.bind(py).items_view().iter_py();
         let getter = pylibs::operator::itemgetter(py, 1)?;
         match n {
-            None => pylibs::builtins::sorted_by(&items, true, &getter)?.try_into_py(),
+            None => pylibs::builtins::sorted(&items, true, Some(&getter))?.try_into_py(),
             Some(n) => {
                 let kwargs = PyDict::new(py);
                 kwargs.set_item(intern!(py, "key"), getter)?;

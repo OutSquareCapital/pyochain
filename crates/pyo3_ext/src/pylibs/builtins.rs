@@ -139,25 +139,14 @@ pub fn reversed<'py>(sequence: &Bound<'py, PyAny>) -> Bound<'py, PyIterator> {
 pub fn sorted<'py>(
     iterator: &Bound<'py, PyIterator>,
     reverse: bool,
+    key: Option<&Bound<'py, PyAny>>,
 ) -> PyResult<Bound<'py, PyList>> {
     let py = iterator.py();
     let kwargs = PyDict::new(py);
     kwargs.set_item(intern!(py, "reverse"), reverse)?;
-    SORTED
-        .import(py, BUILTINS, "sorted")?
-        .call((iterator,), Some(&kwargs))
-        .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
-}
-#[inline(always)]
-pub fn sorted_by<'py>(
-    iterator: &Bound<'py, PyIterator>,
-    reverse: bool,
-    key: &Bound<'py, PyAny>,
-) -> PyResult<Bound<'py, PyList>> {
-    let py = iterator.py();
-    let kwargs = PyDict::new(py);
-    kwargs.set_item(intern!(py, "reverse"), reverse)?;
-    kwargs.set_item(intern!(py, "key"), key)?;
+    if let Some(key) = key {
+        kwargs.set_item(intern!(py, "key"), key)?;
+    }
     SORTED
         .import(py, BUILTINS, "sorted")?
         .call((iterator,), Some(&kwargs))
