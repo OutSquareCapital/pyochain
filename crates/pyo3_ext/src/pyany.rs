@@ -6,6 +6,7 @@ use pyo3::{
     ffi,
     prelude::*,
 };
+use std::cmp::Ordering;
 /// Copy of internal pyo3 macro that works with generic types.
 /// Concretely allows to implement `PyAnyMethods` in one line.
 #[macro_export]
@@ -31,6 +32,7 @@ pub trait PyAnyExtMethods<'py> {
     fn ior<O: IntoPyObject<'py>>(&self, other: O) -> PyResult<Bound<'py, PyAny>>;
     fn ixor<O: IntoPyObject<'py>>(&self, other: O) -> PyResult<Bound<'py, PyAny>>;
     fn rich_compare_bool<O: IntoPyObject<'py>>(&self, other: O, op: CompareOp) -> PyResult<bool>;
+    fn compare_fast(&self, other: &Bound<'_, PyAny>) -> PyResult<Ordering>;
 }
 
 macro_rules! implement_inplace_binop {
@@ -57,15 +59,38 @@ impl<'py> PyAnyExtMethods<'py> for Bound<'py, PyAny> {
     implement_inplace_binop!(iand, ffi::PyNumber_InPlaceAnd, "&=");
     implement_inplace_binop!(ior, ffi::PyNumber_InPlaceOr, "|=");
     implement_inplace_binop!(ixor, ffi::PyNumber_InPlaceXor, "^=");
+    #[inline(always)]
     fn rich_compare_bool<O: IntoPyObject<'py>>(&self, other: O, op: CompareOp) -> PyResult<bool> {
         let py = self.py();
         let o = other.into_pyobject_or_pyerr(py)?.into_any();
         let out = unsafe { ffi::PyObject_RichCompareBool(self.as_ptr(), o.as_ptr(), op as c_int) };
         match out {
-            -1 => Err(PyErr::fetch(py)),
-            0 => Ok(false),
             1 => Ok(true),
+            0 => Ok(false),
+            -1 => Err(PyErr::fetch(py)),
             _ => unreachable!(),
         }
     }
+    /// Faster alternative to pyo3 native `compare` method.
+    #[inline(always)]
+    fn compare_fast(&self, other: &Bound<'_, PyAny>) -> PyResult<Ordering> {
+        let py = self.py();
+        unsafe {
+            match rich_compare(self, other, ffi::Py_LT) {
+                1 => Ok(Ordering::Less),
+                0 => match rich_compare(self, other, ffi::Py_GT) {
+                    1 => Ok(Ordering::Greater),
+                    0 => Ok(Ordering::Equal),
+                    -1 => Err(PyErr::fetch(py)),
+                    _ => unreachable!(),
+                },
+                -1 => Err(PyErr::fetch(py)),
+                _ => unreachable!(),
+            }
+        }
+    }
+}
+#[inline(always)]
+unsafe fn rich_compare(a: &Bound<'_, PyAny>, b: &Bound<'_, PyAny>, op: c_int) -> i32 {
+    unsafe { ffi::PyObject_RichCompareBool(a.as_ptr(), b.as_ptr(), op) }
 }
