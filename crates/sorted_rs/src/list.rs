@@ -1,12 +1,10 @@
 use pyo3::prelude::*;
-use tap::prelude::*;
 
 use crate::{
     ListsData,
     bisect::Bisect,
     bounds::{Bounds, Loc},
-    cmp::py_cmp,
-    errors, ops,
+    errors, list_update, ops,
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
@@ -150,7 +148,9 @@ impl ListsDataMethods for ListsData {
         }
     }
     fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
-        self.update_list_by(py, values, |a, b| py_cmp(py, a, b))
+        list_update::dispatch(self, py, values, |a, b| {
+            list_update::py_cmp(a.bind(py), b.bind(py))
+        })
     }
     fn index(
         &mut self,
@@ -195,15 +195,11 @@ impl ListsDataMethods for ListsData {
             }
         }
     }
-    fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
-        self.extend_lists(py, values);
-        self.0
-            .values
-            .iter()
-            .map(|x| x.last().unwrap().clone_ref(py))
-            .pipe(|it| self.0.maxes.extend(it));
-        self.len = values.len();
-        self.idx.clear();
+    fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()> {
+        it.for_each(|chunk| {
+            self.maxes.push(chunk.last().unwrap().clone_ref(py));
+            self.values.push(chunk);
+        });
         Ok(())
     }
 }

@@ -2,16 +2,13 @@ use crate::{
     Bounds, KeysListsData,
     bisect::Bisect,
     bounds::Loc,
-    cmp::py_cmp_by_key,
     errors,
     inner::InnerData,
-    ops,
+    list_update, ops,
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
 use pyo3::prelude::*;
-use tap::prelude::*;
-
 impl KeysListsData {
     #[must_use]
     pub fn new(key: Py<PyAny>) -> Self {
@@ -254,28 +251,27 @@ impl ListsDataMethods for KeysListsData {
             }
         }
     }
-    fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
-        self.extend_lists(py, values);
-        let key_fn = self.2.bind(py);
-        self.values
-            .iter()
-            .map(|list| {
-                list.iter()
-                    .map(|x| key_fn.call1((x,)).map(Bound::unbind))
-                    .collect()
+    fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()> {
+        let key_fn = self.2.clone_ref(py).into_bound(py);
+        it.map(|val_chunk| {
+            val_chunk
+                .iter()
+                .map(|v| key_fn.call1((v,)).map(Bound::unbind))
+                .collect::<PyResult<VecPy>>()
+                .map(|key_chunk| (val_chunk, key_chunk))
+        })
+        .try_for_each(|res| {
+            res.map(|(val_chunk, key_chunk)| {
+                self.maxes.push(key_chunk.last().unwrap().clone_ref(py));
+                self.values.push(val_chunk);
+                self.1.push(key_chunk);
             })
-            .collect::<PyResult<Vec<_>>>()
-            .map(|mut vec| self.1.append(vec.as_mut()))?;
-        self.1
-            .iter()
-            .map(|x| x.last().unwrap().clone_ref(py))
-            .pipe(|it| self.0.maxes.extend(it));
-        self.len = values.len();
-        self.idx.clear();
-        Ok(())
+        })
     }
     fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);
-        self.update_list_by(py, values, |a, b| py_cmp_by_key(a, b, key_fn))
+        list_update::dispatch(self, py, values, |a, b| {
+            list_update::py_cmp(&key_fn.call1((a,)).unwrap(), &key_fn.call1((b,)).unwrap())
+        })
     }
 }

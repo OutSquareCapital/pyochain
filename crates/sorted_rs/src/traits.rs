@@ -68,7 +68,7 @@ pub trait ListsDataMethods:
     fn clear(&mut self, py: Python<'_>);
     fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
-    fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()>;
+    fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()>;
     fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()>;
     fn index(
         &mut self,
@@ -222,26 +222,5 @@ pub trait ListsDataMethods:
         self.clear(py);
         self.load = load;
         self.extend(py, values)
-    }
-
-    fn update_list_by<F>(&mut self, py: Python<'_>, mut values: VecPy, func: F) -> PyResult<()>
-    where
-        F: Fn(&Py<PyAny>, &Py<PyAny>) -> Ordering,
-    {
-        values.sort_by(&func);
-        if self.maxes.is_empty() {
-            self.finalize_update(py, &values)
-        } else if 4 * values.len() >= self.len {
-            self.values.push(values);
-            values = self.collapse(py);
-            values.sort_by(func);
-            self.clear(py);
-            self.finalize_update(py, &values)
-        } else {
-            values
-                .iter()
-                .map(|x| x.clone_ref(py).into_bound(py))
-                .try_for_each(|val| self.add(val))
-        }
     }
 }
