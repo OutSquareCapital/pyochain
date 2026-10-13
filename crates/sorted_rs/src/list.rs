@@ -1,4 +1,5 @@
 use pyo3::prelude::*;
+use pyo3_ext::prelude::*;
 
 use crate::{
     ListsData,
@@ -149,7 +150,7 @@ impl ListsDataMethods for ListsData {
     }
     fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
         list_update::dispatch(self, py, values, |a, b| {
-            list_update::py_cmp(a.bind(py), b.bind(py))
+            a.bind(py).compare_fast(b.bind(py)).unwrap()
         })
     }
     fn index(

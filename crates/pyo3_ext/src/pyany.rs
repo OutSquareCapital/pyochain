@@ -91,6 +91,6 @@ impl<'py> PyAnyExtMethods<'py> for Bound<'py, PyAny> {
     }
 }
 #[inline(always)]
-unsafe fn rich_compare(a: &Bound<'_, PyAny>, b: &Bound<'_, PyAny>, op: c_int) -> i32 {
+unsafe fn rich_compare(a: &Bound<'_, PyAny>, b: &Bound<'_, PyAny>, op: c_int) -> c_int {
     unsafe { ffi::PyObject_RichCompareBool(a.as_ptr(), b.as_ptr(), op) }
 }

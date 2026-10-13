@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 
-use pyo3::{basic::CompareOp, prelude::*};
-use pyo3_ext::prelude::PyAnyExtMethods;
+use pyo3::prelude::*;
 use tap::prelude::*;
 
 use crate::{traits::ListsDataMethods, types::VecPy};
@@ -42,18 +41,4 @@ where
             .pipe(|chunk| (!chunk.is_empty()).then_some(chunk))
     })
     .pipe(|chunked| list.finalize_update(py, chunked))
-}
-
-//TODO: We should find a way to avoid `unwrap` here, whilst keeping in-place sorting behavior.
-#[inline(always)]
-pub fn py_cmp(a: &Bound<'_, PyAny>, b: &Bound<'_, PyAny>) -> Ordering {
-    a.rich_compare_bool(b, CompareOp::Lt)
-        .map(|lt| {
-            if lt {
-                Ordering::Less
-            } else {
-                Ordering::Greater
-            }
-        })
-        .unwrap()
 }

@@ -9,6 +9,7 @@ use crate::{
     types::VecPy,
 };
 use pyo3::prelude::*;
+use pyo3_ext::prelude::*;
 impl KeysListsData {
     #[must_use]
     pub fn new(key: Py<PyAny>) -> Self {
@@ -271,7 +272,11 @@ impl ListsDataMethods for KeysListsData {
     fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);
         list_update::dispatch(self, py, values, |a, b| {
-            list_update::py_cmp(&key_fn.call1((a,)).unwrap(), &key_fn.call1((b,)).unwrap())
+            key_fn
+                .call1((a,))
+                .unwrap()
+                .compare_fast(&key_fn.call1((b,)).unwrap())
+                .unwrap()
         })
     }
 }
