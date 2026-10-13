@@ -39,68 +39,34 @@ def check_result_transpose() -> None:
     _d = assert_type(d.transpose(), Option[Result[int, Option[int]]])
 
 
-def check_result_ok_err() -> None:
-    res: Result[int, str] = Ok(10)
+def check_narrowed_overloads_result() -> None:
+    """Covers the overloaded Result methods added alongside the Option ones in check_options.py."""
+    res: Result[Dog, str] = Ok(Dog())
+    other: Result[Animal, bytes] = Ok(Animal())
+
+    def recover(_: str) -> Result[object, Animal]:
+        return Ok(Animal())
+
     if isinstance(res, Ok):
-        _a = assert_type(res.ok(), Some[int])
-        _b = assert_type(res.err(), Null[str])
+        _ = assert_type(res.ok(), Some[Dog])
+        _ = assert_type(res.err(), Null[str])
+        _ = assert_type(res.unwrap_or_else(len), Dog)
+        _ = assert_type(res.map_err(len), Ok[Dog, int])
+        _ = assert_type(res.inspect(print), Ok[Dog, str])
+        _ = assert_type(res.inspect_err(print), Ok[Dog, str])
+        _ = assert_type(res.and_(other), Result[Animal, bytes])
+        _ = assert_type(res.or_(other), Ok[Dog, bytes])
+        _ = assert_type(res.or_else(recover), Ok[Dog, Animal])
     else:
-        _c = assert_type(res.ok(), Null[int])
-        _d = assert_type(res.err(), Some[str])
-
-
-def check_result_unwrap_or_else() -> None:
-    res: Result[int, str] = Ok(10)
-    if isinstance(res, Ok):
-        _a = assert_type(res.unwrap_or_else(len), int)
-    else:
-        _b = assert_type(res.unwrap_or_else(len), int)
-
-
-def check_result_map_err() -> None:
-    res: Result[int, str] = Ok(10)
-    if isinstance(res, Ok):
-        _a = assert_type(res.map_err(len), Ok[int, int])
-    else:
-        _b = assert_type(res.map_err(len), Err[int, int])
-
-
-def check_result_inspect() -> None:
-    res: Result[int, str] = Ok(10)
-    if isinstance(res, Ok):
-        _a = assert_type(res.inspect(print), Ok[int, str])
-    else:
-        _b = assert_type(res.inspect(print), Err[int, str])
-
-
-def check_result_inspect_err() -> None:
-    res: Result[int, str] = Ok(10)
-    if isinstance(res, Ok):
-        _a = assert_type(res.inspect_err(print), Ok[int, str])
-    else:
-        _b = assert_type(res.inspect_err(print), Err[int, str])
-
-
-def check_result_and_or() -> None:
-    res: Result[int, str] = Ok(10)
-    other: Result[float, bytes] = Ok(1.5)
-    if isinstance(res, Ok):
-        _a = assert_type(res.and_(other), Result[float, bytes])
-        _c = assert_type(res.or_(other), Ok[int, bytes])
-    else:
-        _b = assert_type(res.and_(other), Err[int, bytes])
-        _d = assert_type(res.or_(other), Result[float, bytes])
-
-
-def check_result_or_else() -> None:
-    def recover(e: str) -> Result[object, float]:
-        return Ok(len(e))
-
-    res: Result[int, str] = Ok(10)
-    if isinstance(res, Ok):
-        _a = assert_type(res.or_else(recover), Ok[int, float])
-    else:
-        _b = assert_type(res.or_else(recover), Result[object, float])
+        _ = assert_type(res.ok(), Null[Dog])
+        _ = assert_type(res.err(), Some[str])
+        _ = assert_type(res.unwrap_or_else(len), int)
+        _ = assert_type(res.map_err(len), Err[Dog, int])
+        _ = assert_type(res.inspect(print), Err[Dog, str])
+        _ = assert_type(res.inspect_err(print), Err[Dog, str])
+        _ = assert_type(res.and_(other), Err[Dog, bytes])
+        _ = assert_type(res.or_(other), Result[Animal, bytes])
+        _ = assert_type(res.or_else(recover), Result[object, Animal])
 
 
 def check_result_flatten() -> None:
