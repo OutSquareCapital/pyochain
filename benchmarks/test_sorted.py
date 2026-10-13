@@ -58,7 +58,7 @@ def _key_list(x: Iterable[int]) -> SortedKeyList[int, int]:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_contains(benchmark: BenchFixture, cls: List, size: int) -> None:
+def test_contains(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(sl.__contains__).last())
@@ -165,3 +165,13 @@ def test_add_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     r = Range(size)
     sl = cls()
     assert benchmark(lambda: r.iter().map(sl.add).map(lambda _: sl.pop(-1)).last())
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_update_large(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+    if cls is PySortedList:
+        benchmark(lambda: cls([1]).update(data))
+    else:
+        benchmark(lambda: cls([1]).extend(data))
