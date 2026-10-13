@@ -1,5 +1,5 @@
 use crate::{
-    Bounds, KeysListsData,
+    Bounds, KeysListsData, ListAdd,
     bisect::Bisect,
     bounds::Loc,
     errors,
@@ -22,7 +22,7 @@ impl KeysListsData {
 impl ListsDataMethods for KeysListsData {
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::new(self.2.clone_ref(py));
-        new_inst.extend(py, values)?;
+        new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
     fn irange_specs<'py>(
@@ -269,14 +269,20 @@ impl ListsDataMethods for KeysListsData {
             })
         })
     }
-    fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
+    fn extend(&mut self, py: Python<'_>, data: ListAdd<'_, Self>) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);
-        list_update::dispatch(self, py, values, |a, b| {
-            key_fn
-                .call1((a,))
-                .unwrap()
-                .compare_fast(&key_fn.call1((b,)).unwrap())
-                .unwrap()
-        })
+        list_update::dispatch(
+            self,
+            py,
+            data,
+            |a, b| {
+                key_fn
+                    .call1((a,))
+                    .unwrap()
+                    .compare_fast(&key_fn.call1((b,)).unwrap())
+                    .unwrap()
+            },
+            Some(key_fn),
+        )
     }
 }

@@ -10,6 +10,7 @@ use crate::{
     reprs::PyRepr,
     types::{IntOrSlice, ListOrAny, VecPy},
 };
+use derive_more::From;
 use either::Either;
 use parking_lot::RwLockReadGuard;
 use pyo3::{
@@ -47,9 +48,11 @@ impl<T> NestedVec<T> for [Vec<T>] {
         self[loc.pos].len()
     }
 }
+#[derive(From)]
 pub enum ListAdd<'py, T> {
     Identity,
     Sorted(RwLockReadGuard<'py, T>),
+    Vec(VecPy),
     Iterator(Bound<'py, PyIterator>),
 }
 pub trait ListsDataMethods:
@@ -69,7 +72,7 @@ pub trait ListsDataMethods:
     fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()>;
-    fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()>;
+    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()>;
     fn index(
         &mut self,
         value: &Bound<'_, PyAny>,
@@ -99,10 +102,11 @@ pub trait ListsDataMethods:
                 .chain(list.iter())
                 .map(|x| x.clone_ref(py))
                 .collect(),
+            ListAdd::Vec(values) => values,
             ListAdd::Iterator(it) => self
                 .iter()
                 .map(|x| x.clone_ref(py).pipe(Ok::<Py<PyAny>, PyErr>))
-                .chain(it.map(|x| x?.unbind().pipe(Ok)))
+                .chain(it.map(|x| x.map(Bound::unbind)))
                 .collect::<PyResult<_>>()?,
         };
         self.as_owned_from(py, out)
@@ -149,7 +153,7 @@ pub trait ListsDataMethods:
                     values.extend(new_slice);
                 }
                 self.clear(py);
-                self.extend(py, values)?;
+                self.extend(py, values.into())?;
                 Ok(())
             }
             (Nb::Pos | Nb::One, _) => (start..stop)
@@ -179,7 +183,7 @@ pub trait ListsDataMethods:
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
         let values = self.repeat(py, num);
         self.clear(py);
-        self.extend(py, values)
+        self.extend(py, values.into())
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut bounds = Loc::default();
@@ -221,6 +225,6 @@ pub trait ListsDataMethods:
         let values = self.collapse(py);
         self.clear(py);
         self.load = load;
-        self.extend(py, values)
+        self.extend(py, values.into())
     }
 }

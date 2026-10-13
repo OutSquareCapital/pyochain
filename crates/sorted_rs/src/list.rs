@@ -2,7 +2,7 @@ use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 
 use crate::{
-    ListsData,
+    ListAdd, ListsData,
     bisect::Bisect,
     bounds::{Bounds, Loc},
     errors, list_update, ops,
@@ -13,7 +13,7 @@ use crate::{
 impl ListsDataMethods for ListsData {
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::default();
-        new_inst.extend(py, values)?;
+        new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
     fn irange_specs<'py>(
@@ -148,10 +148,14 @@ impl ListsDataMethods for ListsData {
             ops::Expand::Other => (),
         }
     }
-    fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
-        list_update::dispatch(self, py, values, |a, b| {
-            a.bind(py).compare_fast(b.bind(py)).unwrap()
-        })
+    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
+        list_update::dispatch(
+            self,
+            py,
+            values,
+            |a, b| a.bind(py).compare_fast(b.bind(py)).unwrap(),
+            None,
+        )
     }
     fn index(
         &mut self,

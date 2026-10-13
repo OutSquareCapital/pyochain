@@ -153,14 +153,7 @@ pub(super) trait SortedListMethods:
     }
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let values = match into_list_add(self, iterable)? {
-            ListAdd::Identity => self.lock().collapse(py),
-            ListAdd::Sorted(list) => list.collapse(py),
-            ListAdd::Iterator(it) => it
-                .map(|x| x?.unbind().pipe(Ok))
-                .collect::<PyResult<Vec<_>>>()?,
-        };
-        self.write().extend(py, values)
+        self.write().extend(py, into_list_add(self, iterable)?)
     }
     #[allow(unused_variables)]
     fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {

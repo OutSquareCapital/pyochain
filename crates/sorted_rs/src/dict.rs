@@ -181,7 +181,7 @@ impl<T: ListsDataMethods> DictData<T> {
             if let Some(kw) = kwargs {
                 inner.update(kw.as_mapping())?;
             }
-            extend_list_from_dict(inner, &mut self.0)
+            self.0.extend(inner.py(), inner.iter_py().into())
         } else {
             let pairs = try_cast_into! {
                 match (m, kwargs) {
@@ -209,7 +209,7 @@ impl<T: ListsDataMethods> DictData<T> {
             if (10 * pairs.len()) > inner.len() {
                 inner.update(pairs.as_mapping())?;
                 self.0.clear(py);
-                extend_list_from_dict(inner, &mut self.0)
+                self.0.extend(inner.py(), inner.iter_py().into())
             } else {
                 pairs.keys_view().iter_py().try_for_each(|key| {
                     let k = key?;
@@ -219,15 +219,4 @@ impl<T: ListsDataMethods> DictData<T> {
             }
         }
     }
-}
-#[inline]
-fn extend_list_from_dict<T>(dict: &Bound<'_, PyDict>, list: &mut T) -> PyResult<()>
-where
-    T: ListsDataMethods,
-{
-    let py = dict.py();
-    dict.iter()
-        .map(|(k, _)| k.unbind())
-        .collect::<Vec<_>>()
-        .pipe(|v| list.extend(py, v))
 }
