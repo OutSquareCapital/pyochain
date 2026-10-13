@@ -7,7 +7,7 @@ use crate::{
     bounds::{Bounds, Loc},
     cmp::py_cmp,
     errors, ops,
-    traits::{ListsDataMethods, NestedVec, update_list_by},
+    traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
 
@@ -150,7 +150,7 @@ impl ListsDataMethods for ListsData {
         }
     }
     fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
-        update_list_by(self, py, values, |a, b| py_cmp(py, a, b))
+        self.update_list_by(py, values, |a, b| py_cmp(py, a, b))
     }
     fn index(
         &mut self,

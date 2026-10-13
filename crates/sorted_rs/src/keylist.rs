@@ -6,7 +6,7 @@ use crate::{
     errors,
     inner::InnerData,
     ops,
-    traits::{ListsDataMethods, NestedVec, update_list_by},
+    traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
 use pyo3::prelude::*;
@@ -276,6 +276,6 @@ impl ListsDataMethods for KeysListsData {
     }
     fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);
-        update_list_by(self, py, values, |a, b| py_cmp_by_key(a, b, key_fn))
+        self.update_list_by(py, values, |a, b| py_cmp_by_key(a, b, key_fn))
     }
 }

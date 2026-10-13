@@ -223,26 +223,25 @@ pub trait ListsDataMethods:
         self.load = load;
         self.extend(py, values)
     }
-}
-pub(super) fn update_list_by<T: ListsDataMethods, F: Fn(&Py<PyAny>, &Py<PyAny>) -> Ordering>(
-    list: &mut T,
-    py: Python<'_>,
-    mut values: VecPy,
-    func: F,
-) -> PyResult<()> {
-    values.sort_by(&func);
-    if list.maxes.is_empty() {
-        list.finalize_update(py, &values)
-    } else if 4 * values.len() >= list.len {
-        list.values.push(values);
-        values = list.collapse(py);
-        values.sort_by(func);
-        list.clear(py);
-        list.finalize_update(py, &values)
-    } else {
-        values
-            .iter()
-            .map(|x| x.clone_ref(py).into_bound(py))
-            .try_for_each(|val| list.add(val))
+
+    fn update_list_by<F>(&mut self, py: Python<'_>, mut values: VecPy, func: F) -> PyResult<()>
+    where
+        F: Fn(&Py<PyAny>, &Py<PyAny>) -> Ordering,
+    {
+        values.sort_by(&func);
+        if self.maxes.is_empty() {
+            self.finalize_update(py, &values)
+        } else if 4 * values.len() >= self.len {
+            self.values.push(values);
+            values = self.collapse(py);
+            values.sort_by(func);
+            self.clear(py);
+            self.finalize_update(py, &values)
+        } else {
+            values
+                .iter()
+                .map(|x| x.clone_ref(py).into_bound(py))
+                .try_for_each(|val| self.add(val))
+        }
     }
 }
