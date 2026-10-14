@@ -12,12 +12,13 @@ from pyochain.collections import SortedKeyList, SortedList
 from ._utils import SIZES, rounds_for, shuffled
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Callable, Iterable, Sequence
 
     from ._utils import BenchFixture
 
 type List = SortedList[int] | PySortedList[int]
 type KeyList = type[SortedKeyList[int, int] | PySortedKeyList[int, int]]
+type SetupOut[L: List] = tuple[tuple[L], dict[str, object]]
 CLS_PARAMS = pytest.mark.parametrize(
     "cls",
     (
@@ -208,3 +209,37 @@ def test_add(benchmark: BenchFixture, cls: type[List], size: int) -> None:
             sl.add(val)
 
     benchmark(f)
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    rounds, warmup = rounds_for(size)
+    r = range(size)
+
+    def f(sl: List) -> None:
+        for _ in r:
+            _ = sl.pop()
+
+    benchmark.pedantic(f, setup=make_setup(cls, r), rounds=rounds, warmup_rounds=warmup)
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_remove(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+    rounds, warmup = rounds_for(size)
+    r = range(size)
+
+    def f(sl: List) -> None:
+        for val in data:
+            sl.remove(val)
+
+    benchmark.pedantic(f, setup=make_setup(cls, r), rounds=rounds, warmup_rounds=warmup)
+
+
+def make_setup[L: List](cls: type[L], r: Iterable[int]) -> Callable[[], SetupOut[L]]:
+    def setup() -> SetupOut[L]:
+        return (cls(r),), {}
+
+    return setup
