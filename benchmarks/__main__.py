@@ -9,7 +9,6 @@ import typer as tp
 app = tp.Typer(name="bench", help="Run pytest-benchmark and analyze the results.")
 
 MethodArg = Annotated[str, tp.Argument(help="Benchmark method name")]
-GroupByCommitArg = Annotated[bool, tp.Option(help="Group results by commit.")]
 
 
 @app.command()
@@ -40,13 +39,24 @@ def run(
 
 
 @app.command()
-def plot(method: MethodArg, *, group_by_commit: GroupByCommitArg = False) -> None:
-    """Plot the benchmark results with `plotly` for a given method."""
+def plot(
+    method: MethodArg,
+    *,
+    absolute: Annotated[bool, tp.Option(help="Plot absolute results as well.")] = False,
+    group_by_commit: Annotated[
+        bool, tp.Option(help="Group results by commit.")
+    ] = False,
+) -> None:
+    """Plot the benchmark results with `plotly` for a given method.
+
+    The number correspond to the relative performance of `pyochain` compared to `sortedcontainers` for a given benchmark method.
+    """
     from .cli import check_method, display, query
 
     df = check_method(method).map(query.run, group_by_commit).unwrap()
     x_axis = query.Cols.Commit if group_by_commit else query.Cols.Run
-    display.absolute(df, method, x_axis)
+    if absolute:
+        display.absolute(df, method, x_axis)
     display.relative(df, method, x_axis)
 
 
