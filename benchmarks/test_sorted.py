@@ -1,12 +1,20 @@
+"""Benchmarks for pyochain vs sortedcontainers comparison.
+
+Reference:
+
+https://grantjenks.com/docs/sortedcontainers/performance.html
+"""
+
 from __future__ import annotations
 
+import random
 from typing import TYPE_CHECKING
 
 import pytest
 from sortedcontainers import SortedList as PySortedList
 from sortedcontainers import SortedListWithKey as PySortedKeyList
 
-from pyochain import Range
+from pyochain import Range, Seq
 from pyochain.collections import SortedKeyList, SortedList
 
 from ._utils import SIZES, rounds_for, shuffled
@@ -178,21 +186,17 @@ def test_update_small[L: List](
     k = size // 8
     rounds, warmup = rounds_for(size)
     values = shuffled(k)
-
-    def setup() -> tuple[tuple[L, Sequence[int]], dict[str, object]]:
-        return (cls(range(size)), values), {}
-
     if cls is PySortedList:
         benchmark.pedantic(  # pyright: ignore[reportUnusedCallResult]
-            lambda sl, batch: sl.update(batch),  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownLambdaType]
-            setup=setup,
+            lambda sl: sl.update(values),  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownLambdaType]
+            setup=make_setup(cls, size),
             rounds=rounds,
             warmup_rounds=warmup,
         )
     else:
         benchmark.pedantic(
-            lambda sl, batch: sl.extend(batch),
-            setup=setup,
+            lambda sl: sl.extend(values),
+            setup=make_setup(cls, size),
             rounds=rounds,
             warmup_rounds=warmup,
         )
@@ -201,45 +205,92 @@ def test_update_small[L: List](
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_add(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    data = shuffled(size)
-
-    def f() -> None:
-        sl = cls()
-        for val in data:
-            sl.add(val)
-
-    benchmark(f)
-
-
-@CLS_PARAMS
-@SIZE_PARAMS
-def test_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    values = _values_sample(size)
     rounds, warmup = rounds_for(size)
-    r = range(size)
 
     def f(sl: List) -> None:
-        for _ in r:
-            _ = sl.pop()
+        for val in values:
+            sl.add(val)
 
-    benchmark.pedantic(f, setup=make_setup(cls, r), rounds=rounds, warmup_rounds=warmup)
+    benchmark.pedantic(
+        f, setup=make_setup(cls, size), rounds=rounds, warmup_rounds=warmup
+    )
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_remove(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    data = shuffled(size)
+    values = _values_sample(size)
     rounds, warmup = rounds_for(size)
-    r = range(size)
 
     def f(sl: List) -> None:
-        for val in data:
+        for val in values:
             sl.remove(val)
 
-    benchmark.pedantic(f, setup=make_setup(cls, r), rounds=rounds, warmup_rounds=warmup)
+    benchmark.pedantic(
+        f, setup=make_setup(cls, size), rounds=rounds, warmup_rounds=warmup
+    )
 
 
-def make_setup[L: List](cls: type[L], r: Iterable[int]) -> Callable[[], SetupOut[L]]:
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    calls = _calls_nb(size)
+    rounds, warmup = rounds_for(size)
+
+    def f(sl: List) -> None:
+        for _ in calls:
+            _ = sl.pop()
+
+    benchmark.pedantic(
+        f, setup=make_setup(cls, size), rounds=rounds, warmup_rounds=warmup
+    )
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_delitem(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    positions = _del_positions(size)
+    rounds, warmup = rounds_for(size)
+
+    def f(sl: List) -> None:
+        for pos in positions:
+            del sl[pos]
+
+    benchmark.pedantic(
+        f, setup=make_setup(cls, size), rounds=rounds, warmup_rounds=warmup
+    )
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_delslice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    positions = _del_positions(size)
+    rounds, warmup = rounds_for(size)
+
+    def f(sl: List) -> None:
+        for pos in positions:
+            del sl[pos : pos + 1]
+
+    benchmark.pedantic(
+        f, setup=make_setup(cls, size), rounds=rounds, warmup_rounds=warmup
+    )
+
+
+def _del_positions(size: int) -> Seq[int]:
+    return _calls_nb(size).iter().map(lambda i: random.randrange(size - i)).collect(Seq)
+
+
+def _values_sample(size: int) -> Seq[int]:
+    return shuffled(size).iter().take(_calls_nb(size).len()).collect(Seq)
+
+
+def _calls_nb(size: int) -> Range:
+    return Range(max(5, size // 10))
+
+
+def make_setup[L: List](cls: type[L], size: int) -> Callable[[], SetupOut[L]]:
     def setup() -> SetupOut[L]:
-        return (cls(r),), {}
+        return (cls(range(size)),), {}
 
     return setup
