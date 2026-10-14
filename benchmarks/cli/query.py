@@ -100,5 +100,8 @@ def _selected_cols() -> Sequence[pl.Expr]:
         stat("stddev"),
         stat("total"),
         commit_infos("id").alias(Cols.Commit),
-        pl.col("datetime").cast(pl.Datetime("ms")).alias(Cols.TimeStamp),
+        pl
+        .col("datetime")
+        .str.to_datetime(time_unit="ms", time_zone="UTC")
+        .alias(Cols.TimeStamp),
     )
