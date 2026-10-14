@@ -46,6 +46,7 @@ manifest-path = "Cargo.toml"
 module-name = "pyochain"
 
 [tool.pydoclint]
+include-stub-files = true
 arg-type-hints-in-docstring = true
 arg-type-hints-in-signature = true
 check-class-attributes = true
