@@ -52,13 +52,16 @@ impl InnerData {
     #[inline]
     #[must_use]
     pub fn collapse(&self, py: Python<'_>) -> VecPy {
-        self.iter().map(|x| x.clone_ref(py)).collect()
+        self.iter_owned(py).collect()
+    }
+    #[inline(always)]
+    pub fn iter_owned(&self, py: Python<'_>) -> impl Iterator<Item = Py<PyAny>> {
+        self.iter().map(move |x| x.clone_ref(py))
     }
     #[inline(always)]
     pub fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
         self.values.iter().flatten()
     }
-
     pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         self.iter().collect_bound::<PyList>(py)
     }

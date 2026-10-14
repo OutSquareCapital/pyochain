@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use itertools::Itertools;
 use pyo3::{prelude::*, types::PyList};
 use pyo3_ext::{
     prelude::{CollectBoundIterator, PyListExtMethods},
@@ -18,16 +19,16 @@ pub fn dispatch<T, F>(
 ) -> PyResult<()>
 where
     T: ListsDataMethods,
-    F: Fn(&Py<PyAny>, &Py<PyAny>) -> Ordering,
+    F: FnMut(&Py<PyAny>, &Py<PyAny>) -> Ordering,
 {
     //TODO: Find a way to avoid unecessary intermediate Vecs by flattening `ListAdd` and length checking paths branches,
     // with precise cases instead of two sequential steps,
     // without bloating the code.
     //TODO: Check `itertools::merge` to see if it can be beneficial here.
     let values = match data {
-        ListAdd::Identity => list.collapse(py).tap_mut(|v| v.sort_by(&func)),
-        ListAdd::Vec(vec) => vec.tap_mut(|v| v.sort_by(&func)),
-        ListAdd::Sorted(sorted) => sorted.collapse(py).tap_mut(|v| v.sort_by(&func)),
+        ListAdd::Identity => list.iter_owned(py).sorted_by(func).collect(),
+        ListAdd::Vec(vec) => vec.tap_mut(|v| v.sort_by(func)),
+        ListAdd::Sorted(sorted) => sorted.iter_owned(py).sorted_by(func).collect(),
         ListAdd::Iterator(it) => pylibs::builtins::sorted(&it, false, py_func)?
             .iter()
             .map(Bound::unbind)
