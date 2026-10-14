@@ -1,7 +1,10 @@
 use std::cmp::Ordering;
 
-use pyo3::prelude::*;
-use pyo3_ext::pylibs;
+use pyo3::{prelude::*, types::PyList};
+use pyo3_ext::{
+    prelude::{CollectBoundIterator, PyListExtMethods},
+    pylibs,
+};
 use tap::prelude::*;
 
 use crate::{ListAdd, traits::ListsDataMethods, types::VecPy};
@@ -17,23 +20,33 @@ where
     T: ListsDataMethods,
     F: Fn(&Py<PyAny>, &Py<PyAny>) -> Ordering,
 {
-    let mut values = match data {
+    //TODO: Find a way to avoid unecessary intermediate Vecs by flattening `ListAdd` and length checking paths branches,
+    // with precise cases instead of two sequential steps,
+    // without bloating the code.
+    //TODO: Check `itertools::merge` to see if it can be beneficial here.
+    let values = match data {
         ListAdd::Identity => list.collapse(py).tap_mut(|v| v.sort_by(&func)),
         ListAdd::Vec(vec) => vec.tap_mut(|v| v.sort_by(&func)),
         ListAdd::Sorted(sorted) => sorted.collapse(py).tap_mut(|v| v.sort_by(&func)),
-        ListAdd::Iterator(it) => it
-            .pipe(|x| pylibs::builtins::sorted(&x, false, py_func))?
+        ListAdd::Iterator(it) => pylibs::builtins::sorted(&it, false, py_func)?
             .iter()
             .map(Bound::unbind)
             .collect(),
     };
     if list.maxes.is_empty() {
-        update_chunked(list, py, values)
+        update_chunked(list, py, values.into_iter())
     } else if 4 * values.len() >= list.len {
-        list.values.push(values);
-        values = list.collapse(py);
-        values.sort_by(func);
-        update_chunked(list, py, values)
+        list.iter()
+            .chain(values.iter())
+            .collect_bound::<PyList>(py)
+            .and_then(|pylist| {
+                py_func
+                    .map_or_else(|| pylist.sort(), |key| pylist.sort_by(key, false))
+                    .map(|()| pylist)
+            })?
+            .iter()
+            .map(Bound::unbind)
+            .pipe(|pylist| update_chunked(list, py, pylist))
     } else {
         values
             .into_iter()
@@ -42,14 +55,14 @@ where
     }
 }
 #[inline]
-fn update_chunked<T>(list: &mut T, py: Python<'_>, values: VecPy) -> PyResult<()>
+fn update_chunked<T, I>(list: &mut T, py: Python<'_>, mut it: I) -> PyResult<()>
 where
     T: ListsDataMethods,
+    I: ExactSizeIterator<Item = Py<PyAny>>,
 {
     list.clear(py);
-    list.len = values.len();
+    list.len = it.len();
     let load = list.load;
-    let mut it = values.into_iter();
     std::iter::from_fn(|| {
         it.by_ref()
             .take(load)
