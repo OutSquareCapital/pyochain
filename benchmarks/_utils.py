@@ -19,17 +19,18 @@ class BenchFixture(Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> T: ...
-    def pedantic[P, T](  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
+
+    def pedantic[*Ts, T](  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
         self,
-        target: Callable[[P], T],
+        target: Callable[[*Ts], T],
         args: tuple[object, ...] = (),
         kwargs: dict[str, object] | None = None,
-        setup: Callable[[], P] | None = None,
+        setup: Callable[[], tuple[tuple[*Ts], dict[str, object]]] | None = None,
         teardown: Callable[[], None] | None = None,
         rounds: int = 1,
         warmup_rounds: int = 0,
         iterations: int = 1,
-    ) -> object: ...
+    ) -> T: ...
 
 
 class Sizes(IntEnum):
