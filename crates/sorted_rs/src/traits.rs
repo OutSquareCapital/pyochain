@@ -12,6 +12,7 @@ use crate::{
 };
 use derive_more::From;
 use either::Either;
+use itertools::Itertools;
 use parking_lot::RwLockReadGuard;
 use pyo3::{
     exceptions::PyIndexError,
@@ -106,7 +107,7 @@ pub trait ListsDataMethods:
             ListAdd::Iterator(it) => self
                 .iter()
                 .map(|x| x.clone_ref(py).pipe(Ok::<Py<PyAny>, PyErr>))
-                .chain(it.map(|x| x.map(Bound::unbind)))
+                .chain(it.map_ok(Bound::unbind))
                 .collect::<PyResult<_>>()?,
         };
         self.as_owned_from(py, out)

@@ -7,6 +7,7 @@ use crate::{
     types::{SeqOrAny, VecPy},
 };
 use either::Either;
+use itertools::Itertools;
 use pyo3::{
     basic::CompareOp,
     exceptions::PyValueError,
@@ -194,14 +195,16 @@ impl InnerData {
             (Ordering::Less | Ordering::Equal, Nb::NegOne | Nb::Neg) => Ok(Vec::new()),
             (Ordering::Greater, Nb::Neg) => {
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
-                    .map(|i| self.get_item(py, i).map(Bound::unbind))
+                    .map(|i| self.get_item(py, i))
+                    .map_ok(Bound::unbind)
                     .collect()
             }
             // Return a list because a negative step could reverse the order
             // of the items and this could be the desired behavior.
             (_, Nb::One | Nb::Pos) => (start..stop)
                 .step_by(step.cast_unsigned())
-                .map(|i| self.get_item(py, i).map(Bound::unbind))
+                .map(|i| self.get_item(py, i))
+                .map_ok(Bound::unbind)
                 .collect(),
         }
     }

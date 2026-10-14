@@ -8,6 +8,7 @@ use crate::{
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
+use itertools::Itertools;
 use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 impl KeysListsData {
@@ -257,7 +258,8 @@ impl ListsDataMethods for KeysListsData {
         it.map(|val_chunk| {
             val_chunk
                 .iter()
-                .map(|v| key_fn.call1((v,)).map(Bound::unbind))
+                .map(|v| key_fn.call1((v,)))
+                .map_ok(Bound::unbind)
                 .collect::<PyResult<VecPy>>()
                 .map(|key_chunk| (val_chunk, key_chunk))
         })
