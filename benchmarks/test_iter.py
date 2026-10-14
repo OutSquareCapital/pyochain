@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import operator
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -18,12 +18,21 @@ from pyochain import (
     then_if_true,
 )
 
-from ._utils import SIZES, WINDOW_CASES, Sizes, identity, identity_vargs
+from ._utils import SIZES, Sizes, identity, identity_vargs
 
 if TYPE_CHECKING:
     from pyochain.abc import PyoIterable, PyoIterator, PyoSequence
 
     from ._utils import BenchFixture
+
+WINDOW_CASES: Final = pytest.mark.parametrize(
+    ("size", "tup_len"),
+    SIZES
+    .iter()
+    .product((2, 4, 8, 16, 32, 64, 128))
+    .filter_star(lambda size, tup_len: tup_len < size)
+    .collect(tuple),
+)
 
 
 @pytest.mark.parametrize("size", SIZES)
