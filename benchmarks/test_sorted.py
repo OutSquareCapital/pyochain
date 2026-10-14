@@ -235,7 +235,7 @@ def test_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_delitem(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    positions = _del_positions(size)
+    positions = _del_positions(size, _calls_nb(size), 1)
 
     def f(sl: List) -> None:
         for pos in positions:
@@ -247,11 +247,11 @@ def test_delitem(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_delslice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    positions = _del_positions(size)
+    width = max(1, size // 10)
+    pos = _del_positions(size, 1, width).first()
 
     def f(sl: List) -> None:
-        for pos in positions:
-            del sl[pos : pos + 1]
+        del sl[pos : pos + width]
 
     BenchConfig(benchmark, cls, size).run_pedantic(f)
 
@@ -379,11 +379,12 @@ class BenchConfig[L: List]:
         self.run_pedantic(f)
 
 
-def _del_positions(size: int) -> Seq[int]:
+@cache
+def _del_positions(size: int, count: int, width: int) -> Seq[int]:
     return (
-        Range(_calls_nb(size))
+        Range(count)
         .iter()
-        .map(lambda i: RANDOM.randrange(size - i))
+        .map(lambda i: RANDOM.randrange(size - (i + 1) * width + 1))
         .collect(Seq)
     )
 
