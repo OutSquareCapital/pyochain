@@ -7,10 +7,10 @@ https://grantjenks.com/docs/sortedcontainers/performance.html
 
 from __future__ import annotations
 
-import random
 from dataclasses import dataclass
 from functools import cache
 from math import sqrt
+from random import Random
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -38,7 +38,7 @@ CLS_PARAMS = pytest.mark.parametrize(
     ),
 )
 SIZE_PARAMS = pytest.mark.parametrize("size", SIZES)
-RANDOM: Final[random.Random] = random.Random(0)
+RANDOM: Final[Random] = Random(0)
 
 
 # NOTE: mostly test the "empty maxes" path in `update` method.
@@ -383,7 +383,7 @@ def _del_positions(size: int) -> Seq[int]:
     return (
         Range(_calls_nb(size))
         .iter()
-        .map(lambda i: random.randrange(size - i))
+        .map(lambda i: RANDOM.randrange(size - i))
         .collect(Seq)
     )
 
