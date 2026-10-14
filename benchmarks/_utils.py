@@ -1,10 +1,12 @@
+import random
 from collections.abc import Callable
 from enum import IntEnum, StrEnum, auto
+from functools import cache
 from typing import Final, Protocol
 
 import pytest
 
-from pyochain import Seq
+from pyochain import Seq, Vec
 
 type BenchFn = Callable[[int], object]
 
@@ -17,17 +19,18 @@ class BenchFixture(Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> T: ...
-    def pedantic(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
+
+    def pedantic[*Ts, T](  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
         self,
-        target: Callable[..., object],
+        target: Callable[[*Ts], T],
         args: tuple[object, ...] = (),
         kwargs: dict[str, object] | None = None,
-        setup: Callable[[], tuple[tuple[object, ...], dict[str, object]]] | None = None,
+        setup: Callable[[], tuple[tuple[*Ts], dict[str, object]]] | None = None,
         teardown: Callable[[], None] | None = None,
         rounds: int = 1,
         warmup_rounds: int = 0,
         iterations: int = 1,
-    ) -> object: ...
+    ) -> T: ...
 
 
 class Sizes(IntEnum):
@@ -37,7 +40,7 @@ class Sizes(IntEnum):
     SIZE_4096 = 4096
 
 
-SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000)
+SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000, 1_000_000)
 
 
 class VariantGroups(StrEnum):
@@ -63,3 +66,14 @@ WINDOW_CASES: Final = pytest.mark.parametrize(
     .filter_star(lambda size, tup_len: tup_len < size)
     .collect(tuple),
 )
+
+
+@cache
+def shuffled(size: int) -> Vec[int]:
+    return Vec.wrap(random.Random(0).sample(range(size), size))
+
+
+def rounds_for(size: int) -> tuple[int, int]:
+    rounds = max(SIZES.first(), SIZES.last() // size)
+    warmup = min(SIZES.first(), rounds)
+    return rounds, warmup

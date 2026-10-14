@@ -1,6 +1,5 @@
 pub mod bisect;
 mod bounds;
-mod cmp;
 mod core;
 pub mod debug;
 mod dict;
@@ -10,6 +9,7 @@ mod inner;
 pub mod iter;
 mod keylist;
 mod list;
+mod list_update;
 mod ops;
 pub mod prelude;
 mod reprs;

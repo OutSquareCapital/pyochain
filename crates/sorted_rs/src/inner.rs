@@ -349,18 +349,6 @@ impl InnerData {
     pub fn ge<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
         inner_cmp(self, other, CompareOp::Ge)
     }
-    pub(super) fn extend_lists(&mut self, py: Python<'_>, values: &[Py<PyAny>]) {
-        let val_len = values.len();
-        (0..val_len)
-            .step_by(self.load)
-            .map(|pos| {
-                values[pos..(pos + self.load).min(val_len)]
-                    .iter()
-                    .map(|x| x.clone_ref(py))
-                    .collect::<Vec<_>>()
-            })
-            .pipe(|it| self.values.extend(it));
-    }
 }
 
 fn get_slice<'a>(lists: &'a [VecPy], bounds: &Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {

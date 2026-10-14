@@ -4,98 +4,119 @@ from typing import TYPE_CHECKING
 
 import pytest
 from sortedcontainers import SortedList as PySortedList
+from sortedcontainers import SortedListWithKey as PySortedKeyList
 
 from pyochain import Range
-from pyochain.collections import SortedList as PyoSortedList
+from pyochain.collections import SortedKeyList, SortedList
 
-from ._utils import SIZES
+from ._utils import SIZES, rounds_for, shuffled
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
     from ._utils import BenchFixture
 
-type SortedList = type[PyoSortedList[int] | PySortedList[int]]
+type List = SortedList[int] | PySortedList[int]
+type KeyList = type[SortedKeyList[int, int] | PySortedKeyList[int, int]]
 CLS_PARAMS = pytest.mark.parametrize(
     "cls",
     (
         pytest.param(PySortedList, id="sortedcontainers"),
-        pytest.param(PyoSortedList, id="pyochain"),
+        pytest.param(SortedList, id="pyochain"),
     ),
 )
 SIZE_PARAMS = pytest.mark.parametrize("size", SIZES)
 
 
+# NOTE: mostly test the "empty maxes" path in `update` method.
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_init(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    assert benchmark(cls, r)  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
+def test_init(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    def f(x: Iterable[int]) -> Sequence[int]:
+        return cls(x)
 
-
-@CLS_PARAMS
-@SIZE_PARAMS
-def test_contains(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(sl.__contains__).last())
+    assert benchmark(f, shuffled(size))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_getitem(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(sl.__getitem__).last())
+def test_init_by_key(benchmark: BenchFixture, cls: KeyList, size: int) -> None:
+    data = shuffled(size)
+    if cls is PySortedKeyList:
+        assert benchmark(_py_key_list, data)
+    else:
+        assert benchmark(_key_list, data)
+
+
+def _py_key_list(x: Iterable[int]) -> PySortedKeyList[int, int]:
+    return PySortedKeyList(x, key=lambda x: x + 1)
+
+
+def _key_list(x: Iterable[int]) -> SortedKeyList[int, int]:
+    return SortedKeyList(lambda x: x + 1, x)
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_getitem_slice(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(lambda i: sl[i : i + 1]).last())
+def test_contains(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(sl.__contains__).last())
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_bisect_left(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(sl.bisect_left).last())
+def test_getitem(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(sl.__getitem__).last()) == data.last()
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_bisect_right(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(sl.bisect_right).last())
+def test_getitem_slice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(lambda i: sl[i : i + 1]).last())
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_iter(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
+def test_bisect_left(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(sl.bisect_left).last()) == data.last()
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_bisect_right(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(sl.bisect_right).last())
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_iter(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     def f(obj: Iterable[int]) -> None:
         for _ in obj:
             pass
 
-    r = Range(size)
-    sl = cls(r)
+    sl = cls(range(size))
     benchmark(f, sl)
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_iter_collect(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
+def test_iter_collect(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    sl = cls(range(size))
     _ = benchmark(tuple, sl)
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_iter_rev_collect(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
+def test_iter_rev_collect(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     def f(lst: Sequence[int]) -> Sequence[int]:
         return tuple(reversed(lst))
 
@@ -104,33 +125,31 @@ def test_iter_rev_collect(benchmark: BenchFixture, cls: SortedList, size: int) -
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_count(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(lambda i: sl.count(i) == 1).last())
+def test_count(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(lambda i: sl.count(i) == 1).last())
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_index(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
-    assert benchmark(lambda: r.iter().map(lambda i: sl.index(i) == i).last())
+def test_index(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+    sl = cls(range(size))
+    assert benchmark(lambda: data.iter().map(lambda i: sl.index(i) == i).last())
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_islice(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
+def test_islice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    sl = cls(range(size))
     assert benchmark(lambda: tuple(sl.islice(start=0, stop=size - 1, reverse=False)))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_irange(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
-    r = Range(size)
-    sl = cls(r)
+def test_irange(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    sl = cls(range(size))
     assert benchmark(
         lambda: tuple(
             sl.irange(
@@ -142,7 +161,45 @@ def test_irange(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_add_pop(benchmark: BenchFixture, cls: SortedList, size: int) -> None:
+def test_add_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     r = Range(size)
     sl = cls()
     assert benchmark(lambda: r.iter().map(sl.add).map(lambda _: sl.pop(-1)).last())
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_update_large(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+    if cls is PySortedList:
+        benchmark(lambda: cls([1]).update(data))
+    else:
+        benchmark(lambda: cls([1]).extend(data))
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_update_small[L: List](
+    benchmark: BenchFixture, cls: type[L], size: int
+) -> None:
+    k = size // 8
+    rounds, warmup = rounds_for(size)
+    values = shuffled(k)
+
+    def setup() -> tuple[tuple[L, Sequence[int]], dict[str, object]]:
+        return (cls(range(size)), values), {}
+
+    if cls is PySortedList:
+        benchmark.pedantic(  # pyright: ignore[reportUnusedCallResult]
+            lambda sl, batch: sl.update(batch),  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownLambdaType]
+            setup=setup,
+            rounds=rounds,
+            warmup_rounds=warmup,
+        )
+    else:
+        benchmark.pedantic(
+            lambda sl, batch: sl.extend(batch),
+            setup=setup,
+            rounds=rounds,
+            warmup_rounds=warmup,
+        )

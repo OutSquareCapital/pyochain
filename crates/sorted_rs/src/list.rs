@@ -1,20 +1,19 @@
 use pyo3::prelude::*;
-use tap::prelude::*;
+use pyo3_ext::prelude::*;
 
 use crate::{
-    ListsData,
+    ListAdd, ListsData,
     bisect::Bisect,
     bounds::{Bounds, Loc},
-    cmp::py_cmp,
-    errors, ops,
-    traits::{ListsDataMethods, NestedVec, update_list_by},
+    errors, list_update, ops,
+    traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
 
 impl ListsDataMethods for ListsData {
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::default();
-        new_inst.extend(py, values)?;
+        new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
     fn irange_specs<'py>(
@@ -149,8 +148,14 @@ impl ListsDataMethods for ListsData {
             ops::Expand::Other => (),
         }
     }
-    fn extend(&mut self, py: Python<'_>, values: VecPy) -> PyResult<()> {
-        update_list_by(self, py, values, |a, b| py_cmp(py, a, b))
+    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
+        list_update::dispatch(
+            self,
+            py,
+            values,
+            |a, b| a.bind(py).compare_fast(b.bind(py)).unwrap(),
+            None,
+        )
     }
     fn index(
         &mut self,
@@ -195,15 +200,11 @@ impl ListsDataMethods for ListsData {
             }
         }
     }
-    fn finalize_update(&mut self, py: Python<'_>, values: &[Py<PyAny>]) -> PyResult<()> {
-        self.extend_lists(py, values);
-        self.0
-            .values
-            .iter()
-            .map(|x| x.last().unwrap().clone_ref(py))
-            .pipe(|it| self.0.maxes.extend(it));
-        self.len = values.len();
-        self.idx.clear();
+    fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()> {
+        it.for_each(|chunk| {
+            self.maxes.push(chunk.last().unwrap().clone_ref(py));
+            self.values.push(chunk);
+        });
         Ok(())
     }
 }

@@ -197,7 +197,7 @@ impl<T: ListsDataMethods> SetData<T> {
         let set = &self.1.clone_ref(py).into_bound(py);
         op.call_mut(set, other)?;
         self.0.clear(py);
-        self.0.extend(py, set.iter().map(Bound::unbind).collect())
+        self.0.extend(py, set.iter_py().into())
     }
 }
 #[derive(Clone, Copy)]

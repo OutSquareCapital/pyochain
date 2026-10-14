@@ -11,6 +11,7 @@ use pyo3::{
         PyList, PyMapping, PyRange, PySet, PyString, PyTuple,
     },
 };
+use tap::prelude::*;
 
 use crate::types;
 
@@ -219,17 +220,16 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
     }
 
     fn extend<O: IntoPyObject<'py>>(&self, iterable: O) -> PyResult<()> {
-        match unsafe {
-            ffi::PyList_Extend(
-                self.as_ptr(),
-                iterable
-                    .into_pyobject_or_pyerr(self.py())?
-                    .as_borrowed()
-                    .as_ptr(),
-            )
-        } {
+        let py = self.py();
+        let out = iterable
+            .into_pyobject_or_pyerr(py)?
+            .as_borrowed()
+            .as_ptr()
+            .pipe(|iterable| unsafe { ffi::PyList_Extend(self.as_ptr(), iterable) });
+        match out {
             0 => Ok(()),
-            _ => Err(PyErr::fetch(self.py())),
+            -1 => Err(PyErr::fetch(py)),
+            _ => unreachable!(),
         }
     }
     fn last(&self) -> PyResult<Bound<'py, PyAny>> {
@@ -240,7 +240,10 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
         let py = self.py();
         let kwargs = PyDict::new(py);
         kwargs.set_item(intern!(py, "key"), key)?;
-        kwargs.set_item(intern!(py, "reverse"), reverse)?;
+        // Micro-optimization: Don't add an entry to the kwargs dict if reverse is false, since the default value is false.
+        if reverse {
+            kwargs.set_item(intern!(py, "reverse"), true)?;
+        }
         self.call_method(intern!(py, "sort"), (), Some(&kwargs))?;
         Ok(())
     }
