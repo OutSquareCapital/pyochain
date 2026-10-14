@@ -161,14 +161,6 @@ def test_irange(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_add_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    r = Range(size)
-    sl = cls()
-    assert benchmark(lambda: r.iter().map(sl.add).map(lambda _: sl.pop(-1)).last())
-
-
-@CLS_PARAMS
-@SIZE_PARAMS
 def test_update_large(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     data = shuffled(size)
     if cls is PySortedList:
@@ -203,3 +195,16 @@ def test_update_small[L: List](
             rounds=rounds,
             warmup_rounds=warmup,
         )
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_add(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    data = shuffled(size)
+
+    def f() -> None:
+        sl = cls()
+        for val in data:
+            sl.add(val)
+
+    benchmark(f)
