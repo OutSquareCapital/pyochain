@@ -71,3 +71,9 @@ WINDOW_CASES: Final = pytest.mark.parametrize(
 @cache
 def shuffled(size: int) -> Vec[int]:
     return Vec.wrap(random.Random(0).sample(range(size), size))
+
+
+def rounds_for(size: int) -> tuple[int, int]:
+    rounds = max(SIZES.first(), SIZES.last() // size)
+    warmup = min(SIZES.first(), rounds)
+    return rounds, warmup

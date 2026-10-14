@@ -9,7 +9,7 @@ from sortedcontainers import SortedListWithKey as PySortedKeyList
 from pyochain import Range
 from pyochain.collections import SortedKeyList, SortedList
 
-from ._utils import SIZES, shuffled
+from ._utils import SIZES, rounds_for, shuffled
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -175,3 +175,31 @@ def test_update_large(benchmark: BenchFixture, cls: type[List], size: int) -> No
         benchmark(lambda: cls([1]).update(data))
     else:
         benchmark(lambda: cls([1]).extend(data))
+
+
+@CLS_PARAMS
+@SIZE_PARAMS
+def test_update_small[L: List](
+    benchmark: BenchFixture, cls: type[L], size: int
+) -> None:
+    k = size // 8
+    rounds, warmup = rounds_for(size)
+    values = shuffled(k)
+
+    def setup() -> tuple[tuple[L, Sequence[int]], dict[str, object]]:
+        return (cls(range(size)), values), {}
+
+    if cls is PySortedList:
+        benchmark.pedantic(  # pyright: ignore[reportUnusedCallResult]
+            lambda sl, batch: sl.update(batch),  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownLambdaType]
+            setup=setup,
+            rounds=rounds,
+            warmup_rounds=warmup,
+        )
+    else:
+        benchmark.pedantic(
+            lambda sl, batch: sl.extend(batch),
+            setup=setup,
+            rounds=rounds,
+            warmup_rounds=warmup,
+        )
