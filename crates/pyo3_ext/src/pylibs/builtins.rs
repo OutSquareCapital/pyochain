@@ -142,15 +142,29 @@ pub fn sorted<'py>(
     key: Option<&Bound<'py, PyAny>>,
 ) -> PyResult<Bound<'py, PyList>> {
     let py = iterator.py();
-    let kwargs = PyDict::new(py);
-    kwargs.set_item(intern!(py, "reverse"), reverse)?;
-    if let Some(key) = key {
-        kwargs.set_item(intern!(py, "key"), key)?;
+    let func = SORTED.import(py, BUILTINS, "sorted")?;
+    let it = (iterator,);
+    // Micro-optimization to minimize PyDict::set_item calls, and use vector call if possible.
+    match (reverse, key) {
+        (false, None) => func.call1(it),
+        (true, None) => {
+            let kwargs = PyDict::new(py);
+            kwargs.set_item(intern!(py, "reverse"), true)?;
+            func.call(it, Some(&kwargs))
+        }
+        (false, Some(key)) => {
+            let kwargs = PyDict::new(py);
+            kwargs.set_item(intern!(py, "key"), key)?;
+            func.call(it, Some(&kwargs))
+        }
+        (true, Some(key)) => {
+            let kwargs = PyDict::new(py);
+            kwargs.set_item(intern!(py, "reverse"), true)?;
+            kwargs.set_item(intern!(py, "key"), key)?;
+            func.call(it, Some(&kwargs))
+        }
     }
-    SORTED
-        .import(py, BUILTINS, "sorted")?
-        .call((iterator,), Some(&kwargs))
-        .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
 }
 #[inline(always)]
 pub fn zip<'py>(
