@@ -1,19 +1,16 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 import polars as pl
 
 from pyochain import Iter
 
-from .._utils import SIZES
 from ._common import GET_PATH, PREFIX, Lib, PlEnum
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-Sizes: Final[pl.Enum] = SIZES.iter().map(str).collect(pl.Enum)
 
 
 class Cols(PlEnum):
@@ -44,7 +41,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         )
         .select(
             Cols.TimeStamp,
-            param.first().cast(Sizes).alias(Cols.Size),
+            param.first().cast(pl.String).alias(Cols.Size),
             "min",
             param.last().cast(Lib).alias(Cols.Lib),
             Cols.Commit,

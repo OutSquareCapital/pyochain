@@ -2,6 +2,7 @@ import random
 from collections.abc import Callable
 from enum import IntEnum, StrEnum, auto
 from functools import cache
+from math import sqrt
 from typing import Final, Protocol
 
 import pytest
@@ -40,7 +41,7 @@ class Sizes(IntEnum):
     SIZE_4096 = 4096
 
 
-SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000, 1_000_000)
+SIZES: Final[Seq[int]] = Seq(100, 1_000, 10_000, 100_000, 1_000_000)
 
 
 class VariantGroups(StrEnum):
@@ -74,6 +75,6 @@ def shuffled(size: int) -> Vec[int]:
 
 
 def rounds_for(size: int) -> tuple[int, int]:
-    rounds = max(SIZES.first(), SIZES.last() // size)
-    warmup = min(SIZES.first(), rounds)
+    rounds = max(20, int(50 * sqrt(SIZES.last() // size)))
+    warmup = rounds // 20
     return rounds, warmup

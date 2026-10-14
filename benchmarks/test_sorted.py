@@ -286,7 +286,7 @@ def _values_sample(size: int) -> Seq[int]:
 
 
 def _calls_nb(size: int) -> Range:
-    return Range(max(5, size // 10))
+    return Range(min(size // 4, 1_000))
 
 
 def make_setup[L: List](cls: type[L], size: int) -> Callable[[], SetupOut[L]]:
