@@ -8,6 +8,7 @@ https://grantjenks.com/docs/sortedcontainers/performance.html
 from __future__ import annotations
 
 import random
+from math import sqrt
 from typing import TYPE_CHECKING
 
 import pytest
@@ -17,7 +18,7 @@ from sortedcontainers import SortedListWithKey as PySortedKeyList
 from pyochain import Range, Seq
 from pyochain.collections import SortedKeyList, SortedList
 
-from ._utils import SIZES, rounds_for, shuffled
+from ._utils import SIZES, shuffled
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 
 type List = SortedList[int] | PySortedList[int]
 type KeyList = type[SortedKeyList[int, int] | PySortedKeyList[int, int]]
-type SetupOut[L: List] = tuple[tuple[L], dict[str, object]]
+type SetupOut[L] = tuple[tuple[L], dict[str, object]]
 CLS_PARAMS = pytest.mark.parametrize(
     "cls",
     (
@@ -184,113 +185,102 @@ def test_update_small[L: List](
     benchmark: BenchFixture, cls: type[L], size: int
 ) -> None:
     k = size // 8
-    rounds, warmup = rounds_for(size)
     values = shuffled(k)
     if cls is PySortedList:
-        benchmark.pedantic(  # pyright: ignore[reportUnusedCallResult]
-            lambda sl: sl.update(values),  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownLambdaType]
-            setup=make_setup(cls, size),
-            rounds=rounds,
-            warmup_rounds=warmup,
-        )
+        run_pedantic(benchmark, cls, size, lambda sl: sl.update(values))  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownLambdaType]
     else:
-        benchmark.pedantic(
-            lambda sl: sl.extend(values),
-            setup=make_setup(cls, size),
-            rounds=rounds,
-            warmup_rounds=warmup,
-        )
+        run_pedantic(benchmark, cls, size, lambda sl: sl.extend(values))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_add(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     values = _values_sample(size)
-    rounds, warmup = rounds_for(size)
 
     def f(sl: List) -> None:
         for val in values:
             sl.add(val)
 
-    benchmark.pedantic(
-        f, setup=make_setup(cls, size), rounds=rounds, warmup_rounds=warmup
-    )
+    run_pedantic(benchmark, cls, size, f)
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_remove(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     values = _values_sample(size)
-    rounds, warmup = rounds_for(size)
 
     def f(sl: List) -> None:
         for val in values:
             sl.remove(val)
 
-    benchmark.pedantic(
-        f, setup=make_setup(cls, size), rounds=rounds, warmup_rounds=warmup
-    )
+    run_pedantic(benchmark, cls, size, f)
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    calls = _calls_nb(size)
-    rounds, warmup = rounds_for(size)
+    calls = range(_calls_nb(size))
 
     def f(sl: List) -> None:
         for _ in calls:
             _ = sl.pop()
 
-    benchmark.pedantic(
-        f, setup=make_setup(cls, size), rounds=rounds, warmup_rounds=warmup
-    )
+    run_pedantic(benchmark, cls, size, f)
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_delitem(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     positions = _del_positions(size)
-    rounds, warmup = rounds_for(size)
 
     def f(sl: List) -> None:
         for pos in positions:
             del sl[pos]
 
-    benchmark.pedantic(
-        f, setup=make_setup(cls, size), rounds=rounds, warmup_rounds=warmup
-    )
+    run_pedantic(benchmark, cls, size, f)
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_delslice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     positions = _del_positions(size)
-    rounds, warmup = rounds_for(size)
 
     def f(sl: List) -> None:
         for pos in positions:
             del sl[pos : pos + 1]
 
-    benchmark.pedantic(
-        f, setup=make_setup(cls, size), rounds=rounds, warmup_rounds=warmup
-    )
+    run_pedantic(benchmark, cls, size, f)
 
 
 def _del_positions(size: int) -> Seq[int]:
-    return _calls_nb(size).iter().map(lambda i: random.randrange(size - i)).collect(Seq)
+    return (
+        Range(_calls_nb(size))
+        .iter()
+        .map(lambda i: random.randrange(size - i))
+        .collect(Seq)
+    )
 
 
 def _values_sample(size: int) -> Seq[int]:
-    return shuffled(size).iter().take(_calls_nb(size).len()).collect(Seq)
+    return shuffled(size).iter().take(_calls_nb(size)).collect(Seq)
 
 
-def _calls_nb(size: int) -> Range:
-    return Range(min(size // 4, 1_000))
+def run_pedantic[L: List](
+    benchmark: BenchFixture, cls: type[L], size: int, f: Callable[[L], object]
+) -> None:
+
+    reps = Range(_calls_nb(SIZES.last()) // _calls_nb(size))
+    rounds = max(20, int(50 * sqrt(SIZES.last() // max(size, 4_000))))
+
+    def run(lists: Seq[L]) -> None:
+        for sl in lists:
+            _ = f(sl)
+
+    def setup() -> SetupOut[Seq[L]]:
+        return (reps.iter().map(lambda _: cls(range(size))).collect(Seq),), {}
+
+    benchmark.pedantic(run, setup=setup, rounds=rounds, warmup_rounds=rounds // 20)
 
 
-def make_setup[L: List](cls: type[L], size: int) -> Callable[[], SetupOut[L]]:
-    def setup() -> SetupOut[L]:
-        return (cls(range(size)),), {}
-
-    return setup
+def _calls_nb(size: int) -> int:
+    return min(size // 4, 1_000)
