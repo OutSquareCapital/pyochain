@@ -15,6 +15,9 @@ def check_covariance() -> None:
 
 
 def check_result_basic() -> None:
+    def recover(_: str) -> Result[object, Animal]:
+        return Ok(Animal())
+
     ok = assert_type(Ok(Dog()), Result[Dog, Any])
     err = assert_type(Err(Dog()), Result[Any, Dog])
     _ = assert_type(Ok[int, str](42), Result[int, str])
@@ -23,30 +26,8 @@ def check_result_basic() -> None:
     _c = assert_type(err.map(identity).map_err(Animal.as_parent), Result[Any, Animal])
     _d = assert_type(err.map_err(identity).map(Animal.as_parent), Result[Animal, Dog])
 
-
-def check_result_transpose() -> None:
-    a = assert_type(Ok(Some(10)), Result[Option[int], Any])
-    _a = assert_type(a.transpose(), Option[Result[int, Any]])  # ty: ignore[type-assertion-failure]
-    # ty infer the Literal
-    _aty = assert_type(a.transpose(), Option[Result[Literal[10], Any]])  # pyright: ignore[reportAssertTypeFailure]
-    b = assert_type(Err(Some(10)), Result[Any, Option[int]])
-    _b = assert_type(b.transpose(), Option[Result[Any, Option[int]]])  # ty: ignore[type-assertion-failure]
-    _b_ty = assert_type(b.transpose(), Option[Result[Any, Option[Literal[10]]]])  # pyright: ignore[reportAssertTypeFailure]
-    c = assert_type(Ok[Option[int], int](NONE), Result[Option[int], int])
-    _c = assert_type(c.transpose(), Option[Result[int, int]])
-    d = Err[Option[int], Option[int]](Null())
-    _ = assert_type(d, Result[Option[int], Option[int]])
-    _d = assert_type(d.transpose(), Option[Result[int, Option[int]]])
-
-
-def check_narrowed_overloads_result() -> None:
-    """Covers the overloaded Result methods added alongside the Option ones in check_options.py."""
-    res: Result[Dog, str] = Ok(Dog())
+    res: Result[Dog, str] = ok
     other: Result[Animal, bytes] = Ok(Animal())
-
-    def recover(_: str) -> Result[object, Animal]:
-        return Ok(Animal())
-
     if isinstance(res, Ok):
         _ = assert_type(res.ok(), Some[Dog])
         _ = assert_type(res.err(), Null[str])
@@ -67,6 +48,21 @@ def check_narrowed_overloads_result() -> None:
         _ = assert_type(res.and_(other), Err[Dog, bytes])
         _ = assert_type(res.or_(other), Result[Animal, bytes])
         _ = assert_type(res.or_else(recover), Result[object, Animal])
+
+
+def check_result_transpose() -> None:
+    a = assert_type(Ok(Some(10)), Result[Option[int], Any])
+    _a = assert_type(a.transpose(), Option[Result[int, Any]])  # ty: ignore[type-assertion-failure]
+    # ty infer the Literal
+    _aty = assert_type(a.transpose(), Option[Result[Literal[10], Any]])  # pyright: ignore[reportAssertTypeFailure]
+    b = assert_type(Err(Some(10)), Result[Any, Option[int]])
+    _b = assert_type(b.transpose(), Option[Result[Any, Option[int]]])  # ty: ignore[type-assertion-failure]
+    _b_ty = assert_type(b.transpose(), Option[Result[Any, Option[Literal[10]]]])  # pyright: ignore[reportAssertTypeFailure]
+    c = assert_type(Ok[Option[int], int](NONE), Result[Option[int], int])
+    _c = assert_type(c.transpose(), Option[Result[int, int]])
+    d = Err[Option[int], Option[int]](Null())
+    _ = assert_type(d, Result[Option[int], Option[int]])
+    _d = assert_type(d.transpose(), Option[Result[int, Option[int]]])
 
 
 def check_result_flatten() -> None:

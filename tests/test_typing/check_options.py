@@ -77,11 +77,27 @@ def check_narrowed_overloads() -> None:
         _ = assert_type(opt.is_none(), Literal[False])
         _ = assert_type(opt.unwrap_or_none(), Dog)
         _ = assert_type(opt.unwrap_or(str(1)), Dog)
+        _ = assert_type(opt.map(Animal.as_parent), Some[Animal])
+        _a: Ok[Dog, str] = opt.ok_or("err")
+        _ = assert_type(opt.unwrap_or_else(Animal), Dog)
+        _ = assert_type(opt.and_(Some("x")), Option[str])
+        _ = assert_type(opt.or_(Some("x")), Some[Dog])
+        _ = assert_type(opt.or_else(lambda: Some("x")), Some[Dog])
+        _b: Ok[Dog, str] = opt.ok_or_else(lambda: "err")
+        _ = assert_type(opt.inspect(print), Some[Dog])
     else:
         _ = assert_type(opt.is_some(), Literal[False])
         _ = assert_type(opt.is_none(), Literal[True])
         _ = assert_type(opt.unwrap_or_none(), None)
         _ = assert_type(opt.unwrap_or(str(1)), str)
+        _ = assert_type(opt.map(Animal.as_parent), Null[Animal])
+        _ = assert_type(opt.ok_or("err"), Err[Dog, str])
+        _ = assert_type(opt.unwrap_or_else(Animal), Animal)
+        _ = assert_type(opt.and_(Some("x")), Null[str])
+        _ = assert_type(opt.or_(Some("x")), Option[str])
+        _ = assert_type(opt.or_else(lambda: Some("x")), Option[str])
+        _ = assert_type(opt.ok_or_else(lambda: "err"), Err[Dog, str])
+        _ = assert_type(opt.inspect(print), Null[Dog])
         _ = assert_never(opt.unwrap())
 
 
@@ -94,29 +110,6 @@ def check_option_flatten() -> None:
     _c = assert_type(Null().flatten(), Option[Any])
     _d = assert_type(Some(Null()).flatten().map(_), Option[int])
     _e = assert_type(Some(Some(Some(10))).flatten().flatten().map(str), Option[str])
-
-
-def check_narrowed_overloads_more() -> None:
-    """Covers the remaining overloaded Option methods, in the style of `check_narrowed_overloads`."""
-    opt = Some(Dog())
-    if isinstance(opt, Some):
-        _ = assert_type(opt.map(Animal.as_parent), Some[Animal])
-        _a: Ok[Dog, str] = opt.ok_or("err")
-        _ = assert_type(opt.unwrap_or_else(Animal), Dog)
-        _ = assert_type(opt.and_(Some("x")), Option[str])
-        _ = assert_type(opt.or_(Some("x")), Some[Dog])
-        _ = assert_type(opt.or_else(lambda: Some("x")), Some[Dog])
-        _b: Ok[Dog, str] = opt.ok_or_else(lambda: "err")
-        _ = assert_type(opt.inspect(print), Some[Dog])
-    else:
-        _ = assert_type(opt.map(Animal.as_parent), Null[Animal])
-        _ = assert_type(opt.ok_or("err"), Err[Dog, str])
-        _ = assert_type(opt.unwrap_or_else(Animal), Animal)
-        _ = assert_type(opt.and_(Some("x")), Null[str])
-        _ = assert_type(opt.or_(Some("x")), Option[str])
-        _ = assert_type(opt.or_else(lambda: Some("x")), Option[str])
-        _ = assert_type(opt.ok_or_else(lambda: "err"), Err[Dog, str])
-        _ = assert_type(opt.inspect(print), Null[Dog])
 
 
 def check_option_unzip() -> None:
