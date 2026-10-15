@@ -1,5 +1,5 @@
 use crate::{
-    Bounds, KeysListsData, ListAdd,
+    Bounds, KeysListsData,
     bisect::Bisect,
     bounds::Loc,
     errors,
@@ -271,7 +271,7 @@ impl ListsDataMethods for KeysListsData {
             })
         })
     }
-    fn extend(&mut self, py: Python<'_>, data: ListAdd<'_, Self>) -> PyResult<()> {
+    fn extend(&mut self, py: Python<'_>, data: list_update::ListAdd<'_, Self>) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);
         list_update::dispatch(
             self,

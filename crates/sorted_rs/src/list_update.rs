@@ -1,14 +1,41 @@
 use std::cmp::Ordering;
 
+use derive_more::From;
 use itertools::Itertools;
-use pyo3::{prelude::*, types::PyList};
+use parking_lot::{RwLock, RwLockReadGuard};
+use pyo3::{
+    prelude::*,
+    types::{PyIterator, PyList},
+};
 use pyo3_ext::{
     prelude::{CollectBoundIterator, PyListExtMethods},
     pylibs,
+    types::PyFrozenClass,
 };
 use tap::prelude::*;
 
-use crate::{ListAdd, traits::ListsDataMethods, types::VecPy};
+use crate::{traits::ListsDataMethods, types::VecPy};
+
+pub trait PyListsDataRef: PyFrozenClass + AsRef<RwLock<Self::L>> + From<Self::L> {
+    type L: ListsDataMethods;
+    fn try_as_updatable<'py>(
+        &self,
+        right: &'py Bound<'py, PyAny>,
+    ) -> PyResult<ListAdd<'py, Self::L>> {
+        match right.cast_exact::<Self>().map(Bound::get) {
+            Ok(list) if std::ptr::eq(list, self) => Ok(ListAdd::Identity),
+            Ok(list) => list.as_ref().read().pipe(ListAdd::Sorted).pipe(Ok),
+            Err(_) => right.try_iter().map(ListAdd::Iterator),
+        }
+    }
+}
+#[derive(From)]
+pub enum ListAdd<'py, T> {
+    Identity,
+    Sorted(RwLockReadGuard<'py, T>),
+    Vec(VecPy),
+    Iterator(Bound<'py, PyIterator>),
+}
 #[inline]
 pub fn dispatch<T, F>(
     list: &mut T,

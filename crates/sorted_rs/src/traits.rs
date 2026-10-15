@@ -7,19 +7,18 @@ use crate::{
     Bounds, Loc, errors,
     indexing::Nb,
     inner::InnerData,
+    list_update::ListAdd,
     reprs::PyRepr,
     types::{IntOrSlice, ListOrAny, VecPy},
 };
-use derive_more::From;
 use either::Either;
 use itertools::Itertools;
-use parking_lot::RwLockReadGuard;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PyIterator, PyList, PySlice, slice::PySliceIndices},
+    types::{PyList, PySlice, slice::PySliceIndices},
 };
-use pyo3_ext::prelude::CollectBoundIterator;
+use pyo3_ext::prelude::*;
 use tap::prelude::*;
 pub(super) trait NestedVec<T> {
     fn loc(&self, loc: &Loc) -> &T;
@@ -49,13 +48,7 @@ impl<T> NestedVec<T> for [Vec<T>] {
         self[loc.pos].len()
     }
 }
-#[derive(From)]
-pub enum ListAdd<'py, T> {
-    Identity,
-    Sorted(RwLockReadGuard<'py, T>),
-    Vec(VecPy),
-    Iterator(Bound<'py, PyIterator>),
-}
+
 pub trait ListsDataMethods:
     Deref<Target = InnerData> + DerefMut + PyRepr + Sized + Send + Sync
 {

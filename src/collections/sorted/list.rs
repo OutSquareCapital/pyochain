@@ -11,7 +11,7 @@ use pyo3::{exceptions::PyNotImplementedError, prelude::*};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
 use sorted_rs::{
-    KeysListsData, ListAdd, ListsData,
+    KeysListsData, ListsData, PyListsDataRef,
     prelude::*,
     types::{IntOrSlice, SeqOrAny},
 };
@@ -51,17 +51,22 @@ impl SortedKeyList {
         slf.init().pipe(Ok)
     }
 }
-
+impl PyListsDataRef for SortedList {
+    type L = ListsData;
+}
+impl PyListsDataRef for SortedKeyList {
+    type L = KeysListsData;
+}
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedListMethods:
     SortedCollectionsMethods
     + IntoInit
-    + From<<Self as ListGetter>::L>
     + ListGetter<T = <Self as ListGetter>::L>
+    + PyListsDataRef<L = <Self as ListGetter>::L>
 {
     fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let out = into_list_add(self, other)?;
+        let out = self.try_as_updatable(other)?;
         self.lock().concat(py, out)?.conv::<Self>().into_bound(py)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -153,7 +158,7 @@ pub(super) trait SortedListMethods:
     }
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        self.write().extend(py, into_list_add(self, iterable)?)
+        self.write().extend(py, self.try_as_updatable(iterable)?)
     }
     #[allow(unused_variables)]
     fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
@@ -170,16 +175,5 @@ pub(super) trait SortedListMethods:
     fn reverse(&self) -> PyResult<()> {
         let msg = "use ``sl.rev()`` instead";
         Err(PyNotImplementedError::new_err(msg))
-    }
-}
-
-fn into_list_add<'py, T>(left: &T, right: &'py Bound<'py, PyAny>) -> PyResult<ListAdd<'py, T::L>>
-where
-    T: SortedListMethods,
-{
-    match right.cast_exact::<T>().map(Bound::get) {
-        Ok(list) if std::ptr::eq(list, left) => ListAdd::Identity.pipe(Ok),
-        Ok(list) => list.lock().pipe(ListAdd::Sorted).pipe(Ok),
-        Err(_) => right.try_iter().map(ListAdd::Iterator),
     }
 }
