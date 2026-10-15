@@ -348,6 +348,15 @@ class BenchConfig[L: List]:
     cls: type[L]
     size: int
 
+    def run_workload(self, op: Callable[[List, int, int], object]) -> None:
+        values = _shuffled(self.size).iter().step_by(10).collect(Seq)
+
+        def f(sl: List) -> None:
+            for value in values:
+                _ = op(sl, value, RANDOM.randrange(100))
+
+        self.run_pedantic(f)
+
     def run_pedantic(self, f: Callable[[L], object]) -> None:
         reps = Range(_calls_nb(SIZES.last()) // _calls_nb(self.size))
         rounds = max(20, int(50 * sqrt(SIZES.last() // max(self.size, 4_000))))
@@ -362,15 +371,6 @@ class BenchConfig[L: List]:
 
         self.bench.pedantic(run, setup=setup, rounds=rounds, warmup_rounds=rounds // 20)
 
-    def run_workload(self, op: Callable[[List, int, int], object]) -> None:
-        values = _shuffled(self.size).iter().step_by(10).collect(Seq)
-
-        def f(sl: List) -> None:
-            for value in values:
-                _ = op(sl, value, RANDOM.randrange(100))
-
-        self.run_pedantic(f)
-
 
 @cache
 def _del_positions(size: int, count: int, width: int) -> Seq[int]:
@@ -382,12 +382,12 @@ def _del_positions(size: int, count: int, width: int) -> Seq[int]:
     )
 
 
-def _calls_nb(size: int) -> int:
-    return min(size // 4, 1_000)
-
-
 def _values_sample(size: int) -> Seq[int]:
     return _shuffled(size).iter().take(_calls_nb(size)).collect(Seq)
+
+
+def _calls_nb(size: int) -> int:
+    return min(size // 4, 1_000)
 
 
 @cache
