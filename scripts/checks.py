@@ -11,16 +11,16 @@ from typing import TYPE_CHECKING, Final, Self
 from rich.console import Console
 from rich.text import Text
 
-from pyochain import Err, Iter, Null, Ok, Option, Result, Some, Vec
+from pyochain import Err, Null, Ok, Option, Result, Some, Vec
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pyochain.abc import PyoSequence
-
-CACHE: Final[Path] = Path(".cache", "pyochain-check")
+REPO = "pyochain"
+CACHE: Final[Path] = Path(".cache", f"{REPO}-check")
 CONSOLE: Final[Console] = Console()
-STUBS_PATH: Final[Path] = Path("pyochain")
+STUBS_PATH: Final[Path] = Path(REPO)
 
 
 def run(*, fix: bool, slow: bool) -> int:
@@ -85,14 +85,12 @@ def _all_commands(*, slow: bool) -> PyoSequence[_CommandBuilder]:
 
 
 def _fast_commands() -> Vec[_CommandBuilder]:
-    # NOTE: pydoclint next release will handle stubs files natively.
-    stubs_files = Iter(STUBS_PATH.rglob("*.pyi")).map(str)
     return Vec(
         _Tools.FMT.do("--all").check_args("--", "--check"),
         _Tools.SDSORT.do(".", "--stubs").check_args("--check"),
         _Tools.RUFF.do("check", ".").fix_args("--fix", "--unsafe-fixes"),
         _Tools.RUFF.do("format", ".", "--preview").check_args("--check"),
-        _Tools.PYDOCLINT.do(*stubs_files),
+        _Tools.PYDOCLINT.do(REPO),
         _Tools.TOMBI.do("format").check_args("--check"),
         _Tools.TOMBI.do("lint"),
     )

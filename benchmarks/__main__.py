@@ -29,11 +29,13 @@ def run(
 
     If you don't already have saved results for it, make sure to use the `--calibrate` option.
     """
-    from .cli import bench_run, check_method
+    from .cli import bench_run, check_method, display, query
 
     return (
         check_method(method)
         .and_then(lambda m: bench_run.run(m, repeat, calibrate=calibrate))
+        .map(lambda _: query.run(method, False))
+        .map(lambda df: display.relative(df, method, query.Cols.Run))
         .unwrap()
     )
 

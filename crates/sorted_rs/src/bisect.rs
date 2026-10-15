@@ -1,4 +1,5 @@
-use pyo3::prelude::*;
+use pyo3::{basic::CompareOp, prelude::*};
+use pyo3_ext::prelude::PyAnyExtMethods;
 use std::ops::Not;
 
 /// Trait for bisect functions, adapted from the Python standard library's bisect module.
@@ -9,11 +10,15 @@ pub trait Bisect {
 impl Bisect for [Py<PyAny>] {
     #[inline(always)]
     fn bisect_left(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
-        resolve(self, item, |item, mid| mid.lt(item).map(Not::not))
+        resolve(self, item, |item, mid| {
+            mid.rich_compare_bool(item, CompareOp::Lt).map(Not::not)
+        })
     }
     #[inline(always)]
     fn bisect_right(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
-        resolve(self, item, |item, mid| item.lt(mid))
+        resolve(self, item, |item, mid| {
+            item.rich_compare_bool(mid, CompareOp::Lt)
+        })
     }
 }
 

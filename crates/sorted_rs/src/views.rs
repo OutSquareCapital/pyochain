@@ -1,5 +1,6 @@
 use crate::{DictData, prelude::*, types::ListOrAny};
 use either::Either;
+use itertools::Itertools;
 use pyo3::{
     prelude::*,
     types::{PyList, PySlice},
@@ -43,7 +44,8 @@ pub fn get_item_for_items<'py, T: ListsDataMethods>(
             Case::PySlice(slice) => mapping
                 .get_slice(slice)?
                 .iter()
-                .map(|key| tuple!(key.bind(py), &dict.get_item(key)?).map(Bound::into_any))
+                .map(|key| tuple!(key.bind(py), &dict.get_item(key)?))
+                .map_ok(Bound::into_any)
                 .try_collect_bound::<PyList>(py)
                 .map(Either::Left),
             int => {
