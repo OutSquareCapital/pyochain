@@ -21,9 +21,7 @@ uv sync --dev
 uv sync --all-groups
 ```
 
-A `zed` config file is present to set clippy and per-crate compilation for `rust-analyzer` for more convenient local development.
-
-I don't use `VScode` anymore but it should be easy to set up a similar configuration.
+To set clippy and per-crate compilation settings for `rust-analyzer`, a `zed` and `vscode` config files are present.
 
 Open for PR's for linux/mac cargo config examples, as well as others editors configs.
 
