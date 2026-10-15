@@ -4,7 +4,8 @@ use crate::{
     bounds::Loc,
     errors,
     inner::InnerData,
-    list_update, ops,
+    list_update::ListAdd,
+    ops,
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
@@ -271,12 +272,11 @@ impl ListsDataMethods for KeysListsData {
             })
         })
     }
-    fn extend(&mut self, py: Python<'_>, data: list_update::ListAdd<'_, Self>) -> PyResult<()> {
+    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);
-        list_update::dispatch(
+        values.merge_with(
             self,
             py,
-            data,
             |a, b| {
                 key_fn
                     .call1((a,))

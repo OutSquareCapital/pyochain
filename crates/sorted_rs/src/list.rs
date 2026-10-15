@@ -5,7 +5,9 @@ use crate::{
     ListsData,
     bisect::Bisect,
     bounds::{Bounds, Loc},
-    errors, list_update, ops,
+    errors,
+    list_update::ListAdd,
+    ops,
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
@@ -148,11 +150,10 @@ impl ListsDataMethods for ListsData {
             ops::Expand::Other => (),
         }
     }
-    fn extend(&mut self, py: Python<'_>, values: list_update::ListAdd<'_, Self>) -> PyResult<()> {
-        list_update::dispatch(
+    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
+        values.merge_with(
             self,
             py,
-            values,
             |a, b| a.bind(py).compare_fast(b.bind(py)).unwrap(),
             None,
         )
