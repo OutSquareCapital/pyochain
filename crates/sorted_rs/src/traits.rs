@@ -16,7 +16,7 @@ use parking_lot::RwLockReadGuard;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PyIterator, PyList, PySlice, PySliceIndices},
+    types::{PyIterator, PyList, PySlice, slice::PySliceIndices},
 };
 use pyo3_ext::prelude::CollectBoundIterator;
 use tap::prelude::*;

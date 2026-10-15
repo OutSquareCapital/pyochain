@@ -11,7 +11,7 @@ use pyo3::{
     basic::CompareOp,
     exceptions::PyValueError,
     prelude::*,
-    types::{PyList, PyNotImplemented, PySlice, PySliceIndices},
+    types::{PyList, PyNotImplemented, PySlice, slice::PySliceIndices},
 };
 use pyo3_ext::{
     prelude::*,
