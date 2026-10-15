@@ -116,15 +116,13 @@ def test_iter(benchmark: BenchFixture, cls: type[List], size: int) -> None:
         for _ in obj:
             pass
 
-    sl = cls(range(size))
-    benchmark(f, sl)
+    benchmark(f, cls(range(size)))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_iter_collect(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    sl = cls(range(size))
-    _ = benchmark(tuple, sl)
+    _ = benchmark(tuple, cls(range(size)))
 
 
 @CLS_PARAMS
@@ -156,20 +154,15 @@ def test_index(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @SIZE_PARAMS
 def test_islice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     sl = cls(range(size))
-    assert benchmark(lambda: tuple(sl.islice(start=0, stop=size - 1, reverse=False)))
+    assert benchmark(lambda: tuple(sl.islice(stop=size - 1)))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_irange(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     sl = cls(range(size))
-    assert benchmark(
-        lambda: tuple(
-            sl.irange(
-                minimum=0, maximum=size - 1, inclusive=(True, True), reverse=False
-            )
-        )
-    )
+    maximum = size - 1
+    assert benchmark(lambda: tuple(sl.irange(maximum=maximum)))
 
 
 @CLS_PARAMS
