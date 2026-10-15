@@ -648,7 +648,7 @@ def test_repr_recursion() -> None:
 
 @pytest.mark.skip(reason="We don't support subclassing of concrete pyochain types ATM")
 def test_repr_subclass() -> None:
-    class CustomSortedList[T: SupportsRichComparison](SortedList[T]):
+    class CustomSortedList[T: SupportsRichComparison](SortedList[T]):  # pyright: ignore[reportGeneralTypeIssues]
         pass
 
     this = CustomSortedList([1, 2, 3, 4])

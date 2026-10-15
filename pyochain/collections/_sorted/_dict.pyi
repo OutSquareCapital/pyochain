@@ -3,7 +3,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Hashable, Iterable, Mapping, MutableMapping
-from typing import Any, Self, final, overload, override
+from typing import Any, Self, final, overload, override, type_check_only
 
 from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
@@ -20,6 +20,7 @@ from ._core import SortedCollection
 
 type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]
 
+@type_check_only
 class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     PyoMutableMapping[K, V], SortedCollection[K], PyoReversible[K], ABC
 ):

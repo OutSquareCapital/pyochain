@@ -4,7 +4,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from types import NotImplementedType
-from typing import Self, overload, override, type_check_only
+from typing import Self, final, overload, override, type_check_only
 
 from _typeshed import SupportsRichComparison
 
@@ -520,6 +520,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         Implemented to override `MutableSequence.reverse` which provides an erroneous default implementation.
         """
 
+@final
 class SortedList[T: SupportsRichComparison](BaseSortedList[T]):
     """Sorted list is a sorted `MutableSequence`.
 
