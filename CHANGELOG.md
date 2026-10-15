@@ -24,6 +24,8 @@ Because, frankly, why would you create a `SortedKeyList` with an identity functi
 
 ### 🚀 Performance improvements
 
+- **Massive** global improvements to `SortedList` and `SortedKeyList`, and by extension sorted sets/dicts/views who use them internally. Detailed benchmarks will be provided in the near future.
+
 - `pprint` was used internally in many `__repr__` implementations, which is no longer the case. The "raw" repr of inner objects (e.g `list`, `set`, etc...) is now used, which means we swap a Python call with a CPython one.
 
 #### args concatenation
