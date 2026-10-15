@@ -1,14 +1,13 @@
-import random
 from collections.abc import Callable
 from enum import IntEnum, StrEnum, auto
-from functools import cache
 from typing import Final, Protocol
 
-import pytest
-
-from pyochain import Seq, Vec
+from pyochain import Seq
 
 type BenchFn = Callable[[int], object]
+
+
+SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000, 1_000_000)
 
 
 class BenchFixture(Protocol):
@@ -40,9 +39,6 @@ class Sizes(IntEnum):
     SIZE_4096 = 4096
 
 
-SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000, 1_000_000)
-
-
 class VariantGroups(StrEnum):
     CREATE = auto()
     MAP = auto()
@@ -56,24 +52,3 @@ def identity[T](x: T) -> T:
 
 def identity_vargs[T](*args: T) -> tuple[T, ...]:
     return args
-
-
-WINDOW_CASES: Final = pytest.mark.parametrize(
-    ("size", "tup_len"),
-    SIZES
-    .iter()
-    .product((2, 4, 8, 16, 32, 64, 128))
-    .filter_star(lambda size, tup_len: tup_len < size)
-    .collect(tuple),
-)
-
-
-@cache
-def shuffled(size: int) -> Vec[int]:
-    return Vec.wrap(random.Random(0).sample(range(size), size))
-
-
-def rounds_for(size: int) -> tuple[int, int]:
-    rounds = max(SIZES.first(), SIZES.last() // size)
-    warmup = min(SIZES.first(), rounds)
-    return rounds, warmup

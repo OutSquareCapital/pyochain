@@ -7,6 +7,7 @@ use crate::{
     types::{SeqOrAny, VecPy},
 };
 use either::Either;
+use itertools::Itertools;
 use pyo3::{
     basic::CompareOp,
     exceptions::PyValueError,
@@ -52,13 +53,16 @@ impl InnerData {
     #[inline]
     #[must_use]
     pub fn collapse(&self, py: Python<'_>) -> VecPy {
-        self.iter().map(|x| x.clone_ref(py)).collect()
+        self.iter_owned(py).collect()
+    }
+    #[inline(always)]
+    pub fn iter_owned(&self, py: Python<'_>) -> impl Iterator<Item = Py<PyAny>> {
+        self.iter().map(move |x| x.clone_ref(py))
     }
     #[inline(always)]
     pub fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
         self.values.iter().flatten()
     }
-
     pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         self.iter().collect_bound::<PyList>(py)
     }
@@ -191,14 +195,16 @@ impl InnerData {
             (Ordering::Less | Ordering::Equal, Nb::NegOne | Nb::Neg) => Ok(Vec::new()),
             (Ordering::Greater, Nb::Neg) => {
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
-                    .map(|i| self.get_item(py, i).map(Bound::unbind))
+                    .map(|i| self.get_item(py, i))
+                    .map_ok(Bound::unbind)
                     .collect()
             }
             // Return a list because a negative step could reverse the order
             // of the items and this could be the desired behavior.
             (_, Nb::One | Nb::Pos) => (start..stop)
                 .step_by(step.cast_unsigned())
-                .map(|i| self.get_item(py, i).map(Bound::unbind))
+                .map(|i| self.get_item(py, i))
+                .map_ok(Bound::unbind)
                 .collect(),
         }
     }
