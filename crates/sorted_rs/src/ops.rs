@@ -74,7 +74,7 @@ pub enum Delete {
 impl Delete {
     #[inline(always)]
     #[must_use]
-    pub fn new<T>(lists: &[Vec<T>], load: usize, loc: &Loc) -> Self {
+    pub fn new(lists: &[Vec<Py<PyAny>>], load: usize, loc: &Loc) -> Self {
         let len_pos = lists.loc_len(loc);
         if len_pos > (load >> 1) {
             Self::PosSupToLoad
