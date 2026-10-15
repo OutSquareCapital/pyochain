@@ -56,6 +56,10 @@ See below for the benchmark results, with the number of `args` in the left colum
 - **typing**: `Option::{is_some, is_none, unwrap, unwrap_or, unwrap_or_none}` now have overloads to statically return the narrowed type when the variant is already known.
 - **typing**: `Result::and_then` handles a change of Error type in the closure, and returns the correct `Result` type. i.e `Result[T, E].and_then(f: Callable[[T], Result[U, F]]) -> Result[U, E | F]`.
 
+### ✨ Enhancements
+
+- **typing**: Ensured that all sorted containers classes are marked with `typing::{type_check_only, final}` when appropriate.
+
 ### 🐞 Bug fixes
 
 - **typing**: `PyoIterator::{map_windows, map_windows_star}` now correctly handle functions with varargs.
