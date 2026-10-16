@@ -3,7 +3,7 @@ import polars as pl
 from rich.markdown import Markdown
 
 from ._common import CONSOLE, Lib
-from .query import Cols, group_by_commit
+from .query import Cols, maybe_agg_by_commit
 
 cfg = pl.Config(
     tbl_formatting="MARKDOWN",
@@ -20,7 +20,7 @@ def terminal(df: pl.DataFrame, *, raw: bool) -> None:
     _ = (
         df
         .lazy()
-        .pipe(group_by_commit)
+        .pipe(maybe_agg_by_commit, True)
         .drop(Cols.Run, Cols.TimeStamp)
         .collect()
         .pipe(_show, "Aggregated by commit", raw=raw)

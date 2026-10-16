@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import polars as pl
 
@@ -46,6 +46,8 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         .select(
             Cols.TimeStamp,
             param.first().cast(pl.String).alias(Cols.Size),
+            # Additional params besides size and library
+            param.slice(1, param.len() - 2).list.join("-").alias(Cols.Param),
             "min",
             param.last().cast(Lib).alias(Cols.Lib),
             Cols.Commit,
@@ -53,13 +55,13 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         .pivot(
             Cols.Lib,
             (Lib.SortedContainers, Lib.Pyochain),
-            index=(Cols.TimeStamp, Cols.Size, Cols.Commit),
+            index=(Cols.TimeStamp, Cols.Param, Cols.Size, Cols.Commit),
         )
         .with_columns(
             Lib.SortedContainers
             .pl()
             .median()
-            .over(Cols.Size)
+            .over(Cols.Param, Cols.Size)
             .truediv(Lib.Pyochain)
             .round(3)
             .alias(Cols.Relative),
@@ -67,24 +69,21 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
             Lib.SortedContainers.pl().mul(SEC_TO_MS_FACTOR),
         )
         .sort(Cols.TimeStamp, Cols.Size)
-        .pipe(
-            lambda lf: (
-                group_by_commit(lf)
-                if agg_by_commit
-                else lf.with_columns(
-                    Cols.TimeStamp.pl().cum_count().over(Cols.Size).alias(Cols.Run)
-                )
-            )
-        )
+        .pipe(maybe_agg_by_commit, agg_by_commit)
         .collect()
     )
 
 
-def group_by_commit(lf: pl.LazyFrame) -> pl.LazyFrame:
-    return lf.group_by(Cols.Commit, Cols.Size, maintain_order=True).agg(
-        Cols.TimeStamp.pl().first(),
-        pl.selectors.numeric().median().name.keep(),
-    )
+def maybe_agg_by_commit(lf: pl.LazyFrame, agg_by_commit: bool) -> pl.LazyFrame:
+    if agg_by_commit:
+        return lf.group_by(Cols.Commit, Cols.Param, Cols.Size, maintain_order=True).agg(
+            Cols.TimeStamp.pl().first(),
+            pl.selectors.numeric().median().name.keep(),
+        )
+    else:
+        return lf.with_columns(
+            Cols.TimeStamp.pl().cum_count().over(Cols.Param, Cols.Size).alias(Cols.Run)
+        )
 
 
 def _selected_cols() -> Sequence[pl.Expr]:
