@@ -15,6 +15,9 @@ def check_covariance() -> None:
 
 
 def check_result_basic() -> None:
+    def recover(_: str) -> Result[object, Animal]:
+        return Ok(Animal())
+
     ok = assert_type(Ok(Dog()), Result[Dog, Any])
     err = assert_type(Err(Dog()), Result[Any, Dog])
     _ = assert_type(Ok[int, str](42), Result[int, str])
@@ -22,6 +25,29 @@ def check_result_basic() -> None:
     _b = assert_type(ok.map_err(identity).map(Animal.as_parent), Result[Animal, Any])
     _c = assert_type(err.map(identity).map_err(Animal.as_parent), Result[Any, Animal])
     _d = assert_type(err.map_err(identity).map(Animal.as_parent), Result[Animal, Dog])
+
+    res: Result[Dog, str] = ok
+    other: Result[Animal, bytes] = Ok(Animal())
+    if isinstance(res, Ok):
+        _ = assert_type(res.ok(), Some[Dog])
+        _ = assert_type(res.err(), Null[str])
+        _ = assert_type(res.unwrap_or_else(len), Dog)
+        _ = assert_type(res.map_err(len), Ok[Dog, int])
+        _ = assert_type(res.inspect(print), Ok[Dog, str])
+        _ = assert_type(res.inspect_err(print), Ok[Dog, str])
+        _ = assert_type(res.and_(other), Result[Animal, bytes])
+        _ = assert_type(res.or_(other), Ok[Dog, bytes])
+        _ = assert_type(res.or_else(recover), Ok[Dog, Animal])
+    else:
+        _ = assert_type(res.ok(), Null[Dog])
+        _ = assert_type(res.err(), Some[str])
+        _ = assert_type(res.unwrap_or_else(len), int)
+        _ = assert_type(res.map_err(len), Err[Dog, int])
+        _ = assert_type(res.inspect(print), Err[Dog, str])
+        _ = assert_type(res.inspect_err(print), Err[Dog, str])
+        _ = assert_type(res.and_(other), Err[Dog, bytes])
+        _ = assert_type(res.or_(other), Result[Animal, bytes])
+        _ = assert_type(res.or_else(recover), Result[object, Animal])
 
 
 def check_result_transpose() -> None:
@@ -49,6 +75,9 @@ def check_result_flatten() -> None:
     """
     _a = assert_type(Ok(Ok[int, int](10)).flatten(), Result[int, int])
     _b = assert_type(Ok(Err[str, str]("error")).flatten(), Result[str, str])
+    c: Result[Result[int, int], int] = Err(1)
+    if isinstance(c, Err):
+        _c = assert_type(c.flatten(), Err[int, int])
 
     _ = assert_type(Err(Err("error")), Result[Any, Result[Any, str]])  # ty: ignore[type-assertion-failure]
     # ty infer the Literal

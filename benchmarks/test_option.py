@@ -32,7 +32,9 @@ def test_map_without_kwargs(benchmark: BenchFixture) -> None:
     def double(value: int) -> int:
         return value * 2
 
-    assert benchmark(Some(10).map, double) == Some(20)
+    some = Some(10)
+    assert isinstance(some, Some)
+    assert benchmark(some.map, double) == Some(20)
 
 
 @pytest.mark.benchmark(group=VariantGroups.MAP.value)
@@ -40,7 +42,9 @@ def test_map_with_kwargs(benchmark: BenchFixture) -> None:
     def scale(value: int, *, factor: int, offset: int) -> int:
         return value * factor + offset
 
-    assert benchmark(Some(10).map, scale, factor=3, offset=1) == Some(31)
+    some = Some(10)
+    assert isinstance(some, Some)
+    assert benchmark(some.map, scale, factor=3, offset=1) == Some(31)
 
 
 @pytest.mark.benchmark(group=VariantGroups.AND_THEN.value)
@@ -48,7 +52,9 @@ def test_and_then_with_kwargs(benchmark: BenchFixture) -> None:
     def keep_if_at_least(value: int, *, minimum: int) -> Option[int]:
         return Some(value) if value >= minimum else NONE
 
-    assert benchmark(Some(10).and_then, keep_if_at_least, minimum=5) == Some(10)
+    some = Some(10)
+    assert isinstance(some, Some)
+    assert benchmark(some.and_then, keep_if_at_least, minimum=5) == Some(10)
 
 
 @pytest.mark.benchmark(group=VariantGroups.MATCH.value)
