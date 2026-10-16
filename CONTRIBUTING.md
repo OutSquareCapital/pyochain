@@ -14,7 +14,7 @@ After cloning the repo, copy the [cargo config example](.cargo/config.toml.examp
 
 Then you can sync the venv with `uv`.
 
-`--all-groups` will also install the dependencies necessary for the website documentation.
+`--all-groups` will also install the dependencies necessary for the website documentation, and the type-checking tests.
 
 ```bash
 uv sync --dev

@@ -28,6 +28,7 @@ dev = [
   "typer>=0.27.2",
 ]
 doc = ["mkdocstrings-python>=2.0.7", "zensical>=0.0.57"]
+typing = ["pyrefly>=1.4.0", "ty>=0.0.88"]
 
 [build-system]
 requires = ["maturin>=1.8,<2.0"]
