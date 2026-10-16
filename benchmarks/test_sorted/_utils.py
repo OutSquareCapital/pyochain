@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import cache
 from random import Random
 from typing import TYPE_CHECKING, Final
 
+import pytest
 from sortedcontainers import SortedList as PySortedList
 from sortedcontainers import SortedListWithKey as PySortedKeyList
 
@@ -21,9 +23,18 @@ if TYPE_CHECKING:
 RANDOM: Final[Random] = Random(0)
 
 type List = SortedList[int] | PySortedList[int]
-type KeyList = type[SortedKeyList[int, int] | PySortedKeyList[int, int]]
-
+type KeyList = SortedKeyList[int, int] | PySortedKeyList[int, int]
+type InitFn[L] = Callable[[Iterable[int]], L]
+type KeyFn = Callable[[int], int]
 type SetupOut[L] = tuple[tuple[L], dict[str, object]]
+
+CLS_PARAMS: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
+    "cls",
+    (
+        pytest.param(PySortedList, id="sortedcontainers"),
+        pytest.param(SortedList, id="pyochain"),
+    ),
+)
 
 
 @dataclass(slots=True)

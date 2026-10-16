@@ -1,58 +1,58 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
-from sortedcontainers import SortedList as PySortedList
-from sortedcontainers import SortedListWithKey as PySortedKeyList
 
 from pyochain import Iter, Range, Seq
-from pyochain.collections import SortedKeyList, SortedList
 
-from .._utils import SIZE_PARAMS
-from ._utils import RANDOM, BenchConfig, KeyList, List, calls_nb, shuffled
+from .._utils import SIZE_PARAMS, identity
+from . import methods
+from ._utils import (
+    CLS_PARAMS,
+    RANDOM,
+    BenchConfig,
+    InitFn,
+    KeyList,
+    List,
+    calls_nb,
+    shuffled,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Iterable, Sequence
+
+    from _pytest.mark.structures import MarkDecorator
 
     from .._utils import BenchFixture
-
-CLS_PARAMS = pytest.mark.parametrize(
-    "cls",
-    (
-        pytest.param(PySortedList, id="sortedcontainers"),
-        pytest.param(SortedList, id="pyochain"),
-    ),
+WIDTH_PARAMS: Final[MarkDecorator] = pytest.mark.parametrize(
+    "width_fn",
+    Iter[tuple[Callable[[int], int], str]](
+        (lambda _: 1, "single"),
+        (lambda n: n // 10, "10pct"),
+        (lambda n: n // 4, "25pct"),
+        (identity, "full"),
+    )
+    .map_star(lambda fn, name: pytest.param(fn, id=name))
+    .collect(tuple),
 )
 
 
 # NOTE: mostly test the "empty maxes" path in `update` method.
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_init(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    def f(x: Iterable[int]) -> Sequence[int]:
-        return cls(x)
-
-    assert benchmark(f, shuffled(size))
+def test_init(benchmark: BenchFixture, cls: InitFn[List], size: int) -> None:
+    assert benchmark(cls, shuffled(size))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_init_by_key(benchmark: BenchFixture, cls: KeyList, size: int) -> None:
+def test_init_by_key(benchmark: BenchFixture, cls: type[KeyList], size: int) -> None:
     data = shuffled(size)
-    if cls is PySortedKeyList:
-        assert benchmark(_py_key_list, data)
-    else:
-        assert benchmark(_key_list, data)
-
-
-def _py_key_list(x: Iterable[int]) -> PySortedKeyList[int, int]:
-    return PySortedKeyList(x, key=lambda x: x + 1)
-
-
-def _key_list(x: Iterable[int]) -> SortedKeyList[int, int]:
-    return SortedKeyList(lambda x: x + 1, x)
+    fn: Callable[[int], int] = lambda x: x + 1
+    assert benchmark(methods.key_init(cls), data, fn)
 
 
 @CLS_PARAMS
@@ -157,7 +157,7 @@ def test_update_large[L: List](
     benchmark: BenchFixture, cls: type[L], size: int
 ) -> None:
     data = shuffled(size)
-    method = _get_update_method(cls)
+    method = methods.update(cls)
     benchmark(lambda: method(cls([1]), data))
 
 
@@ -169,7 +169,7 @@ def test_update_small[L: List](
     k = size // 8
     values = shuffled(k)
     config = BenchConfig(benchmark, cls, size)
-    method = _get_update_method(cls)
+    method = methods.update(cls)
     config.run_pedantic(lambda sl: method(sl, values))
 
 
@@ -177,7 +177,7 @@ def test_update_small[L: List](
 @SIZE_PARAMS
 def test_add(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     values = _values_sample(size)
-    method = _get_add_method(cls)
+    method = methods.add(cls)
 
     def f(sl: List) -> None:
         for val in values:
@@ -234,108 +234,6 @@ def test_delslice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     BenchConfig(benchmark, cls, size).run_pedantic(f)
 
 
-@CLS_PARAMS
-@SIZE_PARAMS
-def test_priority_queue(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    add_method = _get_add_method(cls)
-
-    def op(sl: List, value: int, pos: int) -> None:
-        if pos < 40:
-            add_method(sl, value)
-        elif pos < 80:
-            _ = sl.pop()
-        elif pos < 90:
-            sl.discard(value)
-        elif pos < 99:
-            _ = value in sl
-        else:
-            _ = Iter(sl).take(102).last()
-
-    BenchConfig(benchmark, cls, size).run_workload(op)
-
-
-@CLS_PARAMS
-@SIZE_PARAMS
-def test_multiset(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    add_method = _get_add_method(cls)
-
-    def op(sl: List, value: int, pos: int) -> None:
-        if pos < 75:
-            assert value in sl
-        elif pos < 85:
-            add_method(sl, value)
-        elif pos < 95:
-            sl.remove(value)
-        elif value < len(sl):
-            _ = sl[value]
-
-    BenchConfig(benchmark, cls, size).run_workload(op)
-
-
-@CLS_PARAMS
-@SIZE_PARAMS
-def test_ranking(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    add_method = _get_add_method(cls)
-
-    def op(sl: List, value: int, pos: int) -> None:
-        if pos < 40:
-            if value < len(sl):
-                _ = sl[value]
-        elif pos < 80:
-            assert sl.index(value) >= 0
-        elif pos < 90:
-            add_method(sl, value)
-        else:
-            sl.remove(value)
-
-    BenchConfig(benchmark, cls, size).run_workload(op)
-
-
-@CLS_PARAMS
-@SIZE_PARAMS
-def test_neighbor(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    add_method = _get_add_method(cls)
-
-    def op(sl: List, value: int, pos: int) -> None:
-        if pos < 75:
-            _ = sl.bisect_right(value)
-        elif pos < 85:
-            add_method(sl, value)
-        elif pos < 95:
-            sl.remove(value)
-        else:
-            _ = Iter(sl).take(102).last()
-
-    BenchConfig(benchmark, cls, size).run_workload(op)
-
-
-@CLS_PARAMS
-@SIZE_PARAMS
-def test_intervals(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    config = BenchConfig(benchmark, cls, size)
-    add_method = _get_add_method(cls)
-
-    def op(sl: List, value: int, pos: int) -> None:
-        if pos < 30:
-            _ = sl.bisect_right(value)
-        elif pos < 50:
-            if value < len(sl):
-                _ = sl[value]
-        elif pos < 70:
-            if value < len(sl):
-                del sl[value]
-        elif pos < 80:
-            if value < len(sl):
-                other = RANDOM.randrange(value, min(value + 100, len(sl)))
-                _ = sl[value:other]
-        elif pos < 90:
-            add_method(sl, value)
-        else:
-            sl.discard(value)
-
-    config.run_workload(op)
-
-
 @cache
 def _del_positions(size: int, count: int, width: int) -> Seq[int]:
     return (
@@ -348,17 +246,3 @@ def _del_positions(size: int, count: int, width: int) -> Seq[int]:
 
 def _values_sample(size: int) -> Seq[int]:
     return shuffled(size).iter().take(calls_nb(size)).collect(Seq)
-
-
-def _get_update_method[L: List](cls: type[L]) -> Callable[[L, Iterable[int]], None]:
-    if cls is PySortedList:
-        return PySortedList[int].update  # pyright: ignore[reportReturnType]
-    else:
-        return SortedList[int].extend  # pyright: ignore[reportReturnType]
-
-
-def _get_add_method[L: List](cls: type[L]) -> Callable[[L, int], None]:
-    if cls is PySortedList:
-        return PySortedList[int].add  # pyright: ignore[reportReturnType]
-    else:
-        return SortedList[int].append  # pyright: ignore[reportReturnType]
