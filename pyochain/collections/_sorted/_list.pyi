@@ -452,12 +452,15 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
     def clear(self) -> None: ...
     @override
     def insert(self, index: int, value: T) -> None:
-        """Warning: raise not-implemented error.
+        """Add `value` to the `SortedList`. Prefer using `append` instead.
 
-        use ``sl.add(value)`` instead
+        Warning:
+            Unlike `list.insert`, this method does not add the value at the specified index, the latter is ignored.
+
+            The value is added in sorted order.
 
         Args:
-            index (int): index to insert value at
+            index (int): ignored, only here for compatibility with `MutableSequence` protocol.
             value (T): value to insert
         """
 

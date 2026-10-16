@@ -157,8 +157,7 @@ pub(super) trait SortedListMethods:
     }
     #[allow(unused_variables)]
     fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let msg = "use ``sl.add(value)`` instead";
-        Err(PyNotImplementedError::new_err(msg))
+        self.append(value)
     }
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
