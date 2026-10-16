@@ -7,7 +7,7 @@ import pytest
 
 from pyochain import NONE, Err, Ok, Option, Range, Result, Some
 
-from ._utils import SIZES, VariantGroups
+from ._utils import SIZE_PARAMS, VariantGroups
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture
@@ -134,14 +134,14 @@ def test_swap(benchmark: BenchFixture, fn: BenchCall) -> None:
     assert benchmark(run) is None
 
 
-@pytest.mark.parametrize("size", SIZES)
+@SIZE_PARAMS
 def test_iter_ok(benchmark: BenchFixture, size: int) -> None:
     data = Range(size)
     opt = Ok(1)
     assert benchmark(_iter, data, opt).is_some()
 
 
-@pytest.mark.parametrize("size", SIZES)
+@SIZE_PARAMS
 def test_iter_err(benchmark: BenchFixture, size: int) -> None:
     data = Range(size)
     opt = Err(0)

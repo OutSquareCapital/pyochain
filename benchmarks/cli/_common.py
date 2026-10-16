@@ -67,7 +67,7 @@ def check_method(method: str) -> Result[Method, tp.BadParameter]:
 
 def _get_test_funcs() -> Vec[str]:
     return (
-        Iter(test_sorted.__dict__)
+        Iter(test_sorted.test_list.__dict__)
         .filter(lambda name: name.startswith(PREFIX))
         .map(lambda name: name.removeprefix(PREFIX))
         .sort()

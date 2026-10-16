@@ -1,35 +1,23 @@
-"""Benchmarks for pyochain vs sortedcontainers comparison.
-
-Reference:
-
-https://grantjenks.com/docs/sortedcontainers/performance.html
-"""
-
 from __future__ import annotations
 
-from dataclasses import dataclass
 from functools import cache
-from math import sqrt
-from random import Random
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 import pytest
 from sortedcontainers import SortedList as PySortedList
 from sortedcontainers import SortedListWithKey as PySortedKeyList
 
-from pyochain import Iter, Range, Seq, Vec
+from pyochain import Iter, Range, Seq
 from pyochain.collections import SortedKeyList, SortedList
 
-from ._utils import SIZES
+from .._utils import SIZE_PARAMS
+from ._utils import RANDOM, BenchConfig, KeyList, List, calls_nb, shuffled
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
 
-    from ._utils import BenchFixture
+    from .._utils import BenchFixture
 
-type List = SortedList[int] | PySortedList[int]
-type KeyList = type[SortedKeyList[int, int] | PySortedKeyList[int, int]]
-type SetupOut[L] = tuple[tuple[L], dict[str, object]]
 CLS_PARAMS = pytest.mark.parametrize(
     "cls",
     (
@@ -37,8 +25,6 @@ CLS_PARAMS = pytest.mark.parametrize(
         pytest.param(SortedList, id="pyochain"),
     ),
 )
-SIZE_PARAMS = pytest.mark.parametrize("size", SIZES)
-RANDOM: Final[Random] = Random(0)
 
 
 # NOTE: mostly test the "empty maxes" path in `update` method.
@@ -48,13 +34,13 @@ def test_init(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     def f(x: Iterable[int]) -> Sequence[int]:
         return cls(x)
 
-    assert benchmark(f, _shuffled(size))
+    assert benchmark(f, shuffled(size))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_init_by_key(benchmark: BenchFixture, cls: KeyList, size: int) -> None:
-    data = _shuffled(size)
+    data = shuffled(size)
     if cls is PySortedKeyList:
         assert benchmark(_py_key_list, data)
     else:
@@ -72,7 +58,7 @@ def _key_list(x: Iterable[int]) -> SortedKeyList[int, int]:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_contains(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    data = _shuffled(size)
+    data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(sl.__contains__).last())
 
@@ -80,7 +66,7 @@ def test_contains(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_getitem(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    data = _shuffled(size)
+    data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(sl.__getitem__).last()) == data.last()
 
@@ -88,7 +74,7 @@ def test_getitem(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_getitem_slice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    data = _shuffled(size)
+    data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(lambda i: sl[i : i + 1]).last())
 
@@ -96,7 +82,7 @@ def test_getitem_slice(benchmark: BenchFixture, cls: type[List], size: int) -> N
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_bisect_left(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    data = _shuffled(size)
+    data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(sl.bisect_left).last()) == data.last()
 
@@ -104,7 +90,7 @@ def test_bisect_left(benchmark: BenchFixture, cls: type[List], size: int) -> Non
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_bisect_right(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    data = _shuffled(size)
+    data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(sl.bisect_right).last())
 
@@ -137,7 +123,7 @@ def test_iter_rev_collect(benchmark: BenchFixture, cls: type[List], size: int) -
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_count(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    data = _shuffled(size)
+    data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(lambda i: sl.count(i) == 1).last())
 
@@ -145,7 +131,7 @@ def test_count(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_index(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    data = _shuffled(size)
+    data = shuffled(size)
     sl = cls(range(size))
     assert benchmark(lambda: data.iter().map(lambda i: sl.index(i) == i).last())
 
@@ -170,7 +156,7 @@ def test_irange(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 def test_update_large[L: List](
     benchmark: BenchFixture, cls: type[L], size: int
 ) -> None:
-    data = _shuffled(size)
+    data = shuffled(size)
     method = _get_update_method(cls)
     benchmark(lambda: method(cls([1]), data))
 
@@ -181,7 +167,7 @@ def test_update_small[L: List](
     benchmark: BenchFixture, cls: type[L], size: int
 ) -> None:
     k = size // 8
-    values = _shuffled(k)
+    values = shuffled(k)
     config = BenchConfig(benchmark, cls, size)
     method = _get_update_method(cls)
     config.run_pedantic(lambda sl: method(sl, values))
@@ -215,7 +201,7 @@ def test_remove(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    calls = range(_calls_nb(size))
+    calls = range(calls_nb(size))
 
     def f(sl: List) -> None:
         for _ in calls:
@@ -227,7 +213,7 @@ def test_pop(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_delitem(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    positions = _del_positions(size, _calls_nb(size), 1)
+    positions = _del_positions(size, calls_nb(size), 1)
 
     def f(sl: List) -> None:
         for pos in positions:
@@ -350,36 +336,6 @@ def test_intervals(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     config.run_workload(op)
 
 
-@dataclass(slots=True)
-class BenchConfig[L: List]:
-    bench: BenchFixture
-    cls: type[L]
-    size: int
-
-    def run_workload(self, op: Callable[[List, int, int], object]) -> None:
-        values = _shuffled(self.size).iter().step_by(10).collect(Seq)
-
-        def f(sl: List) -> None:
-            for value in values:
-                _ = op(sl, value, RANDOM.randrange(100))
-
-        self.run_pedantic(f)
-
-    def run_pedantic(self, f: Callable[[L], object]) -> None:
-        reps = Range(_calls_nb(SIZES.last()) // _calls_nb(self.size))
-        rounds = max(20, int(50 * sqrt(SIZES.last() // max(self.size, 4_000))))
-
-        def run(lists: Seq[L]) -> None:
-            for sl in lists:
-                _ = f(sl)
-
-        def setup() -> SetupOut[Seq[L]]:
-            data = reps.iter().map(lambda _: self.cls(range(self.size))).collect(Seq)
-            return (data,), {}
-
-        self.bench.pedantic(run, setup=setup, rounds=rounds, warmup_rounds=rounds // 20)
-
-
 @cache
 def _del_positions(size: int, count: int, width: int) -> Seq[int]:
     return (
@@ -391,16 +347,7 @@ def _del_positions(size: int, count: int, width: int) -> Seq[int]:
 
 
 def _values_sample(size: int) -> Seq[int]:
-    return _shuffled(size).iter().take(_calls_nb(size)).collect(Seq)
-
-
-def _calls_nb(size: int) -> int:
-    return min(size // 4, 1_000)
-
-
-@cache
-def _shuffled(size: int) -> Vec[int]:
-    return Vec.wrap(RANDOM.sample(range(size), size))
+    return shuffled(size).iter().take(calls_nb(size)).collect(Seq)
 
 
 def _get_update_method[L: List](cls: type[L]) -> Callable[[L, Iterable[int]], None]:

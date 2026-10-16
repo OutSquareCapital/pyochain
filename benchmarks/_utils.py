@@ -2,12 +2,15 @@ from collections.abc import Callable
 from enum import IntEnum, StrEnum, auto
 from typing import Final, Protocol
 
+import pytest
+
 from pyochain import Seq
 
 type BenchFn = Callable[[int], object]
 
 
 SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000, 1_000_000)
+SIZE_PARAMS = pytest.mark.parametrize("size", SIZES)
 
 
 class BenchFixture(Protocol):

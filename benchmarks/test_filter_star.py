@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
 from pyochain import Range, Seq
 
-from ._utils import SIZES, Sizes
+from ._utils import SIZE_PARAMS, Sizes
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -14,7 +12,7 @@ if TYPE_CHECKING:
     from ._utils import BenchFixture
 
 
-@pytest.mark.parametrize("size", SIZES)
+@SIZE_PARAMS
 def test_2(benchmark: BenchFixture, size: int) -> None:
     data = Range(size).iter().enumerate().collect(Seq)
     assert benchmark(_2, data)[0] % 2 == 0
