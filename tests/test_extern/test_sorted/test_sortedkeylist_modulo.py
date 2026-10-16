@@ -86,8 +86,8 @@ def test_key2() -> None:
     a = Incomparable()
     b = Incomparable()
     slt = SortedKeyList[Incomparable, int](lambda _: 1)
-    slt.add(a)
-    slt.add(b)
+    slt.append(a)
+    slt.append(b)
     assert slt == [a, b]
 
 
@@ -96,17 +96,17 @@ def test_add() -> None:
     slt = _modulo_list()
     nb = 1000
     for val in range(nb):
-        slt.add(val)
+        slt.append(val)
     check_sorted_key_list(slt)
 
     slt = _modulo_list()
     for val in range(nb, 0, -1):
-        slt.add(val)
+        slt.append(val)
     check_sorted_key_list(slt)
 
     slt = _modulo_list()
     for _ in range(nb):
-        slt.add(random.random())
+        slt.append(random.random())
     check_sorted_key_list(slt)
 
 
@@ -136,7 +136,7 @@ def test_update_order_consistency() -> None:
     slt2 = _modulo_list(setup)
     addition = [40, 50, 60]
     for value in addition:
-        slt1.add(value)
+        slt1.append(value)
     slt2.extend(addition)
     assert slt1 == slt2
 
@@ -248,7 +248,7 @@ def test_getitem() -> None:
     slt = _modulo_list()
     slt.reset(17)
 
-    slt.add(5)
+    slt.append(5)
     # Same story as `test_build_index`. In any case, it doesn't seem to change the outcome of the test.
     # slt.build_index()  # ruff: ignore[commented-out-code]
     check_sorted_key_list(slt)
@@ -274,7 +274,7 @@ def test_getitem_slice() -> None:
 
     for _rpt in range(100):
         val = random.random()
-        slt.add(val)
+        slt.append(val)
         lst.append(val)
 
     _ = lst.sort_by(modulo)
@@ -510,7 +510,7 @@ def test_len() -> None:
     slt = _modulo_list()
 
     for val in range(100):
-        slt.add(val)
+        slt.append(val)
         assert len(slt) == (val + 1)
 
 
@@ -564,7 +564,7 @@ def test_copy() -> None:
     slt = _modulo_list(range(100))
     slt.reset(7)
     two = slt.copy()
-    slt.add(100)
+    slt.append(100)
     assert len(slt) == 101
     assert len(two) == 100
 
@@ -575,7 +575,7 @@ def test_copy_copy() -> None:
     slt = _modulo_list(range(100))
     slt.reset(7)
     two = copy.copy(slt)
-    slt.add(100)
+    slt.append(100)
     assert len(slt) == 101
     assert len(two) == 100
 
@@ -588,7 +588,7 @@ def test_count() -> None:
 
     for iii in range(100):
         for _jjj in range(iii):
-            slt.add(iii)
+            slt.append(iii)
     check_sorted_key_list(slt)
 
     for iii in range(100):

@@ -226,34 +226,6 @@ class SortedCollection[T](ABC):
 
 class BaseSortedListSet[T](SortedCollection[T], ABC):
     @abstractmethod
-    def add(self, value: T) -> None:
-        """Add `value` to the `SortedCollection`.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        Args:
-            value (T): value to add to the `SortedCollection`
-
-        Examples:
-        ```python
-        from pyochain.collections import SortedList, SortedKeyList
-        from operator import neg
-
-        sl = SortedList()
-        sl.add(3)
-        sl.add(1)
-        sl.add(2)
-        assert sl == [1, 2, 3]
-
-        skl = SortedKeyList(neg)
-        skl.add(3)
-        skl.add(1)
-        skl.add(2)
-        assert skl == [3, 2, 1]
-        ```
-        """
-
-    @abstractmethod
     def discard(self, value: T) -> None:
         """Remove `value` from sorted-key list if it is a member.
 

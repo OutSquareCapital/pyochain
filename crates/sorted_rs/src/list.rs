@@ -28,7 +28,7 @@ impl ListsDataMethods for ListsData {
         Bounds::from_irange(&self.values, &self.maxes, minimum, maximum, inclusive)
     }
 
-    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         match ops::Maxes::right(&self.0.maxes, &value) {
             ops::Maxes::BisectErr(err) => return Err(err),

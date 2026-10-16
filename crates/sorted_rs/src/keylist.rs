@@ -39,7 +39,7 @@ impl ListsDataMethods for KeysListsData {
         let maximum = maximum.map(|value| key.call1((value,))).transpose()?;
         Bounds::from_irange(&self.1, &self.maxes, minimum, maximum, inclusive)
     }
-    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let key = self.extract_key(&value)?;
         let py = value.py();
         match ops::Maxes::right(&self.maxes, &key) {

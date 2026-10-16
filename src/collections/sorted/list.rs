@@ -136,13 +136,8 @@ pub(super) trait SortedListMethods:
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.lock().contains(value)
     }
-    #[allow(unused_variables)]
     fn append(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let msg = "use ``sl.add(value)`` instead";
-        Err(PyNotImplementedError::new_err(msg))
-    }
-    fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.write().add(value)
+        self.write().append(value)
     }
     fn clear(&self, py: Python<'_>) {
         self.write().clear(py);

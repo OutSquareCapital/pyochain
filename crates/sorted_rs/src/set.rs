@@ -338,7 +338,7 @@ where
         Ok(true) => Ok(()),
         Ok(false) => {
             set.add(&value)?;
-            list.add(value)
+            list.append(value)
         }
         Err(e) => Err(e),
     }

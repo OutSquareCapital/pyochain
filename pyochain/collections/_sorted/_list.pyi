@@ -387,18 +387,36 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         reverse: bool = False,
     ) -> PyoIterator[T]: ...
     @override
-    def add(self, value: T) -> None: ...
-    @override
     def append(self, value: T) -> None:
-        """Warning: Raise not-implemented error.
+        """Add `value` to the `SortedList`.
 
-        use ``sl.add(value)`` instead
+        Runtime complexity: `O(log(n))` -- approximate.
 
-        Implemented to override `MutableSequence.append` which provides an erroneous default implementation.
+        Warning:
+            Unlike `list.append`, this method does not add the value to the end of the sorted list.
+
+            The value is added in sorted order.
 
         Args:
-            value (T): value to append to sorted list
+            value (T): value to add to the `SortedList`
 
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
+
+        sl = SortedList()
+        sl.append(3)
+        sl.append(1)
+        sl.append(2)
+        assert sl == [1, 2, 3]
+
+        skl = SortedKeyList(neg)
+        skl.append(3)
+        skl.append(1)
+        skl.append(2)
+        assert skl == [3, 2, 1]
+        ```
         """
 
     @override
@@ -487,6 +505,11 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         """Add all the values from *iterable* to the `BaseSortedList`.
 
         Runtime complexity: `O(k*log(n))` -- approximate.
+
+        Warning:
+            Unlike `list.extend`, this method does not add the values to the end of the sorted list.
+
+            The values are added in sorted order.
 
         Args:
             iterable (Iterable[T]): iterable of values to add

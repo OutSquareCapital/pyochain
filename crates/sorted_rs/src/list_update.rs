@@ -76,7 +76,7 @@ impl<T: ListsDataMethods> ListAdd<'_, T> {
             values
                 .into_iter()
                 .map(|x| x.into_bound(py))
-                .try_for_each(|val| list.add(val))
+                .try_for_each(|val| list.append(val))
         }
     }
 }

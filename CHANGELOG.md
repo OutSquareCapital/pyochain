@@ -5,12 +5,7 @@
 ### 💥 Breaking changes
 
 - `SortedKeySet` and `SortedKeyDict` don't expose anymore their `key` attribute, as this is an implementation detail.
-
-#### `SortedKeyList` and `SortedList` `update` methods replaced by `extend`
-
-This is just a naming change, fixed from the original `sortedcontainers` library who incorrectly raise error at runtime when `extend` is called, suggesting to use `update` instead.
-
-However this violates the `MutableSequence` protocol, is counter-intuitive, AND not justified by any practical reason.
+- `{SortedKeyList, SortedList}::{add, update}` methods have been replaced by `append` and `extend`, respectively. Unlike the original `sortedcontainers` library, who raise runtime errors if those two are called. Allow to be more compliant with the `MutableSequence` protocol.
 
 #### No more identity function as default key for "key containers"
 

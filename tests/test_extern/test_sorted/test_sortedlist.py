@@ -46,17 +46,17 @@ def test_add() -> None:
     slt = SortedList[int]()
     nb = 100
     for val in range(nb):
-        slt.add(val)
+        slt.append(val)
         check_sorted_list(slt)
 
     slt = SortedList[int]()
     for val in range(nb, 0, -1):
-        slt.add(val)
+        slt.append(val)
         check_sorted_list(slt)
 
     slt = SortedList[float]()
     for _ in range(nb):
-        slt.add(random.random())
+        slt.append(random.random())
         check_sorted_list(slt)
 
 
@@ -163,7 +163,7 @@ def test_getitem() -> None:
 
     for _rpt in range(100):
         val = random.random()
-        slt.add(val)
+        slt.append(val)
         lst.append(val)
 
     lst.sort()
@@ -181,7 +181,7 @@ def test_getitem_slice() -> None:
 
     for _rpt in range(100):
         val = random.random()
-        slt.add(val)
+        slt.append(val)
         lst.append(val)
 
     lst.sort()
@@ -380,7 +380,7 @@ def test_len() -> None:
     slt = SortedList[int]()
 
     for val in range(100):
-        slt.add(val)
+        slt.append(val)
         assert len(slt) == (val + 1)
 
 
@@ -410,7 +410,7 @@ def test_copy() -> None:
     alpha = SortedList(range(100))
     alpha.reset(7)
     beta = alpha.copy()
-    alpha.add(100)
+    alpha.append(100)
     assert len(alpha) == 101
     assert len(beta) == 100
 
@@ -421,7 +421,7 @@ def test_copy_copy() -> None:
     alpha = SortedList(range(100))
     alpha.reset(7)
     beta = copy.copy(alpha)
-    alpha.add(100)
+    alpha.append(100)
     assert len(alpha) == 101
     assert len(beta) == 100
 
@@ -434,7 +434,7 @@ def test_count() -> None:
 
     for iii in range(100):
         for _jjj in range(iii):
-            slt.add(iii)
+            slt.append(iii)
         check_sorted_list(slt)
 
     for iii in range(100):
