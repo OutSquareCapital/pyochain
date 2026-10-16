@@ -12,6 +12,9 @@ from ._common import GET_PATH, PREFIX, Lib, PlEnum
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+SEC_TO_MS_FACTOR: Final[int] = 1_000_000
+"""Convert seconds to microseconds."""
+
 
 class Cols(PlEnum):
     """Column names used in the benchmarks."""
@@ -22,10 +25,11 @@ class Cols(PlEnum):
     Lib = auto()
     Commit = auto()
     Run = auto()
+    Param = auto()
 
 
 def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
-    param = pl.col("param").str.split("-").list
+    param = Cols.Param.pl().str.split("-").list
     cols = _selected_cols()
     return (
         Iter(GET_PATH.glob("*.json"))
@@ -59,8 +63,8 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
             .truediv(Lib.Pyochain)
             .round(3)
             .alias(Cols.Relative),
-            Lib.Pyochain.pl().mul(1000000),  # Convert seconds to microseconds
-            Lib.SortedContainers.pl().mul(1000000),
+            Lib.Pyochain.pl().mul(SEC_TO_MS_FACTOR),
+            Lib.SortedContainers.pl().mul(SEC_TO_MS_FACTOR),
         )
         .sort(Cols.TimeStamp, Cols.Size)
         .pipe(
@@ -90,7 +94,7 @@ def _selected_cols() -> Sequence[pl.Expr]:
     return (
         benchmark("fullname"),
         benchmark("name"),
-        benchmark("param"),
+        benchmark(Cols.Param),
         stat("min"),
         stat("max"),
         stat("median"),
