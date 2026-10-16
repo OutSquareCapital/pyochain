@@ -815,7 +815,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         The most basic pattern in which `collect()` is used is to turn one collection into another.
 
-        You take a collection, call [`iter()`][PyoIterator.iter] on it, do a bunch of transformations, and then `collect()` at the end.
+        You take a collection, call [`iter()`][_iterable.PyoIterable.iter] on it, do a bunch of transformations, and then `collect()` at the end.
 
         The *collector* can be any `Callable` that takes an `Iterator[T]` as an input.
 
