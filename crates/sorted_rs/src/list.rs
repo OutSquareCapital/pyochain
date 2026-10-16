@@ -2,10 +2,12 @@ use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 
 use crate::{
-    ListAdd, ListsData,
+    ListsData,
     bisect::Bisect,
     bounds::{Bounds, Loc},
-    errors, list_update, ops,
+    errors,
+    list_update::ListAdd,
+    ops,
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
@@ -26,7 +28,7 @@ impl ListsDataMethods for ListsData {
         Bounds::from_irange(&self.values, &self.maxes, minimum, maximum, inclusive)
     }
 
-    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         match ops::Maxes::right(&self.0.maxes, &value) {
             ops::Maxes::BisectErr(err) => return Err(err),
@@ -149,10 +151,9 @@ impl ListsDataMethods for ListsData {
         }
     }
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
-        list_update::dispatch(
+        values.merge_with(
             self,
             py,
-            values,
             |a, b| a.bind(py).compare_fast(b.bind(py)).unwrap(),
             None,
         )

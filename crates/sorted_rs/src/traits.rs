@@ -7,55 +7,48 @@ use crate::{
     Bounds, Loc, errors,
     indexing::Nb,
     inner::InnerData,
+    list_update::ListAdd,
     reprs::PyRepr,
     types::{IntOrSlice, ListOrAny, VecPy},
 };
-use derive_more::From;
 use either::Either;
 use itertools::Itertools;
-use parking_lot::RwLockReadGuard;
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PyIterator, PyList, PySlice, slice::PySliceIndices},
+    types::{PyList, PySlice, slice::PySliceIndices},
 };
-use pyo3_ext::prelude::CollectBoundIterator;
+use pyo3_ext::prelude::*;
 use tap::prelude::*;
-pub(super) trait NestedVec<T> {
-    fn loc(&self, loc: &Loc) -> &T;
-    fn loc_insert(&mut self, loc: &Loc, value: T);
+pub(super) trait NestedVec {
+    fn loc(&self, loc: &Loc) -> &Py<PyAny>;
+    fn loc_insert(&mut self, loc: &Loc, value: Py<PyAny>);
     fn loc_remove(&mut self, loc: &Loc);
-    fn loc_push(&mut self, loc: &Loc, value: T);
-    fn loc_last(&self, loc: &Loc) -> &T;
+    fn loc_push(&mut self, loc: &Loc, value: Py<PyAny>);
+    fn loc_last(&self, loc: &Loc) -> &Py<PyAny>;
     fn loc_len(&self, loc: &Loc) -> usize;
 }
-impl<T> NestedVec<T> for [Vec<T>] {
-    fn loc(&self, loc: &Loc) -> &T {
+impl NestedVec for [Vec<Py<PyAny>>] {
+    fn loc(&self, loc: &Loc) -> &Py<PyAny> {
         &self[loc.pos][loc.idx]
     }
-    fn loc_insert(&mut self, loc: &Loc, value: T) {
+    fn loc_insert(&mut self, loc: &Loc, value: Py<PyAny>) {
         self[loc.pos].insert(loc.idx, value);
     }
     fn loc_remove(&mut self, loc: &Loc) {
         self[loc.pos].remove(loc.idx);
     }
-    fn loc_push(&mut self, loc: &Loc, value: T) {
+    fn loc_push(&mut self, loc: &Loc, value: Py<PyAny>) {
         self[loc.pos].push(value);
     }
-    fn loc_last(&self, loc: &Loc) -> &T {
+    fn loc_last(&self, loc: &Loc) -> &Py<PyAny> {
         self[loc.pos].last().unwrap()
     }
     fn loc_len(&self, loc: &Loc) -> usize {
         self[loc.pos].len()
     }
 }
-#[derive(From)]
-pub enum ListAdd<'py, T> {
-    Identity,
-    Sorted(RwLockReadGuard<'py, T>),
-    Vec(VecPy),
-    Iterator(Bound<'py, PyIterator>),
-}
+
 pub trait ListsDataMethods:
     Deref<Target = InnerData> + DerefMut + PyRepr + Sized + Send + Sync
 {
@@ -66,7 +59,7 @@ pub trait ListsDataMethods:
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
     ) -> PyResult<Bounds>;
-    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
     fn clear(&mut self, py: Python<'_>);

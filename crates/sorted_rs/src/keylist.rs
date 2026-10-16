@@ -1,10 +1,11 @@
 use crate::{
-    Bounds, KeysListsData, ListAdd,
+    Bounds, KeysListsData,
     bisect::Bisect,
     bounds::Loc,
     errors,
     inner::InnerData,
-    list_update, ops,
+    list_update::ListAdd,
+    ops,
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
@@ -38,7 +39,7 @@ impl ListsDataMethods for KeysListsData {
         let maximum = maximum.map(|value| key.call1((value,))).transpose()?;
         Bounds::from_irange(&self.1, &self.maxes, minimum, maximum, inclusive)
     }
-    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let key = self.extract_key(&value)?;
         let py = value.py();
         match ops::Maxes::right(&self.maxes, &key) {
@@ -271,12 +272,11 @@ impl ListsDataMethods for KeysListsData {
             })
         })
     }
-    fn extend(&mut self, py: Python<'_>, data: ListAdd<'_, Self>) -> PyResult<()> {
+    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);
-        list_update::dispatch(
+        values.merge_with(
             self,
             py,
-            data,
             |a, b| {
                 key_fn
                     .call1((a,))

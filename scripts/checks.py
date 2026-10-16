@@ -31,6 +31,11 @@ def run(*, fix: bool, slow: bool) -> int:
     """
     commands = _all_commands(slow=slow)
     start = _start_index(commands.len())
+    if slow and fix:
+        CONSOLE.print(
+            "WARNING: clippy currently crashes on Windows when running with --fix.",
+            style="bold red",
+        )
     return (
         commands
         .iter()

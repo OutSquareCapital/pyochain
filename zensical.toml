@@ -88,6 +88,7 @@ nav = [
     ] },
     { "Overview" = "api-reference.md" },
   ] },
+  { "sortedcontainers migration" = "sortedcontainers-migration.md" },
   { "Core Types Overview" = "overview.md" },
   { "Home" = "index.md" },
 ]

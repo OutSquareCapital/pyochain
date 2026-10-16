@@ -167,12 +167,12 @@ def test_irange(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 
 @CLS_PARAMS
 @SIZE_PARAMS
-def test_update_large(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+def test_update_large[L: List](
+    benchmark: BenchFixture, cls: type[L], size: int
+) -> None:
     data = _shuffled(size)
-    if cls is PySortedList:
-        benchmark(lambda: cls([1]).update(data))
-    else:
-        benchmark(lambda: cls([1]).extend(data))
+    method = _get_update_method(cls)
+    benchmark(lambda: method(cls([1]), data))
 
 
 @CLS_PARAMS
@@ -183,20 +183,19 @@ def test_update_small[L: List](
     k = size // 8
     values = _shuffled(k)
     config = BenchConfig(benchmark, cls, size)
-    if cls is PySortedList:
-        config.run_pedantic(lambda sl: sl.update(values))  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownLambdaType]
-    else:
-        config.run_pedantic(lambda sl: sl.extend(values))
+    method = _get_update_method(cls)
+    config.run_pedantic(lambda sl: method(sl, values))
 
 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_add(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     values = _values_sample(size)
+    method = _get_add_method(cls)
 
     def f(sl: List) -> None:
         for val in values:
-            sl.add(val)
+            method(sl, val)
 
     BenchConfig(benchmark, cls, size).run_pedantic(f)
 
@@ -252,9 +251,11 @@ def test_delslice(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_priority_queue(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    add_method = _get_add_method(cls)
+
     def op(sl: List, value: int, pos: int) -> None:
         if pos < 40:
-            sl.add(value)
+            add_method(sl, value)
         elif pos < 80:
             _ = sl.pop()
         elif pos < 90:
@@ -270,11 +271,13 @@ def test_priority_queue(benchmark: BenchFixture, cls: type[List], size: int) -> 
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_multiset(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    add_method = _get_add_method(cls)
+
     def op(sl: List, value: int, pos: int) -> None:
         if pos < 75:
             assert value in sl
         elif pos < 85:
-            sl.add(value)
+            add_method(sl, value)
         elif pos < 95:
             sl.remove(value)
         elif value < len(sl):
@@ -286,6 +289,8 @@ def test_multiset(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_ranking(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    add_method = _get_add_method(cls)
+
     def op(sl: List, value: int, pos: int) -> None:
         if pos < 40:
             if value < len(sl):
@@ -293,7 +298,7 @@ def test_ranking(benchmark: BenchFixture, cls: type[List], size: int) -> None:
         elif pos < 80:
             assert sl.index(value) >= 0
         elif pos < 90:
-            sl.add(value)
+            add_method(sl, value)
         else:
             sl.remove(value)
 
@@ -303,11 +308,13 @@ def test_ranking(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @CLS_PARAMS
 @SIZE_PARAMS
 def test_neighbor(benchmark: BenchFixture, cls: type[List], size: int) -> None:
+    add_method = _get_add_method(cls)
+
     def op(sl: List, value: int, pos: int) -> None:
         if pos < 75:
             _ = sl.bisect_right(value)
         elif pos < 85:
-            sl.add(value)
+            add_method(sl, value)
         elif pos < 95:
             sl.remove(value)
         else:
@@ -320,6 +327,7 @@ def test_neighbor(benchmark: BenchFixture, cls: type[List], size: int) -> None:
 @SIZE_PARAMS
 def test_intervals(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     config = BenchConfig(benchmark, cls, size)
+    add_method = _get_add_method(cls)
 
     def op(sl: List, value: int, pos: int) -> None:
         if pos < 30:
@@ -335,7 +343,7 @@ def test_intervals(benchmark: BenchFixture, cls: type[List], size: int) -> None:
                 other = RANDOM.randrange(value, min(value + 100, len(sl)))
                 _ = sl[value:other]
         elif pos < 90:
-            sl.add(value)
+            add_method(sl, value)
         else:
             sl.discard(value)
 
@@ -393,3 +401,17 @@ def _calls_nb(size: int) -> int:
 @cache
 def _shuffled(size: int) -> Vec[int]:
     return Vec.wrap(RANDOM.sample(range(size), size))
+
+
+def _get_update_method[L: List](cls: type[L]) -> Callable[[L, Iterable[int]], None]:
+    if cls is PySortedList:
+        return PySortedList[int].update  # pyright: ignore[reportReturnType]
+    else:
+        return SortedList[int].extend  # pyright: ignore[reportReturnType]
+
+
+def _get_add_method[L: List](cls: type[L]) -> Callable[[L, int], None]:
+    if cls is PySortedList:
+        return PySortedList[int].add  # pyright: ignore[reportReturnType]
+    else:
+        return SortedList[int].append  # pyright: ignore[reportReturnType]

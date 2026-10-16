@@ -2,7 +2,7 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 
 from collections.abc import Iterable
-from typing import Self, override
+from typing import Self, final, override
 
 from _typeshed import SupportsRichComparison
 
@@ -11,6 +11,7 @@ from pyochain.abc import PyoIterator
 from ._core import KeyFunc
 from ._list import BaseSortedList
 
+@final
 class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
     """a `MutableSequence` that maintains its values in sorted order based on a key function.
 
