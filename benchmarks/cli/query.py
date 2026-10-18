@@ -26,6 +26,7 @@ class Cols(PlEnum):
     Commit = auto()
     Run = auto()
     Param = auto()
+    Min = auto()
 
 
 def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
@@ -48,7 +49,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
             param.first().cast(pl.String).alias(Cols.Size),
             # Additional params besides size and library
             param.slice(1, param.len() - 2).list.join("-").alias(Cols.Param),
-            "min",
+            Cols.Min,
             param.last().cast(Lib).alias(Cols.Lib),
             Cols.Commit,
         )
@@ -94,7 +95,7 @@ def _selected_cols() -> Sequence[pl.Expr]:
         benchmark("fullname"),
         benchmark("name"),
         benchmark(Cols.Param),
-        stat("min"),
+        stat(Cols.Min),
         stat("max"),
         stat("median"),
         stat("stddev"),
