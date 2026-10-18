@@ -27,6 +27,7 @@ class Cols(PlEnum):
     Run = auto()
     Param = auto()
     Min = auto()
+    Name = auto()
 
 
 def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
@@ -37,8 +38,8 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         .map(lambda path: pl.read_json(path).lazy().select(cols))
         .collect(pl.concat)
         .filter(
-            pl
-            .col("name")
+            Cols.Name
+            .pl()
             .str.split("[")
             .list.first()
             .str.strip_prefix(PREFIX)
@@ -48,7 +49,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
             Cols.TimeStamp,
             param.first().cast(pl.String).alias(Cols.Size),
             # Additional params besides size and library
-            param.slice(1, param.len() - 2).list.join("-").alias(Cols.Param),
+            param.slice(1, param.len() - 2).alias(Cols.Param),
             Cols.Min,
             param.last().cast(Lib).alias(Cols.Lib),
             Cols.Commit,
@@ -93,7 +94,7 @@ def _selected_cols() -> Sequence[pl.Expr]:
     stat = benchmark("stats").struct.field
     return (
         benchmark("fullname"),
-        benchmark("name"),
+        benchmark(Cols.Name),
         benchmark(Cols.Param),
         stat(Cols.Min),
         stat("max"),
