@@ -4,24 +4,27 @@ import platform
 import sys
 from enum import StrEnum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Final, NewType
+from types import ModuleType
+from typing import TYPE_CHECKING, Final, NewType, TypeIs
 
 import typer as tp
 from rich.console import Console
 from rich.text import Text
 
-from pyochain import Err, Iter, Ok, Result, Vec
+from pyochain import Dict, Err, Iter, Ok, Result, Vec
 
 from .. import test_sorted
 
 if TYPE_CHECKING:
     import polars as pl
 
+    from pyochain.abc import PyoIterator
+
 CONSOLE = Console()
 PLATFORM_DIR: Final[str] = (
     f"{platform.system()}-CPython-{sys.version_info.major}.{sys.version_info.minor}-{platform.architecture()[0]}"
 )
-PREFIX = "test_"
+TEST = "test_"
 """Test function prefix used to identify benchmark tests."""
 # NOTE: annoying repetition but wathever
 RUN_PATH: Final[Path] = Path("benchmarks", "test_sorted.py")
@@ -67,8 +70,25 @@ def check_method(method: str) -> Result[Method, tp.BadParameter]:
 
 def _get_test_funcs() -> Vec[str]:
     return (
-        Iter(test_sorted.test_list.__dict__)
-        .filter(lambda name: name.startswith(PREFIX))
-        .map(lambda name: name.removeprefix(PREFIX))
+        Dict
+        .from_object(test_sorted)
+        .items()
+        .iter()
+        .filter_star(lambda _, v: _is_module(v))
+        .map_star(_add_module)
+        .flatten()
         .sort()
     )
+
+
+def _add_module(mod_name: str, module: ModuleType) -> PyoIterator[str]:
+    name = f"{mod_name.removeprefix(TEST)}::"
+    return (
+        Iter(module.__dict__)
+        .filter(lambda fn: fn.startswith(TEST))
+        .map(lambda fn: f"{name}{fn.removeprefix(TEST)}")
+    )
+
+
+def _is_module(v: object) -> TypeIs[ModuleType]:
+    return isinstance(v, ModuleType)

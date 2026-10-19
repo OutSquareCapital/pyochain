@@ -7,7 +7,7 @@ import polars as pl
 
 from pyochain import Iter
 
-from ._common import GET_PATH, PREFIX, Lib, PlEnum
+from ._common import GET_PATH, TEST, Lib, PlEnum
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -38,12 +38,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         .map(lambda path: pl.read_json(path).lazy().select(cols))
         .collect(pl.concat)
         .filter(
-            Cols.Name
-            .pl()
-            .str.split("[")
-            .list.first()
-            .str.strip_prefix(PREFIX)
-            .eq(method)
+            Cols.Name.pl().str.split("[").list.first().str.strip_prefix(TEST).eq(method)
         )
         .select(
             Cols.TimeStamp,
