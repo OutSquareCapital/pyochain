@@ -4,16 +4,18 @@ from typing import TYPE_CHECKING
 
 from pyochain import Iter
 
-from .._utils import SIZE_PARAMS, BenchFixture
+from .._utils import BenchFixture, consume
 from . import methods
-from ._utils import CLS_PARAMS, RANDOM, BenchConfig
+from ._utils import CLS_PARAMS, RANDOM, SC_SIZES, SeqConfig
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from ._utils import List
 
 
 @CLS_PARAMS
-@SIZE_PARAMS
+@SC_SIZES
 def test_priority_queue(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     add_method = methods.add(cls)
 
@@ -27,13 +29,13 @@ def test_priority_queue(benchmark: BenchFixture, cls: type[List], size: int) -> 
         elif pos < 99:
             _ = value in sl
         else:
-            _ = Iter(sl).take(102).last()
+            _iterate(sl)
 
-    BenchConfig(benchmark, cls, size).run_workload(op)
+    SeqConfig(benchmark, cls, size).run_workload(op)
 
 
 @CLS_PARAMS
-@SIZE_PARAMS
+@SC_SIZES
 def test_multiset(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     add_method = methods.add(cls)
 
@@ -47,11 +49,11 @@ def test_multiset(benchmark: BenchFixture, cls: type[List], size: int) -> None:
         elif value < len(sl):
             _ = sl[value]
 
-    BenchConfig(benchmark, cls, size).run_workload(op)
+    SeqConfig(benchmark, cls, size).run_workload(op)
 
 
 @CLS_PARAMS
-@SIZE_PARAMS
+@SC_SIZES
 def test_ranking(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     add_method = methods.add(cls)
 
@@ -66,11 +68,11 @@ def test_ranking(benchmark: BenchFixture, cls: type[List], size: int) -> None:
         else:
             sl.remove(value)
 
-    BenchConfig(benchmark, cls, size).run_workload(op)
+    SeqConfig(benchmark, cls, size).run_workload(op)
 
 
 @CLS_PARAMS
-@SIZE_PARAMS
+@SC_SIZES
 def test_neighbor(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     add_method = methods.add(cls)
 
@@ -82,15 +84,15 @@ def test_neighbor(benchmark: BenchFixture, cls: type[List], size: int) -> None:
         elif pos < 95:
             sl.remove(value)
         else:
-            _ = Iter(sl).take(102).last()
+            _iterate(sl)
 
-    BenchConfig(benchmark, cls, size).run_workload(op)
+    SeqConfig(benchmark, cls, size).run_workload(op)
 
 
 @CLS_PARAMS
-@SIZE_PARAMS
+@SC_SIZES
 def test_intervals(benchmark: BenchFixture, cls: type[List], size: int) -> None:
-    config = BenchConfig(benchmark, cls, size)
+    config = SeqConfig(benchmark, cls, size)
     add_method = methods.add(cls)
 
     def op(sl: List, value: int, pos: int) -> None:
@@ -103,8 +105,10 @@ def test_intervals(benchmark: BenchFixture, cls: type[List], size: int) -> None:
             if value < len(sl):
                 del sl[value]
         elif pos < 80:
-            if value < len(sl):
-                other = RANDOM.randrange(value, min(value + 100, len(sl)))
+            list_length = len(sl)
+            if value < list_length:
+                stop = min(value + 100, list_length)
+                other = RANDOM.randrange(value, stop)
                 _ = sl[value:other]
         elif pos < 90:
             add_method(sl, value)
@@ -112,3 +116,7 @@ def test_intervals(benchmark: BenchFixture, cls: type[List], size: int) -> None:
             sl.discard(value)
 
     config.run_workload(op)
+
+
+def _iterate(sl: Iterable[object]) -> None:
+    Iter(sl).take(102).pipe(consume)

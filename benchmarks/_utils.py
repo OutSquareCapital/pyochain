@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from enum import IntEnum, StrEnum, auto
 from typing import Final, Protocol
 
@@ -55,3 +55,8 @@ def identity[T](x: T) -> T:
 
 def identity_vargs[T](*args: T) -> tuple[T, ...]:
     return args
+
+
+def consume(values: Iterable[object]) -> None:
+    for _ in values:
+        pass
