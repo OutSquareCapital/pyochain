@@ -23,10 +23,12 @@ from .._utils import SIZES
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from _pytest.mark import MarkDecorator, ParameterSet
+
     from .._utils import BenchFixture
 SEED: Final[int] = 0
 RANDOM: Final[Random] = Random(SEED)
-SC_SIZES: Final[pytest.MarkDecorator] = pytest.mark.parametrize("size", SIZES[1:])
+SC_SIZES: Final[MarkDecorator] = pytest.mark.parametrize("size", SIZES[1:])
 """`sortedcontainers` original benchs don't have a size of 10, so we skip it when the scaling (e.g `.step_by(10)`) cause issues."""
 type List = SortedList[int] | PySortedList[int]
 type Set = SortedSet[int] | PySortedSet[int]
@@ -40,7 +42,7 @@ type KeyFn = Callable[[int], int]
 type SetupOut[L] = tuple[tuple[L], dict[str, object]]
 
 
-def _make_params(pyochain: type, sortedcontainers: type) -> pytest.MarkDecorator:
+def _make_params(pyochain: type, sortedcontainers: type) -> MarkDecorator:
     args = (
         pytest.param(sortedcontainers, id="sortedcontainers"),
         pytest.param(pyochain, id="pyochain"),
@@ -48,7 +50,7 @@ def _make_params(pyochain: type, sortedcontainers: type) -> pytest.MarkDecorator
     return pytest.mark.parametrize("cls", args)
 
 
-SEQ_PARAMS: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
+SEQ_PARAMS: Final[MarkDecorator] = pytest.mark.parametrize(
     "cls",
     (
         pytest.param(PySortedList, id="sortedcontainers-list"),
@@ -57,9 +59,9 @@ SEQ_PARAMS: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
         pytest.param(SortedSet, id="pyochain-set"),
     ),
 )
-CLS_PARAMS: Final[pytest.MarkDecorator] = _make_params(PySortedList, SortedList)
-CLS_DICT_PARAMS: Final[pytest.MarkDecorator] = _make_params(PySortedDict, SortedDict)
-CLS_SET_PARAMS: Final[pytest.MarkDecorator] = _make_params(PySortedSet, SortedSet)
+CLS_PARAMS: Final[MarkDecorator] = _make_params(PySortedList, SortedList)
+CLS_DICT_PARAMS: Final[MarkDecorator] = _make_params(PySortedDict, SortedDict)
+CLS_SET_PARAMS: Final[MarkDecorator] = _make_params(PySortedSet, SortedSet)
 
 
 @dataclass(slots=True)
@@ -157,3 +159,6 @@ class Stop(Enum):
                 return size * 5 // 10
             case self.Large:
                 return size * 9 // 10
+
+    def as_param(self) -> ParameterSet:
+        return pytest.param(self, id=self.name)

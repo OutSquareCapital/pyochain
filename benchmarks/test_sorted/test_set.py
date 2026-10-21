@@ -17,10 +17,6 @@ if TYPE_CHECKING:
 
     from .._utils import BenchFixture
 
-STOP_PARAMS = pytest.mark.parametrize(
-    "stop",
-    Iter(Stop).map(lambda op: pytest.param(op, id=op.name)).collect(tuple),
-)
 
 OPS: Final[Sequence[ParameterSet]] = SetOp.generate(
     SetOp("union", lambda lst, r: lst.union(r), False),
@@ -59,7 +55,7 @@ def test_add(benchmark: BenchFixture, cls: type[Set], size: int) -> None:
 
 
 @pytest.mark.parametrize("op", OPS)
-@STOP_PARAMS
+@pytest.mark.parametrize("stop", Iter(Stop).map(Stop.as_param).collect(tuple))
 @CLS_SET_PARAMS
 @SC_SIZES
 def test_op(
