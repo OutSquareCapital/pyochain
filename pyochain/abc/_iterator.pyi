@@ -809,7 +809,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert chained == (1, 2, 3, 4, 5)
             ```
         """
-
     def collect[R](self, collector: Callable[[Iterator[T]], R]) -> R:
         """Consume the `Iterator` into the *collector* type or function.
 

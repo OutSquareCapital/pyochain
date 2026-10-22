@@ -1,71 +1,90 @@
 from __future__ import annotations
 
-import operator
-from typing import TYPE_CHECKING, Final
+from enum import Enum, auto
+from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Iter, Seq
+from pyochain import Iter
+from pyochain.pyochain import Seq
 
-from ._utils import CLS_SET_PARAMS, SC_SIZES, SeqConfig, Set, Stop, shuffled
-from .methods import SetOp
+from ._utils import SC_SIZES, SET_PARAMS, Set, from_range, run_pedantic
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable
 
-    from _pytest.mark import ParameterSet
+    from _pytest.mark import MarkDecorator
 
     from .._utils import BenchFixture
 
 
-OPS: Final[Sequence[ParameterSet]] = SetOp.generate(
-    SetOp("union", lambda lst, r: lst.union(r), False),
-    SetOp("difference", lambda lst, r: lst.difference(r)),
-    SetOp("intersection", lambda lst, r: lst.intersection(r)),
-    SetOp("symmetric_difference", lambda lst, r: lst.symmetric_difference(r)),
-    SetOp("update", lambda lst, r: lst.update(r), False, True),
-    SetOp("difference_update", lambda lst, r: lst.difference_update(r), mut=True),
-    SetOp("intersection_update", lambda lst, r: lst.intersection_update(r), mut=True),
-    SetOp(
-        "symmetric_difference_update",
-        lambda lst, r: lst.symmetric_difference_update(r),
-        mut=True,
-    ),
-)
+class _ParamEnum(Enum):
+    @classmethod
+    def as_params(cls) -> MarkDecorator:
+        return (
+            Iter(cls)
+            .map(lambda slf: pytest.param(slf, id=slf.name))
+            .collect(Seq)
+            .pipe(lambda params: pytest.mark.parametrize(cls.__name__.lower(), params))
+        )
 
 
-@CLS_SET_PARAMS
+class Op(_ParamEnum):
+    Union = auto()
+    Difference = auto()
+    Intersection = auto()
+    SymmetricDifference = auto()
+
+    def get(self, size: int, stop: Stop, update: bool) -> Callable[[Set], object]:  # ruff: ignore[too-many-return-statements]
+        start = size if self is self.Union else size // 2
+        r = range(start, start + stop.get(size))
+        match self, update:
+            case self.Union, False:
+                return lambda lst: lst.union(r)
+            case self.Difference, False:
+                return lambda lst: lst.difference(r)
+            case self.Intersection, False:
+                return lambda lst: lst.intersection(r)
+            case self.SymmetricDifference, False:
+                return lambda lst: lst.symmetric_difference(r)
+            case self.Union, True:
+                return lambda lst: lst.update(r)
+            case self.Difference, True:
+                return lambda lst: lst.difference_update(r)
+            case self.Intersection, True:
+                return lambda lst: lst.intersection_update(r)
+            case self.SymmetricDifference, True:
+                return lambda lst: lst.symmetric_difference_update(r)
+
+
+class Stop(_ParamEnum):
+    Tiny = auto()
+    Small = auto()
+    Medium = auto()
+    Large = auto()
+
+    def get(self, size: int) -> int:
+        match self:
+            case self.Tiny:
+                return min(10, size)
+            case self.Small:
+                return size // 10
+            case self.Medium:
+                return size * 5 // 10
+            case self.Large:
+                return size * 9 // 10
+
+
+@Op.as_params()
+@Stop.as_params()
+@pytest.mark.parametrize("update", (True, False))
+@SET_PARAMS
 @SC_SIZES
-def test_contains(benchmark: BenchFixture, cls: type[Set], size: int) -> None:
-    config = SeqConfig(benchmark, cls, size)
-    values = shuffled(config.size, 100)
-    lst = config.new_from_size()
-    config.bench(lambda: values.iter().for_each(lst.__contains__))
-
-
-@CLS_SET_PARAMS
-@SC_SIZES
-def test_add(benchmark: BenchFixture, cls: type[Set], size: int) -> None:
-    values = shuffled(size, 100).iter().map(operator.neg).collect(Seq)
-
-    def f(lst: Set) -> None:
-        values.iter().for_each(lst.add)
-
-    SeqConfig(benchmark, cls, size).run_pedantic(f)
-
-
-@pytest.mark.parametrize("op", OPS)
-@pytest.mark.parametrize("stop", Iter(Stop).map(Stop.as_param).collect(tuple))
-@CLS_SET_PARAMS
-@SC_SIZES
-def test_op(
-    benchmark: BenchFixture, cls: type[Set], size: int, stop: Stop, op: SetOp
+def test_op(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
+    benchmark: BenchFixture, cls: type[Set], size: int, stop: Stop, op: Op, update: bool
 ) -> None:
-    config = SeqConfig(benchmark, cls, size)
-    start = config.size // 2 if op.halved else config.size
-    r = range(start, start + stop.fn(config.size))
-    if op.mut:
-        config.run_pedantic(lambda lst: op.fn(lst, r))
+    f = op.get(size, stop, update)
+    if update:
+        run_pedantic(benchmark, cls, size, f)
     else:
-        lst = config.new_from_size()
-        _ = config.bench(lambda: op.fn(lst, r))
+        _ = benchmark(f, from_range(cls, size))

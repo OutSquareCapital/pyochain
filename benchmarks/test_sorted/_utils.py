@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 import math
-from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from dataclasses import dataclass
-from enum import Enum, auto
 from functools import cache
 from random import Random
-from typing import TYPE_CHECKING, Final, override
+from typing import TYPE_CHECKING, Final, TypeIs
 
 import pytest
 import sortedcontainers as sc
 
-from pyochain import Range, Seq, Vec
+from pyochain import Iter, Range, Seq, Vec
 from pyochain.collections import SortedDict, SortedKeyList, SortedList, SortedSet
 
 from .._utils import SIZES
@@ -37,85 +34,75 @@ type InitFn[E, L] = Callable[[Iterable[E]], L]
 type InitDict[D] = InitFn[tuple[int, int], D]
 type KeyFn = Callable[[int], int]
 type SetupOut[L] = tuple[tuple[L], dict[str, object]]
-type AddFn = Callable[[SortedCollection, int], None]
+type AddFn = Callable[[List, int], None]
 
 
-def _make_params(pyochain: type, sortedcontainers: type) -> MarkDecorator:
-    args = (
-        pytest.param(sortedcontainers, id="sortedcontainers"),
-        pytest.param(pyochain, id="pyochain"),
-    )
-    return pytest.mark.parametrize("cls", args)
+def make_params(*classes: type) -> Seq[ParameterSet]:
+    def _to_param(cls: type) -> ParameterSet:
+        return pytest.param(cls, id=f"{cls.__module__}::{cls.__name__}")
+
+    return Iter(classes).map(_to_param).collect(Seq)
 
 
-SEQ_PARAMS: Final[MarkDecorator] = pytest.mark.parametrize(
-    "cls",
-    (
-        pytest.param(sc.SortedList, id="sortedcontainers-list"),
-        pytest.param(SortedList, id="pyochain-list"),
-        pytest.param(sc.SortedSet, id="sortedcontainers-set"),
-        pytest.param(SortedSet, id="pyochain-set"),
-    ),
-)
-CLS_PARAMS: Final[MarkDecorator] = _make_params(SortedList, sc.SortedList)
-CLS_DICT_PARAMS: Final[MarkDecorator] = _make_params(SortedDict, sc.SortedDict)
-CLS_SET_PARAMS: Final[MarkDecorator] = _make_params(SortedSet, sc.SortedSet)
+_LISTS = make_params(SortedList, sc.SortedList)
+_SETS = make_params(SortedSet, sc.SortedSet)
+_SEQS = _LISTS + _SETS
+_DICTS = make_params(SortedDict, sc.SortedDict)
+LST_PARAMS: Final[MarkDecorator] = pytest.mark.parametrize("cls", _LISTS)
+SET_PARAMS: Final[MarkDecorator] = pytest.mark.parametrize("cls", _SETS)
+DICT_PARAMS: Final[MarkDecorator] = pytest.mark.parametrize("cls", _DICTS)
+SEQ_PARAMS: Final[MarkDecorator] = pytest.mark.parametrize("cls", _SEQS)
+COLLECTION_PARAMS: Final[MarkDecorator] = pytest.mark.parametrize("cls", _SEQS + _DICTS)
 
 
-@dataclass(slots=True)
-class _BaseConfig[C](ABC):
-    bench: BenchFixture
-    cls: type[C]
-    size: int
+def run_pedantic[C: SortedCollection](
+    bench: BenchFixture,
+    cls: type[C],
+    size: int,
+    f: Callable[[C], object],
+    *,
+    filled: bool = True,
+) -> None:
+    min_rounds = 20
+    rounds = max(min_rounds, int(50 * math.sqrt(SIZES.last() // max(size, 4_000))))
+    warmup_rounds = rounds // min_rounds
+    values = Range(_calls_nb(SIZES.last()) // _calls_nb(size))
 
-    @abstractmethod
-    def new_from_size(self) -> C: ...
-
-    def run_pedantic(self, f: Callable[[C], object], *, filled: bool = True) -> None:
-        min_rounds = 20
-        rounds = max(
-            min_rounds, int(50 * math.sqrt(SIZES.last() // max(self.size, 4_000)))
+    def setup() -> SetupOut[Seq[C]]:
+        data = (
+            values
+            .iter()
+            .map(lambda _: from_range(cls, size, filled=filled))
+            .collect(Seq)
         )
-        warmup_rounds = rounds // min_rounds
-        length = calls_nb(SIZES.last()) // calls_nb(self.size)
+        return (data,), {}
 
-        def setup() -> SetupOut[Seq[C]]:
-            f = self._make(filled)
-            data = Range(length).iter().map(lambda _: f()).collect(Seq[C])
-            return (data,), {}
+    def target(data: Seq[C]) -> None:
+        data.iter().for_each(f)
 
-        def target(data: Seq[C]) -> None:
-            data.iter().for_each(f)
+    bench.pedantic(target, setup=setup, rounds=rounds, warmup_rounds=warmup_rounds)
 
-        self.bench.pedantic(
-            target, setup=setup, rounds=rounds, warmup_rounds=warmup_rounds
-        )
 
-    def _make(self, filled: bool) -> Callable[[], C]:
-        if filled:
-            return self.new_from_size
+def _calls_nb(size: int) -> int:
+    return min(size // 4, 1_000)
+
+
+def from_range[C: SortedCollection](
+    cls: type[C], size: int, *, filled: bool = True
+) -> C:
+    if not filled:
+        return cls()
+    else:
+        values = Range(size)
+        if is_type_of(cls, sc.SortedDict) or is_type_of(cls, SortedDict):
+            return cls(values.iter().map(_item_to_pair))  # pyright: ignore[reportReturnType]
         else:
-            return self.cls
+            return cls(values)  # pyright: ignore[reportReturnType]
 
 
-@dataclass(slots=True)
-class SeqConfig[S: SortedSequence](_BaseConfig[S]):
-    """Config for `Sequence` collections (List, Set)."""
-
-    @override
-    def new_from_size(self) -> S:
-        return self.cls(Range(self.size))
-
-
-@dataclass(slots=True)
-class DictConfig[D: Dict](_BaseConfig[D]):
-    @override
-    def new_from_size(self) -> D:
-        return self.cls(Range(self.size).iter().map(item_to_pair))
-
-
-def item_to_pair(item: int) -> tuple[int, int]:
-    return item, -item
+@cache
+def shuffled_pairs(size: int, step: int = 1) -> Vec[tuple[int, int]]:
+    return shuffled(size, step).iter().map(_item_to_pair).collect(Vec)
 
 
 @cache
@@ -123,26 +110,16 @@ def shuffled(size: int, step: int = 1) -> Vec[int]:
     return Vec.wrap(RANDOM.sample(range(size), size // step))
 
 
-def calls_nb(size: int) -> int:
-    return min(size // 4, 1_000)
+def _item_to_pair(item: int) -> tuple[int, int]:
+    return item, -item
 
 
-class Stop(Enum):
-    Tiny = auto()
-    Small = auto()
-    Medium = auto()
-    Large = auto()
+def add_fn[S: SortedSequence](cls: type[S]) -> Callable[[S, int], None]:
+    if is_type_of(cls, SortedList):
+        return cls.append  # pyright: ignore[reportReturnType]
+    else:
+        return cls.add  # pyright: ignore[reportReturnType]
 
-    def fn(self, size: int) -> int:
-        match self:
-            case self.Tiny:
-                return min(10, size)
-            case self.Small:
-                return size // 10
-            case self.Medium:
-                return size * 5 // 10
-            case self.Large:
-                return size * 9 // 10
 
-    def as_param(self) -> ParameterSet:
-        return pytest.param(self, id=self.name)
+def is_type_of[T](obj: type, cls: type[T]) -> TypeIs[type[T]]:  # ruff: ignore[reimplemented-operator]
+    return obj is cls
