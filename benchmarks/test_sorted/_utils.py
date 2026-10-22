@@ -72,6 +72,7 @@ class _BaseConfig[C](ABC):
 
     @abstractmethod
     def new_from_size(self) -> C: ...
+
     def run_pedantic(self, f: Callable[[C], object], *, filled: bool = True) -> None:
         min_rounds = 20
         rounds = max(
@@ -102,21 +103,6 @@ class _BaseConfig[C](ABC):
 @dataclass(slots=True)
 class SeqConfig[S: SortedSequence](_BaseConfig[S]):
     """Config for `Sequence` collections (List, Set)."""
-
-    def run_workload(self, op: Callable[[S, int, int], object]) -> None:
-        values = (
-            shuffled(self.size, 10)
-            .tap(lambda _: RANDOM.seed(SEED))
-            .iter()
-            .map(lambda val: (val, RANDOM.randrange(start=100)))
-            .collect(Seq)
-        )
-
-        def f(sl: S) -> None:
-            for value, pos in values:
-                _ = op(sl, value, pos)
-
-        self.run_pedantic(f, filled=True)
 
     @override
     def new_from_size(self) -> S:
