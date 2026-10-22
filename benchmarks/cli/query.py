@@ -43,10 +43,10 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         .select(
             Cols.TimeStamp,
             param.first().cast(pl.String).alias(Cols.Size),
+            param.get(1).cast(Lib).alias(Cols.Lib),
             # Additional params besides size and library
-            param.slice(1, param.len() - 2).alias(Cols.Param),
+            param.slice(2, param.len() - 2).alias(Cols.Param),
             Cols.Min,
-            param.last().cast(Lib).alias(Cols.Lib),
             Cols.Commit,
         )
         .pivot(

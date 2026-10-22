@@ -6,8 +6,6 @@ from pyochain import Err, Ok, Result
 
 from ._common import CONSOLE, RUN_PATH, SAVE_PATH, Lib, Method
 
-UV_RUN = ("uv", "run")
-
 
 def run(method: Method, repeat: int, *, calibrate: bool) -> Result[None, ValueError]:
     match repeat:
