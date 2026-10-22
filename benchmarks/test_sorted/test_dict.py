@@ -10,11 +10,11 @@ if TYPE_CHECKING:
     from .._utils import BenchFixture
 
 
-@DICT_PARAMS
-@SC_SIZES
 @pytest.mark.parametrize(
     "filled", (pytest.param(True, id="filled"), pytest.param(False, id="empty"))
 )
+@DICT_PARAMS
+@SC_SIZES
 def test_setitem(
     benchmark: BenchFixture, cls: type[Dict], size: int, filled: bool
 ) -> None:

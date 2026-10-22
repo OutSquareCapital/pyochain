@@ -33,9 +33,9 @@ def test_update(benchmark: BenchFixture, cls: type[List], size: int, step: int) 
         run_pedantic(benchmark, cls, size, lambda lst: lst.update(values))
 
 
+@pytest.mark.parametrize("op", WORKLOADS)
 @LST_PARAMS
 @SC_SIZES
-@pytest.mark.parametrize("op", WORKLOADS)
 def test_workload(
     benchmark: BenchFixture, cls: type[List], size: int, op: WorkLoad
 ) -> None:
