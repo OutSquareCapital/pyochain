@@ -27,7 +27,7 @@ PLATFORM_DIR: Final[str] = (
 TEST = "test_"
 """Test function prefix used to identify benchmark tests."""
 # NOTE: annoying repetition but wathever
-RUN_PATH: Final[Path] = Path("benchmarks", "test_sorted.py")
+RUN_PATH: Final[Path] = Path("benchmarks", "test_sorted")
 SAVE_PATH: Final[Path] = Path(".benchmarks", "test_sorted")
 """Path to the benchmark results directory."""
 GET_PATH: Final[Path] = SAVE_PATH.joinpath(PLATFORM_DIR)
