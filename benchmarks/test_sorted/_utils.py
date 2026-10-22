@@ -37,6 +37,7 @@ type InitFn[E, L] = Callable[[Iterable[E]], L]
 type InitDict[D] = InitFn[tuple[int, int], D]
 type KeyFn = Callable[[int], int]
 type SetupOut[L] = tuple[tuple[L], dict[str, object]]
+type AddFn = Callable[[SortedCollection, int], None]
 
 
 def _make_params(pyochain: type, sortedcontainers: type) -> MarkDecorator:

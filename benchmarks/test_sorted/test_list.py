@@ -4,11 +4,12 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
-from benchmarks._utils import SIZE_PARAMS, BenchFixture
 from pyochain import Range, Seq
 
+from .._utils import SIZE_PARAMS, BenchFixture
 from . import methods
 from ._utils import CLS_PARAMS, RANDOM, SC_SIZES, SEED, List, SeqConfig, shuffled
+from ._workloads import WORKLOADS, WorkLoad
 from .methods import OpFactory
 
 if TYPE_CHECKING:
@@ -74,3 +75,25 @@ def test_op(
     values = shuffled(config.size, 100)
     f = op.fn(config.new_from_size())
     config.bench(lambda: values.iter().for_each(f))
+
+
+@CLS_PARAMS
+@SC_SIZES
+@pytest.mark.parametrize("op", WORKLOADS)
+def test_workload(
+    benchmark: BenchFixture, cls: type[List], size: int, op: WorkLoad
+) -> None:
+    add_method = methods.add(cls)
+    values = (
+        shuffled(size, 10)
+        .tap(lambda _: RANDOM.seed(SEED))
+        .iter()
+        .map(lambda val: (val, RANDOM.randrange(start=100)))
+        .collect(Seq)
+    )
+
+    def f(sl: List) -> None:
+        for value, pos in values:
+            _ = op(sl, value, pos, add_method)
+
+    SeqConfig(benchmark, cls, size).run_pedantic(f, filled=True)

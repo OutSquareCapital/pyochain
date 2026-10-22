@@ -5,6 +5,6 @@ Reference:
 https://grantjenks.com/docs/sortedcontainers/performance.html
 """
 
-from . import test_dict, test_list, test_set, test_workloads
+from . import test_dict, test_list, test_sequences, test_set
 
-__all__ = ["test_dict", "test_list", "test_set", "test_workloads"]
+__all__ = ["test_dict", "test_list", "test_sequences", "test_set"]
