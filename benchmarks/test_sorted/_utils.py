@@ -10,10 +10,7 @@ from random import Random
 from typing import TYPE_CHECKING, Final, override
 
 import pytest
-from sortedcontainers import SortedDict as PySortedDict
-from sortedcontainers import SortedList as PySortedList
-from sortedcontainers import SortedListWithKey as PySortedKeyList
-from sortedcontainers import SortedSet as PySortedSet
+import sortedcontainers as sc
 
 from pyochain import Range, Seq, Vec
 from pyochain.collections import SortedDict, SortedKeyList, SortedList, SortedSet
@@ -30,12 +27,12 @@ SEED: Final[int] = 0
 RANDOM: Final[Random] = Random(SEED)
 SC_SIZES: Final[MarkDecorator] = pytest.mark.parametrize("size", SIZES[1:])
 """`sortedcontainers` original benchs don't have a size of 10, so we skip it when the scaling (e.g `.step_by(10)`) cause issues."""
-type List = SortedList[int] | PySortedList[int]
-type Set = SortedSet[int] | PySortedSet[int]
+type List = SortedList[int] | sc.SortedList[int]
+type Set = SortedSet[int] | sc.SortedSet[int]
 type SortedSequence = List | Set
-type Dict = SortedDict[int, int] | PySortedDict[int, int]
+type Dict = SortedDict[int, int] | sc.SortedDict[int, int]
 type SortedCollection = SortedSequence | Dict
-type KeyList = SortedKeyList[int, int] | PySortedKeyList[int, int]
+type KeyList = SortedKeyList[int, int] | sc.SortedKeyList[int, int]
 type InitFn[E, L] = Callable[[Iterable[E]], L]
 type InitDict[D] = InitFn[tuple[int, int], D]
 type KeyFn = Callable[[int], int]
@@ -53,15 +50,15 @@ def _make_params(pyochain: type, sortedcontainers: type) -> MarkDecorator:
 SEQ_PARAMS: Final[MarkDecorator] = pytest.mark.parametrize(
     "cls",
     (
-        pytest.param(PySortedList, id="sortedcontainers-list"),
+        pytest.param(sc.SortedList, id="sortedcontainers-list"),
         pytest.param(SortedList, id="pyochain-list"),
-        pytest.param(PySortedSet, id="sortedcontainers-set"),
+        pytest.param(sc.SortedSet, id="sortedcontainers-set"),
         pytest.param(SortedSet, id="pyochain-set"),
     ),
 )
-CLS_PARAMS: Final[MarkDecorator] = _make_params(PySortedList, SortedList)
-CLS_DICT_PARAMS: Final[MarkDecorator] = _make_params(PySortedDict, SortedDict)
-CLS_SET_PARAMS: Final[MarkDecorator] = _make_params(PySortedSet, SortedSet)
+CLS_PARAMS: Final[MarkDecorator] = _make_params(SortedList, sc.SortedList)
+CLS_DICT_PARAMS: Final[MarkDecorator] = _make_params(SortedDict, sc.SortedDict)
+CLS_SET_PARAMS: Final[MarkDecorator] = _make_params(SortedSet, sc.SortedSet)
 
 
 @dataclass(slots=True)

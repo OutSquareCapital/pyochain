@@ -6,12 +6,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
-from sortedcontainers import SortedList as PySortedList
+import sortedcontainers as sc
 
 from pyochain import Iter
 from pyochain.collections import SortedList
-
-from ._utils import Dict, List, Set
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -19,6 +17,8 @@ if TYPE_CHECKING:
     from _pytest.mark import ParameterSet
 
     from pyochain.abc import PyoSequence
+
+    from ._utils import Set, SortedCollection
 
 
 @dataclass(slots=True)
@@ -42,19 +42,21 @@ class OpFactory[T](BaseOp):
     fn: Callable[[T], Callable[[int], object]]
 
 
-def update[L: List](cls: type[L]) -> Callable[[L, Iterable[int]], None]:
-    if cls is PySortedList:
-        return PySortedList[int].update  # pyright: ignore[reportReturnType]
+def update(
+    cls: type[SortedCollection],
+) -> Callable[[SortedCollection, Iterable[int]], None]:
+    if cls is sc.SortedList:
+        return sc.SortedList[int].update  # pyright: ignore[reportReturnType]
     else:
         return SortedList[int].extend  # pyright: ignore[reportReturnType]
 
 
-def add[L: List](cls: type[L]) -> Callable[[L, int], None]:
-    if cls is PySortedList:
-        return PySortedList[int].add  # pyright: ignore[reportReturnType]
+def add(cls: type[SortedCollection]) -> Callable[[SortedCollection, int], None]:
+    if cls is sc.SortedList:
+        return sc.SortedList[int].add  # pyright: ignore[reportReturnType]
     else:
         return SortedList[int].append  # pyright: ignore[reportReturnType]
 
 
-def delitem[T: Dict | List](values: PyoSequence[int]) -> Callable[[T], None]:
+def delitem(values: PyoSequence[int]) -> Callable[[SortedCollection], None]:
     return lambda x: values.iter().for_each(x.__delitem__)
