@@ -31,6 +31,9 @@ class Cols(PlEnum):
     Name = auto()
 
 
+GROUP = (Cols.Param, Cols.Size)
+
+
 def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
     param = Cols.Param.pl().str.split("-").list
     cols = _selected_cols()
@@ -53,13 +56,13 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         .pivot(
             Cols.Lib,
             (Lib.SortedContainers, Lib.Pyochain),
-            index=(Cols.TimeStamp, Cols.Param, Cols.Size, Cols.Commit),
+            index=(Cols.TimeStamp, *GROUP, Cols.Commit),
         )
         .with_columns(
             Lib.SortedContainers
             .pl()
             .median()
-            .over(Cols.Param, Cols.Size)
+            .over(GROUP)
             .truediv(Lib.Pyochain)
             .round(3)
             .alias(Cols.Relative),
@@ -74,13 +77,13 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
 
 def maybe_agg_by_commit(lf: pl.LazyFrame, agg_by_commit: bool) -> pl.LazyFrame:
     if agg_by_commit:
-        return lf.group_by(Cols.Commit, Cols.Param, Cols.Size, maintain_order=True).agg(
+        return lf.group_by(Cols.Commit, *GROUP, maintain_order=True).agg(
             Cols.TimeStamp.pl().first(),
             pl.selectors.numeric().median().name.keep(),
         )
     else:
         return lf.with_columns(
-            Cols.TimeStamp.pl().cum_count().over(Cols.Param, Cols.Size).alias(Cols.Run)
+            Cols.TimeStamp.pl().cum_count().over(GROUP).alias(Cols.Run)
         )
 
 
