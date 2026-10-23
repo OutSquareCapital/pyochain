@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 from collections.abc import Callable, Iterable
 from enum import IntEnum, StrEnum, auto
-from typing import Final, Protocol
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
 from pyochain import Seq
+
+if TYPE_CHECKING:
+    import polars as pl
+    from _pytest.mark import ParameterSet
 
 type BenchFn = Callable[[int], object]
 
@@ -33,6 +39,27 @@ class BenchFixture(Protocol):
         warmup_rounds: int = 0,
         iterations: int = 1,
     ) -> T: ...
+
+
+class PlEnum(StrEnum):
+    """Base class for enums that can be used as polars expressions."""
+
+    def pl(self) -> pl.Expr:
+        """Return a polars expression for the enum value."""
+
+        import polars as pl
+
+        return pl.col(self.value)
+
+
+class Lib(PlEnum):
+    """Libraries used in the benchmarks."""
+
+    Pyochain = auto()
+    SortedContainers = auto()
+
+    def to_param(self, cls: type) -> ParameterSet:
+        return pytest.param(cls, id=f"{self}::{cls.__name__}")
 
 
 class Sizes(IntEnum):

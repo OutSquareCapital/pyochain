@@ -7,7 +7,8 @@ import polars as pl
 
 from pyochain import Iter
 
-from ._common import GET_PATH, TEST, Lib, PlEnum
+from .._utils import Lib, PlEnum
+from ._common import GET_PATH
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

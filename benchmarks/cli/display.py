@@ -2,7 +2,8 @@ import plotly.express as px
 import polars as pl
 from rich.markdown import Markdown
 
-from ._common import CONSOLE, Lib
+from .._utils import Lib
+from ._common import CONSOLE
 from .query import Cols, maybe_agg_by_commit
 
 cfg = pl.Config(

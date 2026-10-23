@@ -4,7 +4,8 @@ import subprocess
 
 from pyochain import Err, Ok, Result
 
-from ._common import CONSOLE, RUN_PATH, SAVE_PATH, Lib, Method
+from .._utils import Lib
+from ._common import CONSOLE, RUN_PATH, SAVE_PATH, Method
 
 
 def run(method: Method, repeat: int, *, calibrate: bool) -> Result[None, ValueError]:

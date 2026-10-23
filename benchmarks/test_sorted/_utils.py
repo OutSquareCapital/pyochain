@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING, Final, TypeIs
 import pytest
 import sortedcontainers as sc
 
-from pyochain import Iter, Range, Seq, Vec
+from pyochain import Range, Seq, Vec
 from pyochain.collections import SortedDict, SortedKeyList, SortedList, SortedSet
 
-from .._utils import SIZES
+from .._utils import SIZES, Lib
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -37,11 +37,10 @@ type SetupOut[L] = tuple[tuple[L], dict[str, object]]
 type AddFn = Callable[[List, int], None]
 
 
-def make_params(*classes: type) -> Seq[ParameterSet]:
-    def _to_param(cls: type) -> ParameterSet:
-        return pytest.param(cls, id=f"{cls.__module__}::{cls.__name__}")
-
-    return Iter(classes).map(_to_param).collect(Seq)
+def make_params(pyochain: type, sortedcontainers: type) -> Seq[ParameterSet]:
+    return Seq(
+        Lib.Pyochain.to_param(pyochain), Lib.SortedContainers.to_param(sortedcontainers)
+    )
 
 
 _LISTS = make_params(SortedList, sc.SortedList)

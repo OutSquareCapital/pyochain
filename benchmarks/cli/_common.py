@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import platform
 import sys
-from enum import StrEnum, auto
+from functools import cache
 from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING, Final, NewType, TypeIs
@@ -16,8 +16,6 @@ from pyochain import Dict, Err, Iter, Ok, Result, Vec
 from .. import test_sorted
 
 if TYPE_CHECKING:
-    import polars as pl
-
     from pyochain.abc import PyoIterator
 
 CONSOLE = Console()
@@ -36,24 +34,6 @@ Method = NewType("Method", str)
 """A validated benchmark method name that corresponds to a test function."""
 
 
-class PlEnum(StrEnum):
-    """Base class for enums that can be used as polars expressions."""
-
-    def pl(self) -> pl.Expr:
-        """Return a polars expression for the enum value."""
-
-        import polars as pl
-
-        return pl.col(self.value)
-
-
-class Lib(PlEnum):
-    """Libraries used in the benchmarks."""
-
-    Pyochain = auto()
-    SortedContainers = auto()
-
-
 def check_method(method: str) -> Result[Method, tp.BadParameter]:
     available_methods = _get_test_funcs()
     if not available_methods.contains(method):
@@ -68,6 +48,7 @@ def check_method(method: str) -> Result[Method, tp.BadParameter]:
         return Ok(Method(method))
 
 
+@cache
 def _get_test_funcs() -> Vec[str]:
     return (
         Dict
