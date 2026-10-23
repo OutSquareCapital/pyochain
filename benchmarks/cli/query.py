@@ -41,9 +41,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         Iter(GET_PATH.glob("*.json"))
         .map(lambda path: pl.read_json(path).lazy().select(cols))
         .collect(pl.concat)
-        .filter(
-            Cols.Name.pl().str.split("[").list.first().str.strip_prefix(TEST).eq(method)
-        )
+        .filter(Cols.Name.pl().str.split("[").list.first().eq(method))
         .select(
             Cols.TimeStamp,
             param.first().cast(pl.String).alias(Cols.Size),

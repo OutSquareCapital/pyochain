@@ -25,7 +25,7 @@ def run(method: Method, repeat: int, *, calibrate: bool) -> Result[None, ValueEr
 def _inner_run(method: Method, *, calibrate: bool) -> None:
     args = [
         "pytest",
-        f"{RUN_PATH.as_posix()}::test_{method}",
+        RUN_PATH.joinpath(method).as_posix(),
         _bench_arg("only"),
         _bench_arg("warmup=true"),
         _bench_arg("disable-gc"),

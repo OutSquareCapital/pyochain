@@ -5,13 +5,14 @@ import sys
 from functools import cache
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Final, NewType, TypeIs
+from typing import TYPE_CHECKING, Final, NewType
 
 import typer as tp
 from rich.console import Console
 from rich.text import Text
 
-from pyochain import Dict, Err, Iter, Ok, Result, Vec
+from pyochain import NONE, Dict, Err, Iter, Ok, Option, Result, Vec
+from pyochain.core import Some
 
 from .. import test_sorted
 
@@ -22,8 +23,6 @@ CONSOLE = Console()
 PLATFORM_DIR: Final[str] = (
     f"{platform.system()}-CPython-{sys.version_info.major}.{sys.version_info.minor}-{platform.architecture()[0]}"
 )
-TEST = "test_"
-"""Test function prefix used to identify benchmark tests."""
 # NOTE: annoying repetition but wathever
 RUN_PATH: Final[Path] = Path("benchmarks", "test_sorted")
 SAVE_PATH: Final[Path] = Path(".benchmarks", "test_sorted")
@@ -55,21 +54,19 @@ def _get_test_funcs() -> Vec[str]:
         .from_object(test_sorted)
         .items()
         .iter()
-        .filter_star(lambda _, v: _is_module(v))
-        .map_star(_add_module)
+        .filter_map_star(_add_module)
         .flatten()
         .sort()
     )
 
 
-def _add_module(mod_name: str, module: ModuleType) -> PyoIterator[str]:
-    name = f"{mod_name.removeprefix(TEST)}::"
-    return (
-        Iter(module.__dict__)
-        .filter(lambda fn: fn.startswith(TEST))
-        .map(lambda fn: f"{name}{fn.removeprefix(TEST)}")
-    )
-
-
-def _is_module(v: object) -> TypeIs[ModuleType]:
-    return isinstance(v, ModuleType)
+def _add_module(mod_name: str, obj: object) -> Option[PyoIterator[str]]:
+    match obj:
+        case ModuleType():
+            return Some(
+                Iter(obj.__dict__)
+                .filter(lambda fn: fn.startswith("test_"))
+                .map(lambda fn: f"{mod_name}.py::{fn}")
+            )
+        case _:
+            return NONE

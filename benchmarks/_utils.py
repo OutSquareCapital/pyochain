@@ -59,7 +59,7 @@ class Lib(PlEnum):
     SortedContainers = auto()
 
     def to_param(self, cls: type) -> ParameterSet:
-        return pytest.param(cls, id=f"{self}::{cls.__name__}")
+        return pytest.param(cls, id=f"{self}-{cls.__name__}")
 
 
 class Sizes(IntEnum):
