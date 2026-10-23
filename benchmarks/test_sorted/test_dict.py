@@ -11,12 +11,12 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.parametrize(
-    "filled", (pytest.param(True, id="filled"), pytest.param(False, id="empty"))
+    "empty", (pytest.param(False, id="filled"), pytest.param(True, id="empty"))
 )
 @DICT_PARAMS
 @SC_SIZES
 def test_setitem(
-    benchmark: BenchFixture, cls: type[Dict], size: int, filled: bool
+    benchmark: BenchFixture, cls: type[Dict], size: int, empty: bool
 ) -> None:
 
     values = shuffled_pairs(size, 100)
@@ -24,4 +24,4 @@ def test_setitem(
     def f(dct: Dict) -> None:
         values.iter().for_each_star(dct.__setitem__)
 
-    run_pedantic(benchmark, cls, size, f, filled=filled)
+    run_pedantic(benchmark, cls, size, f, empty=empty)

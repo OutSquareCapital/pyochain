@@ -52,4 +52,4 @@ def test_workload(
         for value, pos in values:
             _ = op(sl, value, pos, add_method)
 
-    run_pedantic(benchmark, cls, size, f, filled=True)
+    run_pedantic(benchmark, cls, size, f)

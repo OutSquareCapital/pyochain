@@ -60,18 +60,18 @@ def run_pedantic[C: SortedCollection](
     size: int,
     f: Callable[[C], object],
     *,
-    filled: bool = True,
+    empty: bool = False,
 ) -> None:
     min_rounds = 20
     rounds = max(min_rounds, int(50 * math.sqrt(SIZES.last() // max(size, 4_000))))
     warmup_rounds = rounds // min_rounds
-    values = Range(_calls_nb(SIZES.last()) // _calls_nb(size))
 
     def setup() -> SetupOut[Seq[C]]:
+        stop = size if not empty else 0
         data = (
-            values
+            Range(_calls_nb(SIZES.last()) // _calls_nb(size))
             .iter()
-            .map(lambda _: from_range(cls, size, filled=filled))
+            .map(lambda _: from_range(cls, stop))
             .collect(Seq)
         )
         return (data,), {}
@@ -86,17 +86,12 @@ def _calls_nb(size: int) -> int:
     return min(size // 4, 1_000)
 
 
-def from_range[C: SortedCollection](
-    cls: type[C], size: int, *, filled: bool = True
-) -> C:
-    if not filled:
-        return cls()
+def from_range[C: SortedCollection](cls: type[C], size: int) -> C:
+    values = Range(size)
+    if is_type_of(cls, sc.SortedDict) or is_type_of(cls, SortedDict):
+        return cls(values.iter().map(_item_to_pair))  # pyright: ignore[reportReturnType]
     else:
-        values = Range(size)
-        if is_type_of(cls, sc.SortedDict) or is_type_of(cls, SortedDict):
-            return cls(values.iter().map(_item_to_pair))  # pyright: ignore[reportReturnType]
-        else:
-            return cls(values)  # pyright: ignore[reportReturnType]
+        return cls(values)  # pyright: ignore[reportReturnType]
 
 
 @cache
