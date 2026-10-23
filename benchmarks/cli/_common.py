@@ -57,7 +57,7 @@ class Lib(PlEnum):
 def check_method(method: str) -> Result[Method, tp.BadParameter]:
     available_methods = _get_test_funcs()
     if not available_methods.contains(method):
-        methods = available_methods.iter().map(str).map(lambda m: " - " + m).join("\n")
+        methods = available_methods.iter().map(lambda m: " - " + m).join("\n")
         txt = Text("\nAvailable methods:\n", style="bold yellow").append(
             methods, style="bold green"
         )
