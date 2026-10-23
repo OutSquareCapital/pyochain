@@ -1102,7 +1102,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def enumerate(self, start: int = 0) -> PyoIterator[tuple[int, T]]:
         """Return a `Iterator` of (index, value) pairs.
 
-        Each value in the `Iterator` is paired with its index, starting from 0.
+        Each element will be a tuple a tuple containing a count, beginning at *start*, and the value yielded from the original `Iterator`.
 
         Tip:
             `map_star`[] can then be used for subsequent operations on the index and value.
@@ -1110,7 +1110,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Args:
-            start (int): The starting index.
+            start (int): The starting index. Default to 0.
 
         Returns:
             PyoIterator[tuple[int, T]]: An `Iterator` of (index, value) pairs.
@@ -1119,17 +1119,15 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Seq
 
-            data = Seq("apple", "banana", "cherry")
-            output = data.iter().enumerate().collect(Seq)
-            assert output == Seq((0, "apple"), (1, "banana"), (2, "cherry"))
-            output = (
-                data
-                .iter()
-                .enumerate()
-                .map_star(lambda idx, val: (idx, val.upper()))
-                .collect(Seq)
+            fruits = Seq("apple", "banana", "cherry")
+            out = fruits.iter().enumerate().collect(Seq)
+            assert out == Seq((0, "apple"), (1, "banana"), (2, "cherry"))
+            out2 = (
+                out.iter().map_star(lambda idx, val: (idx, val.upper())).collect(Seq)
             )
-            assert output == Seq((0, "APPLE"), (1, "BANANA"), (2, "CHERRY"))
+            assert out2 == Seq((0, "APPLE"), (1, "BANANA"), (2, "CHERRY"))
+            out3 = fruits.iter().enumerate(start=1).collect(Seq)
+            assert out3 = Seq((1, "apple"), (2, "banana"), (3, "cherry"))
             ```
         """
 
