@@ -19,7 +19,7 @@ from ._utils import (
     SortedCollection,
     SortedSequence,
     add_fn,
-    from_range,
+    into_sorted,
     is_type_of,
     run_pedantic,
     shuffled,
@@ -64,7 +64,7 @@ def test_init[C: SortedCollection](
 @COLLECTION_PARAMS
 @SIZE_PARAMS
 def test_iter(benchmark: BenchFixture, cls: Cls, size: int) -> None:
-    benchmark(consume, from_range(cls, size))
+    benchmark(consume, into_sorted(Range(size), cls))
 
 
 @COLLECTION_PARAMS
@@ -90,7 +90,7 @@ def test_lookup(
     benchmark: BenchFixture, cls: Cls, size: int, factory: FnFactory
 ) -> None:
     values = shuffled(size, 100)
-    f = factory(from_range(cls, size))
+    f = factory(into_sorted(Range(size), cls))
     benchmark(lambda: values.iter().for_each(f))
 
 
@@ -98,8 +98,8 @@ def test_lookup(
 @SC_SIZES
 def test_count(benchmark: BenchFixture, cls: type[SortedSequence], size: int) -> None:
     values = shuffled(size, 100)
-    col = from_range(cls, size)
-    f = col.count
+
+    f = cls(Range(size)).count
     benchmark(lambda: values.iter().for_each(f))
 
 

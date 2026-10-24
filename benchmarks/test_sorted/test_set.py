@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Iter
+from pyochain import Iter, Range
 from pyochain.pyochain import Seq
 
-from ._utils import SC_SIZES, SET_PARAMS, Set, from_range, run_pedantic
+from ._utils import SC_SIZES, SET_PARAMS, Set, run_pedantic
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -87,4 +87,4 @@ def test_op(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     if update:
         run_pedantic(benchmark, cls, size, f)
     else:
-        _ = benchmark(f, from_range(cls, size))
+        _ = benchmark(f, cls(Range(size)))

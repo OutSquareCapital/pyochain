@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 
     from _pytest.mark import MarkDecorator, ParameterSet
 
+    from pyochain.abc import PyoIterable
+
     from .._utils import BenchFixture
 SEED: Final[int] = 0
 RANDOM: Final[Random] = Random(SEED)
@@ -67,11 +69,11 @@ def run_pedantic[C: SortedCollection](
     warmup_rounds = rounds // min_rounds
 
     def setup() -> SetupOut[Seq[C]]:
-        stop = size if not empty else 0
+        values = Range(size if not empty else 0)
         data = (
             Range(_calls_nb(SIZES.last()) // _calls_nb(size))
             .iter()
-            .map(lambda _: from_range(cls, stop))
+            .map(lambda _: into_sorted(values, cls))
             .collect(Seq)
         )
         return (data,), {}
@@ -86,8 +88,7 @@ def _calls_nb(size: int) -> int:
     return min(size // 4, 1_000)
 
 
-def from_range[C: SortedCollection](cls: type[C], size: int) -> C:
-    values = Range(size)
+def into_sorted[C: SortedCollection](values: PyoIterable[int], cls: type[C]) -> C:
     if is_type_of(cls, sc.SortedDict) or is_type_of(cls, SortedDict):
         return cls(values.iter().map(_item_to_pair))  # pyright: ignore[reportReturnType]
     else:
