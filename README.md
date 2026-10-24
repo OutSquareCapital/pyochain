@@ -8,9 +8,9 @@
 - [Core design principles](#core-design-principles)
 - [Installation](#installation)
 - [Links](#links)
-- [Why use pyochain?](#why-use-pyochain)
+- [Why use pyochain?](#why-use-pyochain?)
 - [Getting started](#getting-started)
-- [Notice on Stability](#notice-on-stability ⚠️)
+- [Notice on Stability](#notice-on-stability)
 - [Contributing](#contributing)
 - [Credits](#credits)
 
@@ -284,9 +284,9 @@ assert issubclass(MySequence, PyoSequence)
 assert issubclass(MySequence, Sequence)
 ```
 
-## Notice on Stability ⚠️
+## Notice on Stability
 
-`pyochain` is currently in early development (< 1.0), and the API may undergo significant changes multiple times before reaching a stable 1.0 release.
+`pyochain` is currently in early development (< 1.0), and **the API may undergo significant changes multiple times before reaching a stable 1.0 release**.
 
 ## Contributing
 
