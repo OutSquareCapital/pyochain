@@ -94,9 +94,10 @@ def maybe_agg_by_commit(lf: pl.LazyFrame, agg_by_commit: bool) -> pl.LazyFrame:
 def _selected_cols() -> Sequence[pl.Expr]:
     benchmark = pl.col("benchmarks").list.explode().struct.field
     return (
+        # format is `path/to/file.py::test_func[param]`
         benchmark("fullname")
         .str.split("/")
-        .list.first()
+        .list.last()
         .str.split("[")
         .list.first()
         .alias(Cols.Name),
