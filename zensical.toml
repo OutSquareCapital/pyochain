@@ -116,6 +116,12 @@ signature_crossrefs = true
 [project.plugins.mkdocstrings.handlers.python.options.docstring_options]
 returns_named_value = false
 
+[project.plugins.llmstxt]
+full_output = "llms-full.txt"
+
+[project.plugins.llmstxt.sections]
+"API" = ["reference/*.md"]
+
 [project.markdown_extensions.pymdownx.superfences]
 custom_fences = [
   { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },

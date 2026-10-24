@@ -48,7 +48,7 @@ uv add pyochain # or pip install pyochain
 
 [🐍Pypi package](https://pypi.org/project/pyochain/)
 
-[📚 Full API Reference](https://outsquarecapital.github.io/pyochain/api-reference/)
+[📚 Website](https://outsquarecapital.github.io/pyochain/)
 
 [📄 README.md](https://github.com/OutSquareCapital/pyochain)
 
