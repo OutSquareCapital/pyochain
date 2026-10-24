@@ -17,18 +17,18 @@ cfg = pl.Config(
 
 @cfg
 def terminal(df: pl.DataFrame, *, raw: bool) -> None:
-    _show(df, "All results details", raw=raw)
+    show(df, "All results details", raw=raw)
     _ = (
         df
         .lazy()
         .pipe(maybe_agg_by_commit, True)
         .drop(Cols.Run, Cols.TimeStamp)
         .collect()
-        .pipe(_show, "Aggregated by commit", raw=raw)
+        .pipe(show, "Aggregated by commit", raw=raw)
     )
 
 
-def _show(df: pl.DataFrame, title: str, *, raw: bool) -> None:
+def show(df: pl.DataFrame, title: str, *, raw: bool) -> None:
     CONSOLE.rule(title)
     df_repr = str(df)
     if raw:

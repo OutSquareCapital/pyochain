@@ -35,20 +35,17 @@ GROUP = (Cols.Param, Cols.Size)
 
 
 def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
-    param = Cols.Param.pl().str.split("-").list
-    cols = _selected_cols()
+    param = Cols.Param.pl().list
     return (
-        Iter(GET_PATH.glob("*.json"))
-        .map(lambda path: pl.read_json(path).lazy().select(cols))
-        .collect(pl.concat)
-        .filter(Cols.Name.pl().str.split("[").list.first().eq(method))
+        read_jsons(True)
+        .filter(Cols.Name.pl().eq(method))
         .select(
             Cols.TimeStamp,
             param.first().cast(pl.String).alias(Cols.Size),
             param.get(1).cast(Lib).alias(Cols.Lib),
             # Additional params besides size and library
             param.slice(2, param.len() - 2).alias(Cols.Param),
-            Cols.Min,
+            pl.col("stats").struct.field(Cols.Min),
             Cols.Commit,
         )
         .pivot(
@@ -73,6 +70,15 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
     )
 
 
+def read_jsons(unnest: bool) -> pl.LazyFrame:
+    cols = _selected_cols() if unnest else pl.all()
+    return (
+        Iter(GET_PATH.glob("*.json"))
+        .map(lambda path: pl.read_json(path).lazy().select(cols))
+        .collect(pl.concat)
+    )
+
+
 def maybe_agg_by_commit(lf: pl.LazyFrame, agg_by_commit: bool) -> pl.LazyFrame:
     if agg_by_commit:
         return lf.group_by(Cols.Commit, *GROUP, maintain_order=True).agg(
@@ -86,19 +92,17 @@ def maybe_agg_by_commit(lf: pl.LazyFrame, agg_by_commit: bool) -> pl.LazyFrame:
 
 
 def _selected_cols() -> Sequence[pl.Expr]:
-    commit_infos = pl.col("commit_info").struct.field
     benchmark = pl.col("benchmarks").list.explode().struct.field
-    stat = benchmark("stats").struct.field
     return (
-        benchmark("fullname"),
-        benchmark(Cols.Name),
-        benchmark(Cols.Param),
-        stat(Cols.Min),
-        stat("max"),
-        stat("median"),
-        stat("stddev"),
-        stat("total"),
-        commit_infos("id").alias(Cols.Commit),
+        benchmark("fullname")
+        .str.split("/")
+        .list.first()
+        .str.split("[")
+        .list.first()
+        .alias(Cols.Name),
+        benchmark(Cols.Param).str.split("-"),
+        benchmark("stats"),
+        pl.col("commit_info").struct.field("id").alias(Cols.Commit),
         pl
         .col("datetime")
         .str.to_datetime(time_unit="ms", time_zone="UTC")

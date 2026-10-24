@@ -82,5 +82,16 @@ def show(
     )
 
 
+@app.command()
+def check_jsons(
+    *, unnest: Annotated[bool, tp.Option(help="Unnest the JSON structure")] = True
+) -> None:
+    """Display raw saved jsons."""
+
+    from .cli import display, query
+
+    return query.read_jsons(unnest).collect().pipe(display.show, "raw jsons", raw=False)
+
+
 if __name__ == "__main__":
     app()
