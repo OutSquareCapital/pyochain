@@ -1122,12 +1122,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             fruits = Seq("apple", "banana", "cherry")
             out = fruits.iter().enumerate().collect(Seq)
             assert out == Seq((0, "apple"), (1, "banana"), (2, "cherry"))
-            out2 = (
-                out.iter().map_star(lambda idx, val: (idx, val.upper())).collect(Seq)
-            )
+            out2 = out.iter().map_star(lambda idx, val: (idx, val.upper())).collect(Seq)
             assert out2 == Seq((0, "APPLE"), (1, "BANANA"), (2, "CHERRY"))
             out3 = fruits.iter().enumerate(start=1).collect(Seq)
-            assert out3 = Seq((1, "apple"), (2, "banana"), (3, "cherry"))
+            assert out3 == Seq((1, "apple"), (2, "banana"), (3, "cherry"))
             ```
         """
 
