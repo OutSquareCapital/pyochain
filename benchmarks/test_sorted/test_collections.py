@@ -7,7 +7,7 @@ import pytest
 import sortedcontainers as sc
 
 from pyochain import Iter, Range, Seq
-from pyochain.collections import SortedDict, SortedSet
+from pyochain.collections import SortedSet
 
 from .._utils import SIZE_PARAMS, consume
 from ._utils import (
@@ -20,6 +20,7 @@ from ._utils import (
     SortedSequence,
     add_fn,
     into_sorted,
+    is_dict,
     is_type_of,
     run_pedantic,
     shuffled,
@@ -52,7 +53,7 @@ LOOKUP_FNS = (
 def test_init[C: SortedCollection](
     benchmark: BenchFixture, cls: type[C], size: int
 ) -> None:
-    if is_type_of(cls, sc.SortedDict) or is_type_of(cls, SortedDict):
+    if is_dict(cls):
         values = shuffled_pairs(size)
         init = lambda: cls(values)
     else:
@@ -70,7 +71,7 @@ def test_iter(benchmark: BenchFixture, cls: Cls, size: int) -> None:
 @COLLECTION_PARAMS
 @SC_SIZES
 def test_delitem(benchmark: BenchFixture, cls: Cls, size: int) -> None:
-    if is_type_of(cls, sc.SortedDict) or is_type_of(cls, SortedDict):
+    if is_dict(cls):
         values = shuffled(size, 100)
     else:
         RANDOM.seed(SEED)

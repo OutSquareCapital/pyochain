@@ -89,10 +89,14 @@ def _calls_nb(size: int) -> int:
 
 
 def into_sorted[C: SortedCollection](values: PyoIterable[int], cls: type[C]) -> C:
-    if is_type_of(cls, sc.SortedDict) or is_type_of(cls, SortedDict):
+    if is_dict(cls):
         return cls(values.iter().map(_item_to_pair))  # pyright: ignore[reportReturnType]
     else:
         return cls(values)  # pyright: ignore[reportReturnType]
+
+
+def is_dict(cls: type[SortedCollection]) -> TypeIs[type[Dict]]:
+    return cls is SortedDict or cls is sc.SortedDict
 
 
 @cache
