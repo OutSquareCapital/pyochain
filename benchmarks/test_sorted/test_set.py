@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Iter, Range
-from pyochain.pyochain import Seq
+from pyochain import Iter, Range, Seq
 
 from ._utils import SC_SIZES, SET_PARAMS, Set, run_pedantic
 
