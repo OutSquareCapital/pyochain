@@ -15,13 +15,12 @@ MethodArg = Annotated[str, tp.Argument(help="Benchmark method name")]
 def run(
     method: MethodArg,
     repeat: Annotated[int, tp.Option(help="How many times the benchmark is run")] = 1,
-    *,
-    calibrate: Annotated[
-        bool,
+    k: Annotated[
+        str,
         tp.Option(
-            help="Run original sortedcontainers with pyochain for relative comparison"
+            help="Additional parameters to filter the benchmark methods (e.g. `--k 'pyochain'`)"
         ),
-    ] = False,
+    ] = "",
 ) -> None:
     """Run a benchmark x time.
 
@@ -33,7 +32,7 @@ def run(
 
     return (
         check_method(method)
-        .and_then(lambda m: bench_run.run(m, repeat, calibrate=calibrate))
+        .and_then(lambda method: bench_run.run(method, repeat, k))
         .map(lambda _: query.run(method, False))
         .map(lambda df: display.relative(df, method, query.Cols.Run))
         .unwrap()
@@ -81,6 +80,17 @@ def show(
         .map(display.terminal, raw=raw)
         .unwrap()
     )
+
+
+@app.command()
+def check_jsons(
+    *, unnest: Annotated[bool, tp.Option(help="Unnest the JSON structure")] = True
+) -> None:
+    """Display raw saved jsons."""
+
+    from .cli import display, query
+
+    return query.read_jsons(unnest).collect().pipe(display.show, "raw jsons", raw=False)
 
 
 if __name__ == "__main__":

@@ -2,29 +2,29 @@ from __future__ import annotations
 
 import platform
 import sys
-from enum import StrEnum, auto
+from functools import cache
 from pathlib import Path
+from types import ModuleType
 from typing import TYPE_CHECKING, Final, NewType
 
 import typer as tp
 from rich.console import Console
 from rich.text import Text
 
-from pyochain import Err, Iter, Ok, Result, Vec
+from pyochain import NONE, Dict, Err, Iter, Ok, Option, Result, Vec
+from pyochain.core import Some
 
 from .. import test_sorted
 
 if TYPE_CHECKING:
-    import polars as pl
+    from pyochain.abc import PyoIterator
 
 CONSOLE = Console()
 PLATFORM_DIR: Final[str] = (
     f"{platform.system()}-CPython-{sys.version_info.major}.{sys.version_info.minor}-{platform.architecture()[0]}"
 )
-PREFIX = "test_"
-"""Test function prefix used to identify benchmark tests."""
 # NOTE: annoying repetition but wathever
-RUN_PATH: Final[Path] = Path("benchmarks", "test_sorted.py")
+RUN_PATH: Final[Path] = Path("benchmarks", "test_sorted")
 SAVE_PATH: Final[Path] = Path(".benchmarks", "test_sorted")
 """Path to the benchmark results directory."""
 GET_PATH: Final[Path] = SAVE_PATH.joinpath(PLATFORM_DIR)
@@ -33,28 +33,10 @@ Method = NewType("Method", str)
 """A validated benchmark method name that corresponds to a test function."""
 
 
-class PlEnum(StrEnum):
-    """Base class for enums that can be used as polars expressions."""
-
-    def pl(self) -> pl.Expr:
-        """Return a polars expression for the enum value."""
-
-        import polars as pl
-
-        return pl.col(self.value)
-
-
-class Lib(PlEnum):
-    """Libraries used in the benchmarks."""
-
-    Pyochain = auto()
-    SortedContainers = auto()
-
-
 def check_method(method: str) -> Result[Method, tp.BadParameter]:
     available_methods = _get_test_funcs()
     if not available_methods.contains(method):
-        methods = available_methods.iter().map(str).map(lambda m: " - " + m).join("\n")
+        methods = available_methods.iter().map(lambda m: " - " + m).join("\n")
         txt = Text("\nAvailable methods:\n", style="bold yellow").append(
             methods, style="bold green"
         )
@@ -65,10 +47,26 @@ def check_method(method: str) -> Result[Method, tp.BadParameter]:
         return Ok(Method(method))
 
 
+@cache
 def _get_test_funcs() -> Vec[str]:
     return (
-        Iter(test_sorted.__dict__)
-        .filter(lambda name: name.startswith(PREFIX))
-        .map(lambda name: name.removeprefix(PREFIX))
+        Dict
+        .from_object(test_sorted)
+        .items()
+        .iter()
+        .filter_map_star(_add_module)
+        .flatten()
         .sort()
     )
+
+
+def _add_module(mod_name: str, obj: object) -> Option[PyoIterator[str]]:
+    match obj:
+        case ModuleType():
+            return Some(
+                Iter(obj.__dict__)
+                .filter(lambda fn: fn.startswith("test_"))
+                .map(lambda fn: f"{mod_name}.py::{fn}")
+            )
+        case _:
+            return NONE

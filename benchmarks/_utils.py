@@ -1,13 +1,22 @@
-from collections.abc import Callable
+from __future__ import annotations
+
+from collections.abc import Callable, Iterable
 from enum import IntEnum, StrEnum, auto
-from typing import Final, Protocol
+from typing import TYPE_CHECKING, Final, Protocol
+
+import pytest
 
 from pyochain import Seq
+
+if TYPE_CHECKING:
+    import polars as pl
+    from _pytest.mark import ParameterSet
 
 type BenchFn = Callable[[int], object]
 
 
 SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000, 1_000_000)
+SIZE_PARAMS = pytest.mark.parametrize("size", SIZES)
 
 
 class BenchFixture(Protocol):
@@ -32,6 +41,27 @@ class BenchFixture(Protocol):
     ) -> T: ...
 
 
+class PlEnum(StrEnum):
+    """Base class for enums that can be used as polars expressions."""
+
+    def pl(self) -> pl.Expr:
+        """Return a polars expression for the enum value."""
+
+        import polars as pl
+
+        return pl.col(self.value)
+
+
+class Lib(PlEnum):
+    """Libraries used in the benchmarks."""
+
+    Pyochain = auto()
+    SortedContainers = auto()
+
+    def to_param(self, cls: type) -> ParameterSet:
+        return pytest.param(cls, id=f"{self}-{cls.__name__}")
+
+
 class Sizes(IntEnum):
     SIZE_64 = 64
     SIZE_256 = 256
@@ -52,3 +82,8 @@ def identity[T](x: T) -> T:
 
 def identity_vargs[T](*args: T) -> tuple[T, ...]:
     return args
+
+
+def consume(values: Iterable[object]) -> None:
+    for _ in values:
+        pass
