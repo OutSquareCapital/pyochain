@@ -113,12 +113,8 @@ def _item_to_pair(item: int) -> tuple[int, int]:
     return item, -item
 
 
-def add_fn[S: SortedSequence](cls: type[S]) -> Callable[[S, int], None]:
-    if is_type_of(cls, SortedList):
-        return cls.append  # pyright: ignore[reportReturnType]
+def add_fn(cls: type[SortedSequence]) -> Callable[[SortedSequence, int], None]:
+    if cls is SortedList:
+        return SortedList[int].append  # pyright: ignore[reportReturnType]
     else:
         return cls.add  # pyright: ignore[reportReturnType]
-
-
-def is_type_of[T](obj: type, cls: type[T]) -> TypeIs[type[T]]:  # ruff: ignore[reimplemented-operator]
-    return obj is cls

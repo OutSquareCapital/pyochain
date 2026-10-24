@@ -13,7 +13,6 @@ from ._utils import (
     SEED,
     List,
     add_fn,
-    is_type_of,
     run_pedantic,
     shuffled,
 )
@@ -27,8 +26,8 @@ from ._workloads import WORKLOADS, WorkLoad
 @SIZE_PARAMS
 def test_update(benchmark: BenchFixture, cls: type[List], size: int, step: int) -> None:
     values = shuffled(size, step)
-    if is_type_of(cls, SortedList):
-        run_pedantic(benchmark, cls, size, lambda lst: lst.extend(values))
+    if cls is SortedList:
+        run_pedantic(benchmark, SortedList, size, lambda lst: lst.extend(values))
     else:
         run_pedantic(benchmark, cls, size, lambda lst: lst.update(values))
 

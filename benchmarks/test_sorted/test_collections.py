@@ -21,7 +21,6 @@ from ._utils import (
     add_fn,
     into_sorted,
     is_dict,
-    is_type_of,
     run_pedantic,
     shuffled,
     shuffled_pairs,
@@ -50,16 +49,9 @@ LOOKUP_FNS = (
 
 @COLLECTION_PARAMS
 @SIZE_PARAMS
-def test_init[C: SortedCollection](
-    benchmark: BenchFixture, cls: type[C], size: int
-) -> None:
-    if is_dict(cls):
-        values = shuffled_pairs(size)
-        init = lambda: cls(values)
-    else:
-        values = shuffled(size)
-        init = lambda: cls(values)
-    assert benchmark(init)
+def test_init(benchmark: BenchFixture, cls: type[SortedCollection], size: int) -> None:
+    values = shuffled_pairs(size) if is_dict(cls) else shuffled(size)
+    assert benchmark(cls, values)  # pyright: ignore[reportCallIssue]
 
 
 @COLLECTION_PARAMS
@@ -127,7 +119,7 @@ def test_pop(benchmark: BenchFixture, cls: type[SortedSequence], size: int) -> N
 def test_add(benchmark: BenchFixture, cls: type[SortedSequence], size: int) -> None:
     add_method = add_fn(cls)
     values = shuffled(size, 100)
-    if is_type_of(cls, sc.SortedSet) or is_type_of(cls, SortedSet):
+    if cls is sc.SortedSet or cls is SortedSet:
         values = values.iter().map(operator.neg).collect(Seq)
 
     def f(lst: SortedSequence) -> None:
