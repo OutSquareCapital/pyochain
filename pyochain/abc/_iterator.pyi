@@ -1564,9 +1564,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Args:
             init (B): Initial value for the accumulator.
-            func (Callable[..., B]): Function that takes the accumulator and current element, returning the new accumulator value.
-            *args (P.args): Additional positional arguments to pass to **func**.
-            **kwargs (P.kwargs): Additional keyword arguments to pass to **func**.
+            func (Callable[[B, *U], B]): Function that takes the accumulator and current element, returning the new accumulator value.
 
         Returns:
             B: The final accumulated value.
@@ -1610,9 +1608,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert out == Vec(1, 2, 3)
             ```
         """
-    def for_each_star[*U, R](
-        self: Iterator[tuple[*U]], func: Callable[[*U], Any]
-    ) -> None:
+    def for_each_star[*U](self: Iterator[tuple[*U]], func: Callable[[*U], Any]) -> None:
         """Consume the `Iterator` by applying a function to each unpacked element in the `Iterable`.
 
         Is a terminal operation, and is useful for functions that have side effects,
@@ -1621,7 +1617,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         This is often used after methods like `zip()` or `enumerate()` that yield tuples.
 
         Args:
-            func (Callable[[*U], R]): Function to apply to each unpacked element.
+            func (Callable[[*U], Any]): Function to apply to each unpacked element.
 
         Example:
             ```python
