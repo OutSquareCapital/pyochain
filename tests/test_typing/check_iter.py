@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 def check_iter_covariance() -> None:
     a = assert_type(Iter(Dog()), Iter[Dog])
-    b = assert_type(a.batched(1).flatten(), PyoIterator[Dog])
-    _a = assert_type(a.batched(1).map_star(str), PyoIterator[str])
+    b = assert_type(a.batched(1, strict=True).flatten(), PyoIterator[Dog])
+    _a = assert_type(a.batched(1, strict=True).map_star(str), PyoIterator[str])
     _b: Iter[Animal] = a
     _c: PyoIterator[Animal] = a
     _f: Iterator[Animal] = a
