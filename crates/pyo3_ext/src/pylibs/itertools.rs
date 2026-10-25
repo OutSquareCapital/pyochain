@@ -214,7 +214,7 @@ pub fn product<'py, A: ArgsConcat<'py>>(
 }
 #[inline(always)]
 pub fn map_star<'py>(
-    func: Bound<'py, PyAny>,
+    func: &Bound<'py, PyAny>,
     iterable: Bound<'py, PyIterator>,
 ) -> PyResult<Bound<'py, PyIterator>> {
     MAP_STAR

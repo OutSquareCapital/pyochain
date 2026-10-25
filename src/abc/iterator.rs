@@ -952,7 +952,7 @@ impl PyoIterator {
     }
     fn map_star<'py>(
         slf: &Bound<'py, Self>,
-        func: Bound<'py, PyAny>,
+        func: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::map_star(func, x))
