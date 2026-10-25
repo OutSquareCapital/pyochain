@@ -1637,7 +1637,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> B: ...
     @overload
     def fold_star[*U, B](
-        self: Iterator[tuple[*U]], init: B, func: Callable[[*U], B]
+        self: Iterator[tuple[*U]], init: B, func: Callable[[*U, B], B]
     ) -> B: ...
     def fold_star[*U, **P, B](
         self: Iterator[tuple[*U]],
