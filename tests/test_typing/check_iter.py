@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import operator
 from typing import TYPE_CHECKING, Any, Literal, Never, assert_never, assert_type
 
 from pyochain import Iter, Range, Seq, Some
@@ -111,6 +112,12 @@ def check_starred_fail(number: int) -> None:
         case 3:
             _ = assert_type(r_star.filter_map_star(Some), PyoIterator[int])
             _ = assert_never(r.filter_map_star(Some))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+        case 4:
+            _ = assert_type(r_star.fold_star(0, operator.add), int)
+            _ = assert_never(r.fold_star(1, str))  # pyright: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
+        case 5:
+            _ = assert_type(r.map_windows_star(1, str), PyoIterator[str])
+            _ = assert_never(r.map_windows_star(2, str))  # pyright: ignore[reportUnknownArgumentType, reportCallIssue, reportArgumentType]
         case _:
             pass
 

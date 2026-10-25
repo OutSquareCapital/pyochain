@@ -1597,10 +1597,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     @overload
-    def fold_star[**P, B](
-        self: Iterator[tuple[Any]],
+    def fold_star[T1, **P, B](
+        self: Iterator[tuple[T1]],
         init: B,
-        func: Callable[[Any], B],
+        func: Callable[Concatenate[B, T1, P], B],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> B: ...
@@ -1676,8 +1676,12 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> B: ...
-    def fold_star[U: Iterable[Any], **P, B](
-        self: Iterator[U],
+    @overload
+    def fold_star[*U, B](
+        self: Iterator[tuple[*U]], init: B, func: Callable[[*U], B]
+    ) -> B: ...
+    def fold_star[*U, **P, B](
+        self: Iterator[tuple[*U]],
         init: B,
         func: Callable[..., B],
         *args: P.args,

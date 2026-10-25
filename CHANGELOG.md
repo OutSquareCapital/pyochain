@@ -51,9 +51,6 @@ See below for the benchmark results, with the number of `args` in the left colum
 - **typing**: Relaxed the _collector_ input type of `PyoIterator::collect`. The constraint on the return type `R: Collection[Any]` was artificial, and was preventing to use `collect` on functions or types who indeed consume the `Iterator`, but weren't strictly speaking a `Collection` (e.g polars DataFrames). In python, the `FromIterator` equivalent is simply `Callable[[Iterator[T]], Any]`, and this is now reflected in the typing of `collect`.
 - **typing**: `Option::{is_some, is_none, unwrap, unwrap_or, unwrap_or_none}` now have overloads to statically return the narrowed type when the variant is already known.
 - **typing**: `Result::and_then` handles a change of Error type in the closure, and returns the correct `Result` type. i.e `Result[T, E].and_then(f: Callable[[T], Result[U, F]]) -> Result[U, E | F]`.
-
-### ✨ Enhancements
-
 - **typing**: Ensured that all sorted containers classes are marked with `typing::{type_check_only, final}` when appropriate.
 - **typing**: `PyoIterator::{map_star, filter_map_star}` use tuple unpacking instead of overloads, meaning that the signature can now be statically checked, regardless of the number of arguments in the function (it was stopping a 10 before, and having for example a function taking 11 pos args wouldn't have been flagged as incorrect on an `Iterator` yielding tuples of 10 elelements.)
 
@@ -63,6 +60,7 @@ See below for the benchmark results, with the number of `args` in the left colum
 - **typing**: `PyoIterator::for_each_star` now correctly handle functions with varargs and ParamSpec.
 - **typing**: `Iter::__new__` missed overloads, which caused false positives with type checkers, for example, when providing a single `Iterable` argument. This is now fixed.
 - **typing**: `PyoIterator::map_star` had false negatives where it accepted functions incompatible with the`Iterator` argument. This is now fixed.
+- **typing**: `PyoIterator::fold_star` now correctly handle tuples with 1 element. With a few other overload tweaks, it should overall be more robust to false positives/negatives.
 
 ### 🔄 Refactors
 
