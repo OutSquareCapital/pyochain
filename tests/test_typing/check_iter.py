@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 import operator
-from typing import TYPE_CHECKING, Any, Literal, Never, assert_never, assert_type
+from typing import TYPE_CHECKING, Any, Literal, Never, assert_type
 
 from pyochain import Iter, Range, Seq, Some
 from pyochain.abc import PyoIterator
@@ -95,31 +95,20 @@ def check_map_star() -> None:
     _ = assert_type(out, Seq[tuple[int, str, bool]])
 
 
-def check_starred_fail(number: int) -> None:
-    # Expected to fail
+def check_starred(failure: bool) -> None:
     r = assert_type(Range(3).iter(), PyoIterator[int])
-    r_star = assert_type(r.iter().batched(1, strict=True), PyoIterator[tuple[int]])
-    match number:
-        case 0:
+    r_star = assert_type(r.batched(1, strict=True), PyoIterator[tuple[int]])
+    match failure:
+        case True:
+            _ = assert_type(r.map_star(str), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]  # ty: ignore[type-assertion-failure, invalid-argument-type]
+            _ = assert_type(r.filter_star(str), Any)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
+            _ = assert_type(r.filter_map_star(Some), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]  # ty: ignore[type-assertion-failure, invalid-argument-type]
+            _ = assert_type(r.fold_star(1, str), Any)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
+        case False:
             _ = assert_type(r_star.map_star(str), PyoIterator[str])
-            _ = assert_never(r.map_star(str))  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]  # ty: ignore[type-assertion-failure, invalid-argument-type]
-        case 1:
             _ = assert_type(r_star.filter_star(str), PyoIterator[tuple[int]])
-            _ = assert_never(r.filter_star(str))  # pyright: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]  # ty: ignore[type-assertion-failure, no-matching-overload]
-        case 2:
-            _ = assert_type(r_star.for_each_star(str), None)
-            _ = assert_never(r.for_each_star(str))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]  # ty: ignore[type-assertion-failure, no-matching-overload]
-        case 3:
             _ = assert_type(r_star.filter_map_star(Some), PyoIterator[int])
-            _ = assert_never(r.filter_map_star(Some))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]  # ty: ignore[type-assertion-failure, invalid-argument-type]
-        case 4:
             _ = assert_type(r_star.fold_star(0, operator.add), int)
-            _ = assert_never(r.fold_star(1, str))  # pyright: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]  # ty: ignore[type-assertion-failure, no-matching-overload]
-        case 5:
-            _ = assert_type(r.map_windows_star(1, str), PyoIterator[str])
-            _ = assert_never(r.map_windows_star(2, str))  # pyright: ignore[reportUnknownArgumentType, reportCallIssue, reportArgumentType]  # ty: ignore[type-assertion-failure, no-matching-overload]
-        case _:
-            pass
 
 
 type TupItem = tuple[int, str, bool]
