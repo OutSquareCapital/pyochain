@@ -1341,84 +1341,20 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     @overload
-    def filter_star[T1, R](
-        self: Iterator[tuple[T1]], func: Callable[[T1], TypeIs[R]]
+    def filter_star[*U, R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], TypeIs[R]]
     ) -> PyoIterator[tuple[R]]: ...
     @overload
-    def filter_star[T1, R](
-        self: Iterator[tuple[T1]], func: Callable[[T1], TypeGuard[R]]
+    def filter_star[*U, R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], TypeGuard[R]]
     ) -> PyoIterator[tuple[R]]: ...
     @overload
-    def filter_star[T1](
-        self: Iterator[tuple[T1]], func: Callable[[T1], object]
-    ) -> PyoIterator[tuple[T1]]: ...
-    @overload
-    def filter_star[T1, T2, R, R2](
-        self: Iterator[tuple[T1, T2]], func: Callable[[T1, T2], TypeIs[tuple[R, R2]]]
-    ) -> PyoIterator[tuple[R, R2]]: ...
-    @overload
-    def filter_star[T1, T2, R, R2](
-        self: Iterator[tuple[T1, T2]],
-        func: Callable[[T1, T2], TypeGuard[tuple[R, R2]]],
-    ) -> PyoIterator[tuple[R, R2]]: ...
-    @overload
-    def filter_star[T1, T2](
-        self: Iterator[tuple[T1, T2]],
-        func: Callable[[T1, T2], object],
-    ) -> PyoIterator[tuple[T1, T2]]: ...
-    @overload
-    def filter_star[T1, T2, T3, R, R2, R3](
-        self: Iterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], TypeIs[tuple[R, R2, R3]]],
-    ) -> PyoIterator[tuple[R, R2, R3]]: ...
-    @overload
-    def filter_star[T1, T2, T3, R, R2, R3](
-        self: Iterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], TypeGuard[tuple[R, R2, R3]]],
-    ) -> PyoIterator[tuple[R, R2, R3]]: ...
-    @overload
-    def filter_star[T1, T2, T3](
-        self: Iterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], object],
-    ) -> PyoIterator[tuple[T1, T2, T3]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4](
-        self: Iterator[tuple[T1, T2, T3, T4]],
-        func: Callable[[T1, T2, T3, T4], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5](
-        self: Iterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
-    def filter_star[U: tuple[Any, ...]](
-        self: Iterator[U], func: Callable[..., object]
-    ) -> PyoIterator[U]:
+    def filter_star[*U](
+        self: Iterator[tuple[*U]], func: Callable[[*U], object]
+    ) -> PyoIterator[tuple[*U]]: ...
+    def filter_star[*U](
+        self: Iterator[tuple[*U]], func: Callable[[*U], object]
+    ) -> PyoIterator[tuple[*U]]:
         """Creates an `Iterator` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
 
         Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the **func**.
@@ -1480,7 +1416,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def find_map[R](self, func: Callable[[T], Option[R]]) -> Option[R]:
         """Applies function to the elements of the `Iterator` and returns the first Some(R) result.
 
-        `Iter.find_map(f)` is equivalent to `Iter.filter_map(f).next()`.
+        `.find_map(f)` is equivalent to `.filter_map(f).next()`.
 
         Args:
             func (Callable[[T], Option[R]]): Function to apply to each element, returning an `Option[R]`.
@@ -1503,7 +1439,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def flat_map[R](self, func: Callable[[T], Iterable[R]]) -> PyoIterator[R]:
-        """Creates an iterator that applies a function to each element of the original iterator and flattens the result.
+        """Creates an `Iterator` that applies a function to each element of the original `Iterator` and flattens the result.
 
         This is useful when the **func** you want to pass to `.map()` itself returns an iterable, and you want to avoid having nested iterables in the output.
 
