@@ -55,12 +55,14 @@ See below for the benchmark results, with the number of `args` in the left colum
 ### ✨ Enhancements
 
 - **typing**: Ensured that all sorted containers classes are marked with `typing::{type_check_only, final}` when appropriate.
+- **typing**: `PyoIterator::{map_star, filter_map_star}` use tuple unpacking instead of overloads, meaning that the signature can now be statically checked, regardless of the number of arguments in the function (it was stopping a 10 before, and having for example a function taking 11 pos args wouldn't have been flagged as incorrect on an `Iterator` yielding tuples of 10 elelements.)
 
 ### 🐞 Bug fixes
 
 - **typing**: `PyoIterator::{map_windows, map_windows_star}` now correctly handle functions with varargs.
 - **typing**: `PyoIterator::for_each_star` now correctly handle functions with varargs and ParamSpec.
 - **typing**: `Iter::__new__` missed overloads, which caused false positives with type checkers, for example, when providing a single `Iterable` argument. This is now fixed.
+- **typing**: `PyoIterator::map_star` had false negatives where it accepted functions incompatible with the`Iterator` argument. This is now fixed.
 
 ### 🔄 Refactors
 

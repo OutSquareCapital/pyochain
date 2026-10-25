@@ -1301,58 +1301,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    @overload
-    def filter_map_star[R](
-        self: Iterator[tuple[Any]],
-        func: Callable[[Any], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, R](
-        self: Iterator[tuple[T1, T2]],
-        func: Callable[[T1, T2], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, R](
-        self: Iterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, R](
-        self: Iterator[tuple[T1, T2, T3, T4]],
-        func: Callable[[T1, T2, T3, T4], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, T6, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Option[R]],
-    ) -> PyoIterator[R]: ...
-    def filter_map_star[U: Iterable[Any], R](
-        self: Iterator[U], func: Callable[..., Option[R]]
+    def filter_map_star[*U, R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], Option[R]]
     ) -> PyoIterator[R]:
         """Creates an iterator that both filters and maps, where each element is an iterable.
 
@@ -2502,61 +2452,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert res == Seq((0, 0), (2, 1))
             ```
         """
-    # TODO: Can give false negatives ATM for typing (silence incorrect inputs)
-    @overload
-    def map_star[T1, R](
-        self: Iterator[tuple[T1]], func: Callable[[T1], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, R](
-        self: Iterator[tuple[T1, T2]], func: Callable[[T1, T2], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, R](
-        self: Iterator[tuple[T1, T2, T3]], func: Callable[[T1, T2, T3], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, R](
-        self: Iterator[tuple[T1, T2, T3, T4]], func: Callable[[T1, T2, T3, T4], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[U: tuple[Any, ...], R](
-        self: Iterator[U], func: Callable[..., R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star(self, func: Callable[..., Any]) -> Never: ...
-    def map_star[R](
-        self: Iterator[tuple[Any, ...]], func: Callable[..., R]
+
+    def map_star[*U, R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], R]
     ) -> PyoIterator[R]:
         """Applies a function to each element.where each element is a `tuple`.
 

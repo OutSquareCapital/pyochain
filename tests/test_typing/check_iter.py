@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 from typing import TYPE_CHECKING, Any, Literal, Never, assert_never, assert_type
 
-from pyochain import Iter, Range, Seq
+from pyochain import Iter, Range, Seq, Some
 from pyochain.abc import PyoIterator
 
 from ._utils import Animal, Dog
@@ -92,8 +92,27 @@ def check_map_star() -> None:
         .collect(Seq)
     )
     _ = assert_type(out, Seq[tuple[int, str, bool]])
+
+
+def check_starred_fail(number: int) -> None:
     # Expected to fail
-    _ = assert_never(Range(3).iter().map_star(str))
+    r = assert_type(Range(3).iter(), PyoIterator[int])
+    r_star = assert_type(r.iter().batched(1, strict=True), PyoIterator[tuple[int]])
+    match number:
+        case 0:
+            _ = assert_type(r_star.map_star(str), PyoIterator[str])
+            _ = assert_never(r.map_star(str))  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
+        case 1:
+            _ = assert_type(r_star.filter_star(str), PyoIterator[tuple[int]])
+            _ = assert_never(r.filter_star(str))  # pyright: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
+        case 2:
+            _ = assert_type(r_star.for_each_star(str), None)
+            _ = assert_never(r.for_each_star(str))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+        case 3:
+            _ = assert_type(r_star.filter_map_star(Some), PyoIterator[int])
+            _ = assert_never(r.filter_map_star(Some))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+        case _:
+            pass
 
 
 type TupItem = tuple[int, str, bool]
