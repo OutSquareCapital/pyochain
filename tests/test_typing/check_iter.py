@@ -115,47 +115,24 @@ type TupItem = tuple[int, str, bool]
 
 
 def check_map_windows() -> None:
-    def foo(x: int, _y: int) -> int:
-        return x
-
-    def bar(*x: int) -> int:
-        return sum(x)
-
-    def baz(x: tuple[int, ...]) -> int:
-        return sum(x)
-
-    data = Range(3)
+    data = Range(3).iter()
     # pyrefly: ignore [no-matching-overload]
-    _ = assert_type(data.iter().map_windows_star(1, foo), Any)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
-    _ = assert_type(data.iter().map_windows_star(2, foo), PyoIterator[int])
-    _ = assert_type(data.iter().map_windows(3, baz), PyoIterator[int])
-    _ = assert_type(data.iter().map_windows_star(2, bar), PyoIterator[int])
-    _ = assert_type(data.iter().map_windows_star(3, bar), PyoIterator[int])
+    _ = assert_type(data.map_windows_star(1, operator.add), Any)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
+    _ = assert_type(data.map_windows_star(2, operator.add), PyoIterator[int])
+    _ = assert_type(data.map_windows(3, sum), PyoIterator[int])
+    _ = assert_type(data.map_windows_star(2, _varargs), PyoIterator[int])
+    _ = assert_type(data.map_windows_star(3, _varargs), PyoIterator[int])
 
 
 def check_for_each_star() -> None:
-    def foo(*_: int) -> None:
-        pass
-
-    def bar(_a: int, _b: int, _c: int) -> None:
-        pass
-
-    def bar2(_a: int, _b: int, _c: int, _d: int) -> None:
-        pass
-
-    def baz(_x: int, _y: int, _z: int, /, _a: int, _b: int) -> None:
-        pass
 
     data_tup = Range(3).iter().map(lambda _: Range(10)).map(tuple)
     data_2 = Range(3).iter().map(lambda x: (x, x + 1))
 
-    _ = assert_type(data_tup.for_each_star(foo, 1, 2, 3), None)
-    _ = assert_type(data_2.for_each_star(bar, 1), None)
-    # pyrefly: ignore [no-matching-overload]
-    _ = assert_type(Range(3).iter().for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
-    # pyrefly: ignore [no-matching-overload]
-    _ = assert_type(data_2.for_each_star(bar, 1, 2), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
-    _ = assert_type(data_2.for_each_star(bar2, 1, 2), None)
-    # pyrefly: ignore [no-matching-overload]
-    _ = assert_type(data_2.for_each_star(bar2, 1), Any)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
-    _ = assert_type(data_2.for_each_star(baz, 1, _a=1, _b=2), None)
+    _ = assert_type(data_tup.for_each_star(_varargs), None)
+    _ = assert_type(data_2.for_each_star(_varargs), None)
+    _ = assert_type(data_2.for_each_star(operator.add), None)
+
+
+def _varargs(*x: int) -> int:
+    return sum(x)

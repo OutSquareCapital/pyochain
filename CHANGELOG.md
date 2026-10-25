@@ -4,9 +4,11 @@
 
 ### 💥 Breaking changes
 
-- `SortedKeySet` and `SortedKeyDict` don't expose anymore their `key` attribute, as this is an implementation detail.
-- `{SortedKeyList, SortedList}::{add, update}` methods have been replaced by `append` and `extend`, respectively. Unlike the original `sortedcontainers` library, who raise runtime errors if those two are called. Allow to be more compliant with the `MutableSequence` protocol.
-- `{SortedKeyList, SortedList}::insert` does not raise runtime errors anymore, and simply forward to `append`. Index is ignored. Allow to be more compliant with the `MutableSequence` protocol.
+#### `PyoIterator::{for_each_star, fold_star}` do not accept `*args` and `**kwargs` anymore
+
+Unfortunately, python typing system limitations forced us to have situations with false negatives (i.e typing accepted, runtime error) to prevent many more false positives (i.e typing rejected, runtime error)
+
+This is because `typing::Concatenate`, `TypeVarTuple`(i.e `*Ts`), `ParamSpec`(i.e `**P`), and `collections::abc::Callable` can't express together things like `Callable[Concatenate[T, *Ts, P], R]`.
 
 #### No more identity function as default key for "key containers"
 
@@ -14,9 +16,17 @@
 
 Moreover, _key_ is now the **first** argument, followed by the _iterable_ argument, and they are both positional-only.
 
-This allows performance improvements, simplify internal implementations, but most importantly, aligns more with the API choice of pyochain, which, unlike the original `sortedcontainers` library, provides those "key containers" as explicit classes, instead of dynamically creating them depending on the signature.
+This allows performance improvements, simplify internal implementations, but most importantly, aligns more with the API choice of pyochain.
+
+Unlike the original `sortedcontainers`, `pyochain` provides those "key containers" as explicit classes, instead of dynamically creating them depending on the signature.
 
 Because, frankly, why would you create a `SortedKeyList` with an identity function as key, when you can just use a `SortedList` instead?
+
+#### Other breaking changes
+
+- `SortedKeySet` and `SortedKeyDict` don't expose anymore their `key` attribute, as this is an implementation detail.
+- `{SortedKeyList, SortedList}::{add, update}` methods have been replaced by `append` and `extend`, respectively. Unlike the original `sortedcontainers` library, who raise runtime errors if those two are called. Allow to be more compliant with the `MutableSequence` protocol.
+- `{SortedKeyList, SortedList}::insert` does not raise runtime errors anymore, and simply forward to `append`. Index is ignored. Allow to be more compliant with the `MutableSequence` protocol.
 
 ### 🆕 New features
 

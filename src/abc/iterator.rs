@@ -535,32 +535,9 @@ impl PyoIterator {
             }),
         }
     }
-    #[pyo3(signature = (func, *args, **kwargs))]
-    fn for_each_star(
-        slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        let mut slf = slf.try_iter()?;
-        match (args.is_empty(), kwargs) {
-            (true, None) => slf.try_for_each(|item| {
-                func.call1(item?.cast_exact::<PyTuple>()?)?;
-                Ok(())
-            }),
-            (true, Some(_)) => slf.try_for_each(|item| {
-                func.call(item?.cast_exact::<PyTuple>()?, kwargs)?;
-                Ok(())
-            }),
-            (false, None) => slf.try_for_each(|item| {
-                func.call_concat1((item?.cast_exact::<PyTuple>()?, args))?;
-                Ok(())
-            }),
-            (false, Some(_)) => slf.try_for_each(|item| {
-                func.call_concat((item?.cast_exact::<PyTuple>()?, args), kwargs)?;
-                Ok(())
-            }),
-        }
+    fn for_each_star(slf: &Bound<'_, Self>, func: &Bound<'_, PyAny>) -> PyResult<()> {
+        slf.try_iter()?
+            .try_for_each(|item| func.call1(item?.cast_exact::<PyTuple>()?).map(|_| ()))
     }
     fn try_for_each(slf: &Bound<'_, Self>, f: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
         let slf = slf.try_iter()?;
@@ -708,32 +685,14 @@ impl PyoIterator {
             .pipe(Ok)
     }
 
-    #[pyo3(signature = (init, func, *args, **kwargs))]
     fn fold_star<'py>(
         slf: &Bound<'py, Self>,
         init: Bound<'py, PyAny>,
         func: &Bound<'py, PyAny>,
-        args: &Bound<'py, PyTuple>,
-        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let mut slf = slf.try_iter()?;
-        match (args.is_empty(), kwargs) {
-            (true, None) => slf.try_fold(init, |acc, item| {
-                func.call_concat1((&acc, item?.cast_exact::<PyTuple>()?, args))
-            }),
-
-            (false, None) => slf.try_fold(init, |acc, item| {
-                func.call_concat1((&acc, item?.cast_exact::<PyTuple>()?, args))
-            }),
-
-            (true, Some(_)) => slf.try_fold(init, |acc, item| {
-                func.call_concat((&acc, item?.cast_exact::<PyTuple>()?, args), kwargs)
-            }),
-
-            (false, Some(_)) => slf.try_fold(init, |acc, item| {
-                func.call_concat((&acc, item?.cast_exact::<PyTuple>()?, args), kwargs)
-            }),
-        }
+        slf.try_iter()?.try_fold(init, |acc, item| {
+            func.call_concat1((&acc, item?.cast_exact::<PyTuple>()?))
+        })
     }
     // TODO: Use `TryIterator` methods here. Need to benchmark current impl first.
     fn find(slf: &Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
