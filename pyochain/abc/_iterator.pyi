@@ -1313,7 +1313,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         This is useful after using methods like `zip`, `product`, or `enumerate` that yield tuples.
 
         Args:
-            func (Callable[..., Option[R]]): Function to apply to unpacked elements.
+            func (Callable[[*U], Option[R]]): Function to apply to unpacked elements.
 
         Returns:
             PyoIterator[R]: An iterable of the results where func returned `Some`.
@@ -1364,10 +1364,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         This is useful after using methods like `.zip()`, `.product()`, or `.enumerate()` that yield tuples.
 
         Args:
-            func (Callable[..., object]): Function to evaluate unpacked elements.
+            func (Callable[[*U], object]): Function to evaluate unpacked elements.
 
         Returns:
-            PyoIterator[U]: An `Iterator` of the items that satisfy the predicate.
+            PyoIterator[tuple[*U]]: An `Iterator` of the items that satisfy the predicate.
 
         Example:
             ```python
@@ -2433,7 +2433,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             Not only it is more readable, but it's also much more performant (up to 30% faster in benchmarks).
 
         Args:
-            func (Callable[..., R]): Function to apply to unpacked elements.
+            func (Callable[[*U], R]): Function to apply to unpacked elements.
 
         Returns:
             PyoIterator[R]: An `Iterator` of results from applying the function to unpacked elements.
