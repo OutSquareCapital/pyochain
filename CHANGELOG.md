@@ -18,6 +18,10 @@ This allows performance improvements, simplify internal implementations, but mos
 
 Because, frankly, why would you create a `SortedKeyList` with an identity function as key, when you can just use a `SortedList` instead?
 
+### 🆕 New features
+
+-`PyoIterator::flat_map_star`, unpacking version of `PyoIterator::flat_map`.
+
 ### 🚀 Performance improvements
 
 - **Massive** global improvements to `SortedList` and `SortedKeyList`, and by extension sorted sets/dicts/views who use them internally. Detailed benchmarks will be provided in the near future.

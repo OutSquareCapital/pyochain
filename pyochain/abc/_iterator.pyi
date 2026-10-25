@@ -1523,6 +1523,29 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert out == Seq(0, 0, 1, 0, 1, 2)
             ```
         """
+    def flat_map_star[*U, R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], Iterable[R]]
+    ) -> PyoIterator[R]:
+        """Unpacks each element of the `Iterator` into positional arguments for the **func**, applies the function, and flattens the result.
+
+        Same as [`flat_map`][], but for iterables of tuples.
+
+        Args:
+            func (Callable[[*U], Iterable[R]]): Function to apply to each element.
+
+        Returns:
+            PyoIterator[R]: An iterable of flattened transformed elements.
+
+        Example:
+            ```python
+            from pyochain import Iter, Seq
+
+            fruits = Seq("apple", "banana", "cherry", "orange")
+            qty = (2, 1, 0, 1)
+            items = fruits.iter().zip(qty).flat_map_star(Iter.repeat).collect(Seq)
+            assert items == Seq("apple", "apple", "banana", "orange")
+            ```
+        """
     # NOTE: I'm not sure if that's the best way to type this, but at least it allows to have a `Never` return type when the `Iterator` is not of `Iterable` type.
     # It clearly separates it from an `Unknown` return type, that may be shrugged off as a typing limitation, but in this case it is a clear indication that the `Iterator` is not of `Iterable` type and thus cannot be flattened.
     @overload

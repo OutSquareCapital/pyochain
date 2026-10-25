@@ -940,6 +940,15 @@ impl PyoIterator {
             .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
             .and_then(pyiterator_into_iter)
     }
+    fn flat_map_star<'py>(
+        slf: &Bound<'py, Self>,
+        func: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::itertools::map_star(func, x))
+            .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
+            .and_then(pyiterator_into_iter)
+    }
     fn flatten<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
