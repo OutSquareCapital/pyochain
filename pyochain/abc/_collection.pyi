@@ -9,7 +9,7 @@ class PyoContainer[T](Checkable, Protocol):
     @abstractmethod
     def __contains__(self, x: T, /) -> bool: ...
     def contains(self, value: T) -> bool:
-        """Check if the `Container` contains the specified **value**.
+        """Check if the `Container` contains the specified *value*.
 
         This is equivalent to `value in self`, but as a method.
 
@@ -17,7 +17,7 @@ class PyoContainer[T](Checkable, Protocol):
             value (T): The value to check for existence.
 
         Returns:
-            bool: True if the value exists in the Collection, False otherwise.
+            bool: `True` if the value exists in the Collection, `False` otherwise.
 
         Example:
             ```python
@@ -51,10 +51,12 @@ class PyoSized(Checkable, Protocol):
         """
 
     def is_empty(self) -> bool:
-        """Returns `True` if the `Collection` contains no elements.
+        """Returns `True` if `Self` contains no elements.
+
+        Equivalent to `len(self) == 0`, but as a method.
 
         Returns:
-            bool: `True` if the `Collection` is empty, `False` otherwise.
+            bool: `True` if `Self` is empty, `False` otherwise.
 
         Example:
             ```python

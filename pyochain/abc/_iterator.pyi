@@ -30,13 +30,13 @@ type Position = Literal["first", "middle", "last", "only"]
 
 type AnyOpt = Option[Any]
 type ZippedLongest[T] = (
-    PyoIterator[tuple[Option[T], AnyOpt]]
-    | PyoIterator[tuple[Option[T], AnyOpt, AnyOpt]]
-    | PyoIterator[tuple[Option[T], AnyOpt, AnyOpt, AnyOpt]]
-    | PyoIterator[tuple[Option[T], AnyOpt, AnyOpt, AnyOpt, AnyOpt]]
-    | PyoIterator[tuple[AnyOpt, ...]]
+    tuple[Option[T], AnyOpt]
+    | tuple[Option[T], AnyOpt, AnyOpt]
+    | tuple[Option[T], AnyOpt, AnyOpt, AnyOpt]
+    | tuple[Option[T], AnyOpt, AnyOpt, AnyOpt, AnyOpt]
+    | tuple[AnyOpt, ...]
 )
-"""Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
+"""Elements yielded by the [`PyoIterator.zip_longest`][] operation."""
 
 type FilterFn[T, R] = Callable[[T], object | TypeIs[R] | TypeGuard[R]] | None
 """Optional closure that can be passed to [`PyoIterator.filter`][] to determine if an element should be yielded."""
@@ -220,9 +220,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Iter, Seq
 
-            assert Iter.once(42).collect(Seq) == Seq(
-                42,
-            )
+            assert Iter.once(42).collect(Seq) == Seq(42)
             ```
         """
 
@@ -248,9 +246,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```python
             from pyochain import Iter, Seq
 
-            assert Iter.once_with(lambda: 42).collect(Seq) == Seq(
-                42,
-            )
+            assert Iter.once_with(lambda: 42).collect(Seq) == Seq(42)
             ```
         """
 
@@ -3933,7 +3929,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     ) -> PyoIterator[
         tuple[Option[T], Option[T2], Option[T3], Option[T4], Option[T5]]
     ]: ...
-    def zip_longest(self, *others: Iterable[Any]) -> ZippedLongest[T]:
+    def zip_longest(self, *others: Iterable[Any]) -> PyoIterator[ZippedLongest[T]]:
         """Make an `Iterator` that aggregates elements from each of `Self` and input `Iterable`s.
 
         If the iterables are of uneven length, missing values are filled-in with `Null`.
