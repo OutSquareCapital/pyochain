@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### 🆕 New features
+
+- `PyoIterator::flat_map_star`, unpacking version of `flat_map`.
+
+- `SortedList` and `SortedKeyList` support `__setitem__` dunder with `int` indexes.
+
 ### 💥 Breaking changes
 
 #### `PyoIterator::{for_each_star, fold_star}` do not accept `*args` and `**kwargs` anymore
@@ -28,12 +34,6 @@ Because, frankly, why would you create a `SortedKeyList` with an identity functi
 - `{SortedKeyList, SortedList}::{add, update}` methods have been replaced by `append` and `extend`, respectively. Unlike the original `sortedcontainers` library, who raise runtime errors if those two are called. Allow to be more compliant with the `MutableSequence` protocol.
 - `{SortedKeyList, SortedList}::insert` does not raise runtime errors anymore, and simply forward to `append`. Index is ignored. Allow to be more compliant with the `MutableSequence` protocol.
 
-### 🆕 New features
-
--`PyoIterator::flat_map_star`, unpacking version of `PyoIterator::flat_map`.
-
-- `SortedList` and `SortedKeyList` support `__setitem__` dunder with `int` indexes.
-
 ### 🚀 Performance improvements
 
 - **Massive** global improvements to `SortedList` and `SortedKeyList`, and by extension sorted sets/dicts/views who use them internally. Detailed benchmarks will be provided in the near future.
@@ -42,7 +42,7 @@ Because, frankly, why would you create a `SortedKeyList` with an identity functi
 
 #### args concatenation
 
-When you do`my_iter.for_each_star(f, *args)`, each element `T` of `my_iter` need to be passed first to `f` as the first argument, followed by the unpacked `args`.
+When you do`my_iter.for_each(f, *args)`, each element `T` of `my_iter` need to be passed first to `f` as the first argument, followed by the unpacked `args`.
 
 This entails reconstructing a new data structure to hold said arguments.
 
@@ -60,7 +60,7 @@ See below for the benchmark results, with the number of `args` in the left colum
 | **16** | 1.21x | 1.26x | 1.26x | 1.25x  | 1.22x   |
 | **32** | 1.00x | 1.17x | 1.19x | 1.20x  | 1.19x   |
 
-- ``PyoIterator::map_windows_star` is **1.05x** to **1.26x** faster across all sizes tested, (small and big iterators, small and big window sizes). A single regression has been noted at 100k items with a window size of 32, which is planned to be fixed in a future release.
+- `PyoIterator::map_windows_star` is **1.05x** to **1.26x** faster across all sizes tested, (small and big iterators, small and big window sizes). A single regression has been noted at 100k items with a window size of 32, which is planned to be fixed in a future release.
 
 ### ✨ Enhancements
 
@@ -73,10 +73,8 @@ See below for the benchmark results, with the number of `args` in the left colum
 ### 🐞 Bug fixes
 
 - **typing**: `PyoIterator::{map_windows, map_windows_star}` now correctly handle functions with varargs.
-- **typing**: `PyoIterator::for_each_star` now correctly handle functions with varargs and ParamSpec.
 - **typing**: `Iter::__new__` missed overloads, which caused false positives with type checkers, for example, when providing a single `Iterable` argument. This is now fixed.
-- **typing**: `PyoIterator::map_star` had false negatives where it accepted functions incompatible with the`Iterator` argument. This is now fixed.
-- **typing**: `PyoIterator::fold_star` now correctly handle tuples with 1 element. With a few other overload tweaks, it should overall be more robust to false positives/negatives.
+- **typing**: `PyoIterator::{for_each_star, map_star, fold_star}`had various typing issues due to the handling of `*args` and `**kwargs`. As explained in breaking changes section, this is now fixed.
 
 ### 🔄 Refactors
 
