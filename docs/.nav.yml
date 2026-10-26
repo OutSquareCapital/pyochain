@@ -1,6 +1,6 @@
 nav:
-  - sortedcontainers migration: sortedcontainers-migration.md
-  - Core Types Overview: overview.md
   - Home: index.md
   - API Reference:
       - autoapi/pyochain/*
+  - sortedcontainers migration: sortedcontainers-migration.md
+  - Core Types Overview: overview.md
