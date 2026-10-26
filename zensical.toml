@@ -9,6 +9,7 @@ extra_javascript = ["javascripts/mermaid.mjs"]
 site_dir = "site"
 
 [project.theme]
+features = ["navigation.indexes"]
 palette = [
   { media = "(prefers-color-scheme: dark)", scheme = "slate", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/moon", name = "Switch to light mode" } },
   { media = "(prefers-color-scheme: light)", scheme = "default", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/sun", name = "Switch to dark mode" } },

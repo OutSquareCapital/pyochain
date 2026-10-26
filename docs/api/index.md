@@ -115,16 +115,16 @@ Since these types fully implement their corresponding interface, they can act as
 
 ### Concrete Collection Types
 
-| Type                | Underlying Structure | Ordered | Uniqueness | Mutability |
-| ------------------- | -------------------- | ------- | ---------- | ---------- |
-| `Iter[T]`           | `Iterator[T]`        | N/A     | N/A        | N/A        |
-| `Peekable[T]`       | `Iterator[T]`        | N/A     | N/A        | N/A        |
-| `Seq[T]`            | `tuple[T]`           | Yes     | No         | No         |
-| `Vec[T]`            | `list[T]`            | Yes     | No         | Yes        |
-| `Set[T]`            | `frozenset[T]`       | No      | Yes        | No         |
-| `SetMut[T]`         | `set[T]`             | No      | Yes        | Yes        |
-| `Dict[K,V]`         | `dict[K, V]`         | Yes     | Keys       | Yes        |
-| `PyoKeysView[K]`    | `KeysView[K]`        | No      | Yes        | No         |
-| `PyoValuesView[V]`  | `ValuesView[V]`      | No      | No         | No         |
-| `PyoItemsView[K,V]` | `ItemsView[K,V]`     | No      | Yes        | No         |
-| `Range`             | `range`              | Yes     | No         | No         |
+| Type                                                    | Underlying Structure | Ordered | Uniqueness | Mutability |
+| ------------------------------------------------------- | -------------------- | ------- | ---------- | ---------- |
+| [`Iter[T]`][pyochain.core._iterators.Iter]              | `Iterator[T]`        | N/A     | N/A        | N/A        |
+| [`Peekable[T]`][pyochain.core._iterators.Peekable]      | `Iterator[T]`        | N/A     | N/A        | N/A        |
+| [`Seq[T]`][pyochain.core._seq.Seq]                      | `tuple[T]`           | Yes     | No         | No         |
+| [`Vec[T]`][pyochain.core._vec.Vec]                      | `list[T]`            | Yes     | No         | Yes        |
+| [`Set[T]`][pyochain.core._set.Set]                      | `frozenset[T]`       | No      | Yes        | No         |
+| [`SetMut[T]`][pyochain.core._set.SetMut]                | `set[T]`             | No      | Yes        | Yes        |
+| [`Dict[K,V]`][pyochain.core._dict.Dict]                 | `dict[K, V]`         | Yes     | Keys       | Yes        |
+| [`PyoKeysView[K]`][pyochain.abc._views.PyoKeysView]     | `KeysView[K]`        | No      | Yes        | No         |
+| [`PyoValuesView[V]`][pyochain.abc._views.PyoValuesView] | `ValuesView[V]`      | No      | No         | No         |
+| [`PyoItemsView[K,V]`][pyochain.abc._views.PyoItemsView] | `ItemsView[K,V]`     | No      | Yes        | No         |
+| [`Range`][pyochain.core._range.Range]                   | `range`              | Yes     | No         | No         |
