@@ -1301,58 +1301,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    @overload
-    def filter_map_star[R](
-        self: Iterator[tuple[Any]],
-        func: Callable[[Any], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, R](
-        self: Iterator[tuple[T1, T2]],
-        func: Callable[[T1, T2], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, R](
-        self: Iterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, R](
-        self: Iterator[tuple[T1, T2, T3, T4]],
-        func: Callable[[T1, T2, T3, T4], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, T6, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Option[R]],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Option[R]],
-    ) -> PyoIterator[R]: ...
-    def filter_map_star[U: Iterable[Any], R](
-        self: Iterator[U], func: Callable[..., Option[R]]
+    def filter_map_star[*U, R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], Option[R]]
     ) -> PyoIterator[R]:
         """Creates an iterator that both filters and maps, where each element is an iterable.
 
@@ -1363,7 +1313,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         This is useful after using methods like `zip`, `product`, or `enumerate` that yield tuples.
 
         Args:
-            func (Callable[..., Option[R]]): Function to apply to unpacked elements.
+            func (Callable[[*U], Option[R]]): Function to apply to unpacked elements.
 
         Returns:
             PyoIterator[R]: An iterable of the results where func returned `Some`.
@@ -1389,86 +1339,22 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert parsed == [(1, 10)]
             ```
         """
-
+    # NOTE: Is there a way to constrain `*R` length to be equal to `*U` length?
     @overload
-    def filter_star[T1, R](
-        self: Iterator[tuple[T1]], func: Callable[[T1], TypeIs[R]]
-    ) -> PyoIterator[tuple[R]]: ...
+    def filter_star[*U, *R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], TypeIs[tuple[*R]]]
+    ) -> PyoIterator[tuple[*R]]: ...
     @overload
-    def filter_star[T1, R](
-        self: Iterator[tuple[T1]], func: Callable[[T1], TypeGuard[R]]
-    ) -> PyoIterator[tuple[R]]: ...
+    def filter_star[*U, *R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], TypeGuard[tuple[*R]]]
+    ) -> PyoIterator[tuple[*R]]: ...
     @overload
-    def filter_star[T1](
-        self: Iterator[tuple[T1]], func: Callable[[T1], object]
-    ) -> PyoIterator[tuple[T1]]: ...
-    @overload
-    def filter_star[T1, T2, R, R2](
-        self: Iterator[tuple[T1, T2]], func: Callable[[T1, T2], TypeIs[tuple[R, R2]]]
-    ) -> PyoIterator[tuple[R, R2]]: ...
-    @overload
-    def filter_star[T1, T2, R, R2](
-        self: Iterator[tuple[T1, T2]],
-        func: Callable[[T1, T2], TypeGuard[tuple[R, R2]]],
-    ) -> PyoIterator[tuple[R, R2]]: ...
-    @overload
-    def filter_star[T1, T2](
-        self: Iterator[tuple[T1, T2]],
-        func: Callable[[T1, T2], object],
-    ) -> PyoIterator[tuple[T1, T2]]: ...
-    @overload
-    def filter_star[T1, T2, T3, R, R2, R3](
-        self: Iterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], TypeIs[tuple[R, R2, R3]]],
-    ) -> PyoIterator[tuple[R, R2, R3]]: ...
-    @overload
-    def filter_star[T1, T2, T3, R, R2, R3](
-        self: Iterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], TypeGuard[tuple[R, R2, R3]]],
-    ) -> PyoIterator[tuple[R, R2, R3]]: ...
-    @overload
-    def filter_star[T1, T2, T3](
-        self: Iterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], object],
-    ) -> PyoIterator[tuple[T1, T2, T3]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4](
-        self: Iterator[tuple[T1, T2, T3, T4]],
-        func: Callable[[T1, T2, T3, T4], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5](
-        self: Iterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
-    def filter_star[U: tuple[Any, ...]](
-        self: Iterator[U], func: Callable[..., object]
-    ) -> PyoIterator[U]:
+    def filter_star[*U](
+        self: Iterator[tuple[*U]], func: Callable[[*U], object]
+    ) -> PyoIterator[tuple[*U]]: ...
+    def filter_star[*U](
+        self: Iterator[tuple[*U]], func: Callable[[*U], object]
+    ) -> PyoIterator[tuple[*U]]:
         """Creates an `Iterator` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
 
         Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the **func**.
@@ -1478,10 +1364,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         This is useful after using methods like `.zip()`, `.product()`, or `.enumerate()` that yield tuples.
 
         Args:
-            func (Callable[..., object]): Function to evaluate unpacked elements.
+            func (Callable[[*U], object]): Function to evaluate unpacked elements.
 
         Returns:
-            PyoIterator[U]: An `Iterator` of the items that satisfy the predicate.
+            PyoIterator[tuple[*U]]: An `Iterator` of the items that satisfy the predicate.
 
         Example:
             ```python
@@ -1530,7 +1416,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def find_map[R](self, func: Callable[[T], Option[R]]) -> Option[R]:
         """Applies function to the elements of the `Iterator` and returns the first Some(R) result.
 
-        `Iter.find_map(f)` is equivalent to `Iter.filter_map(f).next()`.
+        `.find_map(f)` is equivalent to `.filter_map(f).next()`.
 
         Args:
             func (Callable[[T], Option[R]]): Function to apply to each element, returning an `Option[R]`.
@@ -1553,7 +1439,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     def flat_map[R](self, func: Callable[[T], Iterable[R]]) -> PyoIterator[R]:
-        """Creates an iterator that applies a function to each element of the original iterator and flattens the result.
+        """Creates an `Iterator` that applies a function to each element of the original `Iterator` and flattens the result.
 
         This is useful when the **func** you want to pass to `.map()` itself returns an iterable, and you want to avoid having nested iterables in the output.
 
@@ -1571,6 +1457,29 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             out = Range(1, 4).iter().flat_map(range).collect(Seq)
             assert out == Seq(0, 0, 1, 0, 1, 2)
+            ```
+        """
+    def flat_map_star[*U, R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], Iterable[R]]
+    ) -> PyoIterator[R]:
+        """Unpacks each element of the `Iterator` into positional arguments for the **func**, applies the function, and flattens the result.
+
+        Same as [`flat_map`][], but for iterables of tuples.
+
+        Args:
+            func (Callable[[*U], Iterable[R]]): Function to apply to each element.
+
+        Returns:
+            PyoIterator[R]: An iterable of flattened transformed elements.
+
+        Example:
+            ```python
+            from pyochain import Iter, Seq
+
+            fruits = Seq("apple", "banana", "cherry", "orange")
+            qty = (2, 1, 0, 1)
+            items = fruits.iter().zip(qty).flat_map_star(Iter.repeat).collect(Seq)
+            assert items == Seq("apple", "apple", "banana", "orange")
             ```
         """
     # NOTE: I'm not sure if that's the best way to type this, but at least it allows to have a `Never` return type when the `Iterator` is not of `Iterable` type.
@@ -1625,8 +1534,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Args:
             init (B): Initial value for the accumulator.
-            func (Callable[[B, T], B]): Function that takes the accumulator and current element,
-                returning the new accumulator value.
+            func (Callable[[B, T], B]): Function that takes the accumulator and current element, returning the new accumulator value.
 
         Returns:
             B: The final accumulated value.
@@ -1637,101 +1545,18 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         Example:
             ```python
             from pyochain import Seq
+            import operator
 
             data = Seq(1, 2, 3)
 
-            assert data.iter().fold(0, lambda acc, x: acc + x) == 6
-            assert data.iter().fold(10, lambda acc, x: acc + x) == 16
-            assert Seq("a", "b", "c").iter().fold("", lambda acc, x: acc + x) == "abc"
+            assert data.iter().fold(0, operator.add) == 6
+            assert data.iter().fold(10, operator.add) == 16
+            assert Seq("a", "b", "c").iter().fold("", operator.add) == "abc"
             ```
         """
 
-    @overload
-    def fold_star[**P, B](
-        self: Iterator[tuple[Any]],
-        init: B,
-        func: Callable[[Any], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, **P, B](
-        self: Iterator[tuple[T1, T2]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, **P, B](
-        self: Iterator[tuple[T1, T2, T3]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, **P, B](
-        self: Iterator[tuple[T1, T2, T3, T4]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, **P, B](
-        self: Iterator[tuple[T1, T2, T3, T4, T5]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, T6, **P, B](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, T6, T7, **P, B](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, B](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, B](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, B](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    def fold_star[U: Iterable[Any], **P, B](
-        self: Iterator[U],
-        init: B,
-        func: Callable[..., B],
-        *args: P.args,
-        **kwargs: P.kwargs,
+    def fold_star[*U, B](
+        self: Iterator[tuple[*U]], init: B, func: Callable[[B, *U], B]
     ) -> B:
         """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
 
@@ -1739,9 +1564,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Args:
             init (B): Initial value for the accumulator.
-            func (Callable[..., B]): Function that takes the accumulator and current element, returning the new accumulator value.
-            *args (P.args): Additional positional arguments to pass to **func**.
-            **kwargs (P.kwargs): Additional keyword arguments to pass to **func**.
+            func (Callable[[B, *U], B]): Function that takes the accumulator and current element, returning the new accumulator value.
 
         Returns:
             B: The final accumulated value.
@@ -1751,21 +1574,12 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            from pyochain import Iter, Seq
+            from pyochain import Seq
 
             data = Seq((1, 2), (3, 4))
             assert data.iter().fold_star(0, lambda acc, x, y: acc + x + y) == 10
             data = Seq(("a", "b"), ("c", "d"))
             assert data.iter().fold_star("", lambda acc, x, y: acc + x + y) == "abcd"
-            ```
-            You can also pass additional arguments to the folding function:
-            ```python
-            data = Seq((1, 2), (3, 4))
-
-            def add_with_offset(acc: int, x: int, y: int, offset: int) -> int:
-                return acc + x + y + offset
-
-            assert data.iter().fold_star(0, add_with_offset, 10) == 30
             ```
         """
 
@@ -1778,7 +1592,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """Consume the `Iterator` by applying a function to each element in the `Iterable`.
 
         Is a terminal operation, and is useful for functions that have side effects,
-        or when you want to force evaluation of a lazy iterable.
+        or when you want to force evaluation of a lazy `Iterable`.
 
         Args:
             func (Callable[Concatenate[T, P], Any]): Function to apply to each element.
@@ -1794,105 +1608,31 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert out == Vec(1, 2, 3)
             ```
         """
-    @overload
-    def for_each_star[*U, **P, R](
-        self: Iterator[tuple[*U]], func: Callable[[*U], R]
-    ) -> None: ...
-    @overload
-    def for_each_star[U, R](
-        self: Iterator[tuple[U, ...]], func: Callable[[*tuple[U, ...]], R], *args: U
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, **P, R](
-        self: Iterator[tuple[T1, T2]],
-        func: Callable[Concatenate[T1, T2, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, **P, R](
-        self: Iterator[tuple[T1, T2, T3]],
-        func: Callable[Concatenate[T1, T2, T3, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, **P, R](
-        self: Iterator[tuple[T1, T2, T3, T4]],
-        func: Callable[Concatenate[T1, T2, T3, T4, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, **P, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, **P, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, **P, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    def for_each_star[U: tuple[Any, ...], **P, R](
-        self: PyoIterator[*U],
-        func: Callable[Concatenate[*U, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None:
-        """Consume the `Iterator` by applying a function to each unpacked item in the `Iterable` element.
+    def for_each_star[*U](self: Iterator[tuple[*U]], func: Callable[[*U], Any]) -> None:
+        """Consume the `Iterator` by applying a function to each unpacked element in the `Iterable`.
 
         Is a terminal operation, and is useful for functions that have side effects,
-        or when you want to force evaluation of a lazy iterable.
-
-        Each item yielded by the `Iterator` is expected to be an `Iterable` itself (e.g., a tuple or list),
-        and its elements are unpacked as arguments to the provided function.
+        or when you want to force evaluation of a lazy `Iterable`.
 
         This is often used after methods like `zip()` or `enumerate()` that yield tuples.
 
         Args:
-            func (Callable[Concatenate[*U, P], R]): Function to apply to each unpacked element.
-            *args (P.args): Positional arguments for the function.
-            **kwargs (P.kwargs): Keyword arguments for the function.
+            func (Callable[[*U], Any]): Function to apply to each unpacked element.
 
         Example:
             ```python
-            from pyochain import Range, Vec
+            from pyochain import Seq, Vec
 
-            vec = Vec()
-            Range(1, 5).iter().batched(2).for_each_star(lambda x, y: vec.append(x + y))
-            assert vec == Vec(3, 7)
+            vec = Vec[str]()
+            names = Seq("Alice", "Bob", "Charlie", "Eve")
+
+            _ = (
+                names
+                .iter()
+                .enumerate()
+                .for_each_star(lambda i, name: vec.append(f"{i}: {name}"))
+            )
+            assert vec == ["0: Alice", "1: Bob", "2: Charlie", "3: Eve"]
             ```
         """
 
@@ -2502,61 +2242,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert res == Seq((0, 0), (2, 1))
             ```
         """
-    # TODO: Can give false negatives ATM for typing (silence incorrect inputs)
-    @overload
-    def map_star[T1, R](
-        self: Iterator[tuple[T1]], func: Callable[[T1], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, R](
-        self: Iterator[tuple[T1, T2]], func: Callable[[T1, T2], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, R](
-        self: Iterator[tuple[T1, T2, T3]], func: Callable[[T1, T2, T3], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, R](
-        self: Iterator[tuple[T1, T2, T3, T4]], func: Callable[[T1, T2, T3, T4], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: Iterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[U: tuple[Any, ...], R](
-        self: Iterator[U], func: Callable[..., R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star(self, func: Callable[..., Any]) -> Never: ...
-    def map_star[R](
-        self: Iterator[tuple[Any, ...]], func: Callable[..., R]
+
+    def map_star[*U, R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], R]
     ) -> PyoIterator[R]:
         """Applies a function to each element.where each element is a `tuple`.
 
@@ -2572,7 +2260,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             Not only it is more readable, but it's also much more performant (up to 30% faster in benchmarks).
 
         Args:
-            func (Callable[..., R]): Function to apply to unpacked elements.
+            func (Callable[[*U], R]): Function to apply to unpacked elements.
 
         Returns:
             PyoIterator[R]: An `Iterator` of results from applying the function to unpacked elements.

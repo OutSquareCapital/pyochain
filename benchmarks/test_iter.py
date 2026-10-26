@@ -169,32 +169,6 @@ def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
     data.iter().for_each_star(_with_args)
 
 
-@SIZE_PARAMS
-@pytest.mark.parametrize("tup_len", (1, 2, 4, 8, 16))
-def test_for_each_star_args(benchmark: BenchFixture, size: int, tup_len: int) -> None:
-    args = Range(min(tup_len, size)).pipe(tuple)
-    data = Range(size).iter().map(lambda _: args).collect(Seq)
-    assert benchmark(_for_each_star_args, data, args) is None
-
-
-def _for_each_star_args(data: Seq[tuple[int, ...]], args: tuple[int, ...]) -> None:
-    data.iter().for_each_star(_with_args, *args)
-
-
-@pytest.mark.benchmark(group="for_each_star_kwargs")
-@SIZE_PARAMS
-def test_for_each_star_kwargs(benchmark: BenchFixture, size: int) -> None:
-    data = Range(size).iter().map(lambda i: (i, i * 2, i * 3)).collect(Seq)
-    assert benchmark(_for_each_star_kwargs, data) is None
-
-
-def _for_each_star_kwargs(data: Seq[tuple[int, int, int]]) -> None:
-    def fn(_a: int, _b: int, _c: int, _d: int, _e: int, **_kwargs: int) -> None:
-        pass
-
-    data.iter().for_each_star(fn, 1, 2, d=4, e=5)
-
-
 @pytest.mark.benchmark(group="intersperse")
 @SIZE_PARAMS
 def test_intersperse(benchmark: BenchFixture, size: int) -> None:
@@ -373,18 +347,6 @@ def test_fold_star(benchmark: BenchFixture) -> None:
 
 def _fold_star(data: Seq[tuple[int, int]]) -> int:
     return data.iter().fold_star(0, lambda acc, x, y: acc + x + y)
-
-
-def test_fold_star_args_and_kwargs(benchmark: BenchFixture) -> None:
-    data = Range(4096).iter().enumerate().collect(Seq)
-    assert benchmark(_fold_star_args_and_kwargs, data) is not None
-
-
-def _fold_star_args_and_kwargs(data: Seq[tuple[int, int]]) -> int:
-    def f(acc: int, x: int, y: int, offset: int, additional: int) -> int:
-        return acc + x + y + offset + additional
-
-    return data.iter().fold_star(0, f, 10, additional=5)
 
 
 def test_nth(benchmark: BenchFixture) -> None:

@@ -9,6 +9,11 @@ dependencies = []
 
 classifiers = ["License :: OSI Approved :: MIT License"]
 
+[project.urls]
+Documentation = "https://outsquarecapital.github.io/pyochain/"
+Issues = "https://github.com/OutSquareCapital/pyochain/issues"
+Repository = "https://github.com/OutSquareCapital/pyochain"
+
 [dependency-groups]
 dev = [
   "basedpyright>=1.39.10",

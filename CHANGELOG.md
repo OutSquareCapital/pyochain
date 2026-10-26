@@ -4,9 +4,11 @@
 
 ### 💥 Breaking changes
 
-- `SortedKeySet` and `SortedKeyDict` don't expose anymore their `key` attribute, as this is an implementation detail.
-- `{SortedKeyList, SortedList}::{add, update}` methods have been replaced by `append` and `extend`, respectively. Unlike the original `sortedcontainers` library, who raise runtime errors if those two are called. Allow to be more compliant with the `MutableSequence` protocol.
-- `{SortedKeyList, SortedList}::insert` does not raise runtime errors anymore, and simply forward to `append`. Index is ignored. Allow to be more compliant with the `MutableSequence` protocol.
+#### `PyoIterator::{for_each_star, fold_star}` do not accept `*args` and `**kwargs` anymore
+
+Unfortunately, python typing system limitations forced us to have situations with false negatives (i.e typing accepted, runtime error) to prevent many more false positives (i.e typing rejected, runtime error)
+
+This is because `typing::Concatenate`, `TypeVarTuple`(i.e `*Ts`), `ParamSpec`(i.e `**P`), and `collections::abc::Callable` can't express together things like `Callable[Concatenate[T, *Ts, P], R]`.
 
 #### No more identity function as default key for "key containers"
 
@@ -14,9 +16,23 @@
 
 Moreover, _key_ is now the **first** argument, followed by the _iterable_ argument, and they are both positional-only.
 
-This allows performance improvements, simplify internal implementations, but most importantly, aligns more with the API choice of pyochain, which, unlike the original `sortedcontainers` library, provides those "key containers" as explicit classes, instead of dynamically creating them depending on the signature.
+This allows performance improvements, simplify internal implementations, but most importantly, aligns more with the API choice of pyochain.
+
+Unlike the original `sortedcontainers`, `pyochain` provides those "key containers" as explicit classes, instead of dynamically creating them depending on the signature.
 
 Because, frankly, why would you create a `SortedKeyList` with an identity function as key, when you can just use a `SortedList` instead?
+
+#### Other breaking changes
+
+- `SortedKeySet` and `SortedKeyDict` don't expose anymore their `key` attribute, as this is an implementation detail.
+- `{SortedKeyList, SortedList}::{add, update}` methods have been replaced by `append` and `extend`, respectively. Unlike the original `sortedcontainers` library, who raise runtime errors if those two are called. Allow to be more compliant with the `MutableSequence` protocol.
+- `{SortedKeyList, SortedList}::insert` does not raise runtime errors anymore, and simply forward to `append`. Index is ignored. Allow to be more compliant with the `MutableSequence` protocol.
+
+### 🆕 New features
+
+-`PyoIterator::flat_map_star`, unpacking version of `PyoIterator::flat_map`.
+
+- `SortedList` and `SortedKeyList` support `__setitem__` dunder with `int` indexes.
 
 ### 🚀 Performance improvements
 
@@ -51,16 +67,16 @@ See below for the benchmark results, with the number of `args` in the left colum
 - **typing**: Relaxed the _collector_ input type of `PyoIterator::collect`. The constraint on the return type `R: Collection[Any]` was artificial, and was preventing to use `collect` on functions or types who indeed consume the `Iterator`, but weren't strictly speaking a `Collection` (e.g polars DataFrames). In python, the `FromIterator` equivalent is simply `Callable[[Iterator[T]], Any]`, and this is now reflected in the typing of `collect`.
 - **typing**: `Option::{is_some, is_none, unwrap, unwrap_or, unwrap_or_none}` now have overloads to statically return the narrowed type when the variant is already known.
 - **typing**: `Result::and_then` handles a change of Error type in the closure, and returns the correct `Result` type. i.e `Result[T, E].and_then(f: Callable[[T], Result[U, F]]) -> Result[U, E | F]`.
-
-### ✨ Enhancements
-
 - **typing**: Ensured that all sorted containers classes are marked with `typing::{type_check_only, final}` when appropriate.
+- **typing**: `PyoIterator::{map_star, filter_star, filter_map_star}` use tuple unpacking instead of overloads, meaning that the signature can now be statically checked, regardless of the number of arguments in the function (it was stopping a 10 before, and having for example a function taking 11 pos args wouldn't have been flagged as incorrect on an `Iterator` yielding tuples of 10 elements.) It also allow to avoid using `Any` in the signatures, improving type safety.
 
 ### 🐞 Bug fixes
 
 - **typing**: `PyoIterator::{map_windows, map_windows_star}` now correctly handle functions with varargs.
 - **typing**: `PyoIterator::for_each_star` now correctly handle functions with varargs and ParamSpec.
 - **typing**: `Iter::__new__` missed overloads, which caused false positives with type checkers, for example, when providing a single `Iterable` argument. This is now fixed.
+- **typing**: `PyoIterator::map_star` had false negatives where it accepted functions incompatible with the`Iterator` argument. This is now fixed.
+- **typing**: `PyoIterator::fold_star` now correctly handle tuples with 1 element. With a few other overload tweaks, it should overall be more robust to false positives/negatives.
 
 ### 🔄 Refactors
 

@@ -115,10 +115,8 @@ pub(super) trait SortedListMethods:
     fn __rmul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
         self.__mul__(py, num)
     }
-    #[allow(unused_variables)]
-    fn __setitem__(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let msg = "use ``del sl[index]`` and ``sl.add(value)`` instead";
-        Err(PyNotImplementedError::new_err(msg))
+    fn __setitem__(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.write().set_item(index, value)
     }
 
     fn __iadd__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
