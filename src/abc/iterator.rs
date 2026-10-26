@@ -950,13 +950,8 @@ impl PyoIterator {
         length: usize,
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        let py = slf.py();
         slf.try_iter()
-            .and_then(|x| iterators::InnerWindow::new(x, length, func.unbind()))
-            .map(iterators::MapWindow)
-            .and_then(|x| x.into_bound_py_any(py))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
-            .and_then(pyiterator_into_iter)
+            .and_then(|x| iterators::window::new::<false>(x, length, func.unbind()))
     }
     fn map_windows_star<'py>(
         slf: &Bound<'py, Self>,
@@ -964,7 +959,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|x| iterators::get_window_star(x, length, func.unbind()))
+            .and_then(|x| iterators::window::new::<true>(x, length, func.unbind()))
     }
     #[pyo3(signature = (func, *iterables))]
     fn map_with<'py>(

@@ -2362,7 +2362,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             The -3 is no longer there, because it was consumed in order to see if the iteration should stop, but wasn't placed back into the `Iterator`.
         """
+    # NOTE: How to link literal length to a TypeVarTuple?
     # TODO: add doc from rust iterator for more examples
+    @overload
+    def map_windows(self, length: Literal[0], func: object) -> Never: ...
     @overload
     def map_windows[R](
         self, length: Literal[1], func: Callable[[tuple[T]], R]
@@ -2445,7 +2448,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert joined == Seq("ABC", "BCD")
             ```
         """
-
+    @overload
+    def map_windows_star(self, length: Literal[0], func: object) -> Never: ...
     @overload
     def map_windows_star[R](
         self, length: Literal[1], func: Callable[[T], R]
