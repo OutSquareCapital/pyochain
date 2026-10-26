@@ -27,7 +27,6 @@ paths = ["pyochain"]
 
 [project.plugins.mkdocstrings.handlers.python.options]
 docstring_style = "google"
-filters = ["!^_[^_]"]
 inherited_members = false
 members_order = "source"
 scoped_crossrefs = true
