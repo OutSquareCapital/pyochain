@@ -8,96 +8,18 @@ docs_dir = "docs"
 extra_javascript = ["javascripts/mermaid.mjs"]
 site_dir = "site"
 
-nav = [
-  { "API reference" = [
-    { "ABC" = [
-      { "Constructors" = [
-        { "FromIter" = "reference/fromiter.md" },
-        { "Wrapper" = "reference/wrapper.md" },
-        { "FromArgs" = "reference/fromargs.md" },
-        { "FromKwargs" = "reference/fromkwargs.md" },
-      ] },
-      { "Mixins" = [
-        { "Checkable" = "reference/checkable.md" },
-        { "Fluent" = "reference/fluent.md" },
-        { "Pipe" = "reference/pipe.md" },
-        { "Tap" = "reference/tap.md" },
-      ] },
-      { "PyoCollection" = "reference/pyocollection.md" },
-      { "PyoContainer" = "reference/pyocontainer.md" },
-      { "PyoIterable" = "reference/pyoiterable.md" },
-      { "PyoIterator" = "reference/pyoiterator.md" },
-      { "PyoMapping" = "reference/pyomapping.md" },
-      { "PyoMappingView" = "reference/pyomappingview.md" },
-      { "PyoMutableMapping" = "reference/pyomutablemapping.md" },
-      { "PyoMutableSequence" = "reference/pyomutablesequence.md" },
-      { "PyoMutableSet" = "reference/pyomutableset.md" },
-      { "PyoReversible" = "reference/pyoreversible.md" },
-      { "PyoSequence" = "reference/pyosequence.md" },
-      { "PyoSet" = "reference/pyoset.md" },
-      { "PyoSized" = "reference/pyosized.md" },
-    ] },
-    { "Collections" = [
-      { "Deque" = "reference/deque.md" },
-      { "Heap" = "reference/heap.md" },
-      { "HeapMax" = "reference/heapmax.md" },
-      { "HeapMin" = "reference/heapmin.md" },
-      { "PyoCounter" = "reference/pyocounter.md" },
-      { "SortedDict" = "reference/sorteddict.md" },
-      { "SortedItemsView" = "reference/sorteditemsview.md" },
-      { "SortedKeyDict" = "reference/sortedkeydict.md" },
-      { "SortedKeyList" = "reference/sortedkeylist.md" },
-      { "SortedKeySet" = "reference/sortedkeyset.md" },
-      { "SortedKeysView" = "reference/sortedkeysview.md" },
-      { "SortedList" = "reference/sortedlist.md" },
-      { "SortedSet" = "reference/sortedset.md" },
-      { "SortedValuesView" = "reference/sortedvaluesview.md" },
-      { "StableSet" = "reference/stableset.md" },
-    ] },
-    { "Core" = [
-      { "Collections" = [
-        { "Dict" = "reference/dict.md" },
-        { "PyoItemsView" = "reference/pyoitemsview.md" },
-        { "PyoKeysView" = "reference/pyokeysview.md" },
-        { "PyoValuesView" = "reference/pyovaluesview.md" },
-        { "Range" = "reference/range.md" },
-        { "Seq" = "reference/seq.md" },
-        { "Set" = "reference/set.md" },
-        { "SetMut" = "reference/setmut.md" },
-        { "SliceView" = "reference/sliceview.md" },
-        { "Vec" = "reference/vec.md" },
-      ] },
-      { "Error Handling" = [
-        { "Err" = "reference/err.md" },
-        { "Ok" = "reference/ok.md" },
-        { "Result" = "reference/result.md" },
-        { "ResultType" = "reference/resulttype.md" },
-        { "ResultUnwrapError" = "reference/resultunwraperror.md" },
-      ] },
-      { "Iterators" = [
-        { "Iter" = "reference/iter.md" },
-        { "Peekable" = "reference/peekable.md" },
-      ] },
-      { "Optional Values" = [
-        { "None" = "reference/null.md" },
-        { "Option" = "reference/option.md" },
-        { "OptionType" = "reference/optiontype.md" },
-        { "OptionUnwrapError" = "reference/optionunwraperror.md" },
-        { "Some" = "reference/some.md" },
-      ] },
-    ] },
-    { "Overview" = "api-reference.md" },
-  ] },
-  { "sortedcontainers migration" = "sortedcontainers-migration.md" },
-  { "Core Types Overview" = "overview.md" },
-  { "Home" = "index.md" },
-]
-
 [project.theme]
 palette = [
   { media = "(prefers-color-scheme: dark)", scheme = "slate", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/moon", name = "Switch to light mode" } },
   { media = "(prefers-color-scheme: light)", scheme = "default", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/sun", name = "Switch to dark mode" } },
 ]
+
+[project.plugins.awesome-nav]
+
+[project.plugins.mkdocs-autoapi]
+autoapi_dir = "pyochain"
+autoapi_add_nav_entry = false
+autoapi_ignore = ["_types.pyi", "pyochain.pyi", "__init__.py", "**/__init__.pyi"]
 
 [project.plugins.mkdocstrings.handlers.python]
 paths = ["pyochain"]
@@ -110,7 +32,9 @@ members_order = "source"
 scoped_crossrefs = true
 show_inheritance_diagram = true
 show_overloads = true
+show_root_toc_entry = false
 signature_crossrefs = true
+show_source = false
 
 [project.plugins.mkdocstrings.handlers.python.options.docstring_options]
 returns_named_value = false
@@ -119,7 +43,7 @@ returns_named_value = false
 full_output = "llms-full.txt"
 
 [project.plugins.llmstxt.sections]
-"API" = ["reference/*.md"]
+"API" = ["autoapi/**/*.md"]
 
 [project.markdown_extensions.pymdownx.superfences]
 custom_fences = [

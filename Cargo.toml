@@ -8,7 +8,6 @@ license = "MIT"
 members = [
   ".",
   "./crates/pyo3_ext",
-  "./crates/pyochain_build",
   "./crates/pyochain_macros",
   "./crates/sorted_rs",
   "./crates/std_tools",
