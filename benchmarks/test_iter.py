@@ -169,18 +169,6 @@ def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
     data.iter().for_each_star(_with_args)
 
 
-@SIZE_PARAMS
-@pytest.mark.parametrize("tup_len", (1, 2, 4, 8, 16))
-def test_for_each_star_args(benchmark: BenchFixture, size: int, tup_len: int) -> None:
-    args = Range(min(tup_len, size)).pipe(tuple)
-    data = Range(size).iter().map(lambda _: args).collect(Seq)
-    assert benchmark(_for_each_star_args, data, args) is None
-
-
-def _for_each_star_args(data: Seq[tuple[int, ...]], args: tuple[int, ...]) -> None:
-    data.iter().for_each_star(_with_args, *args)
-
-
 @pytest.mark.benchmark(group="intersperse")
 @SIZE_PARAMS
 def test_intersperse(benchmark: BenchFixture, size: int) -> None:

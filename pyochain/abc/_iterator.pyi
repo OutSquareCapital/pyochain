@@ -1339,15 +1339,15 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert parsed == [(1, 10)]
             ```
         """
-
+    # NOTE: Is there a way to constrain `*R` length to be equal to `*U` length?
     @overload
-    def filter_star[*U, R](
-        self: Iterator[tuple[*U]], func: Callable[[*U], TypeIs[R]]
-    ) -> PyoIterator[tuple[R]]: ...
+    def filter_star[*U, *R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], TypeIs[tuple[*R]]]
+    ) -> PyoIterator[tuple[*R]]: ...
     @overload
-    def filter_star[*U, R](
-        self: Iterator[tuple[*U]], func: Callable[[*U], TypeGuard[R]]
-    ) -> PyoIterator[tuple[R]]: ...
+    def filter_star[*U, *R](
+        self: Iterator[tuple[*U]], func: Callable[[*U], TypeGuard[tuple[*R]]]
+    ) -> PyoIterator[tuple[*R]]: ...
     @overload
     def filter_star[*U](
         self: Iterator[tuple[*U]], func: Callable[[*U], object]
