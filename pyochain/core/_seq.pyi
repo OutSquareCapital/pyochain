@@ -14,6 +14,9 @@ class Seq[T](PyoSequence[T], ArgsWrapper[T]):
 
     The underlying data structure is an immutable `tuple`, hence the memory efficiency is better than a [`Vec`][Vec].
 
+    Type parameters:
+        T: The type of the individual elements in the `Seq`.
+
     Tip:
         `Seq(tuple)` is preferred over `Seq(list)` as this is a no-copy operation (Python optimizes `tuple` creation from another `tuple`).
 

@@ -40,6 +40,9 @@ show_source = false
 show_symbol_type_heading = true
 show_symbol_type_toc = true
 summary = true
+type_parameter_headings = true
+show_signature_annotations = true
+show_signature_type_parameters = true
 
 [project.plugins.mkdocstrings.handlers.python.options.docstring_options]
 returns_named_value = false
