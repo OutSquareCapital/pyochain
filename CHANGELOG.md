@@ -32,6 +32,8 @@ Because, frankly, why would you create a `SortedKeyList` with an identity functi
 
 -`PyoIterator::flat_map_star`, unpacking version of `PyoIterator::flat_map`.
 
+- `SortedList` and `SortedKeyList` support `__setitem__` dunder with `int` indexes.
+
 ### 🚀 Performance improvements
 
 - **Massive** global improvements to `SortedList` and `SortedKeyList`, and by extension sorted sets/dicts/views who use them internally. Detailed benchmarks will be provided in the near future.

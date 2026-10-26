@@ -221,4 +221,8 @@ pub trait ListsDataMethods:
         self.load = load;
         self.extend(py, values.into())
     }
+    fn set_item(&mut self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.del_item(value.py(), index)?;
+        self.append(value)
+    }
 }

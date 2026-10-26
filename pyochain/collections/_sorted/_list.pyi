@@ -4,7 +4,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from types import NotImplementedType
-from typing import Self, final, overload, override, type_check_only
+from typing import Never, Self, final, overload, override, type_check_only
 
 from _typeshed import SupportsRichComparison
 
@@ -355,18 +355,28 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
     @overload
-    def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
+    def __setitem__(self, index: slice, value: Iterable[T]) -> Never: ...
     @override
     def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
-        """Warning: Raise not-implemented error.
+        """Delete the element at `index` and add *value* to the sorted list.
 
-        use ``del sl[index]`` and ``sl.add(value)`` instead.
+        Unlike most `MutableSequence` implementations, there's no guarantee for `.[index] == value` after this operation.
 
-        ``sl.__setitem__(index, value)`` <==> ``sl[index] = value``
+        Warning:
+            Currently not implemented for slices.
 
         Args:
             index (int | slice): integer or slice for indexing
             value (T | Iterable[T]): value or iterable of values
+        Examples:
+        ```python
+        from pyochain.collections import SortedList
+
+        sl = SortedList("abcde")
+
+        sl[2] = "f"
+        assert sl == SortedList(["a", "b", "d", "e", "f"])
+        ```
         """
 
     @override
