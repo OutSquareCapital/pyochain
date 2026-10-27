@@ -77,6 +77,7 @@ See below for the benchmark results, with the number of `args` in the left colum
 - **typing**: `PyoIterator::{map_windows, map_windows_star}` now correctly handle functions with varargs.
 - **typing**: `Iter::__new__` missed overloads, which caused false positives with type checkers, for example, when providing a single `Iterable` argument. This is now fixed.
 - **typing**: `PyoIterator::{for_each_star, map_star, fold_star}`had various typing issues due to the handling of `*args` and `**kwargs`. As explained in breaking changes section, this is now fixed.
+- **panic**: `PyoIterator::{map_windows, map_windows_star}` panicked when provided with a window size of 0. This is now fixed, and a `ValueError` is raised instead. The `OverFlowError` on `length < 0` is also correctly documented now.
 
 ### 🔄 Refactors
 
