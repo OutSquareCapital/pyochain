@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from typing import (
     Any,
     Concatenate,
@@ -140,66 +140,14 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
-    @overload
-    def map_star[R](
-        self: Option[tuple[Any]],
-        func: Callable[[Any], R],
-    ) -> Option[R]: ...
-    @overload
-    def map_star[T1, T2, R](
-        self: Option[tuple[T1, T2]],
-        func: Callable[[T1, T2], R],
-    ) -> Option[R]: ...
-    @overload
-    def map_star[T1, T2, T3, R](
-        self: Option[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], R],
-    ) -> Option[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, R](
-        self: Option[tuple[T1, T2, T3, T4]],
-        func: Callable[[T1, T2, T3, T4], R],
-    ) -> Option[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, R](
-        self: Option[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], R],
-    ) -> Option[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, R](
-        self: Option[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], R],
-    ) -> Option[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
-    ) -> Option[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
-    ) -> Option[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
-    ) -> Option[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
-    ) -> Option[R]: ...
-    def map_star[U: Iterable[Any], R](
-        self: OptionType[U], func: Callable[..., R]
-    ) -> Option[R]:
+    def map_star[*U, R](self: Option[tuple[*U]], func: Callable[[*U], R]) -> Option[R]:
         """Maps an `Option[Iterable]` to `Option[U]` by unpacking the iterable into the function.
 
         Done by applying a function to a contained `Some` value,
         leaving a `None` value untouched.
 
         Args:
-            func (Callable[..., R]): The function to apply to the unpacked `Some` value.
+            func (Callable[[*U], R]): The function to apply to the unpacked `Some` value.
 
         Returns:
             Option[R]: A new `Option` with the mapped value if `Some`, otherwise `None`.
@@ -212,64 +160,13 @@ class OptionType[T](Pipe, Protocol):
             assert NONE.map_star(lambda x, y: x + y).is_none()
             ```
         """
-
-    @overload
-    def and_then_star[R](
-        self: Option[tuple[Any]],
-        func: Callable[[Any], Option[R]],
-    ) -> Option[R]: ...
-    @overload
-    def and_then_star[T1, T2, R](
-        self: Option[tuple[T1, T2]],
-        func: Callable[[T1, T2], Option[R]],
-    ) -> Option[R]: ...
-    @overload
-    def and_then_star[T1, T2, T3, R](
-        self: Option[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], Option[R]],
-    ) -> Option[R]: ...
-    @overload
-    def and_then_star[T1, T2, T3, T4, R](
-        self: Option[tuple[T1, T2, T3, T4]],
-        func: Callable[[T1, T2, T3, T4], Option[R]],
-    ) -> Option[R]: ...
-    @overload
-    def and_then_star[T1, T2, T3, T4, T5, R](
-        self: Option[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], Option[R]],
-    ) -> Option[R]: ...
-    @overload
-    def and_then_star[T1, T2, T3, T4, T5, T6, R](
-        self: Option[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], Option[R]],
-    ) -> Option[R]: ...
-    @overload
-    def and_then_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], Option[R]],
-    ) -> Option[R]: ...
-    @overload
-    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Option[R]],
-    ) -> Option[R]: ...
-    @overload
-    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Option[R]],
-    ) -> Option[R]: ...
-    @overload
-    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Option[R]],
-    ) -> Option[R]: ...
-    def and_then_star[U: Iterable[Any], R](
-        self: OptionType[U], func: Callable[..., Option[R]]
+    def and_then_star[*U, R](
+        self: Option[tuple[*U]], func: Callable[[*U], Option[R]]
     ) -> Option[R]:
         """Calls a function if the option is `Some`, unpacking the iterable into the function.
 
         Args:
-            func (Callable[..., Option[R]]): The function to call with the unpacked `Some` value.
+            func (Callable[[*U], Option[R]]): The function to call with the unpacked `Some` value.
 
         Returns:
             Option[R]: The result of the function if `Some`, otherwise `None`.

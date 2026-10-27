@@ -214,69 +214,18 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    @overload
-    def map_star[R](
-        self: Result[tuple[Any], E],
-        func: Callable[[Any], R],
-    ) -> Result[R, E]: ...
-    @overload
-    def map_star[T1, T2, R](
-        self: Result[tuple[T1, T2], E],
-        func: Callable[[T1, T2], R],
-    ) -> Result[R, E]: ...
-    @overload
-    def map_star[T1, T2, T3, R](
-        self: Result[tuple[T1, T2, T3], E],
-        func: Callable[[T1, T2, T3], R],
-    ) -> Result[R, E]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, R](
-        self: Result[tuple[T1, T2, T3, T4], E],
-        func: Callable[[T1, T2, T3, T4], R],
-    ) -> Result[R, E]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, R](
-        self: Result[tuple[T1, T2, T3, T4, T5], E],
-        func: Callable[[T1, T2, T3, T4, T5], R],
-    ) -> Result[R, E]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6], E],
-        func: Callable[[T1, T2, T3, T4, T5, T6], R],
-    ) -> Result[R, E]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7], E],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
-    ) -> Result[R, E]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8], E],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
-    ) -> Result[R, E]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9], E],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
-    ) -> Result[R, E]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], E],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
-    ) -> Result[R, E]: ...
-    def map_star[U: tuple[Any, ...], R](
-        self: ResultType[U, E],
-        func: Callable[..., R],
-    ) -> Result[R, E]:
-        """Maps a `Result[tuple, E]` to `Result[R, E]` by unpacking the tuple.
+    def map_star[*U, E1, R](
+        self: Result[tuple[*U], E1], func: Callable[[*U], R]
+    ) -> Result[R, E1]:
+        """Maps a `Result[tuple[*U], E1]` to `Result[R, E1]` by unpacking the tuple.
 
         Done by applying a function to a contained `Ok` value (which is expected to be a `tuple`).
 
         Args:
-            func (Callable[..., R]): The function to apply to the unpacked `Ok` value.
+            func (Callable[[*U], R]): The function to apply to the unpacked `Ok` value.
 
         Returns:
-            Result[R, E]: A new `Result` with the mapped value if `Ok`, otherwise the original `Err`.
+            Result[R, E1]: A new `Result` with the mapped value if `Ok`, otherwise the original `Err`.
 
         Example:
             ```python
@@ -288,68 +237,18 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    @overload
-    def and_then_star[S, T1, R](
-        self: Result[tuple[T1], S],
-        func: Callable[[T1], Result[R, S]],
-    ) -> Result[R, S]: ...
-    @overload
-    def and_then_star[S, T1, T2, R](
-        self: Result[tuple[T1, T2], S],
-        func: Callable[[T1, T2], Result[R, S]],
-    ) -> Result[R, S]: ...
-    @overload
-    def and_then_star[S, T1, T2, T3, R](
-        self: Result[tuple[T1, T2, T3], S],
-        func: Callable[[T1, T2, T3], Result[R, S]],
-    ) -> Result[R, S]: ...
-    @overload
-    def and_then_star[S, T1, T2, T3, T4, R](
-        self: Result[tuple[T1, T2, T3, T4], S],
-        func: Callable[[T1, T2, T3, T4], Result[R, S]],
-    ) -> Result[R, S]: ...
-    @overload
-    def and_then_star[S, T1, T2, T3, T4, T5, R](
-        self: Result[tuple[T1, T2, T3, T4, T5], S],
-        func: Callable[[T1, T2, T3, T4, T5], Result[R, S]],
-    ) -> Result[R, S]: ...
-    @overload
-    def and_then_star[S, T1, T2, T3, T4, T5, T6, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6], S],
-        func: Callable[[T1, T2, T3, T4, T5, T6], Result[R, S]],
-    ) -> Result[R, S]: ...
-    @overload
-    def and_then_star[S, T1, T2, T3, T4, T5, T6, T7, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7], S],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], Result[R, S]],
-    ) -> Result[R, S]: ...
-    @overload
-    def and_then_star[S, T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8], S],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Result[R, S]],
-    ) -> Result[R, S]: ...
-    @overload
-    def and_then_star[S, T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9], S],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Result[R, S]],
-    ) -> Result[R, S]: ...
-    @overload
-    def and_then_star[S, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], S],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Result[R, S]],
-    ) -> Result[R, S]: ...
-    def and_then_star[U: tuple[Any, ...], R](
-        self: Result[U, E], func: Callable[..., Result[R, E]]
-    ) -> Result[R, E]:
+    def and_then_star[*U, E1, R](
+        self: Result[tuple[*U], E1], func: Callable[[*U], Result[R, E1]]
+    ) -> Result[R, E1]:
         """Calls a function if the result is `Ok`, unpacking the tuple.
 
         Done by applying a function to a contained `Ok` value (which is expected to be a tuple).
 
         Args:
-            func (Callable[..., Result[R, E]]): The function to call with the unpacked `Ok` value.
+            func (Callable[[*U], Result[R, E1]]): The function to call with the unpacked `Ok` value.
 
         Returns:
-            Result[R, E]: The result of the function if `Ok`, otherwise the original `Err`.
+            Result[R, E1]: The result of the function if `Ok`, otherwise the original `Err`.
 
         Example:
             ```python
