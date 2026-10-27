@@ -7,7 +7,7 @@ use pyo3::{
 use pyo3_ext::prelude::*;
 use tap::prelude::*;
 
-#[pyclass(module = "pyochain.abc", frozen, subclass, name = "Pipe")]
+#[pyclass(module = "pyochain.mixins", frozen, subclass, name = "Pipe")]
 pub struct PyoPipe;
 
 #[pymethods]
@@ -19,7 +19,7 @@ impl PyoPipe {
     }
 }
 
-#[pyclass(module = "pyochain.abc", frozen, subclass, name = "Tap")]
+#[pyclass(module = "pyochain.mixins", frozen, subclass, name = "Tap")]
 pub struct PyoTap;
 #[pymethods]
 impl PyoTap {
@@ -29,7 +29,7 @@ impl PyoTap {
         PyoTap {}
     }
 }
-#[pyclass(module = "pyochain.abc", frozen, subclass)]
+#[pyclass(module = "pyochain.mixins", frozen, subclass)]
 pub struct Fluent;
 
 #[pymethods]
@@ -40,7 +40,7 @@ impl Fluent {
         Fluent {}
     }
 }
-#[pyclass(module = "pyochain.abc", frozen, subclass)]
+#[pyclass(module = "pyochain.mixins", frozen, subclass)]
 pub struct Checkable;
 #[pymethods]
 impl Checkable {
