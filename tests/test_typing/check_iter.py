@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 import operator
-from typing import TYPE_CHECKING, Any, Literal, Never, assert_type
+from typing import TYPE_CHECKING, Any, Literal, Never, assert_never, assert_type
 
 from pyochain import Iter, Range, Seq, Some
 from pyochain.abc import PyoIterator
@@ -114,7 +114,7 @@ def check_starred(failure: bool) -> None:
 type TupItem = tuple[int, str, bool]
 
 
-def check_map_windows() -> None:
+def check_map_windows(failure: int) -> None:
     data = Range(3).iter()
     # pyrefly: ignore [no-matching-overload]
     _ = assert_type(data.map_windows_star(1, operator.add), Any)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
@@ -122,6 +122,11 @@ def check_map_windows() -> None:
     _ = assert_type(data.map_windows(3, sum), PyoIterator[int])
     _ = assert_type(data.map_windows_star(2, _varargs), PyoIterator[int])
     _ = assert_type(data.map_windows_star(3, _varargs), PyoIterator[int])
+    match failure:
+        case 0:
+            _ = assert_never(data.map_windows(0, operator.add))
+        case _:
+            _ = assert_never(data.enumerate().map_windows_star(0, operator.add))
 
 
 def check_for_each_star() -> None:
