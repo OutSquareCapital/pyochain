@@ -2,7 +2,7 @@ from collections.abc import Iterable, Iterator
 from typing import Any, Self, SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoSequence
-from pyochain.abc.constructors import ArgsWrapper
+from pyochain.constructors import ArgsWrapper
 
 type IntoSeq[T] = Seq[T] | tuple[T, ...]
 
@@ -13,6 +13,9 @@ class Seq[T](PyoSequence[T], ArgsWrapper[T]):
     Implements the `Sequence` Protocol from `collections.abc`, as well as `PyoSequence`.
 
     The underlying data structure is an immutable `tuple`, hence the memory efficiency is better than a [`Vec`][Vec].
+
+    Type parameters:
+        T: The type of the individual elements in the `Seq`.
 
     Tip:
         `Seq(tuple)` is preferred over `Seq(list)` as this is a no-copy operation (Python optimizes `tuple` creation from another `tuple`).

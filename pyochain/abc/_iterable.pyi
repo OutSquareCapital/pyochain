@@ -2,7 +2,8 @@ from abc import abstractmethod
 from collections.abc import Iterator
 from typing import Protocol, runtime_checkable
 
-from pyochain.abc import Checkable, Fluent, PyoIterator
+from pyochain.abc import PyoIterator
+from pyochain.mixins import Checkable, Fluent
 
 @runtime_checkable
 class PyoIterable[T](Checkable, Fluent, Protocol):
@@ -11,9 +12,9 @@ class PyoIterable[T](Checkable, Fluent, Protocol):
     It's the common API surface shared by:
 
     - eager `Collections`: `Seq`, `Vec`, `Set`, `SetMut`, `Dict`
-    - lazy `Iterator`: `Iter`
+    - lazy `Iterator`: [`Iter`][]
 
-    It extends the standard `Iterable[T]` protocol, as well as `Fluent` and `Checkable`.
+    It extends the standard `Iterable[T]` protocol, as well as [`Fluent`][] and [`Checkable`][].
 
     All concrete subclasses must implement `__iter__()`.
 
@@ -70,9 +71,9 @@ class PyoIterable[T](Checkable, Fluent, Protocol):
     @abstractmethod
     def __iter__(self) -> Iterator[T]: ...
     def iter[I](self: PyoIterable[I]) -> PyoIterator[I]:
-        """Returns a `PyoIterator` object over the `Iterable`.
+        """Returns a [`PyoIterator`][] object over `Self`.
 
-        By default, this returns an `Iter`, but can be overriden by concrete subclasses.
+        By default, this returns an [`Iter`][], but can be overriden by concrete subclasses.
 
         This method is the pyochain equivalent of the `__iter__` dunder method.
 

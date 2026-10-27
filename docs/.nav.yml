@@ -1,0 +1,6 @@
+nav:
+  - Home: index.md
+  - API reference:
+      - api/index.md
+      - autoapi/pyochain/*
+  - sortedcontainers migration: sortedcontainers-migration.md

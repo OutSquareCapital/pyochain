@@ -1,3 +1,5 @@
+"""Simple, implementation-agnostic classes that can be easily subclassed to provide additional convenience methods."""
+
 from collections.abc import Callable
 from typing import Concatenate, Protocol, Self
 
@@ -118,7 +120,7 @@ class Checkable(Protocol):
         ```
         This can also be extended to any type, not just collections.
         ```python
-        from pyochain.abc import Checkable
+        from pyochain.mixins import Checkable
 
         class MyString(str, Checkable): ...
 
@@ -310,3 +312,5 @@ class Checkable(Protocol):
             assert Seq().err_or_else(lambda s: msg).unwrap() == msg
             ```
         """
+
+__all__ = ["Checkable", "Fluent", "Pipe", "Tap"]

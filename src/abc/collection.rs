@@ -1,4 +1,4 @@
-use crate::abc::{Checkable, PyoIterable};
+use crate::{abc::PyoIterable, mixins::Checkable};
 use pyo3::{
     prelude::*,
     types::{PyDict, PyTuple},

@@ -28,10 +28,9 @@ assert res == (1, 9, 25, 49, 81)
 
 ## Next steps
 
-- [**Overview**](overview.md)
-- [**API Reference**](api-reference.md) — complete public API docs
-- [🤖 Agent-friendly API reference](https://outsquarecapital.github.io/pyochain/llms.txt)
-- [🤖 Agent-friendly API reference (All content at once)](https://outsquarecapital.github.io/pyochain/llms.txt)
+- [**API reference**](api/index.md)
+- [**🤖 Agent-friendly API reference**](llms.txt)
+- [**🤖 Agent-friendly API reference (All content at once)**](llms-full.txt)
 - [**GitHub Repository**](https://github.com/OutSquareCapital/pyochain)
 - [**Contributing Guide**](https://github.com/OutSquareCapital/pyochain/blob/master/CONTRIBUTING.md)
 - [**PyPI Package**](https://pypi.org/project/pyochain/)

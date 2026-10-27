@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{abc, collections, core};
+use crate::{abc, collections, core, mixins};
 use pyo3::{
     PyClass, PyTypeInfo,
     exceptions::PyTypeError,
@@ -140,8 +140,8 @@ macro_rules! impl_pyoabc {
 }
 
 impl_pyoabc! {
-    abc::Checkable => abc::PyoSized,
-    abc::Checkable => abc::PyoIterable,
+    mixins::Checkable => abc::PyoSized,
+    mixins::Checkable => abc::PyoIterable,
     abc::PyoIterable => abc::PyoReversible,
     abc::PyoIterable => abc::PyoIterator,
     abc::PyoIterable => abc::PyoCollection,
@@ -153,9 +153,9 @@ impl_pyoabc! {
     abc::PyoMapping => abc::PyoMutableMapping,
     abc::PyoMutableSequence => collections::Heap,
 }
-impl PyoABC for abc::Checkable {
+impl PyoABC for mixins::Checkable {
     fn build_init() -> PyClassInitializer<Self> {
-        PyClassInitializer::from(abc::Checkable)
+        PyClassInitializer::from(mixins::Checkable)
     }
 }
 pub trait IntoInit: PyTypeInfo + PyClass {

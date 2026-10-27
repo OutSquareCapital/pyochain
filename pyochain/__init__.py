@@ -61,7 +61,7 @@ Python API Documentation: https://outsquarecapital.github.io/pyochain/
 Source Code: https://github.com/OutSquareCapital/pyochain
 """
 
-from . import abc, collections
+from . import abc, collections, mixins
 from .pyochain import (
     NONE,
     Dict,
@@ -111,6 +111,7 @@ __all__ = [
     "Vec",
     "abc",
     "collections",
+    "mixins",
     "option",
     "then_if_some",
     "then_if_true",

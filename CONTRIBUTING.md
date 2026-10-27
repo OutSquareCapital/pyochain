@@ -58,26 +58,11 @@ docstrings should follow the google format. See more information on [Google Pyth
 
 The code in the `examples` section will be automatically part of the test suite (`pytest-docflex`, which also collects `README.md` and `docs/`).
 
-Every function in a stub needs a docstring with at least one closed `python` code block, this is checked by `pyochain-build` (see below).
+Every public function/method in a stub needs a docstring with at least one closed `python` code block.
 
 We use code blocks instead of doctests, which means that the whole pytest ecosystem is available, which can be handy for expected failures.
 
 See [this file](pyochain/abc/_iterator.pyi) for a practical reference for documentation style.
-
-### Automatic generation
-
-Prior to a release, run the tool to check the coherence between the stubs and the Rust source, generate the pages of `docs/reference`, and validate the navigation of `zensical.toml`.
-
-A new class page must also be added to the `nav` of `zensical.toml`.
-
-You can run one of the following commands:
-
-```bash
-cargo run -p pyochain-build
-cargo run --release -p pyochain-build
-cargo build -p pyochain-build
-cargo build --release -p pyochain-build
-```
 
 ### Website build
 
