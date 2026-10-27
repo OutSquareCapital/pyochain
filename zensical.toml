@@ -20,7 +20,7 @@ palette = [
 [project.plugins.mkdocs-autoapi]
 autoapi_dir = "pyochain"
 autoapi_add_nav_entry = false
-autoapi_ignore = ["_types.pyi", "pyochain.pyi", "__init__.py", "**/__init__.pyi"]
+autoapi_ignore = ["_types.pyi", "pyochain.pyi", "__init__.py"]
 
 [project.plugins.mkdocstrings.handlers.python]
 paths = ["pyochain"]
@@ -33,7 +33,6 @@ scoped_crossrefs = true
 show_inheritance_diagram = true
 show_overloads = true
 backlinks = "tree"
-show_root_toc_entry = false
 signature_crossrefs = true
 show_source = false
 show_symbol_type_heading = true
