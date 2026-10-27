@@ -41,6 +41,8 @@ summary = true
 type_parameter_headings = true
 show_signature_annotations = true
 show_signature_type_parameters = true
+heading_level = 1  # Default is 2, but since we auto-generate the API docs, there's no pre-existing heading to handle
+show_root_heading = true  # Needed otherwise the navigation menu by page (to the right) disappears with `heading_level = 1`
 
 [project.plugins.mkdocstrings.handlers.python.options.docstring_options]
 returns_named_value = false
