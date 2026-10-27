@@ -70,7 +70,7 @@ See below for the benchmark results, with the number of `args` in the left colum
 - **typing**: `Option::{is_some, is_none, unwrap, unwrap_or, unwrap_or_none}` now have overloads to statically return the narrowed type when the variant is already known.
 - **typing**: `Result::and_then` handles a change of Error type in the closure, and returns the correct `Result` type. i.e `Result[T, E].and_then(f: Callable[[T], Result[U, F]]) -> Result[U, E | F]`.
 - **typing**: Ensured that all sorted containers classes are marked with `typing::{type_check_only, final}` when appropriate.
-- **typing**: `PyoIterator::{map_star, filter_star, filter_map_star}` use tuple unpacking instead of overloads, meaning that the signature can now be statically checked, regardless of the number of arguments in the function (it was stopping a 10 before, and having for example a function taking 11 pos args wouldn't have been flagged as incorrect on an `Iterator` yielding tuples of 10 elements.) It also allow to avoid using `Any` in the signatures, improving type safety.
+- **typing**: `PyoIterator::{map_star, filter_star, filter_map_star}` and `{Result, Option}::{map_star, and_then_star}` use tuple unpacking instead of overloads, meaning that the signature can now be statically checked, regardless of the number of arguments in the function (it was stopping a 10 before, and having for example a function taking 11 pos args wouldn't have been flagged as incorrect on an `Iterator` yielding tuples of 10 elements.) It also allow to avoid using `Any` in the signatures, improving type safety.
 
 ### 🐞 Bug fixes
 
