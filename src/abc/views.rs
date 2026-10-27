@@ -1,6 +1,7 @@
 use crate::{
-    abc::{Checkable, PyoSet, PyoSized, traits::MappingView},
+    abc::{PyoSet, PyoSized, traits::MappingView},
     core::{SetMut, iterators},
+    mixins::Checkable,
     traits::IntoInit,
 };
 use derive_more::{Deref, From};

@@ -13,7 +13,8 @@ from typing import (
 )
 
 from pyochain import Result
-from pyochain.abc import Pipe, PyoIterator
+from pyochain.abc import PyoIterator
+from pyochain.mixins import Pipe
 
 class OptionUnwrapError(RuntimeError): ...
 

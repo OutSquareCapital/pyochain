@@ -1,9 +1,7 @@
 mod collection;
-pub mod constructors;
 mod iterable;
 mod iterator;
 mod mappings;
-mod mixins;
 mod mutable_set;
 mod sequences;
 mod set;
@@ -13,7 +11,6 @@ pub use collection::{PyoCollection, PyoContainer, PyoSized};
 pub use iterable::PyoIterable;
 pub use iterator::PyoIterator;
 pub use mappings::{PyoMapping, PyoMutableMapping};
-pub use mixins::{Checkable, Fluent, PyoPipe, PyoTap};
 pub use mutable_set::PyoMutableSet;
 pub use sequences::{PyoMutableSequence, PyoReversible, PyoSequence};
 pub use set::PyoSet;

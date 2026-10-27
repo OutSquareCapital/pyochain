@@ -4,6 +4,7 @@ use crate::{
     core::{
         Dict, PyNull, PySome, PyoErr, PyoOk, SliceViewIterator, SliceViewReverseIterator, iterators,
     },
+    mixins,
 };
 use pyo3::{
     PyTypeInfo,
@@ -64,8 +65,8 @@ pub trait ImplPyoIterator: Sized {
     PyNull,
     PyoOk,
     PyoErr,
-    abc::Fluent,
-    abc::PyoPipe,
+    mixins::Fluent,
+    mixins::PyoPipe,
     abc::PyoIterable,
     abc::PyoIterator
 )]
@@ -82,7 +83,7 @@ trait PipeMethod: PyTypeInfo {
             .pipe(Ok)
     }
 }
-#[py_abc(abc::Fluent, abc::PyoTap, abc::PyoIterable)]
+#[py_abc(mixins::Fluent, mixins::PyoTap, abc::PyoIterable)]
 trait TapMethod: PyTypeInfo {
     #[pyo3(signature = (f, *args, **kwargs))]
     fn tap<'py>(

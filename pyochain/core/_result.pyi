@@ -11,7 +11,8 @@ from typing import (
 )
 
 from pyochain import Option
-from pyochain.abc import Pipe, PyoIterator
+from pyochain.abc import PyoIterator
+from pyochain.mixins import Pipe
 
 def then_if_true[T](value: T, *, predicate: Callable[[T], bool]) -> Option[T]:
     """Creates an `Option[T]` based on a **predicate** condition on the provided **value**.

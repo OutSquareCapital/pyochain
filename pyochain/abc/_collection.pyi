@@ -1,7 +1,8 @@
 from abc import abstractmethod
 from typing import Any, Protocol, runtime_checkable
 
-from pyochain.abc import Checkable, PyoIterable
+from pyochain.abc import PyoIterable
+from pyochain.mixins import Checkable
 
 @runtime_checkable
 class PyoContainer[T](Checkable, Protocol):

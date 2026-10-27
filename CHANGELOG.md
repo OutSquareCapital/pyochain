@@ -30,6 +30,8 @@ Because, frankly, why would you create a `SortedKeyList` with an identity functi
 
 #### Other breaking changes
 
+- `abc::{constructors, _mixins}` are moved to the top-level of the package, and the latter renamed to `mixins`, and the imports of it's classes removed from `abc` module. Replace `from pyochain.abc import <Foo>` by `from pyochain.{mixins, constructors} import <Foo>` to migrate your code. Align the `abc` module with python stdlib.
+- Same for `abc::`.
 - `SortedKeySet` and `SortedKeyDict` don't expose anymore their `key` attribute, as this is an implementation detail.
 - `{SortedKeyList, SortedList}::{add, update}` methods have been replaced by `append` and `extend`, respectively. Unlike the original `sortedcontainers` library, who raise runtime errors if those two are called. Allow to be more compliant with the `MutableSequence` protocol.
 - `{SortedKeyList, SortedList}::insert` does not raise runtime errors anymore, and simply forward to `append`. Index is ignored. Allow to be more compliant with the `MutableSequence` protocol.

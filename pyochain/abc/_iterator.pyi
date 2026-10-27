@@ -814,7 +814,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         The *collector* can be any `Callable` that takes an `Iterator[T]` as an input.
 
-        This is equivalent to [`Pipe::pipe`][Pipe.pipe] at runtime, but with a more idiomatic name, and better performance (no args/kwargs unpacking).
+        This is equivalent to [`mixins.Pipe.pipe`][] at runtime, but with a more idiomatic name, and better performance (no args/kwargs unpacking).
 
         Args:
             collector (Callable[[Iterator[T]], R]): Function|type that can take an `Iterator` as input.
@@ -3946,7 +3946,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             *others (Iterable[Any]): Other iterables to zip with.
 
         Returns:
-            ZippedLongest[T]: An `Iterator` of tuples containing optional elements from the zipped iterables.
+            PyoIterator[ZippedLongest[T]]: An `Iterator` of tuples containing optional elements from the zipped iterables.
 
         Example:
             ```python
