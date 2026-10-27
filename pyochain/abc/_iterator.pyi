@@ -2415,7 +2415,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def map_windows[R](
         self, length: int, func: Callable[[tuple[T, ...]], R]
     ) -> PyoIterator[R]:
-        """Calls the given *func* for each contiguous window of size *length* over **self**.
+        """Calls the given *func* for each contiguous window of size *length* over `Self`.
 
         The windows during mapping overlaps.
 
@@ -2426,10 +2426,14 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             func (Callable[[tuple[T, ...]], R]): Function to apply to each window.
 
         Returns:
-            PyoIterator[R]: An iterator over the outputs of func.
+            PyoIterator[R]: An `Iterator` over the outputs of *func*.
+
+        Raises:
+            OverflowError: If *length* < 0.
+            ValueError: If *length* == 0.
 
         See Also:
-            [`map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.
+            [`map_windows_star`][] for a version that unpacks the window into separate arguments.
 
         Example:
             ```python
@@ -2438,14 +2442,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             data = Seq(1, 2, 3, 4)
             summed = data.iter().map_windows(2, sum).collect(Seq)
             assert summed == Seq(3, 5, 7)
-
-            joined = (
-                Seq("abcd")
-                .iter()
-                .map_windows(3, lambda window: "".join(window).upper())
-                .collect(Seq)
-            )
-            assert joined == Seq("ABC", "BCD")
+            lengths = data.iter().map_windows(3, len).collect(Seq)
+            assert lengths == Seq(3, 3)
             ```
         """
     @overload
@@ -2497,18 +2495,18 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def map_windows_star[R](
         self, length: int, func: Callable[[*tuple[T, ...]], R]
     ) -> PyoIterator[R]:
-        """Calls the given *func* for each contiguous window of size *length* over **self**.
-
-        The windows during mapping overlaps.
-
-        The provided function is called with each element of the window as separate arguments.
+        """Similar to `map_windows`, but the provided function is called with each element of the window as separate arguments.
 
         Args:
             length (int): The length of each window.
             func (Callable[[*tuple[T, ...]], R]): Function to apply to each window.
 
         Returns:
-            PyoIterator[R]: An iterator over the outputs of func.
+            PyoIterator[R]: An `Iterator` over the outputs of *func*.
+
+        Raises:
+            OverflowError: If *length* < 0.
+            ValueError: If *length* == 0.
 
         See Also:
             [`map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.
