@@ -47,7 +47,7 @@ def test_keyword_args() -> None:
 
 
 def test_truth() -> None:
-    assert bool(Seq())
+    assert bool(Seq[int]())
     assert not bool(Seq(42))
 
 
