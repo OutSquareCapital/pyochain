@@ -5,6 +5,7 @@ from typing import Any, Self, override
 
 from pyochain.abc import PyoSet
 
+# pyrefly: ignore [implicit-abstract-class]
 class PyoMutableSet[T](PyoSet[T], MutableSet[T]):  # pyright: ignore[reportImplicitAbstractClass]
     """ABCs for read-only and mutable sets."""
     # TODO: check logic of typing and impl for vanilla collections.abc

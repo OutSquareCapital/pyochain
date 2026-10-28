@@ -133,6 +133,7 @@ class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # 
             ```
         """
 
+# pyrefly: ignore [implicit-abstract-class]
 class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyright: ignore[reportImplicitAbstractClass]
     """Extends `PyoMapping[K, V]` and `collections.abc.MutableMapping[K, V]`.
 

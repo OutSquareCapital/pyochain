@@ -66,7 +66,7 @@ def test_max_push_pop() -> None:
         heap.push(item)
         check_max_invariant(heap)
     results: list[float] = []
-    while heap:
+    while heap is True:
         item = heap.pop()
         check_max_invariant(heap)
         results.append(item)
@@ -90,7 +90,7 @@ def test_heapify() -> None:
 def check_invariant(heap: Sequence[float]) -> None:
     # Check the heap invariant.
     for pos, item in enumerate(heap):
-        if pos:  # pos 0 has no parent
+        if pos != 0:  # pos 0 has no parent
             parentpos = (pos - 1) >> 1
             assert heap[parentpos] <= item
 

@@ -90,6 +90,7 @@ def _calls_nb(size: int) -> int:
 
 def into_sorted[C: SortedCollection](values: PyoIterable[int], cls: type[C]) -> C:
     if is_dict(cls):
+        # pyrefly: ignore [bad-return]
         return cls(values.iter().map(_item_to_pair))  # pyright: ignore[reportReturnType]
     else:
         return cls(values)  # pyright: ignore[reportReturnType]
@@ -115,6 +116,8 @@ def _item_to_pair(item: int) -> tuple[int, int]:
 
 def add_fn(cls: type[SortedSequence]) -> Callable[[SortedSequence, int], None]:
     if cls is SortedList:
+        # pyrefly: ignore [bad-return]
         return SortedList[int].append  # pyright: ignore[reportReturnType]
     else:
+        # pyrefly: ignore [bad-return]
         return cls.add  # pyright: ignore[reportReturnType]

@@ -297,6 +297,7 @@ def test_extend_left() -> None:
         d.extend_left(fail())
 
 
+# pyrefly: ignore [bad-return]
 def fail() -> Never:
     raise SyntaxError
     yield 1  # pyright: ignore[reportUnreachable]
