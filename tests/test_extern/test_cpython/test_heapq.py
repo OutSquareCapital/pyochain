@@ -66,7 +66,7 @@ def test_max_push_pop() -> None:
         heap.push(item)
         check_max_invariant(heap)
     results: list[float] = []
-    while heap is True:
+    while len(heap) > 0:
         item = heap.pop()
         check_max_invariant(heap)
         results.append(item)
