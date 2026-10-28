@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### 🏆 Highlights
+
+- **Performance**: global improvements to `SortedList` and `SortedKeyList`, and by extension sorted sets/dicts/views who use them internally. Detailed benchmarks will be provided in the near future.
+- **Documentation**: Overhaul of the website navigation and structure, to improve readability, reduce redundant informations, and ensure that all classes is present. Concretely, replaced a manual handling of it by mkdocs plugins that handle almost everything automatically.
+
 ### 🆕 New features
 
 - `PyoIterator::flat_map_star`, unpacking version of `flat_map`.
