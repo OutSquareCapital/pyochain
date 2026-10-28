@@ -17,7 +17,7 @@ class ImplMutableSet(ImplCollection):
     # pyrefly: ignore [missing-super-call]
     def __init__(self, it: Iterable[int] | None = None) -> None:
         # pyrefly: ignore [bad-override-mutable-attribute]
-        self._data: set[int] = {1, 2, 3} if it is None else set(it)  # pyright: ignore[reportIncompatibleVariableOverride]
+        self._data: set[int] = {1, 2, 3} if it is None else set(it)  # pyright: ignore[reportIncompatibleVariableOverride]  # ty: ignore[invalid-attribute-override]
 
     def add(self, item: int) -> None:
         self._data.add(item)

@@ -100,10 +100,10 @@ def check_starred(failure: bool) -> None:
     r_star = assert_type(r.batched(1, strict=True), PyoIterator[tuple[int]])
     match failure:
         case True:
-            _ = assert_type(r.map_star(str), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]  # ty: ignore[type-assertion-failure, invalid-argument-type]
+            _ = assert_type(r.map_star(str), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]  # ty: ignore[invalid-argument-type]
             _ = assert_type(r.filter_star(str), Any)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
-            _ = assert_type(r.filter_map_star(Some), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]  # ty: ignore[type-assertion-failure, invalid-argument-type]
-            _ = assert_type(r.fold_star(1, str), Any)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]  # ty: ignore[no-matching-overload]
+            _ = assert_type(r.filter_map_star(Some), Any)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]  # ty: ignore[invalid-argument-type]
+            _ = assert_type(r.fold_star(1, str), Any)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]  # ty: ignore[invalid-argument-type]
         case False:
             _ = assert_type(r_star.map_star(str), PyoIterator[str])
             _ = assert_type(r_star.filter_star(str), PyoIterator[tuple[int]])

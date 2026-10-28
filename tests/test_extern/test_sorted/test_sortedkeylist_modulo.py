@@ -824,7 +824,7 @@ def test_repr_recursion() -> None:
 
 @pytest.mark.skip(reason="We don't support subclassing of concrete pyochain types ATM")
 def test_repr_subclass() -> None:
-    class CustomSortedKeyList[T, OT: SupportsRichComparison](SortedKeyList[T, OT]):  # pyright: ignore[reportGeneralTypeIssues]
+    class CustomSortedKeyList[T, OT: SupportsRichComparison](SortedKeyList[T, OT]):  # pyright: ignore[reportGeneralTypeIssues]  # ty: ignore[subclass-of-final-class]
         pass
 
     this = CustomSortedKeyList(modulo, range(10))
