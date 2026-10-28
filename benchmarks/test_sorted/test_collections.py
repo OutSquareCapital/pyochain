@@ -52,7 +52,7 @@ LOOKUP_FNS = (
 def test_init(benchmark: BenchFixture, cls: type[SortedCollection], size: int) -> None:
     values = shuffled_pairs(size) if is_dict(cls) else shuffled(size)
     # pyrefly: ignore [bad-argument-type, incompatible-overload-residual]
-    assert benchmark(cls, values).len() == size  # pyright: ignore[reportCallIssue]
+    assert len(benchmark(cls, values)) == size  # pyright: ignore[reportCallIssue]
 
 
 @COLLECTION_PARAMS
