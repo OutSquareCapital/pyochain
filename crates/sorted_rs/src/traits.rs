@@ -5,9 +5,9 @@ use std::{
 
 use crate::{
     Bounds, Loc, errors,
-    indexing::Nb,
     inner::InnerData,
     list_update::ListAdd,
+    ops::Nb,
     reprs::PyRepr,
     types::{IntOrSlice, ListOrAny, VecPy},
 };

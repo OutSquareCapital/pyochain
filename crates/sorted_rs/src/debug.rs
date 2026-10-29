@@ -1,4 +1,6 @@
-use crate::{DictData, KeysListsData, SetData, inner::InnerData, prelude::*};
+use crate::{
+    DictData, KeysListsData, SetData, indexing::Lengths, inner::InnerData, prelude::*, types::VecPy,
+};
 use pyo3::prelude::*;
 use std_tools::prelude::*;
 macro_rules! pyassert {
@@ -80,30 +82,8 @@ pub fn check_list(py: Python<'_>, slf: &InnerData) -> PyResult<()> {
         pyassert!(slf.values[pos].len() >= half);
     }
 
-    if !slf.idx.is_empty() {
-        pyassert!(slf.len == slf.idx[0]);
-        pyassert!(slf.idx.len() == slf.offset + slf.values.len());
-
-        // Check index leaf nodes equal length of sublists.
-
-        for pos in 0..slf.values.len() {
-            let leaf = slf.idx[slf.offset + pos];
-            pyassert!(leaf.eq(&slf.values[pos].len()));
-        }
-
-        // Check index branch nodes are the sum of their children.
-
-        for pos in 0..slf.offset {
-            let child = (pos << 1) + 1;
-            if child >= slf.idx.len() {
-                pyassert!(slf.idx[pos].eq(&0));
-            } else if child + 1 == slf.idx.len() {
-                pyassert!(slf.idx[pos].eq(&slf.idx[child]));
-            } else {
-                let child_sum = slf.idx[child] + slf.idx[child + 1];
-                pyassert!(child_sum.eq(&slf.idx[pos]));
-            }
-        }
+    if slf.lengths.is_built() {
+        check_idx(&slf.lengths, slf.len, &slf.values)?;
     }
 
     Ok(()).inspect_err(|e| show_list(py, e, slf))
@@ -169,41 +149,41 @@ pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
         pyassert!(data.values[pos].len() >= half);
     }
 
-    if !data.idx.is_empty() {
-        pyassert!(data.len == data.idx[0]);
-        pyassert!(data.idx.len() == data.offset + data.values.len());
-
-        // Check index leaf nodes equal length of sublists.
-
-        for pos in 0..data.values.len() {
-            let leaf = data.idx[data.offset + pos];
-            pyassert!(leaf == data.values[pos].len());
-        }
-
-        // Check index branch nodes are the sum of their children.
-
-        for pos in 0..data.offset {
-            let child = (pos << 1) + 1;
-            if child >= data.idx.len() {
-                pyassert!(data.idx[pos] == 0);
-            } else if child + 1 == data.idx.len() {
-                pyassert!(data.idx[pos] == data.idx[child]);
-            } else {
-                let child_sum = data.idx[child] + data.idx[child + 1];
-                pyassert!(child_sum == data.idx[pos]);
-            }
-        }
+    if data.lengths.is_built() {
+        check_idx(&data.lengths, data.len, &data.values)?;
     }
     Ok(()).inspect_err(|e| show_key_list(py, e, data))
 }
 
+fn check_idx(idx: &Lengths, length: usize, values: &[VecPy]) -> PyResult<()> {
+    pyassert!(length == idx.inner[0]);
+    pyassert!(idx.inner.len() == idx.offset + values.len());
+    // Check index leaf nodes equal length of sublists.
+    for (val_idx, val) in values.iter().enumerate() {
+        let leaf = idx.inner[idx.offset + val_idx];
+        pyassert!(leaf == val.len());
+    }
+    // Check index branch nodes are the sum of their children.
+    for pos in 0..idx.offset {
+        let child = (pos << 1) + 1;
+        if child >= idx.inner.len() {
+            pyassert!(idx.inner[pos] == 0);
+        } else if child + 1 == idx.inner.len() {
+            pyassert!(idx.inner[pos] == idx.inner[child]);
+        } else {
+            let child_sum = idx.inner[child] + idx.inner[child + 1];
+            pyassert!(child_sum == idx.inner[pos]);
+        }
+    }
+    Ok(())
+}
 fn show_list(py: Python<'_>, err: &PyErr, data: &InnerData) {
     let infos = [
         format!("len: {}", data.len),
         format!("load: {}", data.load),
-        format!("offset: {}", data.offset),
-        format!("len_index: {}", data.idx.len()),
-        format!("index: {:?}", data.idx),
+        format!("offset: {}", data.lengths.offset),
+        format!("len_index: {}", data.lengths.inner.len()),
+        format!("index: {:?}", data.lengths.inner),
         format!("len_maxes: {}", data.maxes.len()),
         format!("maxes: {:?}", data.maxes),
         format!("len_lists: {}", data.values.len()),

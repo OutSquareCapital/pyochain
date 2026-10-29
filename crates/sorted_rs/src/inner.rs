@@ -2,7 +2,8 @@ use std::cmp::Ordering;
 
 use crate::{
     Bounds, Loc, errors,
-    indexing::Nb,
+    indexing::Lengths,
+    ops::Nb,
     traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
@@ -23,9 +24,9 @@ use tap::prelude::*;
 pub struct InnerData {
     pub(super) values: Vec<VecPy>,
     pub maxes: VecPy,
-    pub(super) idx: Vec<usize>,
+    /// Equivalent to `idx` and `offset` attributes in the original `sortedcontainers` implementation.
+    pub(super) lengths: Lengths,
     pub len: usize,
-    pub(super) offset: usize,
     pub(super) load: usize,
 }
 
@@ -34,9 +35,8 @@ impl Default for InnerData {
         Self {
             values: Vec::default(),
             maxes: Vec::default(),
-            idx: Vec::default(),
+            lengths: Lengths::default(),
             len: usize::default(),
-            offset: usize::default(),
             load: 1000,
         }
     }
@@ -46,9 +46,9 @@ impl InnerData {
     pub fn clear(&mut self) {
         self.values.clear();
         self.maxes.clear();
-        self.idx.clear();
+        self.lengths.inner.clear();
         self.len = 0;
-        self.offset = 0;
+        self.lengths.offset = 0;
     }
     #[inline]
     #[must_use]
@@ -70,27 +70,10 @@ impl InnerData {
         if loc.pos == 0 {
             loc.idx
         } else {
-            if self.idx.is_empty() {
-                self.build_index();
+            if self.lengths.is_not_built() {
+                self.lengths.build(&self.values);
             }
-            // Increment pos to point in the index to len(self.lists[pos]).
-            let mut i = loc.pos + self.offset;
-            // Iterate until reaching the root of the index tree at pos = 0.
-            let total = self.idx.pipe_ref_mut(|idx| {
-                let mut total = 0;
-                while i != 0 {
-                    // Right-child nodes are at even indices. At such indices
-                    // account the total below the left child node.
-                    if i.is_multiple_of(2) {
-                        total += idx[i - 1];
-                    }
-                    // Advance pos to the parent node.
-                    i = (i - 1) >> 1;
-                }
-                total
-            });
-
-            total + loc.idx
+            self.lengths.loc_at(loc)
         }
     }
     #[inline]
@@ -207,56 +190,10 @@ impl InnerData {
         }
     }
 
-    fn build_index(&mut self) {
-        let row0 = self.values.iter().map(Vec::len).collect::<Vec<usize>>();
-
-        if row0.len() == 1 {
-            self.idx.extend(&row0);
-            self.offset = 1;
-        }
-
-        let mut row1 = row0
-            .chunks(2)
-            .map(|pair| pair.iter().sum())
-            .collect::<Vec<usize>>();
-
-        if row1.len() == 1 {
-            let combined = row1.into_iter().chain(row0);
-            self.idx.clear();
-            self.idx.extend(combined);
-            self.offset = 1;
-        } else {
-            let size = 1usize << ((row1.len() - 1).ilog2() + 1);
-            row1.resize(size, 0);
-
-            let mut tree = vec![row0, row1];
-            while tree.last().unwrap().len() > 1 {
-                let row = tree
-                    .last()
-                    .unwrap()
-                    .chunks(2)
-                    .map(|pair| pair.iter().sum())
-                    .collect();
-                tree.push(row);
-            }
-
-            let flat = tree.into_iter().rev().flatten();
-            self.idx.extend(flat);
-            self.offset = size * 2 - 1;
-        }
-    }
-    pub(super) fn expand_on_empty_idx(&mut self, pos: usize) {
-        let mut child = self.offset + pos;
-        while child != 0 {
-            self.idx[child] += 1;
-            child = (child - 1) >> 1;
-        }
-        self.idx[0] += 1;
-    }
     pub(super) fn remove_pos(&mut self, loc: &Loc) {
         self.values.remove(loc.pos);
         self.maxes.remove(loc.pos);
-        self.idx.clear();
+        self.lengths.inner.clear();
     }
     pub(super) fn expand_at_pos(
         &mut self,
@@ -268,20 +205,7 @@ impl InnerData {
         self.maxes[pos] = new_max_at_pos;
         self.maxes.insert(pos + 1, last_max);
         self.values.insert(pos + 1, half);
-        self.idx.clear();
-    }
-
-    pub(super) fn delete_on_idx(&mut self, loc: &Loc, max_at_pos: Py<PyAny>) {
-        self.maxes[loc.pos] = max_at_pos;
-
-        if !self.idx.is_empty() {
-            let mut child = self.offset + loc.pos;
-            while child > 0 {
-                self.idx[child] -= 1;
-                child = (child - 1) >> 1;
-            }
-            self.idx[0] -= 1;
-        }
+        self.lengths.inner.clear();
     }
 
     pub(super) fn set_pos(&mut self, mut idx: isize, loc: &mut Loc) -> PyResult<()> {
@@ -306,31 +230,10 @@ impl InnerData {
             loc.idx = idx.cast_unsigned();
             Ok(())
         } else {
-            if self.idx.is_empty() {
-                self.build_index();
+            if self.lengths.is_not_built() {
+                self.lengths.build(&self.values);
             }
-            let pos = self.idx.pipe_ref_mut(|index| {
-                let mut pos = 0;
-                let mut child = 1;
-                let len_index = index.len();
-
-                while child < len_index {
-                    let index_child = index[child].cast_signed();
-
-                    if idx < index_child {
-                        pos = child;
-                    } else {
-                        idx -= index_child;
-                        pos = child + 1;
-                    }
-
-                    child = (pos << 1) + 1;
-                }
-                pos
-            });
-
-            loc.pos = pos - self.offset;
-            loc.idx = idx.cast_unsigned();
+            self.lengths.pos_at(idx, loc);
             Ok(())
         }
     }

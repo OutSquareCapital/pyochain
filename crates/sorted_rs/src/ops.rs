@@ -5,7 +5,28 @@
 
 use pyo3::prelude::*;
 
-use crate::{bisect::Bisect, bounds::Loc, errors, inner::InnerData, traits::NestedVec};
+use crate::{
+    bisect::Bisect, bounds::Loc, errors, indexing::Lengths, inner::InnerData, traits::NestedVec,
+};
+
+pub(super) enum Nb {
+    GTOne,
+    One,
+    Zero,
+    MinusOne,
+    LTMinusOne,
+}
+impl From<isize> for Nb {
+    fn from(value: isize) -> Self {
+        match value {
+            0 => Self::Zero,
+            1 => Self::One,
+            -1 => Self::MinusOne,
+            _ if value > 1 => Self::GTOne,
+            _ => Self::LTMinusOne,
+        }
+    }
+}
 
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
 pub(super) enum Maxes {
@@ -48,17 +69,17 @@ impl Maxes {
 /// Used in `expand`
 pub enum Expand {
     PosLenGtLoad,
-    IdxNotEmpty,
+    IdxBuilt,
     Other,
 }
 impl Expand {
     #[inline(always)]
     #[must_use]
-    pub fn new(lists_len: usize, load: usize, idx: &[usize]) -> Self {
+    pub fn new(lists_len: usize, load: usize, lengths: &Lengths) -> Self {
         if lists_len > load << 1 {
             Self::PosLenGtLoad
-        } else if !idx.is_empty() {
-            Self::IdxNotEmpty
+        } else if lengths.is_built() {
+            Self::IdxBuilt
         } else {
             Self::Other
         }
