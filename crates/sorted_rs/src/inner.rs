@@ -202,17 +202,14 @@ impl InnerData {
                 loc.idx = (self.values.last().unwrap().len().cast_signed() + idx).cast_unsigned();
                 return Ok(());
             }
-
             idx += self.len.cast_signed();
-
             if idx < 0 {
                 return Err(errors::out_of_range());
             }
-        } else if idx >= self.len.cast_signed() {
-            return Err(errors::out_of_range());
         }
-
-        if idx < self.values[0].len().cast_signed() {
+        if idx >= self.len.cast_signed() {
+            Err(errors::out_of_range())
+        } else if idx < self.values[0].len().cast_signed() {
             loc.pos = 0;
             loc.idx = idx.cast_unsigned();
             Ok(())
