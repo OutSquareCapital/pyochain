@@ -272,13 +272,14 @@ def _successors(size: int) -> int:
     return Iter.successors(Some(0), f).last()
 
 
-def test_all(benchmark: BenchFixture) -> None:
-    data = Range(20_000)
-    assert benchmark(_all, data) is True
+@SIZE_PARAMS
+def test_all(benchmark: BenchFixture, size: int) -> None:
+    assert benchmark(_all, Range(size)) is True
 
 
 def _all(data: Range) -> bool:
-    return data.iter().all(lambda x: x < 20_000)
+    last = data.last()
+    return data.iter().all(lambda x: x <= last)
 
 
 @SIZE_PARAMS
@@ -291,13 +292,14 @@ def _all_no_closure(data: Range) -> bool:
     return data.iter().all()
 
 
-def test_any(benchmark: BenchFixture) -> None:
-    data = Range(20_000)
-    assert benchmark(_any, data) is True
+@SIZE_PARAMS
+def test_any(benchmark: BenchFixture, size: int) -> None:
+    assert benchmark(_any, Range(size)) is True
 
 
 def _any(data: Range) -> bool:
-    return data.iter().any(lambda x: x == 19_999)
+    last = data.last()
+    return data.iter().any(lambda x: x == last)
 
 
 @SIZE_PARAMS
