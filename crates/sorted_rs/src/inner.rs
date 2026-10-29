@@ -103,9 +103,9 @@ impl InnerData {
                     last_list[(len_last + index).cast_unsigned()].clone_ref(py)
                 }
                 Nb::LTMinusOne | Nb::GTOne | Nb::One => {
-                    let mut bounds = Bounds::default();
-                    self.set_pos(index, &mut bounds.min)?;
-                    self.values.loc(&bounds.min).clone_ref(py)
+                    let mut loc = Loc::default();
+                    self.set_pos(index, &mut loc)?;
+                    self.values.loc(&loc).clone_ref(py)
                 }
             }
             .into_bound(py)
