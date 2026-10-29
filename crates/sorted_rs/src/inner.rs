@@ -94,33 +94,22 @@ impl InnerData {
             let last_list = self.values.last().unwrap();
             let len_last = last_list.len().cast_signed();
             match index.conv::<Nb>() {
-                Nb::Zero => first_list[0].clone_ref(py).into_bound(py).pipe(Ok),
-                Nb::MinusOne => last_list
-                    .last()
-                    .unwrap()
-                    .clone_ref(py)
-                    .into_bound(py)
-                    .pipe(Ok),
-                Nb::One | Nb::GTOne if index < first_list.len().cast_signed() => first_list
-                    [index.cast_unsigned()]
-                .clone_ref(py)
-                .into_bound(py)
-                .pipe(Ok),
-                Nb::LTMinusOne if -len_last < index => last_list
-                    [(len_last + index).cast_unsigned()]
-                .clone_ref(py)
-                .into_bound(py)
-                .pipe(Ok),
+                Nb::Zero => first_list[0].clone_ref(py),
+                Nb::MinusOne => last_list.last().unwrap().clone_ref(py),
+                Nb::One | Nb::GTOne if index < first_list.len().cast_signed() => {
+                    first_list[index.cast_unsigned()].clone_ref(py)
+                }
+                Nb::LTMinusOne if -len_last < index => {
+                    last_list[(len_last + index).cast_unsigned()].clone_ref(py)
+                }
                 Nb::LTMinusOne | Nb::GTOne | Nb::One => {
                     let mut bounds = Bounds::default();
                     self.set_pos(index, &mut bounds.min)?;
-                    self.values
-                        .loc(&bounds.min)
-                        .clone_ref(py)
-                        .into_bound(py)
-                        .pipe(Ok)
+                    self.values.loc(&bounds.min).clone_ref(py)
                 }
             }
+            .into_bound(py)
+            .pipe(Ok)
         }
     }
     pub fn get_slice(&mut self, slice: &Bound<'_, PySlice>) -> PyResult<VecPy> {
@@ -147,24 +136,22 @@ impl InnerData {
                         [bounds.min.idx..bounds.max.idx]
                         .iter()
                         .map(|x| x.clone_ref(py))
-                        .collect::<Vec<_>>()
-                        .pipe(Ok),
+                        .collect::<Vec<_>>(),
                     (Ordering::Less, Ordering::Equal) => {
                         bounds.max.pos = self.values.len() - 1;
                         bounds.max.idx = self.values.loc_len(&bounds.max);
                         get_slice(&self.values, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
-                            .pipe(Ok)
                     }
                     (Ordering::Less, Ordering::Greater | Ordering::Less) => {
                         self.set_pos(stop, &mut bounds.max)?;
                         get_slice(&self.values, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
-                            .pipe(Ok)
                     }
                 }
+                .pipe(Ok)
             }
             (Ordering::Greater, Nb::MinusOne) => {
                 let mut result = self.get_slice(&PySlice::new(py, stop + 1, start + 1, 1))?;
