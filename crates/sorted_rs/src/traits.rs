@@ -117,9 +117,9 @@ pub trait ListsDataMethods:
         }
     }
     fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
-        let mut bounds = Loc::default();
-        self.set_pos(index, &mut bounds)?;
-        self.delete(py, &mut bounds)
+        let mut loc = Loc::default();
+        self.set_pos(index, &mut loc)?;
+        self.delete(py, &mut loc)
     }
     fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
