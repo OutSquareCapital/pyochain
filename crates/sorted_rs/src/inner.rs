@@ -115,22 +115,23 @@ impl InnerData {
             let len_last = last_list.len().cast_signed();
             match index.conv::<Nb>() {
                 Nb::Zero => first_list[0].clone_ref(py).into_bound(py).pipe(Ok),
-                Nb::NegOne => last_list
+                Nb::MinusOne => last_list
                     .last()
                     .unwrap()
                     .clone_ref(py)
                     .into_bound(py)
                     .pipe(Ok),
-                Nb::One | Nb::Pos if index < first_list.len().cast_signed() => first_list
+                Nb::One | Nb::GTOne if index < first_list.len().cast_signed() => first_list
                     [index.cast_unsigned()]
                 .clone_ref(py)
                 .into_bound(py)
                 .pipe(Ok),
-                Nb::Neg if -len_last < index => last_list[(len_last + index).cast_unsigned()]
-                    .clone_ref(py)
-                    .into_bound(py)
-                    .pipe(Ok),
-                Nb::Neg | Nb::Pos | Nb::One => {
+                Nb::LTMinusOne if -len_last < index => last_list
+                    [(len_last + index).cast_unsigned()]
+                .clone_ref(py)
+                .into_bound(py)
+                .pipe(Ok),
+                Nb::LTMinusOne | Nb::GTOne | Nb::One => {
                     let mut bounds = Bounds::default();
                     self.set_pos(index, &mut bounds.min)?;
                     self.values
@@ -185,15 +186,15 @@ impl InnerData {
                     }
                 }
             }
-            (Ordering::Greater, Nb::NegOne) => {
+            (Ordering::Greater, Nb::MinusOne) => {
                 let mut result = self.get_slice(&PySlice::new(py, stop + 1, start + 1, 1))?;
                 result.reverse();
                 Ok(result)
             }
             // Negative step with nothing to iterate (mirrors Python's `range`,
             // which is empty when `start <= stop` for a negative step).
-            (Ordering::Less | Ordering::Equal, Nb::NegOne | Nb::Neg) => Ok(Vec::new()),
-            (Ordering::Greater, Nb::Neg) => {
+            (Ordering::Less | Ordering::Equal, Nb::MinusOne | Nb::LTMinusOne) => Ok(Vec::new()),
+            (Ordering::Greater, Nb::LTMinusOne) => {
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .map(|i| self.get_item(py, i))
                     .map_ok(Bound::unbind)
@@ -201,7 +202,7 @@ impl InnerData {
             }
             // Return a list because a negative step could reverse the order
             // of the items and this could be the desired behavior.
-            (_, Nb::One | Nb::Pos) => (start..stop)
+            (_, Nb::One | Nb::GTOne) => (start..stop)
                 .step_by(step.cast_unsigned())
                 .map(|i| self.get_item(py, i))
                 .map_ok(Bound::unbind)

@@ -150,7 +150,7 @@ pub trait ListsDataMethods:
                 self.extend(py, values.into())?;
                 Ok(())
             }
-            (Nb::Pos | Nb::One, _) => (start..stop)
+            (Nb::GTOne | Nb::One, _) => (start..stop)
                 .step_by(step.cast_unsigned())
                 .rev()
                 .try_for_each(|idx| {
@@ -187,14 +187,14 @@ pub trait ListsDataMethods:
         }
         let len_last = self.values.last().unwrap().len().cast_signed();
         match index.conv::<Nb>() {
-            Nb::NegOne => {
+            Nb::MinusOne => {
                 bounds.pos = self.values.len() - 1;
                 bounds.idx = self.values.loc_len(&bounds) - 1_usize;
             }
-            Nb::Zero | Nb::One | Nb::Pos if index < self.values[0].len().cast_signed() => {
+            Nb::Zero | Nb::One | Nb::GTOne if index < self.values[0].len().cast_signed() => {
                 bounds.idx = index.cast_unsigned();
             }
-            Nb::Neg if -len_last < index => {
+            Nb::LTMinusOne if -len_last < index => {
                 bounds.pos = self.values.len() - 1;
                 bounds.idx = (len_last + index).cast_unsigned();
             }

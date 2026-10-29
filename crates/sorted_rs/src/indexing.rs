@@ -1,18 +1,18 @@
 pub(super) enum Nb {
-    Pos,
+    GTOne,
     One,
     Zero,
-    NegOne,
-    Neg,
+    MinusOne,
+    LTMinusOne,
 }
 impl From<isize> for Nb {
     fn from(value: isize) -> Self {
         match value {
             0 => Self::Zero,
             1 => Self::One,
-            -1 => Self::NegOne,
-            _ if value > 1 => Self::Pos,
-            _ => Self::Neg,
+            -1 => Self::MinusOne,
+            _ if value > 1 => Self::GTOne,
+            _ => Self::LTMinusOne,
         }
     }
 }
