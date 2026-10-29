@@ -22,9 +22,9 @@ dev = [
   "plotly[express]>=7.0.0",
   "polars>=1.44.1",
   "pydoclint>=0.9.1",
-  "pytest>=9.1.1",
   "pytest-benchmark>=5.2.3",
   "pytest-docflex",
+  "pytest == 9.1.1",  # until https://github.com/ionelmc/pytest-benchmark/issues/321 is fixed
   "ruff>=0.16.5",
   "sdsort",
   "sortedcontainers>=2.4.0",
