@@ -1,5 +1,5 @@
 use crate::{
-    DictData, KeysListsData, SetData, indexing::Lengths, inner::InnerData, prelude::*, types::VecPy,
+    DictData, KeysListsData, SetData, inner::InnerData, lengths::Lengths, prelude::*, types::VecPy,
 };
 use pyo3::prelude::*;
 use std_tools::prelude::*;

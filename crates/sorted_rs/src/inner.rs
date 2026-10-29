@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use crate::{
     Bounds, Loc, errors,
-    indexing::Lengths,
+    lengths::Lengths,
     ops::Nb,
     traits::NestedVec,
     types::{SeqOrAny, VecPy},

@@ -6,7 +6,7 @@
 use pyo3::prelude::*;
 
 use crate::{
-    bisect::Bisect, bounds::Loc, errors, indexing::Lengths, inner::InnerData, traits::NestedVec,
+    bisect::Bisect, bounds::Loc, errors, inner::InnerData, lengths::Lengths, traits::NestedVec,
 };
 
 pub(super) enum Nb {
