@@ -3,6 +3,7 @@ use std::cmp::Ordering;
 
 use crate::{
     KeysListsData, ListsData, SetData,
+    inner::SliceIdxs,
     prelude::*,
     types::{IntOrSlice, ListOrAny},
 };
@@ -118,9 +119,10 @@ impl<T: ListsDataMethods> SetData<T> {
     }
     pub fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         let py = index.py();
+        let length = self.len.cast_signed();
         match index {
             Either::Right(slice) => self
-                .get_slice(&slice)?
+                .get_slice(SliceIdxs::from_pyslice(&slice, length)?)?
                 .iter()
                 .collect_bound::<PyList>(py)
                 .map(Either::Left),
@@ -131,14 +133,11 @@ impl<T: ListsDataMethods> SetData<T> {
     pub fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
         let py = index.py();
         match index {
-            Either::Right(slice) => {
-                let values = self
-                    .0
-                    .get_slice(&slice)?
-                    .iter()
-                    .collect_bound::<PySet>(py)?;
+            Either::Right(pyslice) => {
+                let slice = SliceIdxs::from_pyslice(&pyslice, self.len.cast_signed())?;
+                let values = self.0.get_slice(slice)?.iter().collect_bound::<PySet>(py)?;
                 self.1.bind(py).difference_update((values,))?;
-                self.0.del_slice(&slice)
+                self.0.del_slice(slice)
             }
             Either::Left(int) => {
                 let idx = int.extract::<isize>()?;

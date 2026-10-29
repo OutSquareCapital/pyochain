@@ -7,13 +7,14 @@ use crate::{
     traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
+use derive_more::Constructor;
 use either::Either;
 use itertools::Itertools;
 use pyo3::{
     basic::CompareOp,
     exceptions::PyValueError,
     prelude::*,
-    types::{PyList, PyNotImplemented, PySlice, slice::PySliceIndices},
+    types::{PyList, PyNotImplemented, PySlice},
 };
 use pyo3_ext::{
     prelude::*,
@@ -21,6 +22,27 @@ use pyo3_ext::{
 };
 use std_tools::prelude::*;
 use tap::prelude::*;
+#[derive(Clone, Copy, Constructor)]
+pub struct SliceIdxs<'py> {
+    pub py: Python<'py>,
+    pub start: isize,
+    pub stop: isize,
+    pub step: isize,
+}
+impl<'py> SliceIdxs<'py> {
+    pub fn from_pyslice(slice: &Bound<'py, PySlice>, length: isize) -> PyResult<Self> {
+        let indices = slice.indices(length)?;
+        Self::new(slice.py(), indices.start, indices.stop, indices.step).pipe(Ok)
+    }
+    pub fn iter(&self) -> impl Iterator<Item = isize> + '_ {
+        std::iter::successors(Some(self.start), move |&i| {
+            (i + self.step > self.stop).then_some(i + self.step)
+        })
+    }
+    pub fn into_range(self) -> std::iter::StepBy<std::ops::Range<isize>> {
+        (self.start..self.stop).step_by(self.step.cast_unsigned())
+    }
+}
 pub struct InnerData {
     pub(super) values: Vec<VecPy>,
     pub maxes: VecPy,
@@ -137,23 +159,20 @@ impl InnerData {
             .pipe(Ok)
         }
     }
-    pub fn get_slice(&mut self, slice: &Bound<'_, PySlice>) -> PyResult<VecPy> {
-        let py = slice.py();
-        let PySliceIndices {
-            start, stop, step, ..
-        } = slice.indices(self.len.cast_signed())?;
-        let stop_eq_len = stop.cmp(&self.len.cast_signed());
+    pub fn get_slice(&mut self, slice: SliceIdxs<'_>) -> PyResult<VecPy> {
+        let stop_eq_len = slice.stop.cmp(&self.len.cast_signed());
         let mut bounds = Bounds::default();
-        match (start.cmp(&stop), step.conv::<ops::Nb>()) {
+        let py = slice.py;
+        match (slice.start.cmp(&slice.stop), slice.step.conv::<ops::Nb>()) {
             (_, ops::Nb::Zero) => Err(PyValueError::new_err("slice step cannot be zero")),
             // Whole slice optimization: start to stop slices the whole sorted list.
-            (Ordering::Less, ops::Nb::One) if start == 0 && stop_eq_len.is_eq() => {
+            (Ordering::Less, ops::Nb::One) if slice.start == 0 && stop_eq_len.is_eq() => {
                 self.collapse(py).pipe(Ok)
             }
             (Ordering::Less, ops::Nb::One) => {
-                self.set_pos(start, &mut bounds.min)?;
+                self.set_pos(slice.start, &mut bounds.min)?;
                 let start_list = &self.values[bounds.min.pos];
-                bounds.max.idx = bounds.min.idx + (stop - start).cast_unsigned();
+                bounds.max.idx = bounds.min.idx + (slice.stop - slice.start).cast_unsigned();
                 match (start_list.len().cmp(&bounds.max.idx), stop_eq_len) {
                     // Small slice optimization: start index and stop index are
                     // within the start list.
@@ -170,7 +189,7 @@ impl InnerData {
                             .collect::<Vec<_>>()
                     }
                     (Ordering::Less, Ordering::Greater | Ordering::Less) => {
-                        self.set_pos(stop, &mut bounds.max)?;
+                        self.set_pos(slice.stop, &mut bounds.max)?;
                         get_slice(&self.values, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
@@ -179,7 +198,8 @@ impl InnerData {
                 .pipe(Ok)
             }
             (Ordering::Greater, ops::Nb::MinusOne) => {
-                let mut result = self.get_slice(&PySlice::new(py, stop + 1, start + 1, 1))?;
+                let mut result =
+                    self.get_slice(SliceIdxs::new(py, slice.stop + 1, slice.start + 1, 1))?;
                 result.reverse();
                 Ok(result)
             }
@@ -188,16 +208,15 @@ impl InnerData {
             (Ordering::Less | Ordering::Equal, ops::Nb::MinusOne | ops::Nb::LTMinusOne) => {
                 Ok(Vec::new())
             }
-            (Ordering::Greater, ops::Nb::LTMinusOne) => {
-                std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
-                    .map(|i| self.get_item(py, i))
-                    .map_ok(Bound::unbind)
-                    .collect()
-            }
+            (Ordering::Greater, ops::Nb::LTMinusOne) => slice
+                .iter()
+                .map(|i| self.get_item(py, i))
+                .map_ok(Bound::unbind)
+                .collect(),
             // Return a list because a negative step could reverse the order
             // of the items and this could be the desired behavior.
-            (_, ops::Nb::One | ops::Nb::GTOne) => (start..stop)
-                .step_by(step.cast_unsigned())
+            (_, ops::Nb::One | ops::Nb::GTOne) => slice
+                .into_range()
                 .map(|i| self.get_item(py, i))
                 .map_ok(Bound::unbind)
                 .collect(),

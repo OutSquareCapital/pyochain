@@ -1,4 +1,4 @@
-use crate::{DictData, prelude::*, types::ListOrAny};
+use crate::{DictData, inner::SliceIdxs, prelude::*, types::ListOrAny};
 use either::Either;
 use itertools::Itertools;
 use pyo3::{
@@ -16,7 +16,8 @@ pub fn delitem<T: ListsDataMethods>(
     let dict = mapping.1.clone_ref(py).into_bound(py);
     try_cast! {
         match index {
-            Case::PySlice(slice) => {
+            Case::PySlice(pyslice) => {
+                let slice = SliceIdxs::from_pyslice(pyslice, mapping.len.cast_signed())?;
                 let keys = mapping.get_slice(slice)?;
                 mapping.0.del_slice(slice)?;
                 for key in keys {
@@ -39,10 +40,11 @@ pub fn get_item_for_items<'py, T: ListsDataMethods>(
 ) -> PyResult<ListOrAny<'py>> {
     let py = index.py();
     let dict = mapping.1.clone_ref(py).into_bound(py).into_any();
+    let length = mapping.len.cast_signed();
     try_cast! {
         match index {
             Case::PySlice(slice) => mapping
-                .get_slice(slice)?
+                .get_slice(SliceIdxs::from_pyslice(slice, length)?)?
                 .iter()
                 .map(|key| tuple!(key.bind(py), &dict.get_item(key)?))
                 .map_ok(Bound::into_any)
@@ -63,10 +65,11 @@ pub fn get_item_for_values<'py, T: ListsDataMethods>(
 ) -> PyResult<ListOrAny<'py>> {
     let py = index.py();
     let dict = mapping.1.clone_ref(py).into_bound(py).into_any();
+    let length = mapping.len.cast_signed();
     try_cast! {
         match index {
             Case::PySlice(slice) => mapping
-                .get_slice(slice)?
+                .get_slice(SliceIdxs::from_pyslice(slice, length)?)?
                 .iter()
                 .map(|key| dict.get_item(key))
                 .try_collect_bound::<PyList>(py)
@@ -83,10 +86,11 @@ pub fn get_item_for_keys<'py, T: ListsDataMethods>(
     index: Bound<'py, PyAny>,
 ) -> PyResult<ListOrAny<'py>> {
     let py = index.py();
+    let length = mapping.len.cast_signed();
     try_cast! {
         match index {
             Case::PySlice(slice) => mapping
-                .get_slice(slice)?
+                .get_slice(SliceIdxs::from_pyslice(slice, length)?)?
                 .iter()
                 .collect_bound::<PyList>(py)
                 .map(Either::Left),

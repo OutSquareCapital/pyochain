@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     Bounds, Loc, errors,
-    inner::InnerData,
+    inner::{InnerData, SliceIdxs},
     list_update::ListAdd,
     ops::Nb,
     reprs::PyRepr,
@@ -13,10 +13,7 @@ use crate::{
 };
 use either::Either;
 use itertools::Itertools;
-use pyo3::{
-    prelude::*,
-    types::{PyList, PySlice, slice::PySliceIndices},
-};
+use pyo3::{prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
 use tap::prelude::*;
 pub(super) trait NestedVec {
@@ -105,9 +102,10 @@ pub trait ListsDataMethods:
         self.as_owned_from(py, out)
     }
     fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
+        let length = self.len.cast_signed();
         match index {
             Either::Right(slice) => self
-                .get_slice(&slice)?
+                .get_slice(SliceIdxs::from_pyslice(&slice, length)?)?
                 .iter()
                 .collect_bound::<PyList>(slice.py())
                 .map(Either::Left),
@@ -122,50 +120,44 @@ pub trait ListsDataMethods:
         self.delete(py, &mut loc)
     }
     fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
+        let length = self.len.cast_signed();
         match index {
-            Either::Right(slice) => self.del_slice(&slice),
+            Either::Right(slice) => self.del_slice(SliceIdxs::from_pyslice(&slice, length)?),
             Either::Left(index) => self.del_item(index.py(), index.extract()?),
         }
     }
-    fn del_slice(&mut self, slice: &Bound<'_, PySlice>) -> PyResult<()> {
-        let py = slice.py();
+    fn del_slice(&mut self, slice: SliceIdxs<'_>) -> PyResult<()> {
+        let py = slice.py;
         let length = self.len.cast_signed();
         let mut loc = Loc::default();
-        let PySliceIndices {
-            start, stop, step, ..
-        } = slice.indices(length)?;
-        match (step.conv::<Nb>(), start.cmp(&stop)) {
-            (Nb::One, Ordering::Less) if start == 0 && stop == length => {
+        match (slice.step.conv::<Nb>(), slice.start.cmp(&slice.stop)) {
+            (Nb::One, Ordering::Less) if slice.start == 0 && slice.stop == length => {
                 self.clear(py);
                 Ok(())
             }
-            (Nb::One, Ordering::Less) if length <= 8 * (stop - start) => {
-                let mut values = self.get_slice(&PySlice::new(py, 0, start, 1))?;
-                if stop < length {
-                    let new_slice = self.get_slice(&PySlice::new(py, stop, length, 1))?;
+            (Nb::One, Ordering::Less) if length <= 8 * (slice.stop - slice.start) => {
+                let mut values = self.get_slice(SliceIdxs::new(py, 0, slice.start, 1))?;
+                if slice.stop < length {
+                    let new_slice = self.get_slice(SliceIdxs::new(py, slice.stop, length, 1))?;
                     values.extend(new_slice);
                 }
                 self.clear(py);
                 self.extend(py, values.into())?;
                 Ok(())
             }
-            (Nb::GTOne | Nb::One, _) => (start..stop)
-                .step_by(step.cast_unsigned())
-                .rev()
-                .try_for_each(|idx| {
-                    self.set_pos(idx, &mut loc)?;
-                    self.delete(py, &mut loc)
-                }),
+            (Nb::GTOne | Nb::One, _) => slice.into_range().rev().try_for_each(|idx| {
+                self.set_pos(idx, &mut loc)?;
+                self.delete(py, &mut loc)
+            }),
             // Negative step with nothing to delete (mirrors Python's
             // `range`, which is empty when `start <= stop`).
             (_, Ordering::Less | Ordering::Equal) => Ok(()),
             _ => {
                 // Negative step, `start > stop` guaranteed by the arm above.
-                std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
-                    .try_for_each(|idx| {
-                        self.set_pos(idx, &mut loc)?;
-                        self.delete(py, &mut loc)
-                    })
+                slice.iter().try_for_each(|idx| {
+                    self.set_pos(idx, &mut loc)?;
+                    self.delete(py, &mut loc)
+                })
             }
         }
     }
