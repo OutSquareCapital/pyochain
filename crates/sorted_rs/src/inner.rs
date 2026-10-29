@@ -81,13 +81,10 @@ impl InnerData {
                 while i != 0 {
                     // Right-child nodes are at even indices. At such indices
                     // account the total below the left child node.
-
                     if i.is_multiple_of(2) {
                         total += idx[i - 1];
                     }
-
                     // Advance pos to the parent node.
-
                     i = (i - 1) >> 1;
                 }
                 total
