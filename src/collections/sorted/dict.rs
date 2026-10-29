@@ -80,11 +80,11 @@ pub(super) trait SortedDictMethods:
     type VView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;
     type IView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.lock().contains(value)
+        self.read().contains(value)
     }
     #[getter]
     fn get_dict<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
-        self.lock().1.clone_ref(py).into_bound(py)
+        self.read().1.clone_ref(py).into_bound(py)
     }
     fn keys(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::KView>> {
         let py = slf.py();
@@ -99,13 +99,13 @@ pub(super) trait SortedDictMethods:
         slf.unbind().conv::<Self::VView>().into_bound(py)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.lock().copy(py)?.conv::<Self>().into_bound(py)
+        self.read().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.lock().__len__(py)
+        self.read().__len__(py)
     }
     fn __getitem__<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        self.lock().get_item(key)
+        self.read().get_item(key)
     }
     fn __delitem__(&self, key: &Bound<'_, PyAny>) -> PyResult<()> {
         self.write().del_item(key)
@@ -120,11 +120,11 @@ pub(super) trait SortedDictMethods:
         self.update(other.py(), Some(other), None)
     }
     fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
-        self.lock().or(value)?.conv::<Self>().into_bound(value.py())
+        self.read().or(value)?.conv::<Self>().into_bound(value.py())
     }
     fn __ror__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        self.lock().ror(value)?.conv::<Self>().into_bound(py)
+        self.read().ror(value)?.conv::<Self>().into_bound(py)
     }
     fn clear(&self, py: Python<'_>) {
         self.write().clear(py);

@@ -20,7 +20,7 @@ pub(super) type IterRes<'py> = PyResult<Bound<'py, abc::PyoIterator>>;
 )]
 pub(super) trait SortedCollectionsMethods: ListGetter {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        self.lock().repr::<Self>(py)
+        self.read().repr::<Self>(py)
     }
     fn __iter__<'py>(slf: &Bound<'py, Self>) -> IterRes<'py> {
         Self::build_iter(slf, IterKind::Fwd)
@@ -53,7 +53,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     ) -> IterRes<'py> {
         let bounds = slf
             .get()
-            .lock()
+            .read()
             .list()
             .irange_specs(slf.py(), minimum, maximum, inclusive)?;
         Self::build_iter(slf, IterKind::Bounded(bounds, reverse))
@@ -86,7 +86,7 @@ where
         inclusive: (bool, bool),
         reverse: bool,
     ) -> IterRes<'py> {
-        let data = slf.get().lock();
+        let data = slf.get().read();
         let list = data.list();
         let bounds = Bounds::from_irange(&list.1, &list.maxes, min_key, max_key, inclusive)?;
         Self::build_iter(slf, IterKind::Bounded(bounds, reverse))

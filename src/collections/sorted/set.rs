@@ -65,7 +65,7 @@ pub(super) trait SortedSetMethods:
     #[getter]
     #[inline(always)]
     fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
-        self.lock().get_set(py)
+        self.read().get_set(py)
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.get_set(value.py()).contains(value)
@@ -97,7 +97,7 @@ pub(super) trait SortedSetMethods:
         self.comp(other, CompareOp::Ge)
     }
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.lock().__len__(py)
+        self.read().__len__(py)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
@@ -143,7 +143,7 @@ pub(super) trait SortedSetMethods:
         self.write().discard(&value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.lock().copy(py)?.conv::<Self>().into_bound(py)
+        self.read().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
         self.map_pred(other, SetPred::Disjoint)
@@ -159,7 +159,7 @@ pub(super) trait SortedSetMethods:
         self.write().clear(py);
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.lock().count(value)
+        self.read().count(value)
     }
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {

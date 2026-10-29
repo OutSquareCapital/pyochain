@@ -22,7 +22,7 @@ pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> {
         + Send
         + Sync;
     #[inline(always)]
-    fn lock(&self) -> RwLockReadGuard<'_, Self::T> {
+    fn read(&self) -> RwLockReadGuard<'_, Self::T> {
         self.as_ref().read()
     }
     #[inline(always)]
@@ -32,7 +32,7 @@ pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> {
     #[inline(always)]
     fn build_iter<'py>(slf: &Bound<'py, Self>, kind: IterKind) -> IterRes<'py> {
         let py = slf.py();
-        let owner = (slf.get().lock(), slf.clone().into_any().unbind());
+        let owner = (slf.get().read(), slf.clone().into_any().unbind());
         match kind {
             IterKind::Fwd => Iter::new(owner)
                 .conv::<iter::SortedIter>()
