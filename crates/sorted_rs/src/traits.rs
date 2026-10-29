@@ -14,7 +14,6 @@ use crate::{
 use either::Either;
 use itertools::Itertools;
 use pyo3::{
-    exceptions::PyIndexError,
     prelude::*,
     types::{PyList, PySlice, slice::PySliceIndices},
 };
@@ -180,30 +179,9 @@ pub trait ListsDataMethods:
         self.extend(py, values.into())
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let mut bounds = Loc::default();
-        if self.len == 0 {
-            let msg = "pop index out of range";
-            return Err(PyIndexError::new_err(msg));
-        }
-        let len_last = self.values.last().unwrap().len().cast_signed();
-        match index.conv::<Nb>() {
-            Nb::MinusOne => {
-                bounds.pos = self.values.len() - 1;
-                bounds.idx = self.values.loc_len(&bounds) - 1_usize;
-            }
-            Nb::Zero | Nb::One | Nb::GTOne if index < self.values[0].len().cast_signed() => {
-                bounds.idx = index.cast_unsigned();
-            }
-            Nb::LTMinusOne if -len_last < index => {
-                bounds.pos = self.values.len() - 1;
-                bounds.idx = (len_last + index).cast_unsigned();
-            }
-            _ => {
-                self.set_pos(index, &mut bounds)?;
-            }
-        }
-        let val = self.values.loc(&bounds).clone_ref(py);
-        self.delete(py, &mut bounds)?;
+        let mut loc = self.pop_loc(index)?;
+        let val = self.values.loc(&loc).clone_ref(py);
+        self.delete(py, &mut loc)?;
         Ok(val.into_bound(py))
     }
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {

@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use crate::{
     Bounds, Loc, errors,
     lengths::Lengths,
-    ops::Nb,
+    ops,
     traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
@@ -85,7 +85,32 @@ impl InnerData {
             .map(|x| x.clone_ref(py))
             .collect()
     }
-
+    #[inline]
+    pub fn pop_loc(&mut self, index: isize) -> PyResult<Loc> {
+        if self.len == 0 {
+            Err(errors::out_of_range())
+        } else {
+            let mut loc = Loc::default();
+            let len_last = self.values.last().unwrap().len().cast_signed();
+            match index.conv::<ops::Nb>() {
+                ops::Nb::MinusOne => {
+                    loc.pos = self.values.len() - 1;
+                    loc.idx = self.values.loc_len(&loc) - 1_usize;
+                }
+                ops::Nb::Zero | ops::Nb::One | ops::Nb::GTOne
+                    if index < self.values[0].len().cast_signed() =>
+                {
+                    loc.idx = index.cast_unsigned();
+                }
+                ops::Nb::LTMinusOne if -len_last < index => {
+                    loc.pos = self.values.len() - 1;
+                    loc.idx = (len_last + index).cast_unsigned();
+                }
+                _ => self.set_pos(index, &mut loc)?,
+            }
+            Ok(loc)
+        }
+    }
     pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         if self.len == 0 {
             Err(errors::out_of_range())
@@ -93,16 +118,16 @@ impl InnerData {
             let first_list = &self.values[0];
             let last_list = self.values.last().unwrap();
             let len_last = last_list.len().cast_signed();
-            match index.conv::<Nb>() {
-                Nb::Zero => first_list[0].clone_ref(py),
-                Nb::MinusOne => last_list.last().unwrap().clone_ref(py),
-                Nb::One | Nb::GTOne if index < first_list.len().cast_signed() => {
+            match index.conv::<ops::Nb>() {
+                ops::Nb::Zero => first_list[0].clone_ref(py),
+                ops::Nb::MinusOne => last_list.last().unwrap().clone_ref(py),
+                ops::Nb::One | ops::Nb::GTOne if index < first_list.len().cast_signed() => {
                     first_list[index.cast_unsigned()].clone_ref(py)
                 }
-                Nb::LTMinusOne if -len_last < index => {
+                ops::Nb::LTMinusOne if -len_last < index => {
                     last_list[(len_last + index).cast_unsigned()].clone_ref(py)
                 }
-                Nb::LTMinusOne | Nb::GTOne | Nb::One => {
+                ops::Nb::LTMinusOne | ops::Nb::GTOne | ops::Nb::One => {
                     let mut loc = Loc::default();
                     self.set_pos(index, &mut loc)?;
                     self.values.loc(&loc).clone_ref(py)
@@ -119,13 +144,13 @@ impl InnerData {
         } = slice.indices(self.len.cast_signed())?;
         let stop_eq_len = stop.cmp(&self.len.cast_signed());
         let mut bounds = Bounds::default();
-        match (start.cmp(&stop), step.conv::<Nb>()) {
-            (_, Nb::Zero) => Err(PyValueError::new_err("slice step cannot be zero")),
+        match (start.cmp(&stop), step.conv::<ops::Nb>()) {
+            (_, ops::Nb::Zero) => Err(PyValueError::new_err("slice step cannot be zero")),
             // Whole slice optimization: start to stop slices the whole sorted list.
-            (Ordering::Less, Nb::One) if start == 0 && stop_eq_len.is_eq() => {
+            (Ordering::Less, ops::Nb::One) if start == 0 && stop_eq_len.is_eq() => {
                 self.collapse(py).pipe(Ok)
             }
-            (Ordering::Less, Nb::One) => {
+            (Ordering::Less, ops::Nb::One) => {
                 self.set_pos(start, &mut bounds.min)?;
                 let start_list = &self.values[bounds.min.pos];
                 bounds.max.idx = bounds.min.idx + (stop - start).cast_unsigned();
@@ -153,15 +178,17 @@ impl InnerData {
                 }
                 .pipe(Ok)
             }
-            (Ordering::Greater, Nb::MinusOne) => {
+            (Ordering::Greater, ops::Nb::MinusOne) => {
                 let mut result = self.get_slice(&PySlice::new(py, stop + 1, start + 1, 1))?;
                 result.reverse();
                 Ok(result)
             }
             // Negative step with nothing to iterate (mirrors Python's `range`,
             // which is empty when `start <= stop` for a negative step).
-            (Ordering::Less | Ordering::Equal, Nb::MinusOne | Nb::LTMinusOne) => Ok(Vec::new()),
-            (Ordering::Greater, Nb::LTMinusOne) => {
+            (Ordering::Less | Ordering::Equal, ops::Nb::MinusOne | ops::Nb::LTMinusOne) => {
+                Ok(Vec::new())
+            }
+            (Ordering::Greater, ops::Nb::LTMinusOne) => {
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .map(|i| self.get_item(py, i))
                     .map_ok(Bound::unbind)
@@ -169,7 +196,7 @@ impl InnerData {
             }
             // Return a list because a negative step could reverse the order
             // of the items and this could be the desired behavior.
-            (_, Nb::One | Nb::GTOne) => (start..stop)
+            (_, ops::Nb::One | ops::Nb::GTOne) => (start..stop)
                 .step_by(step.cast_unsigned())
                 .map(|i| self.get_item(py, i))
                 .map_ok(Bound::unbind)
