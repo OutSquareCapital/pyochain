@@ -77,30 +77,30 @@ pub(super) enum Maxes {
 impl Maxes {
     #[inline(always)]
     pub fn left(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
-        Self::new(maxes, value, Bisect::bisect_left)
+        Self::new::<true>(maxes, value)
     }
     #[inline(always)]
     pub fn right(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
-        Self::new(maxes, value, Bisect::bisect_right)
+        Self::new::<false>(maxes, value)
     }
     #[inline(always)]
-    fn new<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
-        maxes: &[Py<PyAny>],
-        value: &Bound<'_, PyAny>,
-        func: F,
-    ) -> Self {
+    fn new<const LEFT: bool>(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
         if maxes.is_empty() {
             Self::Empty
         } else {
-            func(maxes, value)
-                .map(Loc::with_pos)
-                .map_or_else(Self::BisectErr, |bound| {
-                    if bound.pos == maxes.len() {
-                        Self::LenEQPos(bound)
-                    } else {
-                        Self::LenNEPos(bound)
-                    }
-                })
+            if LEFT {
+                maxes.bisect_left(value)
+            } else {
+                maxes.bisect_right(value)
+            }
+            .map(Loc::with_pos)
+            .map_or_else(Self::BisectErr, |bound| {
+                if bound.pos == maxes.len() {
+                    Self::LenEQPos(bound)
+                } else {
+                    Self::LenNEPos(bound)
+                }
+            })
         }
     }
 }
