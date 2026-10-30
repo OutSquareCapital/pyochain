@@ -71,6 +71,12 @@ impl<'py> SliceIdxs<'py> {
                 }
                 .pipe(Ok)
             }
+            // Return a list because a negative step could reverse the order of the items and this could be the desired behavior.
+            (_, Nb::One | Nb::GTOne) => self
+                .into_range()
+                .map(|i| list.get_item(py, i))
+                .map_ok(Bound::unbind)
+                .collect(),
             (Ordering::Greater, Nb::MinusOne) => {
                 let mut result = self
                     .to_new_with(self.stop + 1, self.start + 1)
@@ -78,20 +84,13 @@ impl<'py> SliceIdxs<'py> {
                 result.reverse();
                 Ok(result)
             }
-            // Negative step with nothing to iterate (mirrors Python's `range`,
-            // which is empty when `start <= stop` for a negative step).
-            (Ordering::Less | Ordering::Equal, Nb::MinusOne | Nb::LTMinusOne) => Ok(Vec::new()),
             (Ordering::Greater, Nb::LTMinusOne) => self
                 .iter()
                 .map(|i| list.get_item(py, i))
                 .map_ok(Bound::unbind)
                 .collect(),
-            // Return a list because a negative step could reverse the order of the items and this could be the desired behavior.
-            (_, Nb::One | Nb::GTOne) => self
-                .into_range()
-                .map(|i| list.get_item(py, i))
-                .map_ok(Bound::unbind)
-                .collect(),
+            // Negative step with nothing to iterate (mirrors Python's `range`, which is empty when `start <= stop` for a negative step).
+            (Ordering::Less | Ordering::Equal, Nb::MinusOne | Nb::LTMinusOne) => Ok(Vec::new()),
         }
     }
 
