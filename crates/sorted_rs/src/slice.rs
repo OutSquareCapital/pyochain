@@ -35,20 +35,15 @@ impl<'py> SliceIdxs<'py> {
     }
 
     pub fn extract_from(&self, list: &mut InnerData) -> PyResult<VecPy> {
-        let stop_eq_len = self.stop_cmp_len().is_eq();
-        let mut bounds = Bounds::default();
         let py = self.py;
-        match self.kind() {
-            // SAFETY: Constructors guarantee that `step` is not zero (slice.indices raises `ValueError` on `step == 0`).
-            (_, Nb::Zero) => unsafe { unreachable_unchecked() },
-            // Whole slice optimization: start to stop slices the whole sorted list.
-            (Ordering::Less, Nb::One) if self.start == 0 && stop_eq_len => {
-                list.collapse(py).pipe(Ok)
-            }
-            (Ordering::Less, Nb::One) => {
+        match SliceKind::new(self) {
+            SliceKind::Full => list.collapse(py).pipe(Ok),
+            SliceKind::Forward => {
+                let mut bounds = Bounds::default();
                 list.set_pos(self.start, &mut bounds.min)?;
                 let start_list = &list.values[bounds.min.pos];
                 bounds.max.idx = bounds.min.idx + (self.stop - self.start).cast_unsigned();
+                let stop_eq_len = self.stop_cmp_len().is_eq();
                 match (start_list.len() >= bounds.max.idx, stop_eq_len) {
                     // Small slice optimization: start index and stop index are within the start list.
                     (true, _) => start_list[bounds.min.idx..bounds.max.idx]
@@ -71,40 +66,36 @@ impl<'py> SliceIdxs<'py> {
                 }
                 .pipe(Ok)
             }
-            // Return a list because a negative step could reverse the order of the items and this could be the desired behavior.
-            (_, Nb::One | Nb::GTOne) => self
-                .into_range()
+            SliceKind::ForwardStep | SliceKind::MayReverse => self
+                .iter()
                 .map(|i| list.get_item(py, i))
                 .map_ok(Bound::unbind)
                 .collect(),
-            (Ordering::Greater, Nb::MinusOne) => {
+            SliceKind::Backward => {
                 let mut result = self
                     .to_new_with(self.stop + 1, self.start + 1)
                     .extract_from(list)?;
                 result.reverse();
                 Ok(result)
             }
-            (Ordering::Greater, Nb::LTMinusOne) => self
+            SliceKind::BackwardStep => self
                 .iter()
+                .rev()
                 .map(|i| list.get_item(py, i))
                 .map_ok(Bound::unbind)
                 .collect(),
-            // Negative step with nothing to iterate (mirrors Python's `range`, which is empty when `start <= stop` for a negative step).
-            (Ordering::Less | Ordering::Equal, Nb::MinusOne | Nb::LTMinusOne) => Ok(Vec::new()),
+            SliceKind::NoOp => Ok(Vec::new()),
         }
     }
 
     pub fn delete_from<T: ListsDataMethods>(&self, list: &mut T) -> PyResult<()> {
         let py = self.py;
-        let mut loc = Loc::default();
-        match self.kind() {
-            // SAFETY: Constructors guarantee that `step` is not zero (slice.indices raises `ValueError` on `step == 0`).
-            (_, Nb::Zero) => unsafe { unreachable_unchecked() },
-            (Ordering::Less, Nb::One) if self.start == 0 && self.stop_cmp_len().is_eq() => {
+        match SliceKind::new(self) {
+            SliceKind::Full => {
                 list.clear(py);
                 Ok(())
             }
-            (Ordering::Less, Nb::One) if self.ref_len <= 8 * (self.stop - self.start) => {
+            SliceKind::Forward if self.ref_len <= 8 * (self.stop - self.start) => {
                 let mut values = self.to_new_with(0, self.start).extract_from(list)?;
                 if self.stop_cmp_len().is_lt() {
                     let mut new_slice = self
@@ -113,26 +104,24 @@ impl<'py> SliceIdxs<'py> {
                     values.append(new_slice.as_mut());
                 }
                 list.clear(py);
-                list.extend(py, values.into())?;
-                Ok(())
+                list.extend(py, values.into())
             }
-            (_, Nb::GTOne | Nb::One) => self.into_range().rev().try_for_each(|idx| {
-                list.set_pos(idx, &mut loc)?;
-                list.delete(py, &mut loc)
-            }),
-            (Ordering::Greater, Nb::MinusOne | Nb::LTMinusOne) => self.iter().try_for_each(|idx| {
-                list.set_pos(idx, &mut loc)?;
-                list.delete(py, &mut loc)
-            }),
-            // Negative step with nothing to delete (mirrors Python's `range`, which is empty when `start <= stop`).
-            (Ordering::Less | Ordering::Equal, Nb::MinusOne | Nb::LTMinusOne) => Ok(()),
+            SliceKind::Forward
+            | SliceKind::ForwardStep
+            | SliceKind::MayReverse
+            | SliceKind::Backward
+            | SliceKind::BackwardStep => {
+                let mut loc = Loc::default();
+                self.iter().rev().try_for_each(|idx| {
+                    list.set_pos(idx, &mut loc)?;
+                    list.delete(py, &mut loc)
+                })
+            }
+            SliceKind::NoOp => Ok(()),
         }
     }
     fn stop_cmp_len(&self) -> Ordering {
         self.stop.cmp(&self.ref_len)
-    }
-    fn kind(&self) -> (Ordering, Nb) {
-        (self.start.cmp(&self.stop), self.step.conv::<Nb>())
     }
     fn to_new_with(self, start: isize, stop: isize) -> Self {
         Self {
@@ -143,13 +132,15 @@ impl<'py> SliceIdxs<'py> {
             ref_len: self.ref_len,
         }
     }
-    fn iter(&self) -> impl Iterator<Item = isize> + '_ {
-        std::iter::successors(Some(self.start), move |&i| {
-            (i + self.step > self.stop).then_some(i + self.step)
-        })
-    }
-    fn into_range(self) -> std::iter::StepBy<std::ops::Range<isize>> {
-        (self.start..self.stop).step_by(self.step.cast_unsigned())
+    #[allow(clippy::range_plus_one)]
+    fn iter(self) -> std::iter::StepBy<std::ops::Range<isize>> {
+        if self.step.is_positive() {
+            (self.start..self.stop).step_by(self.step.cast_unsigned())
+        } else {
+            let step: isize = self.step.abs();
+            let lo = self.start - (self.start - self.stop - 1) / step * step;
+            (lo..self.start + 1).step_by(step.cast_unsigned())
+        }
     }
 }
 
@@ -158,4 +149,36 @@ fn get_slice<'a>(lists: &'a [VecPy], bounds: &Bounds) -> impl Iterator<Item = &'
         .iter()
         .chain(lists[bounds.min.pos + 1..bounds.max.pos].iter().flatten())
         .chain(lists[bounds.max.pos][0..bounds.max.idx].iter())
+}
+enum SliceKind {
+    /// Whole slice optimization: start to stop slices the whole sorted list.
+    Full,
+    Forward,
+    ForwardStep,
+    Backward,
+    BackwardStep,
+    ///A negative step could reverse the order of the items and this could be the desired behavior.
+    MayReverse,
+    /// Negative step with nothing to iterate (mirrors Python's `range`, which is empty when `start <= stop` for a negative step).
+    NoOp,
+}
+impl SliceKind {
+    fn new(slice: &SliceIdxs) -> Self {
+        match (slice.start.cmp(&slice.stop), slice.step.conv::<Nb>()) {
+            // SAFETY: Constructors guarantee that `step` is not zero (slice.indices raises `ValueError` on `step == 0`).
+            (_, Nb::Zero) => unsafe { unreachable_unchecked() },
+            (Ordering::Less, Nb::One) => {
+                if slice.start == 0 && slice.stop_cmp_len().is_eq() {
+                    Self::Full
+                } else {
+                    Self::Forward
+                }
+            }
+            (Ordering::Less, Nb::GTOne) => Self::ForwardStep,
+            (Ordering::Equal | Ordering::Greater, Nb::One | Nb::GTOne) => Self::MayReverse,
+            (Ordering::Greater, Nb::MinusOne) => Self::Backward,
+            (Ordering::Greater, Nb::LTMinusOne) => Self::BackwardStep,
+            (Ordering::Less | Ordering::Equal, Nb::MinusOne | Nb::LTMinusOne) => Self::NoOp,
+        }
+    }
 }
