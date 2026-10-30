@@ -1,13 +1,9 @@
-use std::{
-    cmp::Ordering,
-    ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
 use crate::{
     Bounds, Loc, errors,
     inner::InnerData,
     list_update::ListAdd,
-    ops::Nb,
     reprs::PyRepr,
     slice::SliceIdxs,
     types::{IntOrSlice, ListOrAny, VecPy},
@@ -103,10 +99,9 @@ pub trait ListsDataMethods:
         self.as_owned_from(py, out)
     }
     fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
-        let length = self.len.cast_signed();
         match index {
-            Either::Right(slice) => self
-                .get_slice(SliceIdxs::from_pyslice(&slice, length)?)?
+            Either::Right(slice) => SliceIdxs::new(&slice, self.len)?
+                .extract_from(self)?
                 .iter()
                 .collect_bound::<PyList>(slice.py())
                 .map(Either::Left),
@@ -121,45 +116,9 @@ pub trait ListsDataMethods:
         self.delete(py, &mut loc)
     }
     fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
-        let length = self.len.cast_signed();
         match index {
-            Either::Right(slice) => self.del_slice(SliceIdxs::from_pyslice(&slice, length)?),
+            Either::Right(slice) => SliceIdxs::new(&slice, self.len)?.delete_from(self),
             Either::Left(index) => self.del_item(index.py(), index.extract()?),
-        }
-    }
-    fn del_slice(&mut self, slice: SliceIdxs<'_>) -> PyResult<()> {
-        let py = slice.py;
-        let mut loc = Loc::default();
-        match (slice.start.cmp(&slice.stop), slice.step.conv::<Nb>()) {
-            (Ordering::Less, Nb::One) if slice.start == 0 && slice.stop_cmp_len().is_eq() => {
-                self.clear(py);
-                Ok(())
-            }
-            (Ordering::Less, Nb::One) if slice.ref_len <= 8 * (slice.stop - slice.start) => {
-                let mut values = self.get_slice(slice.to_new_with(0, slice.start))?;
-                if slice.stop_cmp_len().is_lt() {
-                    let mut new_slice =
-                        self.get_slice(slice.to_new_with(slice.stop, slice.ref_len))?;
-                    values.append(new_slice.as_mut());
-                }
-                self.clear(py);
-                self.extend(py, values.into())?;
-                Ok(())
-            }
-            (_, Nb::GTOne | Nb::One) => slice.into_range().rev().try_for_each(|idx| {
-                self.set_pos(idx, &mut loc)?;
-                self.delete(py, &mut loc)
-            }),
-            // Negative step with nothing to delete (mirrors Python's
-            // `range`, which is empty when `start <= stop`).
-            (Ordering::Less | Ordering::Equal, Nb::Zero | Nb::MinusOne | Nb::LTMinusOne) => Ok(()),
-            (Ordering::Greater, Nb::Zero | Nb::MinusOne | Nb::LTMinusOne) => {
-                // Negative step, `start > stop` guaranteed by the arm above.
-                slice.iter().try_for_each(|idx| {
-                    self.set_pos(idx, &mut loc)?;
-                    self.delete(py, &mut loc)
-                })
-            }
         }
     }
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {

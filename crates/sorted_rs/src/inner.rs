@@ -1,18 +1,13 @@
-use std::cmp::Ordering;
-
 use crate::{
-    Bounds, Loc, errors,
+    Loc, errors,
     lengths::Lengths,
     ops,
-    slice::SliceIdxs,
     traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
 use either::Either;
-use itertools::Itertools;
 use pyo3::{
     basic::CompareOp,
-    exceptions::PyValueError,
     prelude::*,
     types::{PyList, PyNotImplemented},
 };
@@ -138,68 +133,6 @@ impl InnerData {
             .pipe(Ok)
         }
     }
-    pub fn get_slice(&mut self, slice: SliceIdxs<'_>) -> PyResult<VecPy> {
-        let stop_eq_len = slice.stop_cmp_len().is_eq();
-        let mut bounds = Bounds::default();
-        let py = slice.py;
-        match (slice.start.cmp(&slice.stop), slice.step.conv::<ops::Nb>()) {
-            (_, ops::Nb::Zero) => Err(PyValueError::new_err("slice step cannot be zero")),
-            // Whole slice optimization: start to stop slices the whole sorted list.
-            (Ordering::Less, ops::Nb::One) if slice.start == 0 && stop_eq_len => {
-                self.collapse(py).pipe(Ok)
-            }
-            (Ordering::Less, ops::Nb::One) => {
-                self.set_pos(slice.start, &mut bounds.min)?;
-                let start_list = &self.values[bounds.min.pos];
-                bounds.max.idx = bounds.min.idx + (slice.stop - slice.start).cast_unsigned();
-                match (start_list.len() >= bounds.max.idx, stop_eq_len) {
-                    // Small slice optimization: start index and stop index are
-                    // within the start list.
-                    (true, _) => start_list[bounds.min.idx..bounds.max.idx]
-                        .iter()
-                        .map(|x| x.clone_ref(py))
-                        .collect::<Vec<_>>(),
-                    (false, true) => {
-                        bounds.max.pos = self.values.len() - 1;
-                        bounds.max.idx = self.values.loc_len(&bounds.max);
-                        get_slice(&self.values, &bounds)
-                            .map(|x| x.clone_ref(py))
-                            .collect::<Vec<_>>()
-                    }
-                    (false, false) => {
-                        self.set_pos(slice.stop, &mut bounds.max)?;
-                        get_slice(&self.values, &bounds)
-                            .map(|x| x.clone_ref(py))
-                            .collect::<Vec<_>>()
-                    }
-                }
-                .pipe(Ok)
-            }
-            (Ordering::Greater, ops::Nb::MinusOne) => {
-                let mut result =
-                    self.get_slice(slice.to_new_with(slice.stop + 1, slice.start + 1))?;
-                result.reverse();
-                Ok(result)
-            }
-            // Negative step with nothing to iterate (mirrors Python's `range`,
-            // which is empty when `start <= stop` for a negative step).
-            (Ordering::Less | Ordering::Equal, ops::Nb::MinusOne | ops::Nb::LTMinusOne) => {
-                Ok(Vec::new())
-            }
-            (Ordering::Greater, ops::Nb::LTMinusOne) => slice
-                .iter()
-                .map(|i| self.get_item(py, i))
-                .map_ok(Bound::unbind)
-                .collect(),
-            // Return a list because a negative step could reverse the order
-            // of the items and this could be the desired behavior.
-            (_, ops::Nb::One | ops::Nb::GTOne) => slice
-                .into_range()
-                .map(|i| self.get_item(py, i))
-                .map_ok(Bound::unbind)
-                .collect(),
-        }
-    }
 
     pub(super) fn remove_pos(&mut self, loc: &Loc) {
         self.values.remove(loc.pos);
@@ -264,13 +197,6 @@ impl InnerData {
     pub fn ge<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
         inner_cmp(self, other, CompareOp::Ge)
     }
-}
-
-fn get_slice<'a>(lists: &'a [VecPy], bounds: &Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {
-    lists[bounds.min.pos][bounds.min.idx..]
-        .iter()
-        .chain(lists[bounds.min.pos + 1..bounds.max.pos].iter().flatten())
-        .chain(lists[bounds.max.pos][0..bounds.max.idx].iter())
 }
 
 #[inline]

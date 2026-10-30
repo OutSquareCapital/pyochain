@@ -119,10 +119,9 @@ impl<T: ListsDataMethods> SetData<T> {
     }
     pub fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         let py = index.py();
-        let length = self.len.cast_signed();
         match index {
-            Either::Right(slice) => self
-                .get_slice(SliceIdxs::from_pyslice(&slice, length)?)?
+            Either::Right(pyslice) => SliceIdxs::new(&pyslice, self.len)?
+                .extract_from(self)
                 .iter()
                 .collect_bound::<PyList>(py)
                 .map(Either::Left),
@@ -134,10 +133,13 @@ impl<T: ListsDataMethods> SetData<T> {
         let py = index.py();
         match index {
             Either::Right(pyslice) => {
-                let slice = SliceIdxs::from_pyslice(&pyslice, self.len.cast_signed())?;
-                let values = self.0.get_slice(slice)?.iter().collect_bound::<PySet>(py)?;
+                let slice = SliceIdxs::new(&pyslice, self.len)?;
+                let values = slice
+                    .extract_from(&mut self.0)
+                    .iter()
+                    .collect_bound::<PySet>(py)?;
                 self.1.bind(py).difference_update((values,))?;
-                self.0.del_slice(slice)
+                slice.delete_from(&mut self.0)
             }
             Either::Left(int) => {
                 let idx = int.extract::<isize>()?;
