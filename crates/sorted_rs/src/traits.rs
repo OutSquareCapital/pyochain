@@ -129,31 +129,31 @@ pub trait ListsDataMethods:
     }
     fn del_slice(&mut self, slice: SliceIdxs<'_>) -> PyResult<()> {
         let py = slice.py;
-        let length = self.len.cast_signed();
         let mut loc = Loc::default();
-        match (slice.step.conv::<Nb>(), slice.start.cmp(&slice.stop)) {
-            (Nb::One, Ordering::Less) if slice.start == 0 && slice.stop == length => {
+        match (slice.start.cmp(&slice.stop), slice.step.conv::<Nb>()) {
+            (Ordering::Less, Nb::One) if slice.start == 0 && slice.stop_cmp_len().is_eq() => {
                 self.clear(py);
                 Ok(())
             }
-            (Nb::One, Ordering::Less) if length <= 8 * (slice.stop - slice.start) => {
-                let mut values = self.get_slice(SliceIdxs::new(py, 0, slice.start, 1))?;
-                if slice.stop < length {
-                    let new_slice = self.get_slice(SliceIdxs::new(py, slice.stop, length, 1))?;
-                    values.extend(new_slice);
+            (Ordering::Less, Nb::One) if slice.ref_len <= 8 * (slice.stop - slice.start) => {
+                let mut values = self.get_slice(slice.to_new_with(0, slice.start))?;
+                if slice.stop_cmp_len().is_lt() {
+                    let mut new_slice =
+                        self.get_slice(slice.to_new_with(slice.stop, slice.ref_len))?;
+                    values.append(new_slice.as_mut());
                 }
                 self.clear(py);
                 self.extend(py, values.into())?;
                 Ok(())
             }
-            (Nb::GTOne | Nb::One, _) => slice.into_range().rev().try_for_each(|idx| {
+            (_, Nb::GTOne | Nb::One) => slice.into_range().rev().try_for_each(|idx| {
                 self.set_pos(idx, &mut loc)?;
                 self.delete(py, &mut loc)
             }),
             // Negative step with nothing to delete (mirrors Python's
             // `range`, which is empty when `start <= stop`).
-            (_, Ordering::Less | Ordering::Equal) => Ok(()),
-            _ => {
+            (Ordering::Less | Ordering::Equal, Nb::Zero | Nb::MinusOne | Nb::LTMinusOne) => Ok(()),
+            (Ordering::Greater, Nb::Zero | Nb::MinusOne | Nb::LTMinusOne) => {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 slice.iter().try_for_each(|idx| {
                     self.set_pos(idx, &mut loc)?;

@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use derive_more::Constructor;
 use pyo3::{prelude::*, types::PySlice};
 use tap::prelude::*;
@@ -8,11 +10,19 @@ pub struct SliceIdxs<'py> {
     pub start: isize,
     pub stop: isize,
     pub step: isize,
+    /// Length of the referenced sequence.
+    pub ref_len: isize,
 }
 impl<'py> SliceIdxs<'py> {
     pub fn from_pyslice(slice: &Bound<'py, PySlice>, length: isize) -> PyResult<Self> {
-        let indices = slice.indices(length)?;
-        Self::new(slice.py(), indices.start, indices.stop, indices.step).pipe(Ok)
+        let i = slice.indices(length)?;
+        Self::new(slice.py(), i.start, i.stop, i.step, length).pipe(Ok)
+    }
+    pub fn stop_cmp_len(&self) -> Ordering {
+        self.stop.cmp(&self.ref_len)
+    }
+    pub fn to_new_with(self, start: isize, stop: isize) -> Self {
+        Self::new(self.py, start, stop, 1, self.ref_len)
     }
     pub fn iter(&self) -> impl Iterator<Item = isize> + '_ {
         std::iter::successors(Some(self.start), move |&i| {

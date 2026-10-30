@@ -139,35 +139,34 @@ impl InnerData {
         }
     }
     pub fn get_slice(&mut self, slice: SliceIdxs<'_>) -> PyResult<VecPy> {
-        let stop_eq_len = slice.stop.cmp(&self.len.cast_signed());
+        let stop_eq_len = slice.stop_cmp_len().is_eq();
         let mut bounds = Bounds::default();
         let py = slice.py;
         match (slice.start.cmp(&slice.stop), slice.step.conv::<ops::Nb>()) {
             (_, ops::Nb::Zero) => Err(PyValueError::new_err("slice step cannot be zero")),
             // Whole slice optimization: start to stop slices the whole sorted list.
-            (Ordering::Less, ops::Nb::One) if slice.start == 0 && stop_eq_len.is_eq() => {
+            (Ordering::Less, ops::Nb::One) if slice.start == 0 && stop_eq_len => {
                 self.collapse(py).pipe(Ok)
             }
             (Ordering::Less, ops::Nb::One) => {
                 self.set_pos(slice.start, &mut bounds.min)?;
                 let start_list = &self.values[bounds.min.pos];
                 bounds.max.idx = bounds.min.idx + (slice.stop - slice.start).cast_unsigned();
-                match (start_list.len().cmp(&bounds.max.idx), stop_eq_len) {
+                match (start_list.len() >= bounds.max.idx, stop_eq_len) {
                     // Small slice optimization: start index and stop index are
                     // within the start list.
-                    (Ordering::Equal | Ordering::Greater, _) => start_list
-                        [bounds.min.idx..bounds.max.idx]
+                    (true, _) => start_list[bounds.min.idx..bounds.max.idx]
                         .iter()
                         .map(|x| x.clone_ref(py))
                         .collect::<Vec<_>>(),
-                    (Ordering::Less, Ordering::Equal) => {
+                    (false, true) => {
                         bounds.max.pos = self.values.len() - 1;
                         bounds.max.idx = self.values.loc_len(&bounds.max);
                         get_slice(&self.values, &bounds)
                             .map(|x| x.clone_ref(py))
                             .collect::<Vec<_>>()
                     }
-                    (Ordering::Less, Ordering::Greater | Ordering::Less) => {
+                    (false, false) => {
                         self.set_pos(slice.stop, &mut bounds.max)?;
                         get_slice(&self.values, &bounds)
                             .map(|x| x.clone_ref(py))
@@ -178,7 +177,7 @@ impl InnerData {
             }
             (Ordering::Greater, ops::Nb::MinusOne) => {
                 let mut result =
-                    self.get_slice(SliceIdxs::new(py, slice.stop + 1, slice.start + 1, 1))?;
+                    self.get_slice(slice.to_new_with(slice.stop + 1, slice.start + 1))?;
                 result.reverse();
                 Ok(result)
             }
