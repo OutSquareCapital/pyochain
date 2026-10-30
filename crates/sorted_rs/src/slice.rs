@@ -1,12 +1,9 @@
-use std::{cmp::Ordering, hint::unreachable_unchecked};
-
 use itertools::Itertools;
 use pyo3::{prelude::*, types::PySlice};
 use tap::prelude::*;
 
 use crate::{
-    Bounds, InnerData, Loc,
-    ops::Nb,
+    Bounds, InnerData, Loc, ops,
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
@@ -33,95 +30,59 @@ impl<'py> SliceIdxs<'py> {
         }
         .pipe(Ok)
     }
-
+    fn kind(&self) -> ops::Slice {
+        ops::Slice::new(self.start, self.stop, self.step, self.ref_len)
+    }
     pub fn extract_from(&self, list: &mut InnerData) -> PyResult<VecPy> {
         let py = self.py;
-        match SliceKind::new(self) {
-            SliceKind::Full => list.collapse(py).pipe(Ok),
-            SliceKind::Forward => {
-                let mut bounds = Bounds::default();
-                list.set_pos(self.start, &mut bounds.min)?;
-                let start_list = &list.values[bounds.min.pos];
-                bounds.max.idx = bounds.min.idx + (self.stop - self.start).cast_unsigned();
-                let stop_eq_len = self.stop_cmp_len().is_eq();
-                match (start_list.len() >= bounds.max.idx, stop_eq_len) {
-                    // Small slice optimization: start index and stop index are within the start list.
-                    (true, _) => start_list[bounds.min.idx..bounds.max.idx]
-                        .iter()
-                        .map(|x| x.clone_ref(py))
-                        .collect::<Vec<_>>(),
-                    (false, true) => {
-                        bounds.max.pos = list.values.len() - 1;
-                        bounds.max.idx = list.values.loc_len(&bounds.max);
-                        get_slice(&list.values, &bounds)
-                            .map(|x| x.clone_ref(py))
-                            .collect::<Vec<_>>()
-                    }
-                    (false, false) => {
-                        list.set_pos(self.stop, &mut bounds.max)?;
-                        get_slice(&list.values, &bounds)
-                            .map(|x| x.clone_ref(py))
-                            .collect::<Vec<_>>()
-                    }
-                }
-                .pipe(Ok)
+        match self.kind() {
+            ops::Slice::NoOp => Ok(Vec::new()),
+            ops::Slice::Full => list.collapse(py).pipe(Ok),
+            ops::Slice::Forward | ops::Slice::ForwardSmallToAdjust => {
+                forward_extract::<false>(self, list)
             }
-            SliceKind::ForwardStep | SliceKind::MayReverse => self
+            ops::Slice::ForwardToEnd | ops::Slice::ForwardSmall => {
+                forward_extract::<true>(self, list)
+            }
+            ops::Slice::ForwardStep | ops::Slice::MayReverse => self
                 .iter()
                 .map(|i| list.get_item(py, i))
                 .map_ok(Bound::unbind)
                 .collect(),
-            SliceKind::Backward => {
+            ops::Slice::Backward => {
                 let mut result = self
                     .to_new_with(self.stop + 1, self.start + 1)
                     .extract_from(list)?;
                 result.reverse();
                 Ok(result)
             }
-            SliceKind::BackwardStep => self
+            ops::Slice::BackwardStep => self
                 .iter()
                 .rev()
                 .map(|i| list.get_item(py, i))
                 .map_ok(Bound::unbind)
                 .collect(),
-            SliceKind::NoOp => Ok(Vec::new()),
         }
     }
 
     pub fn delete_from<T: ListsDataMethods>(&self, list: &mut T) -> PyResult<()> {
         let py = self.py;
-        match SliceKind::new(self) {
-            SliceKind::Full => {
+        match self.kind() {
+            ops::Slice::NoOp => Ok(()),
+            ops::Slice::Full => {
                 list.clear(py);
                 Ok(())
             }
-            SliceKind::Forward if self.ref_len <= 8 * (self.stop - self.start) => {
-                let mut values = self.to_new_with(0, self.start).extract_from(list)?;
-                if self.stop_cmp_len().is_lt() {
-                    let mut new_slice = self
-                        .to_new_with(self.stop, self.ref_len)
-                        .extract_from(list)?;
-                    values.append(new_slice.as_mut());
-                }
-                list.clear(py);
-                list.extend(py, values.into())
-            }
-            SliceKind::Forward
-            | SliceKind::ForwardStep
-            | SliceKind::MayReverse
-            | SliceKind::Backward
-            | SliceKind::BackwardStep => {
+            ops::Slice::ForwardSmallToAdjust => forward_delete_small::<_, true>(self, list),
+            ops::Slice::ForwardSmall => forward_delete_small::<_, false>(self, list),
+            _ => {
                 let mut loc = Loc::default();
                 self.iter().rev().try_for_each(|idx| {
                     list.set_pos(idx, &mut loc)?;
                     list.delete(py, &mut loc)
                 })
             }
-            SliceKind::NoOp => Ok(()),
         }
-    }
-    fn stop_cmp_len(&self) -> Ordering {
-        self.stop.cmp(&self.ref_len)
     }
     fn to_new_with(self, start: isize, stop: isize) -> Self {
         Self {
@@ -143,42 +104,51 @@ impl<'py> SliceIdxs<'py> {
         }
     }
 }
+fn forward_extract<const TO_END: bool>(slice: &SliceIdxs, list: &mut InnerData) -> PyResult<VecPy> {
+    let py = slice.py;
+    let mut bounds = Bounds::default();
+    list.set_pos(slice.start, &mut bounds.min)?;
+    let start_list = &list.values[bounds.min.pos];
+    bounds.max.idx = bounds.min.idx + (slice.stop - slice.start).cast_unsigned();
+    match (start_list.len() >= bounds.max.idx, TO_END) {
+        // Small slice optimization: start index and stop index are within the start list.
+        (true, _) => start_list[bounds.min.idx..bounds.max.idx]
+            .iter()
+            .map(|x| x.clone_ref(py))
+            .collect(),
+        (false, true) => {
+            bounds.max.pos = list.values.len() - 1;
+            bounds.max.idx = list.values.loc_len(&bounds.max);
+            get_slice(py, &list.values, &bounds)
+        }
+        (false, false) => {
+            list.set_pos(slice.stop, &mut bounds.max)?;
+            get_slice(py, &list.values, &bounds)
+        }
+    }
+    .pipe(Ok)
+}
 
-fn get_slice<'a>(lists: &'a [VecPy], bounds: &Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {
+fn get_slice(py: Python<'_>, lists: &[VecPy], bounds: &Bounds) -> VecPy {
     lists[bounds.min.pos][bounds.min.idx..]
         .iter()
         .chain(lists[bounds.min.pos + 1..bounds.max.pos].iter().flatten())
         .chain(lists[bounds.max.pos][0..bounds.max.idx].iter())
+        .map(|x| x.clone_ref(py))
+        .collect()
 }
-enum SliceKind {
-    /// Whole slice optimization: start to stop slices the whole sorted list.
-    Full,
-    Forward,
-    ForwardStep,
-    Backward,
-    BackwardStep,
-    ///A negative step could reverse the order of the items and this could be the desired behavior.
-    MayReverse,
-    /// Negative step with nothing to iterate (mirrors Python's `range`, which is empty when `start <= stop` for a negative step).
-    NoOp,
-}
-impl SliceKind {
-    fn new(slice: &SliceIdxs) -> Self {
-        match (slice.start.cmp(&slice.stop), slice.step.conv::<Nb>()) {
-            // SAFETY: Constructors guarantee that `step` is not zero (slice.indices raises `ValueError` on `step == 0`).
-            (_, Nb::Zero) => unsafe { unreachable_unchecked() },
-            (Ordering::Less, Nb::One) => {
-                if slice.start == 0 && slice.stop_cmp_len().is_eq() {
-                    Self::Full
-                } else {
-                    Self::Forward
-                }
-            }
-            (Ordering::Less, Nb::GTOne) => Self::ForwardStep,
-            (Ordering::Equal | Ordering::Greater, Nb::One | Nb::GTOne) => Self::MayReverse,
-            (Ordering::Greater, Nb::MinusOne) => Self::Backward,
-            (Ordering::Greater, Nb::LTMinusOne) => Self::BackwardStep,
-            (Ordering::Less | Ordering::Equal, Nb::MinusOne | Nb::LTMinusOne) => Self::NoOp,
-        }
+fn forward_delete_small<T, const NEED_ADJUST: bool>(slice: &SliceIdxs, list: &mut T) -> PyResult<()>
+where
+    T: ListsDataMethods,
+{
+    let py = slice.py;
+    let mut values = slice.to_new_with(0, slice.start).extract_from(list)?;
+    if NEED_ADJUST {
+        let mut new_slice = slice
+            .to_new_with(slice.stop, slice.ref_len)
+            .extract_from(list)?;
+        values.append(new_slice.as_mut());
     }
+    list.clear(py);
+    list.extend(py, values.into())
 }

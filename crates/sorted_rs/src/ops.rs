@@ -3,7 +3,10 @@
 //! More importantly, they factorize the common logic between the `SortedList` and `SortedKeyList` implementations.\
 //! They have very similar conditional checks, but different actions to take on each branch.
 
+use std::{cmp::Ordering, hint::unreachable_unchecked};
+
 use pyo3::prelude::*;
+use tap::Conv;
 
 use crate::{
     bisect::Bisect, bounds::Loc, errors, inner::InnerData, lengths::Lengths, traits::NestedVec,
@@ -27,7 +30,43 @@ impl From<isize> for Nb {
         }
     }
 }
-
+pub(super) enum Slice {
+    /// Whole slice optimization: start to stop slices the whole sorted list.
+    Full,
+    Forward,
+    ForwardToEnd,
+    ForwardSmall,
+    ForwardSmallToAdjust,
+    ForwardStep,
+    Backward,
+    BackwardStep,
+    ///A negative step could reverse the order of the items and this could be the desired behavior.
+    MayReverse,
+    /// Negative step with nothing to iterate (mirrors Python's `range`, which is empty when `start <= stop` for a negative step).
+    NoOp,
+}
+impl Slice {
+    pub fn new(start: isize, stop: isize, step: isize, length: isize) -> Self {
+        debug_assert!(stop <= length);
+        debug_assert_ne!(step, 0);
+        match (start.cmp(&stop), step.conv::<Nb>()) {
+            // SAFETY: Constructors guarantee that `step` is not zero (slice.indices raises `ValueError` on `step == 0`).
+            (_, Nb::Zero) => unsafe { unreachable_unchecked() },
+            (Ordering::Less, Nb::One) => match (stop >= length, length <= 8 * (stop - start)) {
+                (true, _) if start == 0 => Self::Full,
+                (true, true) => Self::ForwardSmall,
+                (true, false) => Self::ForwardToEnd,
+                (false, true) => Self::ForwardSmallToAdjust,
+                (false, false) => Self::Forward,
+            },
+            (Ordering::Less, Nb::GTOne) => Self::ForwardStep,
+            (Ordering::Equal | Ordering::Greater, Nb::One | Nb::GTOne) => Self::MayReverse,
+            (Ordering::Greater, Nb::MinusOne) => Self::Backward,
+            (Ordering::Greater, Nb::LTMinusOne) => Self::BackwardStep,
+            (Ordering::Less | Ordering::Equal, Nb::MinusOne | Nb::LTMinusOne) => Self::NoOp,
+        }
+    }
+}
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
 pub(super) enum Maxes {
     Empty,
