@@ -14,6 +14,7 @@ mod ops;
 pub mod prelude;
 mod reprs;
 mod set;
+mod slice;
 mod traits;
 pub mod types;
 pub mod views;

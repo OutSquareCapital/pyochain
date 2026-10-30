@@ -3,8 +3,8 @@ use std::cmp::Ordering;
 
 use crate::{
     KeysListsData, ListsData, SetData,
-    inner::SliceIdxs,
     prelude::*,
+    slice::SliceIdxs,
     types::{IntOrSlice, ListOrAny},
 };
 use either::Either;

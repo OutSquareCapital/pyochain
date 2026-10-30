@@ -5,10 +5,11 @@ use std::{
 
 use crate::{
     Bounds, Loc, errors,
-    inner::{InnerData, SliceIdxs},
+    inner::InnerData,
     list_update::ListAdd,
     ops::Nb,
     reprs::PyRepr,
+    slice::SliceIdxs,
     types::{IntOrSlice, ListOrAny, VecPy},
 };
 use either::Either;

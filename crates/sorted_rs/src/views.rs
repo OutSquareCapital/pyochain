@@ -1,4 +1,4 @@
-use crate::{DictData, inner::SliceIdxs, prelude::*, types::ListOrAny};
+use crate::{DictData, prelude::*, slice::SliceIdxs, types::ListOrAny};
 use either::Either;
 use itertools::Itertools;
 use pyo3::{

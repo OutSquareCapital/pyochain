@@ -4,17 +4,17 @@ use crate::{
     Bounds, Loc, errors,
     lengths::Lengths,
     ops,
+    slice::SliceIdxs,
     traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
-use derive_more::Constructor;
 use either::Either;
 use itertools::Itertools;
 use pyo3::{
     basic::CompareOp,
     exceptions::PyValueError,
     prelude::*,
-    types::{PyList, PyNotImplemented, PySlice},
+    types::{PyList, PyNotImplemented},
 };
 use pyo3_ext::{
     prelude::*,
@@ -22,27 +22,6 @@ use pyo3_ext::{
 };
 use std_tools::prelude::*;
 use tap::prelude::*;
-#[derive(Clone, Copy, Constructor)]
-pub struct SliceIdxs<'py> {
-    pub py: Python<'py>,
-    pub start: isize,
-    pub stop: isize,
-    pub step: isize,
-}
-impl<'py> SliceIdxs<'py> {
-    pub fn from_pyslice(slice: &Bound<'py, PySlice>, length: isize) -> PyResult<Self> {
-        let indices = slice.indices(length)?;
-        Self::new(slice.py(), indices.start, indices.stop, indices.step).pipe(Ok)
-    }
-    pub fn iter(&self) -> impl Iterator<Item = isize> + '_ {
-        std::iter::successors(Some(self.start), move |&i| {
-            (i + self.step > self.stop).then_some(i + self.step)
-        })
-    }
-    pub fn into_range(self) -> std::iter::StepBy<std::ops::Range<isize>> {
-        (self.start..self.stop).step_by(self.step.cast_unsigned())
-    }
-}
 pub struct InnerData {
     pub(super) values: Vec<VecPy>,
     pub maxes: VecPy,
