@@ -52,7 +52,7 @@ impl Slice {
         match (start.cmp(&stop), step.conv::<Nb>()) {
             // SAFETY: Constructors guarantee that `step` is not zero (slice.indices raises `ValueError` on `step == 0`).
             (_, Nb::Zero) => unsafe { unreachable_unchecked() },
-            (Ordering::Less, Nb::One) => match (stop >= length, length <= 8 * (stop - start)) {
+            (Ordering::Less, Nb::One) => match (stop == length, length <= 8 * (stop - start)) {
                 (true, _) if start == 0 => Self::Full,
                 (true, true) => Self::ForwardSmall,
                 (true, false) => Self::ForwardToEnd,
