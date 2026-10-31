@@ -44,24 +44,15 @@ impl<'py> SliceIdxs<'py> {
             ops::Slice::ForwardToEnd | ops::Slice::ForwardSmall => {
                 forward_extract::<true>(self, list)
             }
-            ops::Slice::ForwardStep | ops::Slice::MayReverse => self
-                .iter()
-                .map(|i| list.get_item(py, i))
-                .map_ok(Bound::unbind)
-                .collect(),
-            ops::Slice::Backward => {
-                let mut result = self
-                    .to_new_with(self.stop + 1, self.start + 1)
-                    .extract_from(list)?;
-                result.reverse();
-                Ok(result)
+            ops::Slice::ForwardStep | ops::Slice::MayReverse => {
+                self.iter().pipe(|it| get_each_item(py, it, list))
             }
-            ops::Slice::BackwardStep => self
-                .iter()
-                .rev()
-                .map(|i| list.get_item(py, i))
-                .map_ok(Bound::unbind)
-                .collect(),
+            ops::Slice::Backward => self
+                .with(self.stop + 1, self.start + 1)
+                .extract_from(list)?
+                .tap_mut(|r| r.reverse())
+                .pipe(Ok),
+            ops::Slice::BackwardStep => self.iter().rev().pipe(|it| get_each_item(py, it, list)),
         }
     }
 
@@ -84,7 +75,7 @@ impl<'py> SliceIdxs<'py> {
             }
         }
     }
-    fn to_new_with(self, start: isize, stop: isize) -> Self {
+    fn with(self, start: isize, stop: isize) -> Self {
         Self {
             py: self.py,
             start,
@@ -128,7 +119,14 @@ fn forward_extract<const TO_END: bool>(slice: &SliceIdxs, list: &mut InnerData) 
     }
     .pipe(Ok)
 }
-
+fn get_each_item<T>(py: Python<'_>, it: T, list: &mut InnerData) -> PyResult<VecPy>
+where
+    T: Iterator<Item = isize>,
+{
+    it.map(|i| list.get_item(py, i))
+        .map_ok(Bound::unbind)
+        .collect()
+}
 fn get_slice(py: Python<'_>, lists: &[VecPy], bounds: &Bounds) -> VecPy {
     lists[bounds.min.pos][bounds.min.idx..]
         .iter()
@@ -142,11 +140,9 @@ where
     T: ListsDataMethods,
 {
     let py = slice.py;
-    let mut values = slice.to_new_with(0, slice.start).extract_from(list)?;
+    let mut values = slice.with(0, slice.start).extract_from(list)?;
     if NEED_ADJUST {
-        let mut new_slice = slice
-            .to_new_with(slice.stop, slice.ref_len)
-            .extract_from(list)?;
+        let mut new_slice = slice.with(slice.stop, slice.ref_len).extract_from(list)?;
         values.append(new_slice.as_mut());
     }
     list.clear(py);
