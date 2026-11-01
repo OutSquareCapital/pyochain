@@ -89,7 +89,8 @@ impl Lengths {
             self.inner.extend(combined);
             self.offset = 1;
         } else {
-            let size = 1usize << ((row1.len() - 1).ilog2() + 1);
+            let size = row1.len().next_power_of_two();
+            debug_assert_ne!(size, 0);
             row1.resize(size, 0);
 
             let mut tree = vec![row0, row1];
