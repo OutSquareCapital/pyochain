@@ -110,14 +110,18 @@ pub trait ListsDataMethods:
                 .map(Either::Right),
         }
     }
-    fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
-        let mut loc = self.set_pos(index)?;
-        self.delete(py, &mut loc)
-    }
     fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
             Either::Right(slice) => SliceIdxs::new(&slice, self.len)?.delete_from(self),
             Either::Left(index) => self.del_item(index.py(), index.extract()?),
+        }
+    }
+    fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
+        if self.len == 0 {
+            Err(errors::out_of_range())
+        } else {
+            let mut loc = self.set_pos(index)?;
+            self.delete(py, &mut loc)
         }
     }
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
