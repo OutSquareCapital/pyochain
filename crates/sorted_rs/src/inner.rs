@@ -82,55 +82,28 @@ impl InnerData {
             .collect()
     }
     #[inline]
-    pub fn pop_loc(&mut self, index: isize) -> PyResult<Loc> {
-        if self.len == 0 {
-            Err(errors::out_of_range())
-        } else {
-            let len_last = self.values.last().unwrap().len().cast_signed();
-            match index.conv::<ops::Nb>() {
-                ops::Nb::MinusOne => {
-                    let pos = self.values.len() - 1;
-                    let idx = self.values[pos].len() - 1_usize;
-                    Ok(Loc::new(pos, idx))
-                }
-                ops::Nb::Zero | ops::Nb::One | ops::Nb::GTOne
-                    if index < self.values[0].len().cast_signed() =>
-                {
-                    index.cast_unsigned().pipe(Loc::with_idx).pipe(Ok)
-                }
-                ops::Nb::LTMinusOne if -len_last < index => {
-                    let pos = self.values.len() - 1;
-                    let idx = (len_last + index).cast_unsigned();
-                    Ok(Loc::new(pos, idx))
-                }
-                _ => self.set_pos(index),
+    pub fn index_to_loc(&mut self, index: isize) -> PyResult<Loc> {
+        match ops::Locate::new(self.len, &self.values, index) {
+            ops::Locate::Empty => Err(errors::out_of_range()),
+            ops::Locate::Last => {
+                let pos = self.values.len() - 1;
+                let idx = self.values[pos].len() - 1_usize;
+                Ok(Loc::new(pos, idx))
             }
+            ops::Locate::First | ops::Locate::InFirstList => {
+                index.cast_unsigned().pipe(Loc::with_idx).pipe(Ok)
+            }
+            ops::Locate::InLastList => {
+                let pos = self.values.len() - 1;
+                let idx = (self.values.last().unwrap().len().cast_signed() + index).cast_unsigned();
+                Ok(Loc::new(pos, idx))
+            }
+            ops::Locate::InOtherList => self.set_pos(index),
         }
     }
     pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        if self.len == 0 {
-            Err(errors::out_of_range())
-        } else {
-            let first_list = &self.values[0];
-            let last_list = self.values.last().unwrap();
-            let len_last = last_list.len().cast_signed();
-            match index.conv::<ops::Nb>() {
-                ops::Nb::Zero => first_list[0].clone_ref(py),
-                ops::Nb::MinusOne => last_list.last().unwrap().clone_ref(py),
-                ops::Nb::One | ops::Nb::GTOne if index < first_list.len().cast_signed() => {
-                    first_list[index.cast_unsigned()].clone_ref(py)
-                }
-                ops::Nb::LTMinusOne if -len_last < index => {
-                    last_list[(len_last + index).cast_unsigned()].clone_ref(py)
-                }
-                ops::Nb::LTMinusOne | ops::Nb::GTOne | ops::Nb::One => {
-                    let loc = self.set_pos(index)?;
-                    self.values.loc(&loc).clone_ref(py)
-                }
-            }
-            .into_bound(py)
-            .pipe(Ok)
-        }
+        self.index_to_loc(index)
+            .map(|loc| self.values.loc(&loc).clone_ref(py).into_bound(py))
     }
 
     pub(super) fn remove_pos(&mut self, loc: &Loc) {

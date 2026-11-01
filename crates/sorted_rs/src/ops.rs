@@ -10,6 +10,7 @@ use tap::Conv;
 
 use crate::{
     bisect::Bisect, bounds::Loc, errors, inner::InnerData, lengths::Lengths, traits::NestedVec,
+    types::VecPy,
 };
 
 pub(super) enum Nb {
@@ -197,6 +198,34 @@ impl<'py, 'a> Index<'py, 'a> {
                 Err(errors::not_in_list(&value.repr()?))
             }
             Self::BisectErr(err) => Err(err),
+        }
+    }
+}
+
+// Used in `pop` and `get_item`
+pub(super) enum Locate {
+    Empty,
+    Last,
+    First,
+    InFirstList,
+    InLastList,
+    InOtherList,
+}
+impl Locate {
+    #[inline]
+    pub fn new(length: usize, values: &[VecPy], index: isize) -> Self {
+        if length == 0 {
+            Self::Empty
+        } else {
+            match index.conv::<Nb>() {
+                Nb::Zero => Self::First,
+                Nb::MinusOne => Self::Last,
+                Nb::One | Nb::GTOne if index < values[0].len().cast_signed() => Self::InFirstList,
+                Nb::LTMinusOne if -values.last().unwrap().len().cast_signed() < index => {
+                    Self::InLastList
+                }
+                Nb::LTMinusOne | Nb::One | Nb::GTOne => Self::InOtherList,
+            }
         }
     }
 }

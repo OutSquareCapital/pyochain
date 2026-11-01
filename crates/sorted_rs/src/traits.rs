@@ -134,7 +134,7 @@ pub trait ListsDataMethods:
         self.extend(py, values.into())
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let mut loc = self.pop_loc(index)?;
+        let mut loc = self.index_to_loc(index)?;
         let val = self.values.loc(&loc).clone_ref(py);
         self.delete(py, &mut loc)?;
         Ok(val.into_bound(py))
