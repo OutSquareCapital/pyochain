@@ -4,21 +4,30 @@ use std::ops::Not;
 
 /// Trait for bisect functions, adapted from the Python standard library's bisect module.
 pub trait Bisect {
+    fn bisect<const LEFT: bool>(&self, item: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_left(&self, item: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_right(&self, item: &Bound<'_, PyAny>) -> PyResult<usize>;
 }
 impl Bisect for [Py<PyAny>] {
     #[inline(always)]
+    fn bisect<const LEFT: bool>(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
+        if LEFT {
+            resolve(self, item, |item, mid| {
+                mid.rich_compare_bool(item, CompareOp::Lt).map(Not::not)
+            })
+        } else {
+            resolve(self, item, |item, mid| {
+                item.rich_compare_bool(mid, CompareOp::Lt)
+            })
+        }
+    }
+    #[inline(always)]
     fn bisect_left(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
-        resolve(self, item, |item, mid| {
-            mid.rich_compare_bool(item, CompareOp::Lt).map(Not::not)
-        })
+        self.bisect::<true>(item)
     }
     #[inline(always)]
     fn bisect_right(&self, item: &Bound<'_, PyAny>) -> PyResult<usize> {
-        resolve(self, item, |item, mid| {
-            item.rich_compare_bool(mid, CompareOp::Lt)
-        })
+        self.bisect::<false>(item)
     }
 }
 

@@ -67,11 +67,7 @@ pub trait ListsDataMethods:
         stop: Option<isize>,
     ) -> PyResult<usize>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn bisect<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
-        &mut self,
-        value: &Bound<'_, PyAny>,
-        func: F,
-    ) -> PyResult<usize>;
+    fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     #[inline]

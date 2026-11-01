@@ -54,29 +54,25 @@ impl ListsDataMethods for ListsData {
         Ok(())
     }
     #[inline]
-    fn bisect<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
-        &mut self,
-        value: &Bound<'_, PyAny>,
-        func: F,
-    ) -> PyResult<usize> {
+    fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         if self.maxes.is_empty() {
             Ok(0)
         } else {
             let mut loc = Loc::new(0, 0);
-            loc.pos = func(&self.maxes, value)?;
+            loc.pos = self.maxes.bisect::<LEFT>(value)?;
             if loc.pos == self.maxes.len() {
                 Ok(self.len)
             } else {
-                loc.idx = func(&self.values[loc.pos], value)?;
+                loc.idx = self.values[loc.pos].bisect::<LEFT>(value)?;
                 Ok(self.loc(&loc))
             }
         }
     }
     fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.bisect(value, Bisect::bisect_left)
+        self.bisect::<true>(value)
     }
     fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.bisect(value, Bisect::bisect_right)
+        self.bisect::<false>(value)
     }
     #[inline]
     fn clear(&mut self, _py: Python<'_>) {
