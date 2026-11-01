@@ -4,6 +4,45 @@ use pyo3::prelude::*;
 use crate::{InnerData, bisect::Bisect, types::VecPy};
 
 #[derive(PartialEq, Eq, Default, Clone, Copy, Constructor, Debug)]
+pub struct RangeIdxs<T> {
+    pub start: T,
+    pub stop: T,
+}
+impl RangeIdxs<Option<isize>> {
+    pub fn into_bounds(self, data: &mut InnerData) -> PyResult<Bounds> {
+        let length = data.len.cast_signed();
+
+        if length == 0 {
+            Ok(Bounds::default())
+        } else {
+            let normalize_bound = |mut val: isize| {
+                if val < 0 {
+                    val += length;
+                    val.max(0)
+                } else {
+                    val.min(length)
+                }
+            };
+            let start = self.start.map_or(0, normalize_bound);
+            let stop = self.stop.map_or(length, normalize_bound);
+            if start >= stop {
+                Ok(Bounds::default())
+            } else {
+                let min = data.set_pos(start)?;
+                let max = if stop == length {
+                    let max_pos = data.values.len() - 1;
+                    let max_idx = data.values.last().unwrap().len();
+                    Loc::new(max_pos, max_idx)
+                } else {
+                    data.set_pos(stop)?
+                };
+                Ok(Bounds::new(min, max))
+            }
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Default, Clone, Copy, Constructor, Debug)]
 pub struct Loc {
     pub pos: usize,
     pub idx: usize,
@@ -93,41 +132,6 @@ impl Bounds {
             if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
                 Ok(Self::default())
             } else {
-                Ok(Self::new(min, max))
-            }
-        }
-    }
-    pub fn from_islice(
-        data: &mut InnerData,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<Self> {
-        let length = data.len.cast_signed();
-
-        if length == 0 {
-            Ok(Self::default())
-        } else {
-            let normalize_bound = |mut val: isize| {
-                if val < 0 {
-                    val += length;
-                    val.max(0)
-                } else {
-                    val.min(length)
-                }
-            };
-            let start = start.map_or(0, normalize_bound);
-            let stop = stop.map_or(length, normalize_bound);
-            if start >= stop {
-                Ok(Self::default())
-            } else {
-                let min = data.set_pos(start)?;
-                let max = if stop == length {
-                    let max_pos = data.values.len() - 1;
-                    let max_idx = data.values.last().unwrap().len();
-                    Loc::new(max_pos, max_idx)
-                } else {
-                    data.set_pos(stop)?
-                };
                 Ok(Self::new(min, max))
             }
         }

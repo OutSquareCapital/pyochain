@@ -9,8 +9,8 @@ use pyo3::prelude::*;
 use tap::Conv;
 
 use crate::{
-    bisect::Bisect, bounds::Loc, errors, inner::InnerData, lengths::Lengths, traits::NestedVec,
-    types::VecPy,
+    RangeIdxs, bisect::Bisect, bounds::Loc, errors, inner::InnerData, lengths::Lengths,
+    traits::NestedVec, types::VecPy,
 };
 
 pub(super) enum Nb {
@@ -149,7 +149,7 @@ impl Delete {
     }
 }
 /// `Loc`, `start`, and `stop` bounds for a search in a sorted list.
-type IdxBounds = (Loc, usize, usize);
+type IdxBounds = (Loc, RangeIdxs<usize>);
 pub(super) enum Index<'py, 'a> {
     NotFound(&'a Bound<'py, PyAny>),
     Empty(&'a Bound<'py, PyAny>),
@@ -161,15 +161,14 @@ impl<'py, 'a> Index<'py, 'a> {
     pub fn new(
         data: &InnerData,
         value: &'a Bound<'py, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
+        indices: RangeIdxs<Option<isize>>,
     ) -> Self {
         let length = data.len.cast_signed();
         if length == 0 {
             Self::Empty(value)
         } else {
-            let mut start = start.unwrap_or(0);
-            let mut stop = stop.unwrap_or(length);
+            let mut start = indices.start.unwrap_or(0);
+            let mut stop = indices.stop.unwrap_or(length);
             if start < 0 {
                 start += length;
             }
@@ -183,9 +182,10 @@ impl<'py, 'a> Index<'py, 'a> {
             } else {
                 match data.maxes.bisect_left(value).map(Loc::with_pos) {
                     Ok(bound) if bound.pos == data.maxes.len() => Self::NotFound(value),
-                    Ok(bound) => {
-                        Self::Searchable((bound, start.cast_unsigned(), stop.cast_unsigned()))
-                    }
+                    Ok(bound) => Self::Searchable((
+                        bound,
+                        RangeIdxs::new(start.cast_unsigned(), stop.cast_unsigned()),
+                    )),
                     Err(err) => Self::BisectErr(err),
                 }
             }
@@ -193,7 +193,7 @@ impl<'py, 'a> Index<'py, 'a> {
     }
     pub fn into_res(self) -> PyResult<IdxBounds> {
         match self {
-            Self::Searchable((bound, start, stop)) => Ok((bound, start, stop)),
+            Self::Searchable((bound, indices)) => Ok((bound, indices)),
             Self::NotFound(value) | Self::Empty(value) | Self::InvalidRange(value) => {
                 Err(errors::not_in_list(&value.repr()?))
             }

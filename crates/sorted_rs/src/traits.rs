@@ -1,7 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    Bounds, Loc,
+    Bounds, Loc, RangeIdxs,
     bisect::Bisect,
     errors,
     inner::InnerData,
@@ -69,8 +69,7 @@ pub trait ListsDataMethods:
     fn index(
         &mut self,
         value: &Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
+        indices: RangeIdxs<Option<isize>>,
     ) -> PyResult<usize>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_by_key<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {

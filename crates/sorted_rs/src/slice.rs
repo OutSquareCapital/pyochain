@@ -1,18 +1,19 @@
+use derive_more::Deref;
 use itertools::Itertools;
 use pyo3::{prelude::*, types::PySlice};
 use tap::prelude::*;
 
 use crate::{
-    Bounds, InnerData, Loc, ops,
+    Bounds, InnerData, Loc, RangeIdxs, ops,
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Deref)]
 pub(super) struct SliceIdxs<'py> {
     py: Python<'py>,
-    start: isize,
-    stop: isize,
+    #[deref]
+    indices: RangeIdxs<isize>,
     step: isize,
     /// Length of the referenced sequence.
     ref_len: isize,
@@ -23,8 +24,7 @@ impl<'py> SliceIdxs<'py> {
         let i = slice.indices(ref_len)?;
         Self {
             py: slice.py(),
-            start: i.start,
-            stop: i.stop,
+            indices: RangeIdxs::new(i.start, i.stop),
             step: i.step,
             ref_len,
         }
@@ -75,8 +75,7 @@ impl<'py> SliceIdxs<'py> {
     fn with(self, start: isize, stop: isize) -> Self {
         Self {
             py: self.py,
-            start,
-            stop,
+            indices: RangeIdxs::new(start, stop),
             step: 1,
             ref_len: self.ref_len,
         }

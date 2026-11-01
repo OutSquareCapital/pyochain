@@ -6,7 +6,7 @@ use crate::{
 use either::Either;
 use pyo3::prelude::*;
 use pyochain_macros::py_abc;
-use sorted_rs::{Bounds, KeysListsData, iter::IterKind, prelude::*};
+use sorted_rs::{Bounds, KeysListsData, RangeIdxs, iter::IterKind, prelude::*};
 
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyoVec>, Bound<'py, PyAny>>>;
 pub(super) type IterRes<'py> = PyResult<Bound<'py, abc::PyoIterator>>;
@@ -34,14 +34,16 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.write().list_mut().bisect::<false>(value)
     }
-    #[pyo3(signature = (value, start = None, stop = None))]
+    #[pyo3(signature = (value, start = None, stop = None, /))]
     fn index(
         &self,
         value: Bound<'_, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<usize> {
-        self.write().list_mut().index(&value, start, stop)
+        self.write()
+            .list_mut()
+            .index(&value, RangeIdxs::new(start, stop))
     }
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
@@ -65,7 +67,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         stop: Option<isize>,
         reverse: bool,
     ) -> IterRes<'py> {
-        let bounds = Bounds::from_islice(&mut slf.get().write(), start, stop)?;
+        let bounds = RangeIdxs::new(start, stop).into_bounds(&mut slf.get().write())?;
         Self::build_iter(slf, IterKind::Bounded(bounds, reverse))
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {

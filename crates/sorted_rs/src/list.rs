@@ -2,7 +2,7 @@ use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 
 use crate::{
-    ListsData,
+    ListsData, RangeIdxs,
     bisect::Bisect,
     bounds::{Bounds, Loc},
     errors,
@@ -145,23 +145,21 @@ impl ListsDataMethods for ListsData {
     fn index(
         &mut self,
         value: &Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
+        indices: RangeIdxs<Option<isize>>,
     ) -> PyResult<usize> {
         let py = value.py();
-        let (mut loc, start, mut stop) = ops::Index::new(self, value, start, stop).into_res()?;
+        let (mut loc, indices) = ops::Index::new(self, value, indices).into_res()?;
         loc.idx = self.values[loc.pos].bisect_left(value)?;
         if self.values.loc(&loc).bind(py).ne(value)? {
             Err(errors::not_in_list(&value.repr()?))
         } else {
-            stop -= 1;
             let left = self.loc(&loc);
-            if start <= left {
-                if left <= stop {
+            if indices.start <= left {
+                if left < indices.stop {
                     return Ok(left);
                 }
-            } else if start < self.bisect::<false>(value)? {
-                return Ok(start);
+            } else if indices.start < self.bisect::<false>(value)? {
+                return Ok(indices.start);
             }
             Err(errors::not_in_list(&value.repr()?))
         }

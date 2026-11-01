@@ -1,5 +1,5 @@
 use crate::{
-    Bounds, KeysListsData,
+    Bounds, KeysListsData, RangeIdxs,
     bisect::Bisect,
     bounds::Loc,
     errors,
@@ -173,13 +173,11 @@ impl ListsDataMethods for KeysListsData {
     fn index(
         &mut self,
         value: &Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
+        indices: RangeIdxs<Option<isize>>,
     ) -> PyResult<usize> {
         let py = value.py();
         let key = self.extract_key(value)?;
-        let (mut loc, start, mut stop) = ops::Index::new(self, &key, start, stop).into_res()?;
-        stop -= 1;
+        let (mut loc, indices) = ops::Index::new(self, &key, indices).into_res()?;
         let v_left = &self.1[loc.pos];
         loc.idx = v_left.bisect_left(&key)?;
         let len_keys = self.1.len();
@@ -191,9 +189,9 @@ impl ListsDataMethods for KeysListsData {
             }
             if self.values.loc(&loc).bind(py).eq(value)? {
                 let loc = self.loc(&loc);
-                if start <= loc && loc <= stop {
+                if indices.start <= loc && loc < indices.stop {
                     return Ok(loc);
-                } else if loc > stop {
+                } else if loc >= indices.stop {
                     return Err(errors::not_in_list(&value.repr()?));
                 }
             }
