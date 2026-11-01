@@ -86,25 +86,25 @@ impl InnerData {
         if self.len == 0 {
             Err(errors::out_of_range())
         } else {
-            let mut loc = Loc::default();
             let len_last = self.values.last().unwrap().len().cast_signed();
             match index.conv::<ops::Nb>() {
                 ops::Nb::MinusOne => {
-                    loc.pos = self.values.len() - 1;
-                    loc.idx = self.values.loc_len(&loc) - 1_usize;
+                    let pos = self.values.len() - 1;
+                    let idx = self.values[pos].len() - 1_usize;
+                    Ok(Loc::new(pos, idx))
                 }
                 ops::Nb::Zero | ops::Nb::One | ops::Nb::GTOne
                     if index < self.values[0].len().cast_signed() =>
                 {
-                    loc.idx = index.cast_unsigned();
+                    index.cast_unsigned().pipe(Loc::with_idx).pipe(Ok)
                 }
                 ops::Nb::LTMinusOne if -len_last < index => {
-                    loc.pos = self.values.len() - 1;
-                    loc.idx = (len_last + index).cast_unsigned();
+                    let pos = self.values.len() - 1;
+                    let idx = (len_last + index).cast_unsigned();
+                    Ok(Loc::new(pos, idx))
                 }
-                _ => self.set_pos(index, &mut loc)?,
+                _ => self.set_pos(index),
             }
-            Ok(loc)
         }
     }
     pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
@@ -124,8 +124,7 @@ impl InnerData {
                     last_list[(len_last + index).cast_unsigned()].clone_ref(py)
                 }
                 ops::Nb::LTMinusOne | ops::Nb::GTOne | ops::Nb::One => {
-                    let mut loc = Loc::default();
-                    self.set_pos(index, &mut loc)?;
+                    let loc = self.set_pos(index)?;
                     self.values.loc(&loc).clone_ref(py)
                 }
             }
@@ -152,12 +151,12 @@ impl InnerData {
         self.lengths.inner.clear();
     }
 
-    pub(super) fn set_pos(&mut self, mut idx: isize, loc: &mut Loc) -> PyResult<()> {
+    pub(super) fn set_pos(&mut self, mut idx: isize) -> PyResult<Loc> {
         if idx < 0 {
             if idx >= -self.values.last().unwrap().len().cast_signed() {
-                loc.pos = self.values.len() - 1;
-                loc.idx = (self.values.last().unwrap().len().cast_signed() + idx).cast_unsigned();
-                return Ok(());
+                let pos = self.values.len() - 1;
+                let idx = (self.values.last().unwrap().len().cast_signed() + idx).cast_unsigned();
+                return Ok(Loc::new(pos, idx));
             }
             idx += self.len.cast_signed();
             if idx < 0 {
@@ -167,15 +166,12 @@ impl InnerData {
         if idx >= self.len.cast_signed() {
             Err(errors::out_of_range())
         } else if idx < self.values[0].len().cast_signed() {
-            loc.pos = 0;
-            loc.idx = idx.cast_unsigned();
-            Ok(())
+            Ok(Loc::with_idx(idx.cast_unsigned()))
         } else {
             if self.lengths.is_not_built() {
                 self.lengths.build(&self.values);
             }
-            self.lengths.pos_at(idx, loc);
-            Ok(())
+            Ok(self.lengths.pos_at(idx))
         }
     }
 

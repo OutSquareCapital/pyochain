@@ -66,13 +66,10 @@ impl<'py> SliceIdxs<'py> {
             }
             ops::Slice::ForwardSmallToAdjust => forward_delete_small::<_, true>(self, list),
             ops::Slice::ForwardSmall => forward_delete_small::<_, false>(self, list),
-            _ => {
-                let mut loc = Loc::default();
-                self.iter().rev().try_for_each(|idx| {
-                    list.set_pos(idx, &mut loc)?;
-                    list.delete(py, &mut loc)
-                })
-            }
+            _ => self.iter().rev().try_for_each(|idx| {
+                let mut loc = list.set_pos(idx)?;
+                list.delete(py, &mut loc)
+            }),
         }
     }
     fn with(self, start: isize, stop: isize) -> Self {
@@ -97,10 +94,10 @@ impl<'py> SliceIdxs<'py> {
 }
 fn forward_extract<const TO_END: bool>(slice: &SliceIdxs, list: &mut InnerData) -> PyResult<VecPy> {
     let py = slice.py;
-    let mut bounds = Bounds::default();
-    list.set_pos(slice.start, &mut bounds.min)?;
-    let start_list = &list.values[bounds.min.pos];
-    bounds.max.idx = bounds.min.idx + (slice.stop - slice.start).cast_unsigned();
+    let min = list.set_pos(slice.start)?;
+    let start_list = &list.values[min.pos];
+    let max = Loc::with_idx(min.idx + (slice.stop - slice.start).cast_unsigned());
+    let mut bounds = Bounds::new(min, max);
     match (start_list.len() >= bounds.max.idx, TO_END) {
         // Small slice optimization: start index and stop index are within the start list.
         (true, _) => start_list[bounds.min.idx..bounds.max.idx]
@@ -113,7 +110,7 @@ fn forward_extract<const TO_END: bool>(slice: &SliceIdxs, list: &mut InnerData) 
             get_slice(py, &list.values, &bounds)
         }
         (false, false) => {
-            list.set_pos(slice.stop, &mut bounds.max)?;
+            bounds.max = list.set_pos(slice.stop)?;
             get_slice(py, &list.values, &bounds)
         }
     }

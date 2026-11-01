@@ -120,16 +120,15 @@ impl Bounds {
             if start >= stop {
                 Ok(Self::default())
             } else {
-                let mut bounds = Self::default();
-                data.set_pos(start, &mut bounds.min)?;
-
-                if stop == length {
-                    bounds.max.pos = data.values.len() - 1;
-                    bounds.max.idx = data.values.last().unwrap().len();
+                let min = data.set_pos(start)?;
+                let max = if stop == length {
+                    let max_pos = data.values.len() - 1;
+                    let max_idx = data.values.last().unwrap().len();
+                    Loc::new(max_pos, max_idx)
                 } else {
-                    data.set_pos(stop, &mut bounds.max)?;
-                }
-                Ok(bounds)
+                    data.set_pos(stop)?
+                };
+                Ok(Self::new(min, max))
             }
         }
     }
