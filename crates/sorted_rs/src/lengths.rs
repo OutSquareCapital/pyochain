@@ -68,8 +68,8 @@ impl Lengths {
         Loc::new(pos - self.offset, index)
     }
     //TODO: I'm almost sure this is one of the only places were we concretely diverge from the original implementation. Must check what changes exactly, and how we could further improve this.
-    pub fn build(&mut self, values: &[VecPy]) {
-        let row0 = values.iter().map(Vec::len).collect::<Vec<usize>>();
+    pub fn build<'a>(&mut self, values: impl IntoIterator<Item = &'a VecPy>) {
+        let row0 = values.into_iter().map(Vec::len).collect::<Vec<usize>>();
 
         if row0.len() == 1 {
             self.inner.extend(&row0);
