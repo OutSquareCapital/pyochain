@@ -139,7 +139,7 @@ impl ListsDataMethods for KeysListsData {
         self.values.loc_remove(loc);
         self.len -= 1;
         match ops::Delete::new(&self.1, self.load, loc) {
-            ops::Delete::PosSupToLoad => {
+            ops::Delete::PosSupToHalfLoad => {
                 self.maxes[loc.pos] = self.1.loc_last(loc).clone_ref(py);
                 if self.lengths.is_built() {
                     self.lengths.delete_at(loc.pos);
@@ -175,7 +175,7 @@ impl ListsDataMethods for KeysListsData {
     }
     fn expand(&mut self, py: Python<'_>, pos: usize) {
         match ops::Expand::new((self.1[pos]).len(), self.load, &self.lengths) {
-            ops::Expand::PosLenGtLoad => {
+            ops::Expand::PosLenGtDoubleLoad => {
                 let half_keys = self.1[pos].split_off(self.0.load);
                 let half = self.0.values[pos].split_off(self.0.load);
                 let new_max_at_pos = self.1[pos].last().unwrap().clone_ref(py);
@@ -184,7 +184,7 @@ impl ListsDataMethods for KeysListsData {
                 self.1.insert(pos + 1, half_keys);
             }
             ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
-            ops::Expand::Other => (),
+            ops::Expand::NoOp => (),
         }
     }
 

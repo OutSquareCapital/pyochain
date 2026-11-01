@@ -20,7 +20,7 @@ impl Lengths {
         let mut child = self.offset + pos;
         while child > 0 {
             self.inner[child] -= 1;
-            child = (child - 1) >> 1;
+            child = (child - 1) / 2;
         }
         self.inner[0] -= 1;
     }
@@ -28,7 +28,7 @@ impl Lengths {
         let mut child = self.offset + pos;
         while child != 0 {
             self.inner[child] += 1;
-            child = (child - 1) >> 1;
+            child = (child - 1) / 2;
         }
         self.inner[0] += 1;
     }
@@ -44,7 +44,7 @@ impl Lengths {
                 total += self.inner[child - 1];
             }
             // Advance pos to the parent node.
-            child = (child - 1) >> 1;
+            child = (child - 1) / 2;
         }
         total + loc.idx
     }
@@ -63,7 +63,7 @@ impl Lengths {
                 pos = child + 1;
             }
 
-            child = (pos << 1) + 1;
+            child = (pos * 2) + 1;
         }
 
         loc.pos = pos - self.offset;

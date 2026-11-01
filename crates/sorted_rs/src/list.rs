@@ -113,7 +113,7 @@ impl ListsDataMethods for ListsData {
         self.values.loc_remove(loc);
         self.len -= 1;
         match ops::Delete::new(&self.values, self.load, loc) {
-            ops::Delete::PosSupToLoad => {
+            ops::Delete::PosSupToHalfLoad => {
                 self.maxes[loc.pos] = self.values.loc_last(loc).clone_ref(py);
                 if self.lengths.is_built() {
                     self.lengths.delete_at(loc.pos);
@@ -142,14 +142,14 @@ impl ListsDataMethods for ListsData {
     }
     fn expand(&mut self, py: Python<'_>, pos: usize) {
         match ops::Expand::new(self.0.values[pos].len(), self.0.load, &self.0.lengths) {
-            ops::Expand::PosLenGtLoad => {
+            ops::Expand::PosLenGtDoubleLoad => {
                 let half = self.0.values[pos].split_off(self.0.load);
                 let new_max_at_pos = self.values[pos].last().unwrap().clone_ref(py);
                 let last_max = half.last().unwrap().clone_ref(py);
                 self.expand_at_pos(pos, half, last_max, new_max_at_pos);
             }
             ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
-            ops::Expand::Other => (),
+            ops::Expand::NoOp => (),
         }
     }
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {

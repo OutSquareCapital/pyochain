@@ -107,26 +107,26 @@ impl Maxes {
 
 /// Used in `expand`
 pub enum Expand {
-    PosLenGtLoad,
+    PosLenGtDoubleLoad,
     IdxBuilt,
-    Other,
+    NoOp,
 }
 impl Expand {
     #[inline(always)]
     #[must_use]
     pub fn new(lists_len: usize, load: usize, lengths: &Lengths) -> Self {
-        if lists_len > load << 1 {
-            Self::PosLenGtLoad
+        if lists_len > load * 2 {
+            Self::PosLenGtDoubleLoad
         } else if lengths.is_built() {
             Self::IdxBuilt
         } else {
-            Self::Other
+            Self::NoOp
         }
     }
 }
 /// Used in `delete`
 pub enum Delete {
-    PosSupToLoad,
+    PosSupToHalfLoad,
     DataLenGTOne,
     LenPosNotZero,
     Other,
@@ -136,8 +136,8 @@ impl Delete {
     #[must_use]
     pub fn new(lists: &[Vec<Py<PyAny>>], load: usize, loc: &Loc) -> Self {
         let len_pos = lists.loc_len(loc);
-        if len_pos > (load >> 1) {
-            Self::PosSupToLoad
+        if len_pos > (load / 2) {
+            Self::PosSupToHalfLoad
         } else if lists.len() > 1 {
             Self::DataLenGTOne
         } else if len_pos != 0 {
