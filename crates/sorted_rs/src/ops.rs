@@ -126,22 +126,22 @@ impl Expand {
 }
 /// Used in `delete`
 pub enum Delete {
-    PosSupToHalfLoad,
-    DataLenGTOne,
-    LenPosNotZero,
+    LenAtPosSupToHalfLoad,
+    ListsLenGTOne,
+    LenAtPosNotZero,
     Other,
 }
 impl Delete {
     #[inline(always)]
     #[must_use]
     pub fn new(lists: &[Vec<Py<PyAny>>], load: usize, loc: &Loc) -> Self {
-        let len_pos = lists.loc_len(loc);
-        if len_pos > (load / 2) {
-            Self::PosSupToHalfLoad
+        let len_at_pos = lists.loc_len(loc);
+        if len_at_pos > (load / 2) {
+            Self::LenAtPosSupToHalfLoad
         } else if lists.len() > 1 {
-            Self::DataLenGTOne
-        } else if len_pos != 0 {
-            Self::LenPosNotZero
+            Self::ListsLenGTOne
+        } else if len_at_pos != 0 {
+            Self::LenAtPosNotZero
         } else {
             Self::Other
         }

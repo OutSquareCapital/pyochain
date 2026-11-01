@@ -113,13 +113,13 @@ impl ListsDataMethods for ListsData {
         self.values.loc_remove(loc);
         self.len -= 1;
         match ops::Delete::new(&self.values, self.load, loc) {
-            ops::Delete::PosSupToHalfLoad => {
+            ops::Delete::LenAtPosSupToHalfLoad => {
                 self.maxes[loc.pos] = self.values.loc_last(loc).clone_ref(py);
                 if self.lengths.is_built() {
                     self.lengths.delete_at(loc.pos);
                 }
             }
-            ops::Delete::DataLenGTOne => {
+            ops::Delete::ListsLenGTOne => {
                 if loc.pos == 0 {
                     loc.pos += 1;
                 }
@@ -133,7 +133,7 @@ impl ListsDataMethods for ListsData {
                 self.maxes[prev] = self.values[prev].last().unwrap().clone_ref(py);
                 self.expand(py, prev);
             }
-            ops::Delete::LenPosNotZero => {
+            ops::Delete::LenAtPosNotZero => {
                 self.maxes[loc.pos] = self.values.loc_last(loc).clone_ref(py);
             }
             ops::Delete::Other => self.remove_pos(loc),

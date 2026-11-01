@@ -139,13 +139,13 @@ impl ListsDataMethods for KeysListsData {
         self.values.loc_remove(loc);
         self.len -= 1;
         match ops::Delete::new(&self.1, self.load, loc) {
-            ops::Delete::PosSupToHalfLoad => {
+            ops::Delete::LenAtPosSupToHalfLoad => {
                 self.maxes[loc.pos] = self.1.loc_last(loc).clone_ref(py);
                 if self.lengths.is_built() {
                     self.lengths.delete_at(loc.pos);
                 }
             }
-            ops::Delete::DataLenGTOne => {
+            ops::Delete::ListsLenGTOne => {
                 if loc.pos == 0 {
                     loc.pos += 1;
                 }
@@ -163,7 +163,7 @@ impl ListsDataMethods for KeysListsData {
                 self.1.remove(loc.pos);
                 self.expand(py, prev);
             }
-            ops::Delete::LenPosNotZero => {
+            ops::Delete::LenAtPosNotZero => {
                 self.maxes[loc.pos] = self.1.loc_last(loc).clone_ref(py);
             }
             ops::Delete::Other => {
