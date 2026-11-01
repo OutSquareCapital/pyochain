@@ -48,27 +48,24 @@ impl Lengths {
         }
         total + loc.idx
     }
-    pub fn pos_at(&self, mut idx: isize) -> Loc {
+    pub fn pos_at(&self, mut index: usize) -> Loc {
         let mut pos = 0;
         let mut child = 1;
         let len_index = self.inner.len();
 
         while child < len_index {
-            let index_child = self.inner[child].cast_signed();
+            let index_child = self.inner[child];
 
-            if idx < index_child {
+            if index < index_child {
                 pos = child;
             } else {
-                idx -= index_child;
+                index -= index_child;
                 pos = child + 1;
             }
 
             child = (pos * 2) + 1;
         }
-
-        let pos = pos - self.offset;
-        let idx = idx.cast_unsigned();
-        Loc::new(pos, idx)
+        Loc::new(pos - self.offset, index)
     }
     //TODO: I'm almost sure this is one of the only places were we concretely diverge from the original implementation. Must check what changes exactly, and how we could further improve this.
     pub fn build(&mut self, values: &[VecPy]) {

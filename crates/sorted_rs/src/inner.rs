@@ -124,27 +124,27 @@ impl InnerData {
         self.lengths.inner.clear();
     }
 
-    pub(super) fn set_pos(&mut self, mut idx: isize) -> PyResult<Loc> {
-        if idx < 0 {
-            if idx >= -self.values.last().unwrap().len().cast_signed() {
+    pub(super) fn set_pos(&mut self, mut index: isize) -> PyResult<Loc> {
+        if index < 0 {
+            if index >= -self.values.last().unwrap().len().cast_signed() {
                 let pos = self.values.len() - 1;
-                let idx = (self.values.last().unwrap().len().cast_signed() + idx).cast_unsigned();
+                let idx = (self.values.last().unwrap().len().cast_signed() + index).cast_unsigned();
                 return Ok(Loc::new(pos, idx));
             }
-            idx += self.len.cast_signed();
-            if idx < 0 {
+            index += self.len.cast_signed();
+            if index < 0 {
                 return Err(errors::out_of_range());
             }
         }
-        if idx >= self.len.cast_signed() {
+        if index >= self.len.cast_signed() {
             Err(errors::out_of_range())
-        } else if idx < self.values[0].len().cast_signed() {
-            Ok(Loc::with_idx(idx.cast_unsigned()))
+        } else if index < self.values[0].len().cast_signed() {
+            Ok(Loc::with_idx(index.cast_unsigned()))
         } else {
             if self.lengths.is_not_built() {
                 self.lengths.build(&self.values);
             }
-            Ok(self.lengths.pos_at(idx))
+            Ok(self.lengths.pos_at(index.cast_unsigned()))
         }
     }
 
