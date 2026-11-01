@@ -1,7 +1,9 @@
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    Bounds, Loc, errors,
+    Bounds, Loc,
+    bisect::Bisect,
+    errors,
     inner::InnerData,
     list_update::ListAdd,
     reprs::PyRepr,
@@ -45,6 +47,7 @@ impl NestedVec for [Vec<Py<PyAny>>] {
 pub trait ListsDataMethods:
     Deref<Target = InnerData> + DerefMut + PyRepr + Sized + Send + Sync
 {
+    fn keys(&self) -> &[VecPy];
     fn irange_specs<'py>(
         &self,
         py: Python<'py>,
@@ -54,6 +57,9 @@ pub trait ListsDataMethods:
     ) -> PyResult<Bounds>;
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
+    /// Equivalent to `bisect_ky_key` if the collection is sorted **by value**.\
+    /// If the collection is sorted **by key**, *value* is first transformed by the *key* function before the bisect operation.
+    fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
     fn clear(&mut self, py: Python<'_>);
     fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()>;
@@ -67,9 +73,20 @@ pub trait ListsDataMethods:
         stop: Option<isize>,
     ) -> PyResult<usize>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
+    fn bisect_by_key<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        if self.maxes.is_empty() {
+            Ok(0)
+        } else {
+            let mut loc = Loc::new(0, 0);
+            loc.pos = self.maxes.bisect::<LEFT>(value)?;
+            if loc.pos == self.maxes.len() {
+                Ok(self.len)
+            } else {
+                loc.idx = self.keys()[loc.pos].bisect::<LEFT>(value)?;
+                Ok(self.loc(&loc))
+            }
+        }
+    }
     #[inline]
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.find(value).map(|x| x.is_some())

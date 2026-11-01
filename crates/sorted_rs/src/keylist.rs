@@ -22,6 +22,9 @@ impl KeysListsData {
     }
 }
 impl ListsDataMethods for KeysListsData {
+    fn keys(&self) -> &[VecPy] {
+        &self.1
+    }
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::new(self.2.clone_ref(py));
         new_inst.extend(py, values.into())?;
@@ -70,27 +73,10 @@ impl ListsDataMethods for KeysListsData {
         Ok(())
     }
 
+    #[inline]
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        if self.maxes.is_empty() {
-            Ok(0)
-        } else {
-            let mut loc = Loc::new(0, 0);
-            loc.pos = self.maxes.bisect::<LEFT>(value)?;
-            if loc.pos == self.maxes.len() {
-                Ok(self.len)
-            } else {
-                loc.idx = self.1[loc.pos].bisect::<LEFT>(value)?;
-                Ok(self.loc(&loc))
-            }
-        }
-    }
-    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.extract_key(value)
-            .and_then(|x| self.bisect::<true>(&x))
-    }
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.extract_key(value)
-            .and_then(|x| self.bisect::<false>(&x))
+            .and_then(|x| self.bisect_by_key::<LEFT>(&x))
     }
     #[inline]
     fn clear(&mut self, _py: Python<'_>) {

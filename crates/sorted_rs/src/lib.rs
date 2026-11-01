@@ -1,4 +1,4 @@
-pub mod bisect;
+mod bisect;
 mod bounds;
 mod core;
 pub mod debug;

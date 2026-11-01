@@ -13,6 +13,9 @@ use crate::{
 };
 
 impl ListsDataMethods for ListsData {
+    fn keys(&self) -> &[VecPy] {
+        &self.values
+    }
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::default();
         new_inst.extend(py, values.into())?;
@@ -55,24 +58,7 @@ impl ListsDataMethods for ListsData {
     }
     #[inline]
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        if self.maxes.is_empty() {
-            Ok(0)
-        } else {
-            let mut loc = Loc::new(0, 0);
-            loc.pos = self.maxes.bisect::<LEFT>(value)?;
-            if loc.pos == self.maxes.len() {
-                Ok(self.len)
-            } else {
-                loc.idx = self.values[loc.pos].bisect::<LEFT>(value)?;
-                Ok(self.loc(&loc))
-            }
-        }
-    }
-    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.bisect::<true>(value)
-    }
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.bisect::<false>(value)
+        self.bisect_by_key::<LEFT>(value)
     }
     #[inline]
     fn clear(&mut self, _py: Python<'_>) {
@@ -174,12 +160,8 @@ impl ListsDataMethods for ListsData {
                 if left <= stop {
                     return Ok(left);
                 }
-            } else {
-                let right = self.bisect_right(value)? - 1;
-
-                if start <= right {
-                    return Ok(start);
-                }
+            } else if start < self.bisect::<false>(value)? {
+                return Ok(start);
             }
             Err(errors::not_in_list(&value.repr()?))
         }

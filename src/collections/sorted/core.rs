@@ -6,7 +6,7 @@ use crate::{
 use either::Either;
 use pyo3::prelude::*;
 use pyochain_macros::py_abc;
-use sorted_rs::{Bounds, KeysListsData, bisect::Bisect, iter::IterKind, prelude::*};
+use sorted_rs::{Bounds, KeysListsData, iter::IterKind, prelude::*};
 
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyoVec>, Bound<'py, PyAny>>>;
 pub(super) type IterRes<'py> = PyResult<Bound<'py, abc::PyoIterator>>;
@@ -29,10 +29,10 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         Self::build_iter(slf, IterKind::Bwd)
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.write().list_mut().bisect_left(value)
+        self.write().list_mut().bisect::<true>(value)
     }
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.write().list_mut().bisect_right(value)
+        self.write().list_mut().bisect::<false>(value)
     }
     #[pyo3(signature = (value, start = None, stop = None))]
     fn index(
@@ -92,9 +92,9 @@ where
         Self::build_iter(slf, IterKind::Bounded(bounds, reverse))
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.write().list_mut().bisect(key, Bisect::bisect_left)
+        self.write().list_mut().bisect_by_key::<true>(key)
     }
     fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.write().list_mut().bisect(key, Bisect::bisect_right)
+        self.write().list_mut().bisect_by_key::<false>(key)
     }
 }
