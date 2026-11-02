@@ -16,7 +16,6 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use std_tools::prelude::*;
-use tap::prelude::*;
 pub struct InnerData {
     pub(super) values: Vec<VecPy>,
     pub maxes: VecPy,
@@ -90,15 +89,15 @@ impl InnerData {
                 let idx = self.values[pos].len() - 1_usize;
                 Ok(Loc::new(pos, idx))
             }
-            ops::Locate::First | ops::Locate::InFirstList => {
-                index.cast_unsigned().pipe(Loc::with_idx).pipe(Ok)
-            }
-            ops::Locate::InLastList => {
+            ops::Locate::First => Ok(Loc::with_idx(0)),
+            ops::Locate::InFirstList(i) => Ok(Loc::with_idx(i)),
+            ops::Locate::InLastList(i) => {
                 let pos = self.values.len() - 1;
-                let idx = (self.values.last().unwrap().len().cast_signed() + index).cast_unsigned();
+                let idx = (self.values.last().unwrap().len().cast_signed() + i).cast_unsigned();
                 Ok(Loc::new(pos, idx))
             }
-            ops::Locate::InOtherList => self.set_pos(index),
+            ops::Locate::InOtherList(i) => self.set_pos_usize(i),
+            ops::Locate::InOtherListNeg(i) => self.set_pos(i),
         }
     }
     pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
@@ -125,26 +124,30 @@ impl InnerData {
     }
 
     pub(super) fn set_pos(&mut self, mut index: isize) -> PyResult<Loc> {
-        if index < 0 {
-            if index >= -self.values.last().unwrap().len().cast_signed() {
+        if index.is_negative() {
+            let last_len = self.values.last().unwrap().len().cast_signed();
+            if index >= -last_len {
                 let pos = self.values.len() - 1;
-                let idx = (self.values.last().unwrap().len().cast_signed() + index).cast_unsigned();
+                let idx = (last_len + index).cast_unsigned();
                 return Ok(Loc::new(pos, idx));
             }
             index += self.len.cast_signed();
-            if index < 0 {
+            if index.is_negative() {
                 return Err(errors::out_of_range());
             }
         }
-        if index >= self.len.cast_signed() {
+        self.set_pos_usize(index.cast_unsigned())
+    }
+    pub(super) fn set_pos_usize(&mut self, index: usize) -> PyResult<Loc> {
+        if index >= self.len {
             Err(errors::out_of_range())
-        } else if index < self.values[0].len().cast_signed() {
-            Ok(Loc::with_idx(index.cast_unsigned()))
+        } else if index < self.values[0].len() {
+            Ok(Loc::with_idx(index))
         } else {
             if self.lengths.is_not_built() {
                 self.lengths.build(&self.values);
             }
-            Ok(self.lengths.pos_at(index.cast_unsigned()))
+            Ok(self.lengths.pos_at(index))
         }
     }
 

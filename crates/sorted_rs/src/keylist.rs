@@ -116,13 +116,13 @@ impl ListsDataMethods for KeysListsData {
         }
     }
 
-    fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()> {
-        self.1.loc_remove(loc);
-        self.values.loc_remove(loc);
+    fn delete(&mut self, py: Python<'_>, mut loc: Loc) -> PyResult<()> {
+        self.1.loc_remove(&loc);
+        self.values.loc_remove(&loc);
         self.len -= 1;
-        match ops::Delete::new(&self.1, self.load, loc) {
+        match ops::Delete::new(&self.1, self.load, &loc) {
             ops::Delete::LenAtPosSupToHalfLoad => {
-                self.maxes[loc.pos] = self.1.loc_last(loc).clone_ref(py);
+                self.maxes[loc.pos] = self.1.loc_last(&loc).clone_ref(py);
                 if self.lengths.is_built() {
                     self.lengths.delete_at(loc.pos);
                 }
@@ -140,16 +140,16 @@ impl ListsDataMethods for KeysListsData {
                     .map(|x| x.clone_ref(py))
                     .collect::<Vec<_>>();
                 self.0.values[prev].append(removed.as_mut());
-                self.0.remove_pos(loc);
+                self.0.remove_pos(&loc);
                 self.maxes[prev] = left[prev].last().unwrap().clone_ref(py);
                 self.1.remove(loc.pos);
                 self.expand(py, prev);
             }
             ops::Delete::LenAtPosNotZero => {
-                self.maxes[loc.pos] = self.1.loc_last(loc).clone_ref(py);
+                self.maxes[loc.pos] = self.1.loc_last(&loc).clone_ref(py);
             }
             ops::Delete::Other => {
-                self.remove_pos(loc);
+                self.remove_pos(&loc);
                 self.1.remove(loc.pos);
             }
         }
@@ -176,33 +176,33 @@ impl ListsDataMethods for KeysListsData {
         indices: RangeIdxs<Option<isize>>,
     ) -> PyResult<usize> {
         let py = value.py();
-        let key = self.extract_key(value)?;
-        let (mut loc, indices) = ops::Index::new(self, &key, indices).into_res()?;
-        let v_left = &self.1[loc.pos];
-        loc.idx = v_left.bisect_left(&key)?;
-        let len_keys = self.1.len();
-        let mut len_sublist = v_left.len();
-
-        loop {
-            if self.1.loc(&loc).bind(py).ne(&key)? {
-                return Err(errors::not_in_list(&value.repr()?));
-            }
-            if self.values.loc(&loc).bind(py).eq(value)? {
-                let loc = self.loc(&loc);
-                if indices.start <= loc && loc < indices.stop {
-                    return Ok(loc);
-                } else if loc >= indices.stop {
-                    return Err(errors::not_in_list(&value.repr()?));
+        match indices.into_index(self.len) {
+            None => Err(errors::not_in_list(value)),
+            Some(indices) => {
+                let key = self.extract_key(value)?;
+                let mut loc = Loc::try_from_index(self, &key)?;
+                let len_keys = self.1.len();
+                loop {
+                    if self.1.loc(&loc).bind(py).ne(&key)? {
+                        return Err(errors::not_in_list(value));
+                    }
+                    if self.values.loc(&loc).bind(py).eq(value)? {
+                        let loc = self.loc(&loc);
+                        if indices.start <= loc && loc < indices.stop {
+                            return Ok(loc);
+                        } else if loc >= indices.stop {
+                            return Err(errors::not_in_list(value));
+                        }
+                    }
+                    loc.idx += 1;
+                    if loc.idx == self.1.loc_len(&loc) {
+                        loc.pos += 1;
+                        if loc.pos == len_keys {
+                            return Err(errors::not_in_list(value));
+                        }
+                        loc.idx = 0;
+                    }
                 }
-            }
-            loc.idx += 1;
-            if loc.idx == len_sublist {
-                loc.pos += 1;
-                if loc.pos == len_keys {
-                    return Err(errors::not_in_list(&value.repr()?));
-                }
-                len_sublist = self.1.loc_len(&loc);
-                loc.idx = 0;
             }
         }
     }

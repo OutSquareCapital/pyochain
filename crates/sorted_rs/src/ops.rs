@@ -3,22 +3,23 @@
 //! More importantly, they factorize the common logic between the `SortedList` and `SortedKeyList` implementations.\
 //! They have very similar conditional checks, but different actions to take on each branch.
 
-use std::{cmp::Ordering, hint::unreachable_unchecked};
+use std::hint::unreachable_unchecked;
 
+use derive_more::From;
 use pyo3::prelude::*;
 use tap::Conv;
 
 use crate::{
-    RangeIdxs, bisect::Bisect, bounds::Loc, errors, inner::InnerData, lengths::Lengths,
-    traits::NestedVec, types::VecPy,
+    RangeIdxs, bisect::Bisect, bounds::Loc, lengths::Lengths, traits::NestedVec, types::VecPy,
 };
 
+#[derive(Debug, Clone, Copy)]
 pub(super) enum Nb {
-    GTOne,
+    GTOne(usize),
     One,
     Zero,
     MinusOne,
-    LTMinusOne,
+    LTMinusOne(isize),
 }
 impl From<isize> for Nb {
     fn from(value: isize) -> Self {
@@ -26,45 +27,55 @@ impl From<isize> for Nb {
             0 => Self::Zero,
             1 => Self::One,
             -1 => Self::MinusOne,
-            _ if value > 1 => Self::GTOne,
-            _ => Self::LTMinusOne,
+            _ if value > 1 => Self::GTOne(value.cast_unsigned()),
+            _ => Self::LTMinusOne(value),
         }
     }
 }
+#[derive(Debug, Clone, Copy, From)]
 pub(super) enum Slice {
-    /// Whole slice optimization: start to stop slices the whole sorted list.
-    Full,
-    Forward,
-    ForwardToEnd,
-    ForwardSmall,
-    ForwardSmallToAdjust,
-    ForwardStep,
+    #[from]
+    Forward(ForwardSlice),
+    ForwardStep(usize),
     Backward,
-    BackwardStep,
-    ///A negative step could reverse the order of the items and this could be the desired behavior.
-    MayReverse,
+    BackwardStep(usize),
     /// Negative step with nothing to iterate (mirrors Python's `range`, which is empty when `start <= stop` for a negative step).
     NoOp,
 }
 impl Slice {
-    pub fn new(start: isize, stop: isize, step: isize, length: isize) -> Self {
-        debug_assert!(stop <= length);
-        debug_assert_ne!(step, 0);
-        match (start.cmp(&stop), step.conv::<Nb>()) {
+    pub fn new(indices: RangeIdxs<usize>, step: Nb, length: usize) -> Self {
+        debug_assert!(indices.stop <= length);
+        match step {
             // SAFETY: Constructors guarantee that `step` is not zero (slice.indices raises `ValueError` on `step == 0`).
-            (_, Nb::Zero) => unsafe { unreachable_unchecked() },
-            (Ordering::Less, Nb::One) => match (stop == length, length <= 8 * (stop - start)) {
-                (true, _) if start == 0 => Self::Full,
-                (true, true) => Self::ForwardSmall,
-                (true, false) => Self::ForwardToEnd,
-                (false, true) => Self::ForwardSmallToAdjust,
-                (false, false) => Self::Forward,
-            },
-            (Ordering::Less, Nb::GTOne) => Self::ForwardStep,
-            (Ordering::Equal | Ordering::Greater, Nb::One | Nb::GTOne) => Self::MayReverse,
-            (Ordering::Greater, Nb::MinusOne) => Self::Backward,
-            (Ordering::Greater, Nb::LTMinusOne) => Self::BackwardStep,
-            (Ordering::Less | Ordering::Equal, Nb::MinusOne | Nb::LTMinusOne) => Self::NoOp,
+            Nb::Zero => unsafe { unreachable_unchecked() },
+            _ if indices.start >= indices.stop => Self::NoOp,
+            Nb::One => ForwardSlice::new(indices, length).into(),
+            Nb::GTOne(s) => Self::ForwardStep(s),
+            Nb::MinusOne => Self::Backward,
+            Nb::LTMinusOne(s) => Self::BackwardStep(s.unsigned_abs()),
+        }
+    }
+}
+#[derive(Debug, Clone, Copy)]
+pub(super) enum ForwardSlice {
+    /// Whole slice optimization: start to stop slices the whole sorted list.
+    Full,
+    Partial,
+    ToEnd,
+    Small,
+    SmallToAdjust,
+}
+impl ForwardSlice {
+    pub fn new(indices: RangeIdxs<usize>, length: usize) -> Self {
+        match (
+            indices.stop == length,
+            length <= 8 * (indices.stop - indices.start),
+        ) {
+            (true, _) if indices.start == 0 => Self::Full,
+            (true, true) => Self::Small,
+            (true, false) => Self::ToEnd,
+            (false, true) => Self::SmallToAdjust,
+            (false, false) => Self::Partial,
         }
     }
 }
@@ -148,84 +159,32 @@ impl Delete {
         }
     }
 }
-/// `Loc`, `start`, and `stop` bounds for a search in a sorted list.
-type IdxBounds = (Loc, RangeIdxs<usize>);
-pub(super) enum Index<'py, 'a> {
-    NotFound(&'a Bound<'py, PyAny>),
-    Empty(&'a Bound<'py, PyAny>),
-    InvalidRange(&'a Bound<'py, PyAny>),
-    BisectErr(PyErr),
-    Searchable(IdxBounds),
-}
-impl<'py, 'a> Index<'py, 'a> {
-    pub fn new(
-        data: &InnerData,
-        value: &'a Bound<'py, PyAny>,
-        indices: RangeIdxs<Option<isize>>,
-    ) -> Self {
-        let length = data.len.cast_signed();
-        if length == 0 {
-            Self::Empty(value)
-        } else {
-            let mut start = indices.start.unwrap_or(0);
-            let mut stop = indices.stop.unwrap_or(length);
-            if start < 0 {
-                start += length;
-            }
-            start = start.max(0);
-            if stop < 0 {
-                stop += length;
-            }
-            stop = stop.min(length);
-            if stop <= start {
-                Self::InvalidRange(value)
-            } else {
-                match data.maxes.bisect_left(value).map(Loc::with_pos) {
-                    Ok(bound) if bound.pos == data.maxes.len() => Self::NotFound(value),
-                    Ok(bound) => Self::Searchable((
-                        bound,
-                        RangeIdxs::new(start.cast_unsigned(), stop.cast_unsigned()),
-                    )),
-                    Err(err) => Self::BisectErr(err),
-                }
-            }
-        }
-    }
-    pub fn into_res(self) -> PyResult<IdxBounds> {
-        match self {
-            Self::Searchable((bound, indices)) => Ok((bound, indices)),
-            Self::NotFound(value) | Self::Empty(value) | Self::InvalidRange(value) => {
-                Err(errors::not_in_list(&value.repr()?))
-            }
-            Self::BisectErr(err) => Err(err),
-        }
-    }
-}
 
 // Used in `pop` and `get_item`
 pub(super) enum Locate {
     Empty,
     Last,
     First,
-    InFirstList,
-    InLastList,
-    InOtherList,
+    InFirstList(usize),
+    InLastList(isize),
+    InOtherList(usize),
+    InOtherListNeg(isize),
 }
 impl Locate {
     #[inline]
     pub fn new(length: usize, values: &[VecPy], index: isize) -> Self {
-        if length == 0 {
-            Self::Empty
-        } else {
-            match index.conv::<Nb>() {
-                Nb::Zero => Self::First,
-                Nb::MinusOne => Self::Last,
-                Nb::One | Nb::GTOne if index < values[0].len().cast_signed() => Self::InFirstList,
-                Nb::LTMinusOne if -values.last().unwrap().len().cast_signed() < index => {
-                    Self::InLastList
-                }
-                Nb::LTMinusOne | Nb::One | Nb::GTOne => Self::InOtherList,
+        match (length, index.conv::<Nb>()) {
+            (1, Nb::Zero | Nb::MinusOne) => Self::First,
+            (0 | 1, _) => Self::Empty,
+            (_, Nb::Zero) => Self::First,
+            (_, Nb::MinusOne) => Self::Last,
+            (_, Nb::One) => Self::InFirstList(1),
+            (_, Nb::GTOne(i)) if i < values[0].len() => Self::InFirstList(i),
+            (_, Nb::LTMinusOne(i)) if -values.last().unwrap().len().cast_signed() < i => {
+                Self::InLastList(i)
             }
+            (_, Nb::GTOne(i)) => Self::InOtherList(i),
+            (_, Nb::LTMinusOne(i)) => Self::InOtherListNeg(i),
         }
     }
 }

@@ -62,7 +62,7 @@ pub trait ListsDataMethods:
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn expand(&mut self, py: Python<'_>, pos: usize);
     fn clear(&mut self, py: Python<'_>);
-    fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()>;
+    fn delete(&mut self, py: Python<'_>, loc: Loc) -> PyResult<()>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()>;
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()>;
@@ -113,7 +113,7 @@ pub trait ListsDataMethods:
     fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         match index {
             Either::Right(slice) => SliceIdxs::new(&slice, self.len)?
-                .extract_from(self)?
+                .extract_from(slice.py(), self)?
                 .iter()
                 .collect_bound::<PyList>(slice.py())
                 .map(Either::Left),
@@ -124,7 +124,7 @@ pub trait ListsDataMethods:
     }
     fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
-            Either::Right(slice) => SliceIdxs::new(&slice, self.len)?.delete_from(self),
+            Either::Right(slice) => SliceIdxs::new(&slice, self.len)?.delete_from(slice.py(), self),
             Either::Left(index) => self.del_item(index.py(), index.extract()?),
         }
     }
@@ -132,13 +132,13 @@ pub trait ListsDataMethods:
         if self.len == 0 {
             Err(errors::out_of_range())
         } else {
-            let mut loc = self.set_pos(index)?;
-            self.delete(py, &mut loc)
+            let loc = self.set_pos(index)?;
+            self.delete(py, loc)
         }
     }
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.find(&value)?
-            .map_or(Ok(()), |mut loc| self.delete(value.py(), &mut loc))
+            .map_or(Ok(()), |loc| self.delete(value.py(), loc))
     }
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
         let values = self.repeat(py, num);
@@ -146,15 +146,15 @@ pub trait ListsDataMethods:
         self.extend(py, values.into())
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let mut loc = self.index_to_loc(index)?;
+        let loc = self.index_to_loc(index)?;
         let val = self.values.loc(&loc).clone_ref(py);
-        self.delete(py, &mut loc)?;
+        self.delete(py, loc)?;
         Ok(val.into_bound(py))
     }
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         match self.find(value)? {
-            Some(mut loc) => self.delete(value.py(), &mut loc),
-            None => Err(errors::not_in_list(&value.repr()?)),
+            Some(loc) => self.delete(value.py(), loc),
+            None => Err(errors::not_in_list(value)),
         }
     }
     fn as_repeated(&self, py: Python<'_>, num: usize) -> PyResult<Self> {

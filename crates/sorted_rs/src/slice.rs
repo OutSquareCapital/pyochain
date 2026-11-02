@@ -1,127 +1,175 @@
-use derive_more::Deref;
+use derive_more::{Deref, From};
 use itertools::Itertools;
 use pyo3::{prelude::*, types::PySlice};
 use tap::prelude::*;
 
 use crate::{
-    Bounds, InnerData, Loc, RangeIdxs, ops,
+    Bounds, InnerData, Loc, RangeIdxs,
+    ops::{self, ForwardSlice},
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
 
 #[derive(Clone, Copy, Deref)]
-pub(super) struct SliceIdxs<'py> {
-    py: Python<'py>,
+pub(super) struct SliceIdxs {
     #[deref]
-    indices: RangeIdxs<isize>,
-    step: isize,
+    indices: RangeIdxs<usize>,
+    step: ops::Nb,
     /// Length of the referenced sequence.
-    ref_len: isize,
+    ref_len: usize,
 }
-impl<'py> SliceIdxs<'py> {
-    pub fn new(slice: &Bound<'py, PySlice>, length: usize) -> PyResult<Self> {
-        let ref_len = length.cast_signed();
-        let i = slice.indices(ref_len)?;
+impl SliceIdxs {
+    pub fn new(slice: &Bound<'_, PySlice>, ref_len: usize) -> PyResult<Self> {
+        let i = slice.indices(ref_len.cast_signed())?;
+        let step = i.step.into();
         Self {
-            py: slice.py(),
-            indices: RangeIdxs::new(i.start, i.stop),
-            step: i.step,
+            indices: i.into(),
+            step,
             ref_len,
         }
         .pipe(Ok)
     }
     fn kind(&self) -> ops::Slice {
-        ops::Slice::new(self.start, self.stop, self.step, self.ref_len)
+        ops::Slice::new(self.indices, self.step, self.ref_len)
     }
-    pub fn extract_from(&self, list: &mut InnerData) -> PyResult<VecPy> {
-        let py = self.py;
+    pub fn extract_from(&self, py: Python<'_>, list: &mut InnerData) -> PyResult<VecPy> {
         match self.kind() {
             ops::Slice::NoOp => Ok(Vec::new()),
-            ops::Slice::Full => list.collapse(py).pipe(Ok),
-            ops::Slice::Forward | ops::Slice::ForwardSmallToAdjust => {
-                forward_extract::<false>(self, list)
+            ops::Slice::Forward(fwd) => self.extract_fwd(py, fwd, list),
+            ops::Slice::ForwardStep(s) => self
+                .into_iter()
+                .step_by(s)
+                .conv::<ItemsVisitor<_>>()
+                .get_all(list, py),
+            ops::Slice::Backward => {
+                let fwd = ops::ForwardSlice::new(self.indices, self.ref_len);
+                self.extract_fwd(py, fwd, list)?
+                    .tap_mut(|r| r.reverse())
+                    .pipe(Ok)
             }
-            ops::Slice::ForwardToEnd | ops::Slice::ForwardSmall => {
-                forward_extract::<true>(self, list)
-            }
-            ops::Slice::ForwardStep | ops::Slice::MayReverse => {
-                self.iter().pipe(|it| get_each_item(py, it, list))
-            }
-            ops::Slice::Backward => self
-                .with(self.stop + 1, self.start + 1)
-                .extract_from(list)?
-                .tap_mut(|r| r.reverse())
-                .pipe(Ok),
-            ops::Slice::BackwardStep => self.iter().rev().pipe(|it| get_each_item(py, it, list)),
+            ops::Slice::BackwardStep(s) => self
+                .into_iter()
+                .rev()
+                .step_by(s)
+                .conv::<ItemsVisitor<_>>()
+                .get_all(list, py),
         }
     }
 
-    pub fn delete_from<T: ListsDataMethods>(&self, list: &mut T) -> PyResult<()> {
-        let py = self.py;
+    pub fn delete_from<T: ListsDataMethods>(&self, py: Python<'_>, list: &mut T) -> PyResult<()> {
         match self.kind() {
             ops::Slice::NoOp => Ok(()),
-            ops::Slice::Full => {
-                list.clear(py);
-                Ok(())
+            ops::Slice::Forward(fwd) => match fwd {
+                ForwardSlice::Full => {
+                    list.clear(py);
+                    Ok(())
+                }
+                ForwardSlice::SmallToAdjust => self.delete_fwd_small::<_, true>(py, list),
+                ForwardSlice::Small => self.delete_fwd_small::<_, false>(py, list),
+                ForwardSlice::ToEnd | ForwardSlice::Partial => self
+                    .into_iter()
+                    .rev()
+                    .conv::<ItemsVisitor<_>>()
+                    .del_all(list, py),
+            },
+            ops::Slice::Backward => self
+                .into_iter()
+                .rev()
+                .conv::<ItemsVisitor<_>>()
+                .del_all(list, py),
+            ops::Slice::ForwardStep(s) => self
+                .into_iter()
+                .step_by(s)
+                .rev()
+                .conv::<ItemsVisitor<_>>()
+                .del_all(list, py),
+            ops::Slice::BackwardStep(s) => self
+                .into_iter()
+                .rev()
+                .step_by(s)
+                .conv::<ItemsVisitor<_>>()
+                .del_all(list, py),
+        }
+    }
+    fn extract_fwd(
+        &self,
+        py: Python<'_>,
+        fwd: ForwardSlice,
+        list: &mut InnerData,
+    ) -> PyResult<VecPy> {
+        fn fwd_extract<const TO_END: bool>(
+            slf: &SliceIdxs,
+            py: Python<'_>,
+            list: &mut InnerData,
+        ) -> PyResult<VecPy> {
+            let min = list.set_pos_usize(slf.start)?;
+            let max = Loc::with_idx(min.idx + (slf.stop - slf.start));
+            let mut bounds = Bounds::new(min, max);
+            let start_list = &list.values[bounds.min.pos];
+            match (start_list.len() >= bounds.max.idx, TO_END) {
+                // Small slice optimization: start index and stop index are within the start list.
+                (true, _) => start_list[bounds.min.idx..bounds.max.idx]
+                    .iter()
+                    .map(|x| x.clone_ref(py))
+                    .collect(),
+                (false, true) => {
+                    bounds.max.pos = list.values.len() - 1;
+                    bounds.max.idx = list.values.loc_len(&bounds.max);
+                    get_slice(py, &list.values, &bounds)
+                }
+                (false, false) => {
+                    bounds.max = list.set_pos_usize(slf.stop)?;
+                    get_slice(py, &list.values, &bounds)
+                }
             }
-            ops::Slice::ForwardSmallToAdjust => forward_delete_small::<_, true>(self, list),
-            ops::Slice::ForwardSmall => forward_delete_small::<_, false>(self, list),
-            _ => self.iter().rev().try_for_each(|idx| {
-                let mut loc = list.set_pos(idx)?;
-                list.delete(py, &mut loc)
-            }),
+            .pipe(Ok)
+        }
+        match fwd {
+            ForwardSlice::Full => list.collapse(py).pipe(Ok),
+            ForwardSlice::Partial | ForwardSlice::SmallToAdjust => {
+                fwd_extract::<false>(self, py, list)
+            }
+            ForwardSlice::ToEnd | ForwardSlice::Small => fwd_extract::<true>(self, py, list),
         }
     }
-    fn with(self, start: isize, stop: isize) -> Self {
-        Self {
-            py: self.py,
-            indices: RangeIdxs::new(start, stop),
-            step: 1,
-            ref_len: self.ref_len,
+
+    fn delete_fwd_small<T, const NEED_ADJUST: bool>(
+        &self,
+        py: Python<'_>,
+        list: &mut T,
+    ) -> PyResult<()>
+    where
+        T: ListsDataMethods,
+    {
+        let mut values = reset_slice((0, self.start), self.ref_len).extract_from(py, list)?;
+        if NEED_ADJUST {
+            let mut new_slice =
+                reset_slice((self.stop, self.ref_len), self.ref_len).extract_from(py, list)?;
+            values.append(new_slice.as_mut());
         }
-    }
-    #[allow(clippy::range_plus_one)]
-    fn iter(self) -> std::iter::StepBy<std::ops::Range<isize>> {
-        if self.step.is_positive() {
-            (self.start..self.stop).step_by(self.step.cast_unsigned())
-        } else {
-            let step: isize = self.step.abs();
-            let lo = self.start - (self.start - self.stop - 1) / step * step;
-            (lo..self.start + 1).step_by(step.cast_unsigned())
-        }
+        list.clear(py);
+        list.extend(py, values.into())
     }
 }
-fn forward_extract<const TO_END: bool>(slice: &SliceIdxs, list: &mut InnerData) -> PyResult<VecPy> {
-    let py = slice.py;
-    let min = list.set_pos(slice.start)?;
-    let start_list = &list.values[min.pos];
-    let max = Loc::with_idx(min.idx + (slice.stop - slice.start).cast_unsigned());
-    let mut bounds = Bounds::new(min, max);
-    match (start_list.len() >= bounds.max.idx, TO_END) {
-        // Small slice optimization: start index and stop index are within the start list.
-        (true, _) => start_list[bounds.min.idx..bounds.max.idx]
-            .iter()
-            .map(|x| x.clone_ref(py))
-            .collect(),
-        (false, true) => {
-            bounds.max.pos = list.values.len() - 1;
-            bounds.max.idx = list.values.loc_len(&bounds.max);
-            get_slice(py, &list.values, &bounds)
-        }
-        (false, false) => {
-            bounds.max = list.set_pos(slice.stop)?;
-            get_slice(py, &list.values, &bounds)
-        }
-    }
-    .pipe(Ok)
-}
-fn get_each_item<T>(py: Python<'_>, it: T, list: &mut InnerData) -> PyResult<VecPy>
+#[derive(From)]
+struct ItemsVisitor<T>(T);
+impl<T> ItemsVisitor<T>
 where
-    T: Iterator<Item = isize>,
+    T: DoubleEndedIterator<Item = usize>,
 {
-    it.map(|i| list.get_item(py, i))
-        .map_ok(Bound::unbind)
-        .collect()
+    fn del_all<L: ListsDataMethods>(mut self, list: &mut L, py: Python<'_>) -> PyResult<()> {
+        self.0.try_for_each(|idx| {
+            let loc = list.set_pos_usize(idx)?;
+            list.delete(py, loc)
+        })
+    }
+    fn get_all(self, list: &mut InnerData, py: Python<'_>) -> PyResult<VecPy> {
+        self.0
+            .map(usize::cast_signed)
+            .map(|i| list.get_item(py, i))
+            .map_ok(Bound::unbind)
+            .collect()
+    }
 }
 fn get_slice(py: Python<'_>, lists: &[VecPy], bounds: &Bounds) -> VecPy {
     lists[bounds.min.pos][bounds.min.idx..]
@@ -131,16 +179,10 @@ fn get_slice(py: Python<'_>, lists: &[VecPy], bounds: &Bounds) -> VecPy {
         .map(|x| x.clone_ref(py))
         .collect()
 }
-fn forward_delete_small<T, const NEED_ADJUST: bool>(slice: &SliceIdxs, list: &mut T) -> PyResult<()>
-where
-    T: ListsDataMethods,
-{
-    let py = slice.py;
-    let mut values = slice.with(0, slice.start).extract_from(list)?;
-    if NEED_ADJUST {
-        let mut new_slice = slice.with(slice.stop, slice.ref_len).extract_from(list)?;
-        values.append(new_slice.as_mut());
+fn reset_slice<T: Into<RangeIdxs<usize>>>(indices: T, ref_len: usize) -> SliceIdxs {
+    SliceIdxs {
+        indices: indices.into(),
+        step: ops::Nb::One,
+        ref_len,
     }
-    list.clear(py);
-    list.extend(py, values.into())
 }

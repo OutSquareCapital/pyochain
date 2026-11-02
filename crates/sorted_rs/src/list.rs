@@ -91,12 +91,12 @@ impl ListsDataMethods for ListsData {
         }
     }
 
-    fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()> {
-        self.values.loc_remove(loc);
+    fn delete(&mut self, py: Python<'_>, mut loc: Loc) -> PyResult<()> {
+        self.values.loc_remove(&loc);
         self.len -= 1;
-        match ops::Delete::new(&self.values, self.load, loc) {
+        match ops::Delete::new(&self.values, self.load, &loc) {
             ops::Delete::LenAtPosSupToHalfLoad => {
-                self.maxes[loc.pos] = self.values.loc_last(loc).clone_ref(py);
+                self.maxes[loc.pos] = self.values.loc_last(&loc).clone_ref(py);
                 if self.lengths.is_built() {
                     self.lengths.delete_at(loc.pos);
                 }
@@ -111,14 +111,14 @@ impl ListsDataMethods for ListsData {
                     .map(|x| x.clone_ref(py))
                     .collect::<Vec<_>>();
                 self.values[prev].append(removed.as_mut());
-                self.remove_pos(loc);
+                self.remove_pos(&loc);
                 self.maxes[prev] = self.values[prev].last().unwrap().clone_ref(py);
                 self.expand(py, prev);
             }
             ops::Delete::LenAtPosNotZero => {
-                self.maxes[loc.pos] = self.values.loc_last(loc).clone_ref(py);
+                self.maxes[loc.pos] = self.values.loc_last(&loc).clone_ref(py);
             }
-            ops::Delete::Other => self.remove_pos(loc),
+            ops::Delete::Other => self.remove_pos(&loc),
         }
         Ok(())
     }
@@ -148,20 +148,24 @@ impl ListsDataMethods for ListsData {
         indices: RangeIdxs<Option<isize>>,
     ) -> PyResult<usize> {
         let py = value.py();
-        let (mut loc, indices) = ops::Index::new(self, value, indices).into_res()?;
-        loc.idx = self.values[loc.pos].bisect_left(value)?;
-        if self.values.loc(&loc).bind(py).ne(value)? {
-            Err(errors::not_in_list(&value.repr()?))
-        } else {
-            let left = self.loc(&loc);
-            if indices.start <= left {
-                if left < indices.stop {
-                    return Ok(left);
+        match indices.into_index(self.len) {
+            None => Err(errors::not_in_list(value)),
+            Some(indices) => {
+                let loc = Loc::try_from_index(self, value)?;
+                if self.values.loc(&loc).bind(py).ne(value)? {
+                    Err(errors::not_in_list(value))
+                } else {
+                    let left = self.loc(&loc);
+                    if indices.start <= left {
+                        if left < indices.stop {
+                            return Ok(left);
+                        }
+                    } else if indices.start < self.bisect::<false>(value)? {
+                        return Ok(indices.start);
+                    }
+                    Err(errors::not_in_list(value))
                 }
-            } else if indices.start < self.bisect::<false>(value)? {
-                return Ok(indices.start);
             }
-            Err(errors::not_in_list(&value.repr()?))
         }
     }
     #[inline]

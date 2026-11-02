@@ -18,8 +18,8 @@ pub fn delitem<T: ListsDataMethods>(
         match index {
             Case::PySlice(pyslice) => {
                 let slice = SliceIdxs::new(pyslice, mapping.len)?;
-                let keys = slice.extract_from(mapping)?;
-                slice.delete_from(&mut mapping.0)?;
+                let keys = slice.extract_from(py,mapping)?;
+                slice.delete_from(py,&mut mapping.0)?;
                 for key in keys {
                     dict.del_item(key)?;
                 }
@@ -43,7 +43,7 @@ pub fn get_item_for_items<'py, T: ListsDataMethods>(
     try_cast! {
         match index {
             Case::PySlice(slice) => SliceIdxs::new(slice, mapping.len)?
-                .extract_from(mapping)?
+                .extract_from(py,mapping)?
                 .iter()
                 .map(|key| tuple!(key.bind(py), &dict.get_item(key)?))
                 .map_ok(Bound::into_any)
@@ -67,7 +67,7 @@ pub fn get_item_for_values<'py, T: ListsDataMethods>(
     try_cast! {
         match index {
             Case::PySlice(slice) => SliceIdxs::new(slice, mapping.len)?
-                .extract_from(mapping)?
+                .extract_from(py,mapping)?
                 .iter()
                 .map(|key| dict.get_item(key))
                 .try_collect_bound::<PyList>(py)
@@ -87,7 +87,7 @@ pub fn get_item_for_keys<'py, T: ListsDataMethods>(
     try_cast! {
         match index {
             Case::PySlice(slice) => SliceIdxs::new(slice, mapping.len)?
-                .extract_from(mapping)?
+                .extract_from(py,mapping)?
                 .iter()
                 .collect_bound::<PyList>(py)
                 .map(Either::Left),
