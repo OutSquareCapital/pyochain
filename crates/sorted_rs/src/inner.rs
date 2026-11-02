@@ -52,11 +52,11 @@ impl InnerData {
         self.iter_owned(py).collect()
     }
     #[inline(always)]
-    pub fn iter_owned(&self, py: Python<'_>) -> impl Iterator<Item = Py<PyAny>> {
+    pub fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
         self.iter().map(move |x| x.clone_ref(py))
     }
     #[inline(always)]
-    pub fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> {
         self.values.iter().flatten()
     }
     pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
