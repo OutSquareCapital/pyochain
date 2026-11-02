@@ -124,7 +124,7 @@ impl ListsDataMethods for ListsData {
     }
     fn expand(&mut self, py: Python<'_>, pos: usize) {
         match ops::Expand::new(self.0.values[pos].len(), self.0.load, &self.0.lengths) {
-            ops::Expand::PosLenGtDoubleLoad => {
+            ops::Expand::LenAtPosGtDoubleLoad => {
                 let half = self.0.values[pos].split_off(self.0.load);
                 let new_max_at_pos = self.values[pos].last().unwrap().clone_ref(py);
                 let last_max = half.last().unwrap().clone_ref(py);

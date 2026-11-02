@@ -157,7 +157,7 @@ impl ListsDataMethods for KeysListsData {
     }
     fn expand(&mut self, py: Python<'_>, pos: usize) {
         match ops::Expand::new((self.1[pos]).len(), self.load, &self.lengths) {
-            ops::Expand::PosLenGtDoubleLoad => {
+            ops::Expand::LenAtPosGtDoubleLoad => {
                 let half_keys = self.1[pos].split_off(self.0.load);
                 let half = self.0.values[pos].split_off(self.0.load);
                 let new_max_at_pos = self.1[pos].last().unwrap().clone_ref(py);

@@ -119,7 +119,7 @@ impl Maxes {
 
 /// Used in `expand`
 pub enum Expand {
-    PosLenGtDoubleLoad,
+    LenAtPosGtDoubleLoad,
     IdxBuilt,
     NoOp,
 }
@@ -128,7 +128,7 @@ impl Expand {
     #[must_use]
     pub fn new(lists_len: usize, load: usize, lengths: &Lengths) -> Self {
         if lists_len > load * 2 {
-            Self::PosLenGtDoubleLoad
+            Self::LenAtPosGtDoubleLoad
         } else if lengths.is_built() {
             Self::IdxBuilt
         } else {
