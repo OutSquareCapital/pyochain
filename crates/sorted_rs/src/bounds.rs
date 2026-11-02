@@ -49,11 +49,11 @@ pub struct Loc {
 }
 impl Loc {
     #[must_use]
-    pub fn with_idx(idx: usize) -> Self {
+    pub const fn with_idx(idx: usize) -> Self {
         Self::new(0, idx)
     }
     #[must_use]
-    pub fn with_pos(pos: usize) -> Self {
+    pub const fn with_pos(pos: usize) -> Self {
         Self::new(pos, 0)
     }
 }
