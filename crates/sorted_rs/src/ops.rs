@@ -178,7 +178,8 @@ impl Locate {
             (0 | 1, _) => Self::Empty,
             (_, Nb::Zero) => Self::First,
             (_, Nb::MinusOne) => Self::Last,
-            (_, Nb::One) => Self::InFirstList(1),
+            (_, Nb::One) if 1 < values[0].len() => Self::InFirstList(1),
+            (_, Nb::One) => Self::InOtherList(1),
             (_, Nb::GTOne(i)) if i < values[0].len() => Self::InFirstList(i),
             (_, Nb::LTMinusOne(i)) if -values.last().unwrap().len().cast_signed() < i => {
                 Self::InLastList(i)
