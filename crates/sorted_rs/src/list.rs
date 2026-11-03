@@ -4,7 +4,7 @@ use pyo3_ext::prelude::*;
 use crate::{
     ListsData, RangeIdxs,
     bisect::Bisect,
-    bounds::{Bounds, Loc},
+    bounds::{Bounds, IrangeSpecs, Loc},
     errors,
     list_update::ListAdd,
     ops,
@@ -21,14 +21,8 @@ impl ListsDataMethods for ListsData {
         new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
-    fn irange_specs<'py>(
-        &self,
-        _py: Python<'py>,
-        minimum: Option<Bound<'py, PyAny>>,
-        maximum: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-    ) -> PyResult<Bounds> {
-        Bounds::from_irange(&self.values, &self.maxes, minimum, maximum, inclusive)
+    fn irange_specs(&self, specs: IrangeSpecs<'_>) -> PyResult<Bounds> {
+        specs.into_bounds(self)
     }
 
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {

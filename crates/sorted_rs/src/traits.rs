@@ -3,6 +3,7 @@ use std::ops::{Deref, DerefMut};
 use crate::{
     Bounds, Loc, RangeIdxs,
     bisect::Bisect,
+    bounds::IrangeSpecs,
     errors,
     inner::InnerData,
     list_update::ListAdd,
@@ -51,13 +52,7 @@ pub trait ListsDataMethods:
     /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
     /// For collections sorted by *key*, this is equivalent to `KeysListsData::1`.
     fn keys(&self) -> &[VecPy];
-    fn irange_specs<'py>(
-        &self,
-        py: Python<'py>,
-        minimum: Option<Bound<'py, PyAny>>,
-        maximum: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-    ) -> PyResult<Bounds>;
+    fn irange_specs(&self, specs: IrangeSpecs<'_>) -> PyResult<Bounds>;
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
     /// Equivalent to `bisect_ky_key` if the collection is sorted **by value**.\

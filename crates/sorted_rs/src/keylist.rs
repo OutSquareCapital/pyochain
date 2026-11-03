@@ -1,7 +1,7 @@
 use crate::{
     Bounds, KeysListsData, RangeIdxs,
     bisect::Bisect,
-    bounds::Loc,
+    bounds::{IrangeSpecs, Loc},
     errors,
     inner::InnerData,
     list_update::ListAdd,
@@ -30,17 +30,9 @@ impl ListsDataMethods for KeysListsData {
         new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
-    fn irange_specs<'py>(
-        &self,
-        py: Python<'py>,
-        minimum: Option<Bound<'py, PyAny>>,
-        maximum: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-    ) -> PyResult<Bounds> {
-        let key = self.2.bind(py);
-        let minimum = minimum.map(|value| key.call1((value,))).transpose()?;
-        let maximum = maximum.map(|value| key.call1((value,))).transpose()?;
-        Bounds::from_irange(&self.1, &self.maxes, minimum, maximum, inclusive)
+    fn irange_specs(&self, specs: IrangeSpecs<'_>) -> PyResult<Bounds> {
+        let py = specs.py;
+        specs.with_keys(self.2.bind(py))?.into_bounds(self)
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let key = self.extract_key(&value)?;
