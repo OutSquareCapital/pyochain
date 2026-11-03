@@ -1,9 +1,6 @@
 use crate::{
     abc,
-    collections::sorted::{
-        core::{ObjOrVec, SortedCollectionsMethods},
-        getters::ListGetter,
-    },
+    collections::sorted::core::{ObjOrVec, SortedCollectionsMethods},
     traits::IntoInit,
 };
 use parking_lot::RwLock;

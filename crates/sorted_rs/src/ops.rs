@@ -10,7 +10,11 @@ use pyo3::prelude::*;
 use tap::Conv;
 
 use crate::{
-    RangeIdxs, bisect::Bisect, bounds::Loc, lengths::Lengths, traits::NestedVec, types::VecPy,
+    bisect::Bisect,
+    bounds::{Loc, RangeIdxs},
+    lengths::Lengths,
+    traits::NestedVec,
+    types::VecPy,
 };
 
 #[derive(Debug, Clone, Copy)]

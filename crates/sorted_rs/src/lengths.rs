@@ -1,4 +1,4 @@
-use crate::{Loc, types::VecPy};
+use crate::{bounds::Loc, types::VecPy};
 /// Quoting Grant Jenks:
 /// > "a tree of pair-wise sums of the lengths of the lists. The tree is maintained as a dense binary tree."
 ///

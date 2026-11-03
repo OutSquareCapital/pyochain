@@ -3,7 +3,6 @@ use crate::{
     collections::sorted::{
         SortedItemsView, SortedKeysView, SortedValuesView,
         core::SortedCollectionsMethods,
-        getters::ListGetter,
         views::{
             SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView, SortedViewMethods,
         },
@@ -17,7 +16,7 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
-use sorted_rs::{DictData, KeysListsData, ListsData};
+use sorted_rs::{DictData, KeysListsData, ListGetter, ListsData};
 use tap::prelude::*;
 
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends= abc::PyoMutableMapping, mapping)]

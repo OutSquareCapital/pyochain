@@ -1,5 +1,6 @@
 use crate::{
-    Loc, errors,
+    bounds::Loc,
+    errors,
     lengths::Lengths,
     ops,
     traits::NestedVec,
@@ -61,7 +62,7 @@ impl InnerData {
     pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         self.iter().collect_bound::<PyList>(py)
     }
-    pub fn loc(&mut self, loc: &Loc) -> usize {
+    pub(super) fn loc(&mut self, loc: &Loc) -> usize {
         if loc.pos == 0 {
             loc.idx
         } else {
@@ -81,7 +82,7 @@ impl InnerData {
             .collect()
     }
     #[inline]
-    pub fn index_to_loc(&mut self, index: isize) -> PyResult<Loc> {
+    pub(super) fn index_to_loc(&mut self, index: isize) -> PyResult<Loc> {
         match ops::Locate::new(self.len, &self.values, index) {
             ops::Locate::Empty => Err(errors::out_of_range()),
             ops::Locate::Last => {

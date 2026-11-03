@@ -4,7 +4,8 @@ use pyo3::{prelude::*, types::PySlice};
 use tap::prelude::*;
 
 use crate::{
-    Bounds, InnerData, Loc, RangeIdxs,
+    Bounds, InnerData,
+    bounds::{Loc, RangeIdxs},
     ops::{self, ForwardSlice},
     traits::{ListsDataMethods, NestedVec},
     types::VecPy,

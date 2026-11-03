@@ -1,9 +1,9 @@
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    Bounds, Loc, RangeIdxs,
+    Bounds,
     bisect::Bisect,
-    bounds::IrangeSpecs,
+    bounds::{IrangeSpecs, Loc, RangeIdxs, RawIrangeSpecs, RawRangeIdxs},
     errors,
     inner::InnerData,
     list_update::ListAdd,
@@ -52,7 +52,6 @@ pub trait ListsDataMethods:
     /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
     /// For collections sorted by *key*, this is equivalent to `KeysListsData::1`.
     fn keys(&self) -> &[VecPy];
-    fn irange_specs(&self, specs: IrangeSpecs<'_>) -> PyResult<Bounds>;
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
     /// Equivalent to `bisect_ky_key` if the collection is sorted **by value**.\
@@ -64,11 +63,8 @@ pub trait ListsDataMethods:
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()>;
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()>;
-    fn index(
-        &mut self,
-        value: &Bound<'_, PyAny>,
-        indices: RangeIdxs<Option<isize>>,
-    ) -> PyResult<usize>;
+    fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize>;
+    fn irange(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn bisect_by_key<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         if self.maxes.is_empty() {
@@ -142,6 +138,12 @@ pub trait ListsDataMethods:
         let values = self.repeat(py, num);
         self.clear(py);
         self.extend(py, values.into())
+    }
+    fn islice_specs(&mut self, specs: RawRangeIdxs) -> PyResult<Bounds> {
+        specs.conv::<RangeIdxs<_>>().into_bounds(self)
+    }
+    fn irange_by_key(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds> {
+        specs.conv::<IrangeSpecs>().into_bounds(self)
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let loc = self.index_to_loc(index)?;

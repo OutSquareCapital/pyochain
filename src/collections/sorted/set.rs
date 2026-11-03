@@ -4,16 +4,13 @@ use pyo3::{
     types::{PyBool, PySet, PyTuple},
 };
 
-use super::{
-    core::{ObjOrVec, SortedCollectionsMethods},
-    getters::ListGetter,
-};
+use super::core::{ObjOrVec, SortedCollectionsMethods};
 use crate::{abc, traits::IntoInit};
 use parking_lot::RwLock;
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
 use sorted_rs::{
-    KeysListsData, ListsData, PySetDataRef, SetData, SetOp, SetPred, types::IntOrSlice,
+    KeysListsData, ListGetter, ListsData, PySetDataRef, SetData, SetOp, SetPred, types::IntOrSlice,
 };
 use std_tools::prelude::ResultExt;
 use tap::prelude::*;

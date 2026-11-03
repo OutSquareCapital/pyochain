@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use tap::prelude::*;
 
-use crate::Loc;
+use crate::bounds::Loc;
 #[derive(Debug, Default)]
 pub(super) struct Cursor(AtomicU64);
 impl Cursor {

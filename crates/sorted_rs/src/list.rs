@@ -2,9 +2,9 @@ use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 
 use crate::{
-    ListsData, RangeIdxs,
+    Bounds, ListsData,
     bisect::Bisect,
-    bounds::{Bounds, IrangeSpecs, Loc},
+    bounds::{Loc, RangeIdxs, RawIrangeSpecs, RawRangeIdxs},
     errors,
     list_update::ListAdd,
     ops,
@@ -21,10 +21,9 @@ impl ListsDataMethods for ListsData {
         new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
-    fn irange_specs(&self, specs: IrangeSpecs<'_>) -> PyResult<Bounds> {
-        specs.into_bounds(self)
+    fn irange(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds> {
+        self.irange_by_key(specs)
     }
-
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         match ops::Maxes::right(&self.0.maxes, &value) {
@@ -88,9 +87,9 @@ impl ListsDataMethods for ListsData {
     fn delete(&mut self, py: Python<'_>, mut loc: Loc) -> PyResult<()> {
         self.values.loc_remove(&loc);
         self.len -= 1;
-        match ops::Delete::new(&self.values, self.load, &loc) {
+        match ops::Delete::new(self.keys(), self.load, &loc) {
             ops::Delete::LenAtPosSupToHalfLoad => {
-                self.maxes[loc.pos] = self.values.loc_last(&loc).clone_ref(py);
+                self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
                 if self.lengths.is_built() {
                     self.lengths.delete_at(loc.pos);
                 }
@@ -100,17 +99,17 @@ impl ListsDataMethods for ListsData {
                     loc.pos += 1;
                 }
                 let prev = loc.pos - 1;
-                let mut removed = self.values[loc.pos]
+                let mut removed = self.keys()[loc.pos]
                     .iter()
                     .map(|x| x.clone_ref(py))
                     .collect::<Vec<_>>();
                 self.values[prev].append(removed.as_mut());
                 self.remove_pos(&loc);
-                self.maxes[prev] = self.values[prev].last().unwrap().clone_ref(py);
+                self.maxes[prev] = self.keys()[prev].last().unwrap().clone_ref(py);
                 self.expand(py, prev);
             }
             ops::Delete::LenAtPosNotZero => {
-                self.maxes[loc.pos] = self.values.loc_last(&loc).clone_ref(py);
+                self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
             }
             ops::Delete::Other => self.remove_pos(&loc),
         }
@@ -136,12 +135,9 @@ impl ListsDataMethods for ListsData {
             None,
         )
     }
-    fn index(
-        &mut self,
-        value: &Bound<'_, PyAny>,
-        indices: RangeIdxs<Option<isize>>,
-    ) -> PyResult<usize> {
+    fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize> {
         let py = value.py();
+        let indices = RangeIdxs::from(indices);
         match indices.into_index(self.len) {
             None => Err(errors::not_in_list(value)),
             Some(indices) => {

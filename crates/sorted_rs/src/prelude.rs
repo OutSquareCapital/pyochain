@@ -1,1 +1,1 @@
-pub use crate::{core::ListDataOwner, reprs::PyRepr, traits::ListsDataMethods};
+pub use crate::{core::ListGetter, reprs::PyRepr, traits::ListsDataMethods};

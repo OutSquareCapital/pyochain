@@ -1,15 +1,46 @@
 use crate::{
     abc,
-    collections::sorted::{self, getters::ListGetter},
+    collections::sorted::{self, iter},
     core::PyoVec,
 };
 use either::Either;
+use parking_lot::RwLock;
 use pyo3::prelude::*;
 use pyochain_macros::py_abc;
-use sorted_rs::{IrangeSpecs, KeysListsData, RangeIdxs, iter::IterKind, prelude::*};
+use sorted_rs::{DictData, KeysListsData, ListsData, SetData, prelude::*};
 
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyoVec>, Bound<'py, PyAny>>>;
 pub(super) type IterRes<'py> = PyResult<Bound<'py, abc::PyoIterator>>;
+
+macro_rules! impl_getters {
+    ($($from:ty => $into:ty[$list:ty]),+ $(,)?) => {
+        $(
+            impl From<$from> for $into {
+                fn from(inner: $from) -> Self {
+                    Self(RwLock::new(inner))
+                }
+            }
+            impl AsRef<RwLock<<$into as ListGetter>::T>> for $into {
+                fn as_ref(&self) -> &RwLock<<$into as ListGetter>::T> {
+                    &self.0
+                }
+            }
+            impl ListGetter for $into {
+                 type T = $from;
+                 type L = $list;
+             }
+        )+
+    };
+}
+
+impl_getters! {
+    DictData<ListsData> => sorted::SortedDict[ListsData],
+    DictData<KeysListsData> => sorted::SortedKeyDict[KeysListsData],
+    KeysListsData => sorted::SortedKeyList[KeysListsData],
+    ListsData => sorted::SortedList[ListsData],
+    SetData<ListsData> => sorted::SortedSet[ListsData],
+    SetData<KeysListsData> => sorted::SortedKeySet[KeysListsData],
+}
 #[py_abc(
     sorted::SortedList,
     sorted::SortedKeyList,
@@ -23,16 +54,16 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         self.read().repr::<Self>(py)
     }
     fn __iter__<'py>(slf: &Bound<'py, Self>) -> IterRes<'py> {
-        Self::build_iter(slf, IterKind::Fwd)
+        iter::SortedIter::build(slf.py(), slf)
     }
     fn __reversed__<'py>(slf: &Bound<'py, Self>) -> IterRes<'py> {
-        Self::build_iter(slf, IterKind::Bwd)
+        iter::SortedIterRev::build(slf.py(), slf)
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.write().list_mut().bisect::<true>(value)
+        self.write().as_mut().bisect::<true>(value)
     }
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.write().list_mut().bisect::<false>(value)
+        self.write().as_mut().bisect::<false>(value)
     }
     #[pyo3(signature = (value, start = None, stop = None, /))]
     fn index(
@@ -41,9 +72,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<usize> {
-        self.write()
-            .list_mut()
-            .index(&value, RangeIdxs::new(start, stop))
+        self.write().as_mut().index(&value, (start, stop))
     }
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
@@ -53,11 +82,12 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> IterRes<'py> {
-        slf.get()
+        let bounds = slf
+            .get()
             .read()
-            .list()
-            .irange_specs(IrangeSpecs::new(slf.py(), minimum, maximum, inclusive))
-            .and_then(|bounds| Self::build_iter(slf, IterKind::Bounded(bounds, reverse)))
+            .as_ref()
+            .irange((slf.py(), minimum, maximum, inclusive))?;
+        iter::build(slf, bounds, reverse)
     }
     #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
     fn islice<'py>(
@@ -66,19 +96,18 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         stop: Option<isize>,
         reverse: bool,
     ) -> IterRes<'py> {
-        RangeIdxs::new(start, stop)
-            .into_bounds(&mut slf.get().write())
-            .and_then(|bounds| Self::build_iter(slf, IterKind::Bounded(bounds, reverse)))
+        let bounds = slf.get().write().as_mut().islice_specs((start, stop))?;
+        iter::build(slf, bounds, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.write().list_mut().reset(py, load)
+        self.write().as_mut().reset(py, load)
     }
 }
 
 #[py_abc(sorted::SortedKeyList, sorted::SortedKeySet, sorted::SortedKeyDict)]
 pub(super) trait KeyedSortedCollection: SortedCollectionsMethods
 where
-    Self::T: ListDataOwner<List = KeysListsData>,
+    Self: ListGetter<L = KeysListsData>,
 {
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(
@@ -88,14 +117,17 @@ where
         inclusive: (bool, bool),
         reverse: bool,
     ) -> IterRes<'py> {
-        IrangeSpecs::new(slf.py(), min_key, max_key, inclusive)
-            .into_bounds(slf.get().read().list())
-            .and_then(|bounds| Self::build_iter(slf, IterKind::Bounded(bounds, reverse)))
+        let bounds =
+            slf.get()
+                .read()
+                .as_ref()
+                .irange_by_key((slf.py(), min_key, max_key, inclusive))?;
+        iter::build(slf, bounds, reverse)
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.write().list_mut().bisect_by_key::<true>(key)
+        self.write().as_mut().bisect_by_key::<true>(key)
     }
     fn bisect_key_right(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.write().list_mut().bisect_by_key::<false>(key)
+        self.write().as_mut().bisect_by_key::<false>(key)
     }
 }
