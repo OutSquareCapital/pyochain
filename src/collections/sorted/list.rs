@@ -8,21 +8,21 @@ use pyo3::{exceptions::PyNotImplementedError, prelude::*};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
 use sorted_rs::{
-    KeysListsData, ListsData, PyListsDataRef,
+    KeyList, List, PyListsDataRef,
     prelude::*,
     types::{IntOrSlice, SeqOrAny},
 };
 use std_tools::prelude::*;
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
-pub struct SortedList(pub(super) RwLock<ListsData>);
+pub struct SortedList(pub(super) RwLock<List>);
 
 #[pymethods]
 impl SortedList {
     #[new]
     #[pyo3(signature = (iterable = None))]
     fn py_new(iterable: Option<Bound<'_, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
-        let data = Self::from(ListsData::default());
+        let data = Self::from(List::default());
         if let Some(values) = iterable {
             data.extend(&values)?;
         }
@@ -31,7 +31,7 @@ impl SortedList {
 }
 
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
-pub struct SortedKeyList(pub(super) RwLock<KeysListsData>);
+pub struct SortedKeyList(pub(super) RwLock<KeyList>);
 
 #[pymethods]
 impl SortedKeyList {
@@ -41,7 +41,7 @@ impl SortedKeyList {
         key: Bound<'_, PyAny>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let slf = key.unbind().pipe(KeysListsData::new).conv::<Self>();
+        let slf = key.unbind().pipe(KeyList::new).conv::<Self>();
         if let Some(iterable) = iterable {
             slf.extend(&iterable)?;
         }
@@ -49,10 +49,10 @@ impl SortedKeyList {
     }
 }
 impl PyListsDataRef for SortedList {
-    type L = ListsData;
+    type L = List;
 }
 impl PyListsDataRef for SortedKeyList {
-    type L = KeysListsData;
+    type L = KeyList;
 }
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedListMethods:

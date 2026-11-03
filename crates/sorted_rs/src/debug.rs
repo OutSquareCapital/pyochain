@@ -1,5 +1,9 @@
 use crate::{
-    DictData, KeysListsData, SetData, inner::InnerData, lengths::Lengths, prelude::*, types::VecPy,
+    KeyList,
+    inner::InnerData,
+    lengths::Lengths,
+    prelude::*,
+    types::{Dict, Set, VecPy},
 };
 use pyo3::prelude::*;
 use std_tools::prelude::*;
@@ -16,7 +20,7 @@ pub fn check_empty(slf: &InnerData) -> PyResult<()> {
     pyassert!(slf.values.is_empty());
     Ok(())
 }
-pub fn check_dict<T: ListsDataMethods>(py: Python<'_>, data: &DictData<T>) -> PyResult<()> {
+pub fn check_dict<T: ListsMethods>(py: Python<'_>, data: &Dict<T>) -> PyResult<()> {
     check_list(py, data)?;
     let dict = data.1.bind(py);
     pyassert!(dict.len() == data.len);
@@ -27,7 +31,7 @@ pub fn check_dict<T: ListsDataMethods>(py: Python<'_>, data: &DictData<T>) -> Py
     Ok(())
 }
 
-pub fn check_set_len<T: ListsDataMethods>(py: Python<'_>, checked: &SetData<T>) -> PyResult<()> {
+pub fn check_set_len<T: ListsMethods>(py: Python<'_>, checked: &Set<T>) -> PyResult<()> {
     let set = checked.get_set(py);
     pyassert!(set.len() == checked.len);
     check_list(py, checked)?;
@@ -89,7 +93,7 @@ pub fn check_list(py: Python<'_>, slf: &InnerData) -> PyResult<()> {
     Ok(()).inspect_err(|e| show_list(py, e, slf))
 }
 
-pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
+pub fn check_key_list(py: Python<'_>, data: &KeyList) -> PyResult<()> {
     let key_fn = data.2.bind(py);
     pyassert!(data.load >= 4);
     pyassert!(data.maxes.len() == data.values.len() && data.values.len() == data.1.len());
@@ -194,7 +198,7 @@ fn show_list(py: Python<'_>, err: &PyErr, data: &InnerData) {
     err.add_note(py, infos).unwrap();
 }
 
-fn show_key_list(py: Python<'_>, err: &PyErr, data: &KeysListsData) {
+fn show_key_list(py: Python<'_>, err: &PyErr, data: &KeyList) {
     show_list(py, err, data);
     let infos = [
         format!("len_keys: {}", data.1.len()),

@@ -1,7 +1,7 @@
 use derive_more::{Constructor, From};
 use pyo3::{prelude::*, types::slice::PySliceIndices};
 
-use crate::{InnerData, bisect::Bisect, errors, traits::ListsDataMethods};
+use crate::{InnerData, bisect::Bisect, errors, traits::ListsMethods};
 
 pub type RawIrangeSpecs<'py> = (
     Python<'py>,
@@ -46,7 +46,7 @@ impl IrangeSpecs<'_> {
         slf.max = slf.max.with_key(func)?;
         Ok(slf)
     }
-    pub fn into_bounds<T: ListsDataMethods>(self, data: &T) -> PyResult<Bounds> {
+    pub fn into_bounds<T: ListsMethods>(self, data: &T) -> PyResult<Bounds> {
         if data.maxes.is_empty() {
             Ok(Bounds::default())
         } else {
@@ -93,7 +93,7 @@ impl IrangeSpecs<'_> {
 }
 fn min_bound<T, const LEFT: bool>(data: &T, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>
 where
-    T: ListsDataMethods,
+    T: ListsMethods,
 {
     let pos = data.maxes.bisect::<LEFT>(value)?;
     if pos == data.maxes.len() {
@@ -104,7 +104,7 @@ where
 }
 fn max_bound<T, const LEFT: bool>(data: &T, value: &Bound<'_, PyAny>) -> PyResult<Loc>
 where
-    T: ListsDataMethods,
+    T: ListsMethods,
 {
     let mut pos = data.maxes.bisect::<LEFT>(value)?;
     let idx = if pos == data.maxes.len() {
@@ -208,7 +208,7 @@ impl Loc {
     }
     pub fn try_from_index<T>(list: &T, value: &Bound<'_, PyAny>) -> PyResult<Loc>
     where
-        T: ListsDataMethods,
+        T: ListsMethods,
     {
         let pos = list.maxes.bisect_left(value)?;
         if pos == list.maxes.len() {

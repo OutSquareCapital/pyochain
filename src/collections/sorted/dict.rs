@@ -16,11 +16,11 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
-use sorted_rs::{DictData, KeysListsData, ListGetter, ListsData};
+use sorted_rs::{KeyList, List, ListGetter, types};
 use tap::prelude::*;
 
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends= abc::PyoMutableMapping, mapping)]
-pub struct SortedDict(pub(super) RwLock<DictData<ListsData>>);
+pub struct SortedDict(pub(super) RwLock<types::Dict<List>>);
 
 #[pymethods]
 impl SortedDict {
@@ -31,7 +31,7 @@ impl SortedDict {
         iterable: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let mut dict = DictData::<ListsData>::empty(py);
+        let mut dict = types::Dict::<List>::empty(py);
         dict.update(py, iterable, kwargs)?;
         dict.conv::<Self>().init().pipe(Ok)
     }
@@ -43,7 +43,7 @@ impl SortedDictMethods for SortedDict {
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableMapping, mapping)]
 
-pub struct SortedKeyDict(pub(super) RwLock<DictData<KeysListsData>>);
+pub struct SortedKeyDict(pub(super) RwLock<types::Dict<KeyList>>);
 
 #[pymethods]
 impl SortedKeyDict {
@@ -55,8 +55,8 @@ impl SortedKeyDict {
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>> {
         let py = key.py();
-        let list = KeysListsData::new(key.unbind());
-        let mut dict = DictData::new(list, PyDict::new(py).unbind());
+        let list = KeyList::new(key.unbind());
+        let mut dict = types::Dict::new(list, PyDict::new(py).unbind());
         dict.update(py, iterable, kwargs)?;
         dict.conv::<Self>().init().pipe(Ok)
     }
@@ -70,9 +70,9 @@ impl SortedDictMethods for SortedKeyDict {
 #[py_abc(SortedDict, SortedKeyDict)]
 pub(super) trait SortedDictMethods:
     SortedCollectionsMethods
-    + ListGetter<T = DictData<<Self as ListGetter>::L>>
+    + ListGetter<T = types::Dict<<Self as ListGetter>::L>>
     + IntoInit
-    + From<DictData<<Self as ListGetter>::L>>
+    + From<types::Dict<<Self as ListGetter>::L>>
     + PyFrozenClass
 {
     type KView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;
@@ -134,7 +134,7 @@ pub(super) trait SortedDictMethods:
         iterable: &Bound<'py, PyAny>,
         value: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, SortedDict>> {
-        DictData::<ListsData>::from_keys(iterable, value)?
+        types::Dict::<List>::from_keys(iterable, value)?
             .conv::<SortedDict>()
             .into_bound(iterable.py())
     }

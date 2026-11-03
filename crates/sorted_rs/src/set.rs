@@ -2,10 +2,10 @@ use parking_lot::RwLock;
 use std::cmp::Ordering;
 
 use crate::{
-    KeysListsData, ListsData, SetData,
+    KeyList, List,
     prelude::*,
     slice::SliceIdxs,
-    types::{IntOrSlice, ListOrAny},
+    types::{IntOrSlice, ListOrAny, Set},
 };
 use either::Either;
 use pyo3::{
@@ -19,10 +19,8 @@ use pyo3_ext::{
 };
 use pyochain_macros::try_cast_into;
 use tap::prelude::*;
-pub trait PySetDataRef:
-    PyFrozenClass + AsRef<RwLock<SetData<Self::L>>> + From<SetData<Self::L>>
-{
-    type L: ListsDataMethods;
+pub trait PySetDataRef: PyFrozenClass + AsRef<RwLock<Set<Self::L>>> + From<Set<Self::L>> {
+    type L: ListsMethods;
 
     #[inline(always)]
     fn comp<'py>(&self, value: Bound<'py, PyAny>, op: CompareOp) -> PyCmpOut<'py, bool> {
@@ -68,25 +66,25 @@ pub trait PySetDataRef:
         self.as_ref().write().update(args, op)
     }
 }
-impl SetData<ListsData> {
+impl Set<List> {
     pub fn build(py: Python<'_>, iterable: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
-        Self::build_inner(py, ListsData::default(), iterable)
+        Self::build_inner(py, List::default(), iterable)
     }
 }
-impl TryFrom<Bound<'_, PyAny>> for SetData<ListsData> {
+impl TryFrom<Bound<'_, PyAny>> for Set<List> {
     type Error = PyErr;
     fn try_from(iterable: Bound<'_, PyAny>) -> PyResult<Self> {
-        Self::build_inner(iterable.py(), ListsData::default(), Some(iterable))
+        Self::build_inner(iterable.py(), List::default(), Some(iterable))
     }
 }
-impl SetData<KeysListsData> {
+impl Set<KeyList> {
     pub fn build(key: Bound<'_, PyAny>, iterable: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
         let py = key.py();
-        let list = KeysListsData::new(key.unbind());
+        let list = KeyList::new(key.unbind());
         Self::build_inner(py, list, iterable)
     }
 }
-impl<T: ListsDataMethods> SetData<T> {
+impl<T: ListsMethods> Set<T> {
     #[inline(always)]
     fn build_inner(
         py: Python<'_>,
@@ -333,7 +331,7 @@ impl SetOp {
 #[inline(always)]
 fn try_add<T>(list: &mut T, set: &Bound<'_, PySet>, value: Bound<'_, PyAny>) -> PyResult<()>
 where
-    T: ListsDataMethods,
+    T: ListsMethods,
 {
     match set.contains(&value) {
         Ok(true) => Ok(()),

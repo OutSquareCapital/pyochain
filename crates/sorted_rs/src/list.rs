@@ -2,17 +2,17 @@ use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 
 use crate::{
-    Bounds, ListsData,
+    Bounds, List,
     bisect::Bisect,
     bounds::{Loc, RangeIdxs, RawIrangeSpecs, RawRangeIdxs},
     errors,
     list_update::ListAdd,
     ops,
-    traits::{ListsDataMethods, NestedVec},
+    traits::{ListsMethods, NestedVec},
     types::VecPy,
 };
 
-impl ListsDataMethods for ListsData {
+impl ListsMethods for List {
     fn keys(&self) -> &[VecPy] {
         &self.values
     }

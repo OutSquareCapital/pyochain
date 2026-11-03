@@ -1,18 +1,18 @@
 use crate::{
-    Bounds, KeysListsData,
+    Bounds, KeyList,
     bisect::Bisect,
     bounds::{IrangeSpecs, Loc, RangeIdxs, RawIrangeSpecs, RawRangeIdxs},
     errors,
     inner::InnerData,
     list_update::ListAdd,
     ops,
-    traits::{ListsDataMethods, NestedVec},
+    traits::{ListsMethods, NestedVec},
     types::VecPy,
 };
 use itertools::Itertools;
 use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
-impl KeysListsData {
+impl KeyList {
     #[must_use]
     pub fn new(key: Py<PyAny>) -> Self {
         Self(InnerData::default(), Vec::default(), key)
@@ -21,7 +21,7 @@ impl KeysListsData {
         self.2.bind(value.py()).call1((&value,))
     }
 }
-impl ListsDataMethods for KeysListsData {
+impl ListsMethods for KeyList {
     fn keys(&self) -> &[VecPy] {
         &self.1
     }

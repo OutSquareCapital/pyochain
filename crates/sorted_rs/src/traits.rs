@@ -45,7 +45,7 @@ impl NestedVec for [Vec<Py<PyAny>>] {
     }
 }
 
-pub trait ListsDataMethods:
+pub trait ListsMethods:
     Deref<Target = InnerData> + DerefMut + PyRepr + Sized + Send + Sync
 {
     /// Returns a reference to the "keys" of the collection.\

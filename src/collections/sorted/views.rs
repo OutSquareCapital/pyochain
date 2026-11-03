@@ -9,7 +9,7 @@ use parking_lot::{RwLockReadGuard, RwLockWriteGuard};
 use pyo3::{PyClass, prelude::*};
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
-use sorted_rs::{DictData, KeysListsData, ListsData, SetData, prelude::*, views};
+use sorted_rs::{KeyList, List, prelude::*, types, views};
 use std_tools::prelude::*;
 use tap::prelude::*;
 
@@ -25,10 +25,10 @@ macro_rules! impl_base_sorted_view {
                 impl SortedViewMethods for $t {
                         type L = $l;
                         type M = $name;
-                        fn mapping(&self) -> RwLockReadGuard<'_, DictData<Self::L>> {
+                        fn mapping(&self) -> RwLockReadGuard<'_, types::Dict<Self::L>> {
                             self.0.get().0.read()
                         }
-                        fn mapping_mut(&self) -> RwLockWriteGuard<'_, DictData<Self::L>> {
+                        fn mapping_mut(&self) -> RwLockWriteGuard<'_, types::Dict<Self::L>> {
                             self.0.get().0.write()
                         }
                         fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
@@ -40,12 +40,12 @@ macro_rules! impl_base_sorted_view {
     };
 }
 impl_base_sorted_view!(
-    ListsData: SortedDict => [
+    List: SortedDict => [
         views::get_item_for_items => SortedItemsView,
         views::get_item_for_values => SortedValuesView,
         views::get_item_for_keys => SortedKeysView,
     ];
-    KeysListsData: SortedKeyDict => [
+    KeyList: SortedKeyDict => [
         views::get_item_for_items => SortedByKeyItemsView,
         views::get_item_for_values => SortedByKeyValuesView,
         views::get_item_for_keys => SortedByKeyKeysView,
@@ -62,7 +62,7 @@ trait FromIterable {
     #[pyo3(name = "_from_iterable")]
     fn from_iterable(it: Bound<'_, PyAny>) -> PyResult<Bound<'_, SortedSet>> {
         let py = it.py();
-        SetData::try_from(it)?.conv::<SortedSet>().into_bound(py)
+        types::Set::try_from(it)?.conv::<SortedSet>().into_bound(py)
     }
 }
 
@@ -77,14 +77,14 @@ trait FromIterable {
 pub trait SortedViewMethods:
     PyClass<BaseType = abc::PyoSequence> + PyFrozenClass + From<Py<Self::M>>
 where
-    DictData<Self::L>: PyRepr,
+    types::Dict<Self::L>: PyRepr,
 {
-    type L: ListsDataMethods;
+    type L: ListsMethods;
     type M: PyFrozenClass;
     #[skip]
-    fn mapping(&self) -> RwLockReadGuard<'_, DictData<Self::L>>;
+    fn mapping(&self) -> RwLockReadGuard<'_, types::Dict<Self::L>>;
     #[skip]
-    fn mapping_mut(&self) -> RwLockWriteGuard<'_, DictData<Self::L>>;
+    fn mapping_mut(&self) -> RwLockWriteGuard<'_, types::Dict<Self::L>>;
     fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
     fn __len__(&self, py: Python<'_>) -> usize {
         self.mapping().__len__(py)

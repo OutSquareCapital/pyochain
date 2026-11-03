@@ -10,12 +10,12 @@ use parking_lot::RwLock;
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
 use sorted_rs::{
-    KeysListsData, ListGetter, ListsData, PySetDataRef, SetData, SetOp, SetPred, types::IntOrSlice,
+    KeyList, List, ListGetter, PySetDataRef, SetOp, SetPred, types, types::IntOrSlice,
 };
 use std_tools::prelude::ResultExt;
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedSet(pub(super) RwLock<SetData<ListsData>>);
+pub struct SortedSet(pub(super) RwLock<types::Set<List>>);
 #[pymethods]
 impl SortedSet {
     #[new]
@@ -24,14 +24,14 @@ impl SortedSet {
         py: Python<'_>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        SetData::<ListsData>::build(py, iterable)?
+        types::Set::<List>::build(py, iterable)?
             .conv::<Self>()
             .init()
             .pipe(Ok)
     }
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedKeySet(pub(super) RwLock<SetData<KeysListsData>>);
+pub struct SortedKeySet(pub(super) RwLock<types::Set<KeyList>>);
 #[pymethods]
 impl SortedKeySet {
     #[new]
@@ -40,22 +40,22 @@ impl SortedKeySet {
         key: Bound<'_, PyAny>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        SetData::<KeysListsData>::build(key, iterable)?
+        types::Set::<KeyList>::build(key, iterable)?
             .conv::<Self>()
             .init()
             .pipe(Ok)
     }
 }
 impl PySetDataRef for SortedSet {
-    type L = ListsData;
+    type L = List;
 }
 impl PySetDataRef for SortedKeySet {
-    type L = KeysListsData;
+    type L = KeyList;
 }
 #[py_abc(SortedSet, SortedKeySet)]
 pub(super) trait SortedSetMethods:
     SortedCollectionsMethods
-    + ListGetter<T = SetData<<Self as ListGetter>::L>>
+    + ListGetter<T = types::Set<<Self as ListGetter>::L>>
     + IntoInit
     + PySetDataRef<L = <Self as ListGetter>::L>
 {

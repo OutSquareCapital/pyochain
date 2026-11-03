@@ -1,4 +1,8 @@
-use crate::{DictData, prelude::*, slice::SliceIdxs, types::ListOrAny};
+use crate::{
+    prelude::*,
+    slice::SliceIdxs,
+    types::{Dict, ListOrAny},
+};
 use either::Either;
 use itertools::Itertools;
 use pyo3::{
@@ -8,10 +12,7 @@ use pyo3::{
 use pyo3_ext::{prelude::CollectBoundIterator, tuple};
 use pyochain_macros::try_cast;
 
-pub fn delitem<T: ListsDataMethods>(
-    mapping: &mut DictData<T>,
-    index: Bound<'_, PyAny>,
-) -> PyResult<()> {
+pub fn delitem<T: ListsMethods>(mapping: &mut Dict<T>, index: Bound<'_, PyAny>) -> PyResult<()> {
     let py = index.py();
     let dict = mapping.1.clone_ref(py).into_bound(py);
     try_cast! {
@@ -34,10 +35,13 @@ pub fn delitem<T: ListsDataMethods>(
     }
 }
 #[inline(always)]
-pub fn get_item_for_items<'py, T: ListsDataMethods>(
-    mapping: &mut DictData<T>,
+pub fn get_item_for_items<'py, T>(
+    mapping: &mut Dict<T>,
     index: Bound<'py, PyAny>,
-) -> PyResult<ListOrAny<'py>> {
+) -> PyResult<ListOrAny<'py>>
+where
+    T: ListsMethods,
+{
     let py = index.py();
     let dict = mapping.1.clone_ref(py).into_bound(py).into_any();
     try_cast! {
@@ -58,10 +62,13 @@ pub fn get_item_for_items<'py, T: ListsDataMethods>(
     }
 }
 #[inline(always)]
-pub fn get_item_for_values<'py, T: ListsDataMethods>(
-    mapping: &mut DictData<T>,
+pub fn get_item_for_values<'py, T>(
+    mapping: &mut Dict<T>,
     index: Bound<'py, PyAny>,
-) -> PyResult<ListOrAny<'py>> {
+) -> PyResult<ListOrAny<'py>>
+where
+    T: ListsMethods,
+{
     let py = index.py();
     let dict = mapping.1.clone_ref(py).into_bound(py).into_any();
     try_cast! {
@@ -79,8 +86,8 @@ pub fn get_item_for_values<'py, T: ListsDataMethods>(
     }
 }
 #[inline(always)]
-pub fn get_item_for_keys<'py, T: ListsDataMethods>(
-    mapping: &mut DictData<T>,
+pub fn get_item_for_keys<'py, T: ListsMethods>(
+    mapping: &mut Dict<T>,
     index: Bound<'py, PyAny>,
 ) -> PyResult<ListOrAny<'py>> {
     let py = index.py();

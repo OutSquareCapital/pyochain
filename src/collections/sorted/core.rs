@@ -7,7 +7,7 @@ use either::Either;
 use parking_lot::RwLock;
 use pyo3::prelude::*;
 use pyochain_macros::py_abc;
-use sorted_rs::{DictData, KeysListsData, ListsData, SetData, prelude::*};
+use sorted_rs::{KeyList, List, prelude::*, types};
 
 pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyoVec>, Bound<'py, PyAny>>>;
 pub(super) type IterRes<'py> = PyResult<Bound<'py, abc::PyoIterator>>;
@@ -34,12 +34,12 @@ macro_rules! impl_getters {
 }
 
 impl_getters! {
-    DictData<ListsData> => sorted::SortedDict[ListsData],
-    DictData<KeysListsData> => sorted::SortedKeyDict[KeysListsData],
-    KeysListsData => sorted::SortedKeyList[KeysListsData],
-    ListsData => sorted::SortedList[ListsData],
-    SetData<ListsData> => sorted::SortedSet[ListsData],
-    SetData<KeysListsData> => sorted::SortedKeySet[KeysListsData],
+    types::Dict<List> => sorted::SortedDict[List],
+    types::Dict<KeyList> => sorted::SortedKeyDict[KeyList],
+    KeyList => sorted::SortedKeyList[KeyList],
+    List => sorted::SortedList[List],
+    types::Set<List> => sorted::SortedSet[List],
+    types::Set<KeyList> => sorted::SortedKeySet[KeyList],
 }
 #[py_abc(
     sorted::SortedList,
@@ -107,7 +107,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
 #[py_abc(sorted::SortedKeyList, sorted::SortedKeySet, sorted::SortedKeyDict)]
 pub(super) trait KeyedSortedCollection: SortedCollectionsMethods
 where
-    Self: ListGetter<L = KeysListsData>,
+    Self: ListGetter<L = KeyList>,
 {
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(

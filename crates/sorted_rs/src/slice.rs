@@ -7,7 +7,7 @@ use crate::{
     Bounds, InnerData,
     bounds::{Loc, RangeIdxs},
     ops::{self, ForwardSlice},
-    traits::{ListsDataMethods, NestedVec},
+    traits::{ListsMethods, NestedVec},
     types::VecPy,
 };
 
@@ -57,7 +57,7 @@ impl SliceIdxs {
         }
     }
 
-    pub fn delete_from<T: ListsDataMethods>(&self, py: Python<'_>, list: &mut T) -> PyResult<()> {
+    pub fn delete_from<T: ListsMethods>(&self, py: Python<'_>, list: &mut T) -> PyResult<()> {
         match self.kind() {
             ops::Slice::NoOp => Ok(()),
             ops::Slice::Forward(fwd) => match fwd {
@@ -140,7 +140,7 @@ impl SliceIdxs {
         list: &mut T,
     ) -> PyResult<()>
     where
-        T: ListsDataMethods,
+        T: ListsMethods,
     {
         let mut values = reset_slice((0, self.start), self.ref_len).extract_from(py, list)?;
         if NEED_ADJUST {
@@ -158,7 +158,7 @@ impl<T> ItemsVisitor<T>
 where
     T: DoubleEndedIterator<Item = usize>,
 {
-    fn del_all<L: ListsDataMethods>(mut self, list: &mut L, py: Python<'_>) -> PyResult<()> {
+    fn del_all<L: ListsMethods>(mut self, list: &mut L, py: Python<'_>) -> PyResult<()> {
         self.0.try_for_each(|idx| {
             let loc = list.set_pos_usize(idx)?;
             list.delete(py, loc)

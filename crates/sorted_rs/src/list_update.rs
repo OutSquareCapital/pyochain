@@ -14,10 +14,10 @@ use pyo3_ext::{
 };
 use tap::prelude::*;
 
-use crate::{traits::ListsDataMethods, types::VecPy};
+use crate::{traits::ListsMethods, types::VecPy};
 
 pub trait PyListsDataRef: PyFrozenClass + AsRef<RwLock<Self::L>> + From<Self::L> {
-    type L: ListsDataMethods;
+    type L: ListsMethods;
     fn try_as_updatable<'py>(
         &self,
         right: &'py Bound<'py, PyAny>,
@@ -36,7 +36,7 @@ pub enum ListAdd<'py, T> {
     Vec(VecPy),
     Iterator(Bound<'py, PyIterator>),
 }
-impl<T: ListsDataMethods> ListAdd<'_, T> {
+impl<T: ListsMethods> ListAdd<'_, T> {
     #[inline]
     pub fn merge_with(
         self,
@@ -84,7 +84,7 @@ impl<T: ListsDataMethods> ListAdd<'_, T> {
 #[inline]
 fn update_chunked<T, I>(list: &mut T, py: Python<'_>, mut it: I) -> PyResult<()>
 where
-    T: ListsDataMethods,
+    T: ListsMethods,
     I: ExactSizeIterator<Item = Py<PyAny>>,
 {
     list.clear(py);
