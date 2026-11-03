@@ -100,19 +100,11 @@ impl Maxes {
         if maxes.is_empty() {
             Self::Empty
         } else {
-            if LEFT {
-                maxes.bisect_left(value)
-            } else {
-                maxes.bisect_right(value)
+            match maxes.bisect::<LEFT>(value).map(Loc::with_pos) {
+                Err(e) => Self::BisectErr(e),
+                Ok(loc) if loc.pos == maxes.len() => Self::LenEQPos(loc),
+                Ok(loc) => Self::LenNEPos(loc),
             }
-            .map(Loc::with_pos)
-            .map_or_else(Self::BisectErr, |bound| {
-                if bound.pos == maxes.len() {
-                    Self::LenEQPos(bound)
-                } else {
-                    Self::LenNEPos(bound)
-                }
-            })
         }
     }
 }
