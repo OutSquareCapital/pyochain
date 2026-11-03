@@ -47,6 +47,9 @@ impl NestedVec for [Vec<Py<PyAny>>] {
 pub trait ListsDataMethods:
     Deref<Target = InnerData> + DerefMut + PyRepr + Sized + Send + Sync
 {
+    /// Returns a reference to the "keys" of the collection.\
+    /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
+    /// For collections sorted by *key*, this is equivalent to `KeysListsData::1`.
     fn keys(&self) -> &[VecPy];
     fn irange_specs<'py>(
         &self,
