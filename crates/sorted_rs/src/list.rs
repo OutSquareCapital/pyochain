@@ -87,19 +87,16 @@ impl ListsDataMethods for ListsData {
     fn delete(&mut self, py: Python<'_>, mut loc: Loc) -> PyResult<()> {
         self.values.loc_remove(&loc);
         self.len -= 1;
-        match ops::Delete::new(self.keys(), self.load, &loc) {
+        match ops::Delete::new(self, &loc) {
             ops::Delete::LenAtPosSupToHalfLoad => {
-                self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
-                if self.lengths.is_built() {
-                    self.lengths.delete_at(loc.pos);
-                }
+                self.delete_on_len_sup_to_half_load(py, loc);
             }
             ops::Delete::ListsLenGTOne => {
                 if loc.pos == 0 {
                     loc.pos += 1;
                 }
                 let prev = loc.pos - 1;
-                let mut removed = self.keys()[loc.pos]
+                let mut removed = self.values[loc.pos]
                     .iter()
                     .map(|x| x.clone_ref(py))
                     .collect::<Vec<_>>();

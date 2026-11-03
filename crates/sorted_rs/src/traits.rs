@@ -66,6 +66,12 @@ pub trait ListsDataMethods:
     fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize>;
     fn irange(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
+    fn delete_on_len_sup_to_half_load(&mut self, py: Python<'_>, loc: Loc) {
+        self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
+        if self.lengths.is_built() {
+            self.lengths.delete_at(loc.pos);
+        }
+    }
     fn bisect_by_key<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         if self.maxes.is_empty() {
             Ok(0)

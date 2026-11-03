@@ -13,7 +13,7 @@ use crate::{
     bisect::Bisect,
     bounds::{Loc, RangeIdxs},
     lengths::Lengths,
-    traits::NestedVec,
+    traits::{ListsDataMethods, NestedVec},
     types::VecPy,
 };
 
@@ -142,11 +142,11 @@ pub enum Delete {
 impl Delete {
     #[inline(always)]
     #[must_use]
-    pub fn new(lists: &[Vec<Py<PyAny>>], load: usize, loc: &Loc) -> Self {
-        let len_at_pos = lists.loc_len(loc);
-        if len_at_pos > (load / 2) {
+    pub fn new(data: &impl ListsDataMethods, loc: &Loc) -> Self {
+        let len_at_pos = data.keys().loc_len(loc);
+        if len_at_pos > (data.load / 2) {
             Self::LenAtPosSupToHalfLoad
-        } else if lists.len() > 1 {
+        } else if data.keys().len() > 1 {
             Self::ListsLenGTOne
         } else if len_at_pos != 0 {
             Self::LenAtPosNotZero
