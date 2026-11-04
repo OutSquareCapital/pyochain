@@ -1,7 +1,7 @@
 use derive_more::{Constructor, From};
 use pyo3::{prelude::*, types::slice::PySliceIndices};
 
-use crate::{InnerData, bisect::Bisect, errors, traits::ListsMethods};
+use crate::{bisect::Bisect, errors, inner::InnerData, traits::ListsMethods};
 
 pub type RawIrangeSpecs<'py> = (
     Python<'py>,

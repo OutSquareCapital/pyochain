@@ -20,6 +20,5 @@ pub mod types;
 pub mod views;
 pub use bounds::Bounds;
 pub use core::{Collection, KeyList, List, ListGetter};
-pub use inner::InnerData;
 pub use list_update::PyListsDataRef;
 pub use set::{PySetDataRef, SetOp, SetPred};

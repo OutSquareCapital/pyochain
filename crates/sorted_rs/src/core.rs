@@ -1,4 +1,4 @@
-use crate::{InnerData, prelude::*, types::VecPy};
+use crate::{inner::InnerData, prelude::*, types::VecPy};
 use derive_more::{AsMut, AsRef, Constructor, Deref, DerefMut};
 use pyo3::prelude::*;
 use pyo3_ext::types::PyFrozenClass;
