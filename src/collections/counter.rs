@@ -10,7 +10,7 @@ use pyo3::{
     exceptions::{PyKeyError, PyTypeError},
     intern,
     prelude::*,
-    types::{PyDict, PyInt, PyIterator, PyList, PyMapping, PyNotImplemented, PyType},
+    types::{PyDict, PyInt, PyIterator, PyMapping, PyNotImplemented, PyType},
 };
 use pyo3_ext::{
     prelude::*,
@@ -93,7 +93,7 @@ impl PyoCounter {
     }
 
     fn total<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.bind(py).values_view().iter_py().as_native().sum(&0)
+        self.bind(py).values_view().iter_native().sum(&0)
     }
     #[pyo3(signature = (n=None))]
     fn most_common<'py>(
@@ -104,18 +104,16 @@ impl PyoCounter {
         let items = self.bind(py).items_view().iter_py();
         let getter = pylibs::operator::itemgetter(py, 1)?;
         match n {
-            None => items.as_native().sorted(true, Some(&getter))?.try_into_py(),
-            Some(n) => pylibs::heapq::nlargest(n.extract()?, items.as_any(), Some(getter))
-                .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
-                .try_into_py(),
+            None => items.as_native().sorted(true, Some(&getter)),
+            Some(n) => pylibs::heapq::nlargest(n.extract()?, items.as_any(), Some(getter)),
         }
+        .and_then(Bound::try_into_py)
     }
 
     fn elements<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
         self.bind(py)
             .items_view()
-            .iter_py()
-            .as_native()
+            .iter_native()
             .map_star(pyitertools::PyRepeat::type_object(py).as_any())?
             .flatten()?
             .into_inner()

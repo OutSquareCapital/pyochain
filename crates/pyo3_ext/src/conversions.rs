@@ -1,9 +1,13 @@
 use pyo3::{PyTypeInfo, prelude::*, types};
+use tap::Pipe;
 
-use crate::types::PyDeque;
+use crate::{pylibs::iter::NativeIter, types::PyDeque};
 /// Trait for types that we know can safely be converted into a `PyIterator` (i.e. they implement the `__iter__` method in Python).
 pub trait IntoPyIterator<'py> {
     fn iter_py(&self) -> Bound<'py, types::PyIterator>;
+    fn iter_native(&self) -> NativeIter<Bound<'py, types::PyIterator>> {
+        self.iter_py().pipe(NativeIter::new)
+    }
 }
 impl<'py> IntoPyIterator<'py> for Bound<'py, types::PyIterator> {
     fn iter_py(&self) -> Bound<'py, types::PyIterator> {

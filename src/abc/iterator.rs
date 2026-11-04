@@ -337,7 +337,7 @@ impl PyoIterator {
     }
     #[pyo3(signature = (key=None))]
     fn all_equal(slf: &Bound<'_, Self>, key: Option<Bound<'_, PyAny>>) -> PyResult<bool> {
-        let mut iterator = slf.try_iter()?.as_native().group_by(key)?.into_inner();
+        let mut iterator = slf.try_iter_native()?.group_by(key)?.into_inner();
         if let Some(_first) = iterator.next() {
             if let Some(_second) = iterator.next() {
                 return Ok(false);
