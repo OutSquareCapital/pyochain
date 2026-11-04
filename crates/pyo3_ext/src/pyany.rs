@@ -5,8 +5,11 @@ use pyo3::{
     conversion::{IntoPyObject, IntoPyObjectExt},
     ffi,
     prelude::*,
+    types::PyIterator,
 };
 use std::cmp::Ordering;
+
+use crate::{ext_methods::PyIteratorExtMethods, pylibs::iter::NativeIter};
 /// Copy of internal pyo3 macro that works with generic types.
 /// Concretely allows to implement `PyAnyMethods` in one line.
 #[macro_export]
@@ -32,6 +35,7 @@ pub trait PyAnyExtMethods<'py> {
     fn ior<O: IntoPyObject<'py>>(&self, other: O) -> PyResult<Bound<'py, PyAny>>;
     fn ixor<O: IntoPyObject<'py>>(&self, other: O) -> PyResult<Bound<'py, PyAny>>;
     fn rich_compare_bool<O: IntoPyObject<'py>>(&self, other: O, op: CompareOp) -> PyResult<bool>;
+    fn try_iter_native(&self) -> PyResult<NativeIter<Bound<'py, PyIterator>>>;
     fn compare_fast(&self, other: &Bound<'_, PyAny>) -> PyResult<Ordering>;
 }
 
@@ -88,6 +92,9 @@ impl<'py> PyAnyExtMethods<'py> for Bound<'py, PyAny> {
                 _ => unreachable!(),
             }
         }
+    }
+    fn try_iter_native(&self) -> PyResult<NativeIter<Bound<'py, PyIterator>>> {
+        self.try_iter().map(Bound::into_native)
     }
 }
 #[inline(always)]
