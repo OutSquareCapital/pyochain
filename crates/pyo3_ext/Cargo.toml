@@ -21,5 +21,7 @@ seq-macro = "0.3.6"
 smallvec = "1.15.2"
 tap = "1.0.1"
 
+derive_more = { version = "2.1.1", features = ["as_ref", "constructor", "deref", "deref_mut", "from", "into_iterator"] }
+
 [lints]
 workspace = true

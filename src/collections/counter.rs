@@ -93,10 +93,7 @@ impl PyoCounter {
     }
 
     fn total<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.bind(py)
-            .values_view()
-            .iter_py()
-            .pipe(|vals| pylibs::builtins::sum(&vals, &0))
+        self.bind(py).values_view().iter_py().as_native().sum(&0)
     }
     #[pyo3(signature = (n=None))]
     fn most_common<'py>(
@@ -107,26 +104,22 @@ impl PyoCounter {
         let items = self.bind(py).items_view().iter_py();
         let getter = pylibs::operator::itemgetter(py, 1)?;
         match n {
-            None => pylibs::builtins::sorted(&items, true, Some(&getter))?.try_into_py(),
-            Some(n) => {
-                let kwargs = PyDict::new(py);
-                kwargs.set_item(intern!(py, "key"), getter)?;
-                py.import(intern!(py, "heapq"))?
-                    .getattr(intern!(py, "nlargest"))?
-                    .call((n, items), Some(&kwargs))
-                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
-                    .try_into_py()
-            }
+            None => items.as_native().sorted(true, Some(&getter))?.try_into_py(),
+            Some(n) => pylibs::heapq::nlargest(n.extract()?, items.as_any(), Some(getter))
+                .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
+                .try_into_py(),
         }
     }
 
     fn elements<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
-        pylibs::itertools::map_star(
-            pyitertools::PyRepeat::type_object(py).as_any(),
-            self.bind(py).items_view().iter_py(),
-        )?
-        .pipe_ref(pylibs::itertools::chain::from_iterable)?
-        .try_into_py()
+        self.bind(py)
+            .items_view()
+            .iter_py()
+            .as_native()
+            .map_star(pyitertools::PyRepeat::type_object(py).as_any())?
+            .flatten()?
+            .into_inner()
+            .try_into_py()
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
     fn update(

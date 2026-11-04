@@ -1,11 +1,8 @@
-use pyo3::{prelude::*, sync::PyOnceLock};
+use pyo3::prelude::*;
 
-const OPERATOR: &str = "operator";
-static ITEMGETTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+use crate::pylibs::registery::ITEMGETTER;
 
 #[inline(always)]
 pub fn itemgetter(py: Python<'_>, index: isize) -> PyResult<Bound<'_, PyAny>> {
-    ITEMGETTER
-        .import(py, OPERATOR, "itemgetter")?
-        .call1((index,))
+    ITEMGETTER.import(py).call1((index,))
 }

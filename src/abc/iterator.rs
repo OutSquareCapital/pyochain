@@ -15,7 +15,11 @@ use crate::{
     core::{PyNull, PySome, PyoErr, PyoOk, PyoVec, iterators},
     traits::IntoInit,
 };
-use pyo3_ext::{prelude::*, pylibs, types::pyitertools};
+use pyo3_ext::{
+    prelude::*,
+    pylibs::{self, iter::NativeIter},
+    types::pyitertools,
+};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoIterator;
 
@@ -77,9 +81,7 @@ impl PyoIterator {
         start: i32,
         step: i32,
     ) -> PyResult<Bound<'py, Self>> {
-        pylibs::itertools::count(cls.py(), &start, &step)?
-            .try_into_py::<iterators::Iter>()
-            .map(Bound::into_super)
+        pylibs::iter::count(cls.py(), &start, &step).and_then(native_into_iter)
     }
 
     /// We use unsafe code here to match the performance of a Cython implementation
@@ -187,7 +189,7 @@ impl PyoIterator {
                 .pipe(|x| PyBool::new(slf.py(), x))
                 .into_bound()
                 .pipe(Ok),
-            None => pylibs::builtins::any(&slf),
+            None => slf.as_native().any(),
         }
     }
     // TODO: Use `TryIterator` methods here. Need to benchmark current impl first.
@@ -207,7 +209,7 @@ impl PyoIterator {
                 .pipe(|x| PyBool::new(slf.py(), x))
                 .into_bound()
                 .pipe(Ok),
-            None => pylibs::builtins::all(&slf),
+            None => slf.as_native().all(),
         }
     }
 
@@ -335,10 +337,8 @@ impl PyoIterator {
     }
     #[pyo3(signature = (key=None))]
     fn all_equal(slf: &Bound<'_, Self>, key: Option<Bound<'_, PyAny>>) -> PyResult<bool> {
-        let mut iterator = slf
-            .try_iter()
-            .and_then(|it| pylibs::itertools::group_by(&it, key))?;
-        if let Some(_first) = (&iterator).into_iter().next() {
+        let mut iterator = slf.try_iter()?.as_native().group_by(key)?.into_inner();
+        if let Some(_first) = iterator.next() {
             if let Some(_second) = iterator.next() {
                 return Ok(false);
             }
@@ -494,19 +494,18 @@ impl PyoIterator {
     }
     #[pyo3(signature = (*others))]
     fn chain<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         others: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        pylibs::itertools::chain::new(slf.py(), (slf.into_any(), others))?
-            .try_into_py::<iterators::Iter>()
-            .map(Bound::into_super)
+        slf.try_iter_native()?
+            .chain(others)
+            .and_then(native_into_iter)
     }
     #[pyo3(signature = (start = 0))]
     fn enumerate<'py>(slf: &Bound<'py, Self>, start: usize) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::enumerate(&x, start))?
-            .try_into_py::<iterators::Iter>()
-            .map(Bound::into_super)
+        slf.try_iter_native()?
+            .enumerate(start)
+            .and_then(native_into_iter)
     }
     #[pyo3(signature = (func, *args, **kwargs))]
     fn for_each(
@@ -729,17 +728,17 @@ impl PyoIterator {
         slf: &Bound<'py, Self>,
         predicate: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::drop_while(predicate, &x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .drop_while(predicate)
+            .and_then(native_into_iter)
     }
     fn take_while<'py>(
         slf: &Bound<'py, Self>,
         predicate: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::take_while(predicate, &x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .take_while(predicate)
+            .and_then(native_into_iter)
     }
     #[pyo3(signature = (func=None, initial=None))]
     fn accumulate<'py>(
@@ -747,9 +746,9 @@ impl PyoIterator {
         func: Option<Bound<'py, PyAny>>,
         initial: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::accumulate(&x, func, initial))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .accumulate(func, initial)
+            .and_then(native_into_iter)
     }
     #[pyo3(signature = (n, strict=false))]
     fn batched<'py>(
@@ -757,9 +756,9 @@ impl PyoIterator {
         n: &Bound<'py, PyInt>,
         strict: bool,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::batched(&x, n, &strict))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .batched(n, &strict)
+            .and_then(native_into_iter)
     }
 
     #[pyo3(signature = (*selectors))]
@@ -767,49 +766,47 @@ impl PyoIterator {
         slf: &Bound<'py, Self>,
         selectors: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::compress(&x, selectors))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .compress(selectors)
+            .and_then(native_into_iter)
     }
     fn cycle<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::cycle(&x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?.cycle().and_then(native_into_iter)
     }
     fn combinations<'py>(
         slf: &Bound<'py, Self>,
         r: &Bound<'py, PyInt>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::combinations(&x, r))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .combinations(r)
+            .and_then(native_into_iter)
     }
     fn combinations_with_replacement<'py>(
         slf: &Bound<'py, Self>,
         r: &Bound<'py, PyInt>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::combinations_with_replacement(&x, r))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .combinations_with_replacement(r)
+            .and_then(native_into_iter)
     }
     fn fold<'py>(
         slf: &Bound<'py, Self>,
         init: &Bound<'py, PyAny>,
         func: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::functools::reduce(func, &x, Some(init)))
+        slf.try_iter_native()?.reduce(func, Some(init))
     }
     #[pyo3(signature = (key=None))]
     fn group_by<'py>(
         slf: &Bound<'py, Self>,
         key: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::group_by(&x, key))
-            .map(Bound::unbind)
-            .map(iterators::GroupBy)
-            .and_then(|x| iterator_into_iter(x, slf.py()))
+        slf.try_iter_native()?
+            .group_by(key)?
+            .into_inner()
+            .unbind()
+            .pipe(iterators::GroupBy)
+            .pipe(|x| iterator_into_iter(x, slf.py()))
     }
     fn join<'py>(
         slf: &Bound<'py, Self>,
@@ -820,24 +817,22 @@ impl PyoIterator {
             .map(|x| unsafe { x.cast_into_unchecked::<PyString>() })
     }
     fn pairwise<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::pairwise(&x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?.pairwise().and_then(native_into_iter)
     }
     #[pyo3(signature = (r=None))]
     fn permutations<'py>(slf: &Bound<'py, Self>, r: Option<usize>) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::permutations(&x, r))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .permutations(r)
+            .and_then(native_into_iter)
     }
     #[pyo3(signature = (func=None))]
     fn filter<'py>(
         slf: &Bound<'py, Self>,
         func: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::filter(func, &x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .filter(func)
+            .and_then(native_into_iter)
     }
     fn filter_star<'py>(
         slf: &Bound<'py, Self>,
@@ -852,9 +847,9 @@ impl PyoIterator {
         slf: &Bound<'py, Self>,
         func: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::filter_false(func, &x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .filter_false(func)
+            .and_then(native_into_iter)
     }
     fn filter_map<'py>(
         slf: &Bound<'py, Self>,
@@ -894,37 +889,33 @@ impl PyoIterator {
         slf: &Bound<'py, Self>,
         func: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::map(func, &x))
-            .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .map(func)?
+            .flatten()
+            .and_then(native_into_iter)
     }
     fn flat_map_star<'py>(
         slf: &Bound<'py, Self>,
         func: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::map_star(func, x))
-            .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .map_star(func)?
+            .flatten()
+            .and_then(native_into_iter)
     }
     fn flatten<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?.flatten().and_then(native_into_iter)
     }
     fn map<'py>(slf: &Bound<'py, Self>, func: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::map(func, &x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?.map(func).and_then(native_into_iter)
     }
     fn map_star<'py>(
         slf: &Bound<'py, Self>,
         func: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::map_star(func, x))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .map_star(func)
+            .and_then(native_into_iter)
     }
     #[pyo3(signature = (*funcs))]
     fn map_juxt<'py>(
@@ -967,35 +958,31 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
         iterables: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        pylibs::builtins::map_with(slf.py(), (func, slf.try_iter()?.as_any(), iterables))?
-            .try_into_py::<iterators::Iter>()
-            .map(Bound::into_super)
+        slf.try_iter_native()?
+            .map_with(func, iterables)
+            .and_then(native_into_iter)
     }
 
     fn max<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
-        slf.try_iter().and_then(|x| pylibs::builtins::max(&x))
+        slf.try_iter_native()?.max()
     }
     fn max_by<'py>(slf: &Bound<'py, Self>, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::max_by(&x, key))
+        slf.try_iter_native()?.max_by(key)
     }
     fn min<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
-        slf.try_iter().and_then(|x| pylibs::builtins::min(&x))
+        slf.try_iter_native()?.min()
     }
     fn min_by<'py>(slf: &Bound<'py, Self>, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::min_by(&x, key))
+        slf.try_iter_native()?.min_by(key)
     }
     fn nth(slf: &Bound<'_, Self>, n: usize) -> PyResult<Py<PyAny>> {
         let py = slf.py();
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::nth(&x, n))
-            .and_then(|x| {
-                x.map_or_else(
-                    || PyNull::get(py).into_py_any(py),
-                    |y| y.unbind().pipe(PySome::new).into_py_any(py),
-                )
-            })
+        slf.try_iter_native()?.nth(n).and_then(|x| {
+            x.map_or_else(
+                || PyNull::get(py).into_py_any(py),
+                |y| y.unbind().pipe(PySome::new).into_py_any(py),
+            )
+        })
     }
     fn next<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
@@ -1030,20 +1017,19 @@ impl PyoIterator {
     }
     #[pyo3(signature = (*others, repeat=1))]
     fn product<'py>(
-        slf: Bound<'py, Self>,
+        slf: &Bound<'py, Self>,
         others: &Bound<'py, PyTuple>,
         repeat: usize,
     ) -> PyResult<Bound<'py, Self>> {
-        pylibs::itertools::product(slf.py(), (slf.into_any(), others), repeat)?
-            .try_into_py::<iterators::Iter>()
-            .map(Bound::into_super)
+        slf.try_iter_native()?
+            .product(others, repeat)
+            .and_then(native_into_iter)
     }
     fn reduce<'py>(
         slf: &Bound<'py, Self>,
         func: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::functools::reduce(func, &x, None))
+        slf.try_iter_native()?.reduce(func, None)
     }
     fn scan<'py>(
         slf: &Bound<'py, Self>,
@@ -1061,19 +1047,16 @@ impl PyoIterator {
         stop: Option<&Bound<'py, PyInt>>,
         step: Option<&Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::slice(&x, start, stop, step))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .slice(start, stop, step)
+            .and_then(native_into_iter)
     }
     fn skip<'py>(slf: &Bound<'py, Self>, n: &Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::skip(&x, n))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?.skip(n).and_then(native_into_iter)
     }
     #[pyo3(signature = (*, reverse=false))]
     fn sort<'py>(slf: &Bound<'py, Self>, reverse: bool) -> PyResult<Bound<'py, PyoVec>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::sorted(&x, reverse, None)?.try_into_py())
+        slf.try_iter_native()?.sorted(reverse, None)?.try_into_py()
     }
     #[pyo3(signature = (key, *,reverse=false))]
     fn sort_by<'py>(
@@ -1081,21 +1064,21 @@ impl PyoIterator {
         key: &Bound<'py, PyAny>,
         reverse: bool,
     ) -> PyResult<Bound<'py, PyoVec>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::sorted(&x, reverse, Some(key))?.try_into_py())
+        slf.try_iter_native()?
+            .sorted(reverse, Some(key))?
+            .try_into_py()
     }
     fn step_by<'py>(
         slf: &Bound<'py, Self>,
         step: &Bound<'py, PyInt>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::step_by(&x, step))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .step_by(step)
+            .and_then(native_into_iter)
     }
     #[pyo3 (signature = (start=0))]
     fn sum<'py>(slf: &Bound<'py, Self>, start: i32) -> PyResult<Bound<'py, PyAny>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::sum(&x, &start))
+        slf.try_iter_native()?.sum(&start)
     }
     fn tail<'py>(slf: &Bound<'py, Self>, n: usize) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
@@ -1104,14 +1087,12 @@ impl PyoIterator {
     }
 
     fn take<'py>(slf: &Bound<'py, Self>, n: &Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::take(&x, n))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?.take(n).and_then(native_into_iter)
     }
     #[pyo3(signature = (n=2))]
     fn tee<'py>(slf: &Bound<'py, Self>, n: usize) -> PyResult<Bound<'py, PyTuple>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::tee(x, n))?
+        slf.try_iter_native()?
+            .tee(n)?
             .iter()
             .map(|x| slf.get_type().call1((x,)))
             .collect::<PyResult<Vec<_>>>()
@@ -1148,8 +1129,8 @@ impl PyoIterator {
     }
     fn unzip<'py>(slf: &Bound<'py, Self>) -> PyResult<(Bound<'py, Self>, Bound<'py, Self>)> {
         let py = slf.py();
-        slf.try_iter()
-            .and_then(|data| pylibs::itertools::tee(data, 2))
+        slf.try_iter_native()?
+            .tee(2)
             .map(|iterators| {
                 (
                     iterators::Unzip::new(&iterators, 0).pipe(|x| iterator_into_iter(x, py)),
@@ -1172,20 +1153,21 @@ impl PyoIterator {
         others: &Bound<'py, PyTuple>,
         strict: bool,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::builtins::zip(&x, others, strict))
-            .and_then(pyiterator_into_iter)
+        slf.try_iter_native()?
+            .zip(others, strict)
+            .and_then(native_into_iter)
     }
     #[pyo3(signature = (*others))]
     fn zip_longest<'py>(
         slf: &Bound<'py, Self>,
         others: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.try_iter()
-            .and_then(|x| pylibs::itertools::zip_longest(&x, others))
-            .map(Bound::unbind)
-            .map(iterators::ZipLongest)
-            .and_then(|x| iterator_into_iter(x, slf.py()))
+        slf.try_iter_native()?
+            .zip_longest(others)?
+            .into_inner()
+            .unbind()
+            .pipe(iterators::ZipLongest)
+            .pipe(|x| iterator_into_iter(x, slf.py()))
     }
 }
 
@@ -1211,6 +1193,8 @@ fn iterator_into_iter<'py, T: IntoPyObjectExt<'py> + ImplPyoIterator>(
         .try_into_py::<iterators::Iter>()
         .map(Bound::into_super)
 }
-fn pyiterator_into_iter(obj: Bound<'_, PyIterator>) -> PyResult<Bound<'_, PyoIterator>> {
-    obj.try_into_py::<iterators::Iter>().map(Bound::into_super)
+fn native_into_iter(obj: NativeIter<Bound<'_, PyIterator>>) -> PyResult<Bound<'_, PyoIterator>> {
+    obj.into_inner()
+        .try_into_py::<iterators::Iter>()
+        .map(Bound::into_super)
 }

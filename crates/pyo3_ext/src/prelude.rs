@@ -2,9 +2,9 @@ pub use super::args::CallConcat;
 pub use super::conversions::{IntoPyIterator, IntoSequence, TryFromPy, TryIntoPy};
 pub use super::either::EitherExtMethods;
 pub use super::ext_methods::{
-    ABCMethods, CompareOpExtMethods, PyDictExtConstructors, PyDictExtMethods, PyListExtMethods,
-    PyMappingExtMethods, PyRangeExtMethods, PySequenceExtMethods, PySetExtMethods,
-    PySetExtMethodsMut,
+    ABCMethods, CompareOpExtMethods, PyDictExtConstructors, PyDictExtMethods, PyIteratorExtMethods,
+    PyListExtMethods, PyMappingExtMethods, PyRangeExtMethods, PySequenceExtMethods,
+    PySetExtMethods, PySetExtMethodsMut,
 };
 pub use super::iter::{CollectBoundIterator, FromBoundIterator, TryFromBoundIterator};
 pub use super::pyany::PyAnyExtMethods;
