@@ -1,6 +1,10 @@
 use std::{ops::Deref, ptr};
 
-use crate::{ListGetter, inner::InnerData, iter::cursor::Cursor};
+use crate::{
+    ListGetter,
+    inner::InnerData,
+    iter::{cursor::Cursor, traits::Item},
+};
 use derive_more::{Constructor, Deref};
 use pyo3::{ffi, prelude::*};
 use tap::prelude::*;
@@ -52,9 +56,9 @@ impl InnerIter {
         self.pyref.len
     }
     #[inline(always)]
-    pub(super) unsafe fn next<const FWD: bool>(&self) -> *mut ffi::PyObject {
+    pub(super) unsafe fn next<const FWD: bool>(&self) -> Item {
         self.inner_next::<FWD>()
-            .map_or_else(ptr::null_mut, |(at, item)| self.yield_ptr(item, at))
+            .map(|(at, item)| self.yield_ptr(item, at))
     }
     #[inline(always)]
     fn inner_next<const FWD: bool>(&self) -> Option<(u64, &Py<PyAny>)> {
@@ -93,11 +97,11 @@ impl InnerIter {
 }
 impl InnerIterBounded {
     #[inline(always)]
-    pub(super) unsafe fn next<const FWD: bool>(&self) -> *mut ffi::PyObject {
+    pub(super) unsafe fn next<const FWD: bool>(&self) -> Item {
         self.inner_next::<FWD>()
             .filter(|&(at, _)| {
                 at == self.limit || (FWD && at < self.limit) || (!FWD && at > self.limit)
             })
-            .map_or_else(ptr::null_mut, |(at, item)| self.inner.yield_ptr(item, at))
+            .map(|(at, item)| self.inner.yield_ptr(item, at))
     }
 }

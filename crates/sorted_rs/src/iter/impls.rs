@@ -4,13 +4,12 @@ use crate::{
     iter::{
         core::{InnerIter, InnerIterBounded, InnerRef},
         cursor::Cursor,
-        traits::SortedNext,
+        traits::{Item, SortedNext},
     },
 };
 use derive_more::Deref;
 use pyo3::prelude::*;
 
-use pyo3::ffi;
 use tap::prelude::*;
 type IntoBounded<'a, 'py, T> = (&'a Bound<'py, T>, Bounds);
 #[derive(Debug, Deref)]
@@ -57,25 +56,25 @@ impl<T: ListGetter> From<IntoBounded<'_, '_, T>> for IterBoundedRev {
 }
 unsafe impl SortedNext for Iter {
     #[inline(always)]
-    unsafe fn next(&self) -> *mut ffi::PyObject {
+    unsafe fn next(&self) -> Item {
         unsafe { self.0.next::<true>() }
     }
 }
 unsafe impl SortedNext for IterRev {
     #[inline(always)]
-    unsafe fn next(&self) -> *mut ffi::PyObject {
+    unsafe fn next(&self) -> Item {
         unsafe { self.0.next::<false>() }
     }
 }
 unsafe impl SortedNext for IterBounded {
     #[inline(always)]
-    unsafe fn next(&self) -> *mut ffi::PyObject {
+    unsafe fn next(&self) -> Item {
         unsafe { self.0.next::<true>() }
     }
 }
 unsafe impl SortedNext for IterBoundedRev {
     #[inline(always)]
-    unsafe fn next(&self) -> *mut ffi::PyObject {
+    unsafe fn next(&self) -> Item {
         unsafe { self.0.next::<false>() }
     }
 }
