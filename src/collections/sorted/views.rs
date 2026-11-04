@@ -1,7 +1,6 @@
 use crate::{
     abc,
     collections::sorted::{SortedDict, SortedKeyDict, SortedSet, core::ObjOrVec},
-    traits::IntoInit,
 };
 use derive_more::From;
 

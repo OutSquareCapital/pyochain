@@ -5,7 +5,7 @@ use pyo3::{
 };
 
 use super::core::{ObjOrVec, SortedCollectionsMethods};
-use crate::{abc, traits::IntoInit};
+use crate::abc;
 use parking_lot::RwLock;
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
@@ -56,7 +56,7 @@ impl PySetDataRef for SortedKeySet {
 pub(super) trait SortedSetMethods:
     SortedCollectionsMethods
     + ListGetter<T = types::Set<<Self as ListGetter>::L>>
-    + IntoInit
+    + Init
     + PySetDataRef<L = <Self as ListGetter>::L>
 {
     #[getter]

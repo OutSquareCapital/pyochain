@@ -15,7 +15,7 @@ impl PyoPipe {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
-        PyoPipe {}
+        Self
     }
 }
 
@@ -26,7 +26,7 @@ impl PyoTap {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
-        PyoTap {}
+        Self
     }
 }
 #[pyclass(module = "pyochain.mixins", frozen, subclass)]
@@ -37,7 +37,7 @@ impl Fluent {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
-        Fluent {}
+        Self
     }
 }
 #[pyclass(module = "pyochain.mixins", frozen, subclass)]
@@ -47,7 +47,7 @@ impl Checkable {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
-        Checkable {}
+        Self
     }
     #[pyo3(signature = (func, *args, **kwargs))]
     fn then(

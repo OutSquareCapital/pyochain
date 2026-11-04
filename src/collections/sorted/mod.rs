@@ -1,4 +1,3 @@
-mod conversions;
 mod core;
 mod dict;
 pub mod iter;

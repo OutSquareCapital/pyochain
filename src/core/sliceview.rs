@@ -1,6 +1,6 @@
 use std::sync::{Mutex, MutexGuard};
 
-use crate::{abc, traits::IntoInit};
+use crate::abc;
 use derive_more::{Constructor, Deref};
 use either::Either;
 use pyo3::{

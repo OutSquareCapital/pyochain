@@ -7,7 +7,6 @@ use crate::{
             SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView, SortedViewMethods,
         },
     },
-    traits::IntoInit,
 };
 use parking_lot::RwLock;
 use pyo3::{
@@ -71,7 +70,7 @@ impl SortedDictMethods for SortedKeyDict {
 pub(super) trait SortedDictMethods:
     SortedCollectionsMethods
     + ListGetter<T = types::Dict<<Self as ListGetter>::L>>
-    + IntoInit
+    + Init
     + From<types::Dict<<Self as ListGetter>::L>>
     + PyFrozenClass
 {

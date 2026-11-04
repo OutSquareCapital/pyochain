@@ -1,4 +1,4 @@
-use crate::{abc, collections::sorted::core::IterRes, traits::IntoInit};
+use crate::{abc, collections::sorted::core::IterRes};
 use derive_more::{Deref, From};
 use pyo3::{PyClass, prelude::*};
 use sorted_rs::{Bounds, ListGetter, iter};

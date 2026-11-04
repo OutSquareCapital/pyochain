@@ -1,7 +1,6 @@
 use crate::{
     abc,
     collections::sorted::core::{ObjOrVec, SortedCollectionsMethods},
-    traits::IntoInit,
 };
 use parking_lot::RwLock;
 use pyo3::{exceptions::PyNotImplementedError, prelude::*};
@@ -57,7 +56,7 @@ impl PyListsDataRef for SortedKeyList {
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedListMethods:
     SortedCollectionsMethods
-    + IntoInit
+    + Init
     + ListGetter<T = <Self as ListGetter>::L>
     + PyListsDataRef<L = <Self as ListGetter>::L>
 {

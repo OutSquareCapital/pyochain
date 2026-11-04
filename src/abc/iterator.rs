@@ -13,7 +13,6 @@ use tap::prelude::*;
 use crate::{
     abc::{PyoIterable, traits::ImplPyoIterator},
     core::{PyNull, PySome, PyoErr, PyoOk, PyoVec, iterators},
-    traits::IntoInit,
 };
 use pyo3_ext::{prelude::*, pylibs, types::pyitertools};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]

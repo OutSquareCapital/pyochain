@@ -10,7 +10,6 @@ use tap::prelude::*;
 use crate::{
     collections,
     core::{Dict, PyoVec, Seq, Set, SetMut, iterators},
-    traits::IntoInit,
 };
 #[pyclass(frozen, generic)]
 pub struct FromIter;

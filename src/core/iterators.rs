@@ -3,7 +3,6 @@ use std::collections::VecDeque;
 use crate::{
     abc,
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
-    traits::IntoInit,
 };
 use derive_more::{Constructor, Deref, From};
 use parking_lot::{Mutex, MutexGuard};
