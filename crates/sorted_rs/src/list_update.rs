@@ -8,8 +8,7 @@ use pyo3::{
     types::{PyIterator, PyList},
 };
 use pyo3_ext::{
-    prelude::{CollectBoundIterator, PyListExtMethods},
-    pylibs,
+    prelude::{CollectBoundIterator, PyIteratorExtMethods, PyListExtMethods},
     types::PyFrozenClass,
 };
 use tap::prelude::*;
@@ -53,7 +52,9 @@ impl<T: ListsMethods> ListAdd<'_, T> {
             Self::Identity => list.iter_owned(py).sorted_by(func).collect(),
             Self::Vec(vec) => vec.tap_mut(|v| v.sort_by(func)),
             Self::Sorted(sorted) => sorted.iter_owned(py).sorted_by(func).collect(),
-            Self::Iterator(it) => pylibs::builtins::sorted(&it, false, py_func)?
+            Self::Iterator(it) => it
+                .into_native()
+                .sorted(false, py_func)?
                 .iter()
                 .map(Bound::unbind)
                 .collect(),

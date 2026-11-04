@@ -13,7 +13,7 @@ use pyo3::{
 };
 use tap::prelude::*;
 
-use crate::types;
+use crate::{pylibs::iter::NativeIter, types};
 
 /// Create a new Python list from the given arguments.\
 #[macro_export]
@@ -58,6 +58,18 @@ impl ABCMethods<'_> for types::PyMutableMapping {}
 impl ABCMethods<'_> for types::PyKeysView {}
 impl ABCMethods<'_> for types::PyValuesView {}
 impl ABCMethods<'_> for types::PyItemsView {}
+pub trait PyIteratorExtMethods<'py> {
+    fn into_native(self) -> NativeIter<Bound<'py, PyIterator>>;
+    fn as_native(&self) -> NativeIter<&Bound<'py, PyIterator>>;
+}
+impl<'py> PyIteratorExtMethods<'py> for Bound<'py, PyIterator> {
+    fn into_native(self) -> NativeIter<Bound<'py, PyIterator>> {
+        NativeIter::new(self)
+    }
+    fn as_native(&self) -> NativeIter<&Bound<'py, PyIterator>> {
+        NativeIter::new(self)
+    }
+}
 pub trait PySequenceExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
     fn index(

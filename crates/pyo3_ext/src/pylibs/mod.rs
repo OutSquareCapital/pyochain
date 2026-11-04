@@ -3,8 +3,8 @@
 //! This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
 //! We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 pub mod builtins;
-pub mod functools;
 pub mod heapq;
-pub mod itertools;
+pub mod iter;
 pub mod operator;
+mod registery;
 pub mod sys;

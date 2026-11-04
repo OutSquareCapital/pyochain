@@ -2,19 +2,10 @@ use pyo3::{
     call::PyCallArgs,
     intern,
     prelude::*,
-    sync::PyOnceLock,
     types::{PyDict, PyIterator, PyList},
 };
-const HEAPQ: &str = "heapq";
-static MERGE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-static NLARGEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-static NSMALLEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-static HEAPIFY_MAX: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-static HEAPIFY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-static HEAPPOP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-static HEAPPUSH: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-static HEAPPUSHPOP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-static HEAPREPLACE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+
+use crate::pylibs::registery::heapq;
 #[inline(always)]
 pub fn merge<'py, A: PyCallArgs<'py>>(
     py: Python<'py>,
@@ -26,8 +17,8 @@ pub fn merge<'py, A: PyCallArgs<'py>>(
     kwargs.set_item(intern!(py, "key"), key)?;
     kwargs.set_item(intern!(py, "reverse"), reverse)?;
 
-    MERGE
-        .import(py, HEAPQ, "merge")?
+    heapq::MERGE
+        .import(py)
         .call(iterables, Some(&kwargs))
         .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
 }
@@ -38,8 +29,8 @@ pub fn nlargest<'py>(
     iterable: &Bound<'py, PyAny>,
     key: Option<Bound<'py, PyAny>>,
 ) -> PyResult<Bound<'py, PyList>> {
-    NLARGEST
-        .import(iterable.py(), HEAPQ, "nlargest")?
+    heapq::NLARGEST
+        .import(iterable.py())
         .call1((n, iterable, key))
         .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
 }
@@ -50,31 +41,28 @@ pub fn nsmallest<'py>(
     iterable: &Bound<'py, PyAny>,
     key: Option<Bound<'py, PyAny>>,
 ) -> PyResult<Bound<'py, PyList>> {
-    NSMALLEST
-        .import(iterable.py(), HEAPQ, "nsmallest")?
+    heapq::NSMALLEST
+        .import(iterable.py())
         .call1((n, iterable, key))
         .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
 }
 #[inline(always)]
 pub fn heapify_max(heap: &Bound<'_, PyList>) -> PyResult<()> {
-    HEAPIFY_MAX
-        .import(heap.py(), HEAPQ, "_heapify_max")?
+    heapq::HEAPIFY_MAX
+        .import(heap.py())
         .call1((heap,))
         .map(|_| ())
 }
 
 pub fn heapify(heap: &Bound<'_, PyList>) -> PyResult<()> {
-    HEAPIFY
-        .import(heap.py(), HEAPQ, "heapify")?
-        .call1((heap,))
-        .map(|_| ())
+    heapq::HEAPIFY.import(heap.py()).call1((heap,)).map(|_| ())
 }
 pub fn heappop<'py>(heap: &Bound<'py, PyList>) -> PyResult<Bound<'py, PyAny>> {
-    HEAPPOP.import(heap.py(), HEAPQ, "heappop")?.call1((heap,))
+    heapq::HEAPPOP.import(heap.py()).call1((heap,))
 }
 pub fn heappush(heap: &Bound<'_, PyList>, item: Bound<'_, PyAny>) -> PyResult<()> {
-    HEAPPUSH
-        .import(heap.py(), HEAPQ, "heappush")?
+    heapq::HEAPPUSH
+        .import(heap.py())
         .call1((heap, item))
         .map(|_| ())
 }
@@ -82,15 +70,12 @@ pub fn heappushpop<'py>(
     heap: &Bound<'py, PyList>,
     item: Bound<'py, PyAny>,
 ) -> PyResult<Bound<'py, PyAny>> {
-    HEAPPUSHPOP
-        .import(heap.py(), HEAPQ, "heappushpop")?
-        .call1((heap, item))
+    heapq::HEAPPUSHPOP.import(heap.py()).call1((heap, item))
 }
+
 pub fn heapreplace<'py>(
     heap: &Bound<'py, PyList>,
     item: Bound<'py, PyAny>,
 ) -> PyResult<Bound<'py, PyAny>> {
-    HEAPREPLACE
-        .import(heap.py(), HEAPQ, "heapreplace")?
-        .call1((heap, item))
+    heapq::HEAPREPLACE.import(heap.py()).call1((heap, item))
 }
