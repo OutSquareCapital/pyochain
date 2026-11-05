@@ -54,7 +54,7 @@ trait FromIterable {
     SortedByKeyValuesView
 )]
 pub trait PySortedViewMethods:
-    PyClass<BaseType = abc::PyoSequence> + Deref<Target: SortedViewMethods>
+    PyClass<BaseType = abc::PyoSequence> + Deref<Target: ViewMethods>
 {
     fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
         self.get_item(index).and_then_left(TryIntoPy::try_into_py)
@@ -63,7 +63,7 @@ pub trait PySortedViewMethods:
         self.len(py)
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        self.repr(py)
+        self.deref().repr_from::<Self>(py)
     }
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
         self.del_item(index)

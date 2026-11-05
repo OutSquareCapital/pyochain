@@ -23,7 +23,7 @@ pub struct OnKeys<M>(Py<M>);
 pub struct OnValues<M>(Py<M>);
 #[derive(From, Deref)]
 pub struct OnItems<M>(Py<M>);
-pub trait SortedViewMethods: From<Py<Self::Mapping>> + Deref<Target = Py<Self::Mapping>>
+pub trait ViewMethods: From<Py<Self::Mapping>> + Deref<Target = Py<Self::Mapping>>
 where
     Dict<Self::List>: PyRepr,
 {
@@ -39,8 +39,8 @@ where
     fn len(&self, py: Python<'_>) -> usize {
         self.mapping().__len__(py)
     }
-    fn repr(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::Mapping::type_object(py).name()?;
+    fn repr_from<Wrapper: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Wrapper::type_object(py).name()?;
         let values = self.mapping().repr::<Self::Mapping>(py)?;
         Ok(format!("{name}({values})"))
     }
@@ -68,7 +68,7 @@ where
         }
     }
 }
-impl<M> SortedViewMethods for OnKeys<M>
+impl<M> ViewMethods for OnKeys<M>
 where
     M: ListGetter + Deref<Target = RwLock<Dict<M::L>>>,
 {
@@ -90,7 +90,7 @@ where
     }
 }
 
-impl<M> SortedViewMethods for OnValues<M>
+impl<M> ViewMethods for OnValues<M>
 where
     M: ListGetter + Deref<Target = RwLock<Dict<M::L>>>,
 {
@@ -116,7 +116,7 @@ where
     }
 }
 
-impl<M> SortedViewMethods for OnItems<M>
+impl<M> ViewMethods for OnItems<M>
 where
     M: ListGetter + Deref<Target = RwLock<Dict<M::L>>>,
 {
