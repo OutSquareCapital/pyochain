@@ -2,7 +2,7 @@
 use std::borrow::Borrow;
 
 use crate::{
-    args::{ArgsConcat, CallConcat},
+    args::{CallConcat, IntoArgs},
     pylibs::registery::{REDUCE, builtins, itertools},
     tuple,
 };
@@ -326,7 +326,7 @@ where
             .map(rewrap)
     }
     #[inline(always)]
-    pub fn chain<A: ArgsConcat<'py>>(&self, others: A) -> ChainedIter<'py> {
+    pub fn chain<A: IntoArgs<'py>>(&self, others: A) -> ChainedIter<'py> {
         itertools::CHAIN
             .import(self.py())
             .call_concat1((self.as_ref().as_any(), others))
@@ -343,7 +343,7 @@ where
     }
 
     #[inline(always)]
-    pub fn product<A: ArgsConcat<'py>>(&self, iterables: A, repeat: usize) -> ChainedIter<'py> {
+    pub fn product<A: IntoArgs<'py>>(&self, iterables: A, repeat: usize) -> ChainedIter<'py> {
         let py = self.py();
         let kwargs = PyDict::new(py);
         kwargs.set_item(intern!(py, "repeat"), repeat)?;
