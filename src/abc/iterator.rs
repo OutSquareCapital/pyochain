@@ -992,8 +992,7 @@ impl PyoIterator {
     }
     fn peekable<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Peekable>> {
         slf.try_iter()?
-            .unbind()
-            .conv::<iterators::Peekable>()
+            .pipe(iterators::Peekable::new)
             .into_bound(slf.py())
     }
     fn partition<'py>(
@@ -1123,7 +1122,7 @@ impl PyoIterator {
         key: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|iter| iterators::UniqueKey::new(iter, key))
+            .and_then(|iter| iterators::UniqueKey::try_new(iter, key))
             .and_then(|x| iterator_into_iter(x, slf.py()))
     }
     fn unzip<'py>(slf: &Bound<'py, Self>) -> PyResult<(Bound<'py, Self>, Bound<'py, Self>)> {
@@ -1143,7 +1142,7 @@ impl PyoIterator {
     }
     fn with_position<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()?
-            .conv::<iterators::WithPosition>()
+            .pipe(iterators::WithPosition::new)
             .pipe(|x| iterator_into_iter(x, slf.py()))
     }
     #[pyo3(signature = (*others, strict=false))]

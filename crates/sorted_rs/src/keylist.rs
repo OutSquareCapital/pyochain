@@ -3,7 +3,6 @@ use crate::{
     bisect::Bisect,
     bounds::{IrangeSpecs, Loc, RangeIdxs, RawIrangeSpecs, RawRangeIdxs},
     errors,
-    inner::InnerData,
     list_update::ListAdd,
     ops,
     traits::{ListsMethods, NestedVec},
@@ -13,10 +12,6 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 impl KeyList {
-    #[must_use]
-    pub fn new(key: Py<PyAny>) -> Self {
-        Self(InnerData::default(), Vec::default(), key)
-    }
     fn extract_key<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         self.2.bind(value.py()).call1((&value,))
     }

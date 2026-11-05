@@ -24,17 +24,18 @@ impl<'py> RangeBound<'py> {
             .map(|v| Self::new(v, self.inclusive))
     }
 }
+#[derive(Constructor)]
 pub(super) struct IrangeSpecs<'py> {
     pub py: Python<'py>,
     min: RangeBound<'py>,
     max: RangeBound<'py>,
 }
 impl<'py> From<RawIrangeSpecs<'py>> for IrangeSpecs<'py> {
-    fn from((py, min, max, inclusive): RawIrangeSpecs<'py>) -> Self {
+    fn from((py, min, max, (incl_min, incl_max)): RawIrangeSpecs<'py>) -> Self {
         Self {
             py,
-            min: RangeBound::new(min, inclusive.0),
-            max: RangeBound::new(max, inclusive.1),
+            min: RangeBound::new(min, incl_min),
+            max: RangeBound::new(max, incl_max),
         }
     }
 }

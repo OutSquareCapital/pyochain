@@ -1,5 +1,6 @@
 use crate::{inner::InnerData, prelude::*, types::VecPy};
 use derive_more::{AsMut, AsRef, Constructor, Deref, DerefMut};
+use derive_new::new;
 use pyo3::prelude::*;
 use pyo3_ext::{prelude::*, types::PyFrozenClass};
 use std::ops::{Deref, DerefMut};
@@ -7,12 +8,13 @@ use std::ops::{Deref, DerefMut};
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 #[derive(Default, Deref, DerefMut)]
 pub struct List(pub(super) InnerData);
-#[derive(Deref, DerefMut)]
+#[derive(Deref, DerefMut, new)]
 pub struct KeyList(
     #[deref]
     #[deref_mut]
+    #[new(default)]
     pub(super) InnerData,
-    pub Vec<VecPy>,
+    #[new(default)] pub Vec<VecPy>,
     pub(super) Py<PyAny>,
 );
 #[derive(Constructor, AsRef, AsMut, Deref, DerefMut)]
