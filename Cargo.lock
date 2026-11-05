@@ -348,6 +348,7 @@ dependencies = [
 name = "pyo3_ext"
 version = "0.1.0"
 dependencies = [
+ "derive-new",
  "derive_more",
  "either",
  "pyo3",

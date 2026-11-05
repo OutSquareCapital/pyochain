@@ -7,13 +7,13 @@ edition = "2024"
 name = "pyo3_ext"
 
 [dependencies]
+derive_more = { version = "2.1.1", features = ["as_ref", "constructor", "deref", "deref_mut", "from", "into_iterator"] }
+derive-new = "0.7.0"
 either = "1.17.0"
 pyo3 = { version = ">=0.29", features = ["either", "extension-module", "multiple-pymethods", "smallvec"] }
 seq-macro = "0.3.6"
 smallvec = "1.15.2"
 tap = "1.0.1"
-
-derive_more = { version = "2.1.1", features = ["as_ref", "constructor", "deref", "deref_mut", "from", "into_iterator"] }
 
 [lints]
 workspace = true
