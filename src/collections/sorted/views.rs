@@ -1,54 +1,34 @@
+use std::ops::Deref;
+
 use crate::{
     abc,
     collections::sorted::{SortedDict, SortedKeyDict, SortedSet, core::ObjOrVec},
 };
-use derive_more::From;
+use derive_more::{Deref, From};
 
-use parking_lot::{RwLockReadGuard, RwLockWriteGuard};
 use pyo3::{PyClass, prelude::*};
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
-use sorted_rs::{KeyList, List, prelude::*, types, views};
+use sorted_rs::{prelude::*, types, views};
 use std_tools::prelude::*;
 use tap::prelude::*;
-
 macro_rules! impl_base_sorted_view {
-    ($($l:ty:$name:ty => [$($getitem:path => $t:ident),* $(,)?] );* $(;)?) => {
+    ($($inner:ty => $pycls:ident),* $(,)?) => {
         $(
-            $(
-
-                #[derive(From)]
-                #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
-                pub struct $t(Py<$name>);
-
-                impl SortedViewMethods for $t {
-                        type L = $l;
-                        type M = $name;
-                        fn mapping(&self) -> RwLockReadGuard<'_, types::Dict<Self::L>> {
-                            self.0.get().0.read()
-                        }
-                        fn mapping_mut(&self) -> RwLockWriteGuard<'_, types::Dict<Self::L>> {
-                            self.0.get().0.write()
-                        }
-                        fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                            $getitem(&mut self.mapping_mut(), index).and_then_left(|x|x.try_into_py())
-                        }
-                }
-            )*
+            #[derive(From, Deref)]
+            #[from(forward)]
+            #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoSequence, sequence)]
+            pub struct $pycls($inner);
         )*
     };
 }
 impl_base_sorted_view!(
-    List: SortedDict => [
-        views::get_item_for_items => SortedItemsView,
-        views::get_item_for_values => SortedValuesView,
-        views::get_item_for_keys => SortedKeysView,
-    ];
-    KeyList: SortedKeyDict => [
-        views::get_item_for_items => SortedByKeyItemsView,
-        views::get_item_for_values => SortedByKeyValuesView,
-        views::get_item_for_keys => SortedByKeyKeysView,
-    ];
+    views::OnItems<SortedDict> => SortedItemsView,
+    views::OnValues<SortedDict> => SortedValuesView,
+    views::OnKeys<SortedDict> => SortedKeysView,
+    views::OnItems<SortedKeyDict> => SortedByKeyItemsView,
+    views::OnValues<SortedKeyDict> => SortedByKeyValuesView,
+    views::OnKeys<SortedKeyDict> => SortedByKeyKeysView,
 );
 #[py_abc(
     SortedItemsView,
@@ -73,27 +53,19 @@ trait FromIterable {
     SortedByKeyKeysView,
     SortedByKeyValuesView
 )]
-pub trait SortedViewMethods:
-    PyClass<BaseType = abc::PyoSequence> + PyFrozenClass + From<Py<Self::M>>
-where
-    types::Dict<Self::L>: PyRepr,
+pub trait PySortedViewMethods:
+    PyClass<BaseType = abc::PyoSequence> + Deref<Target: SortedViewMethods>
 {
-    type L: ListsMethods;
-    type M: PyFrozenClass;
-    #[skip]
-    fn mapping(&self) -> RwLockReadGuard<'_, types::Dict<Self::L>>;
-    #[skip]
-    fn mapping_mut(&self) -> RwLockWriteGuard<'_, types::Dict<Self::L>>;
-    fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
+    fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
+        self.get_item(index).and_then_left(TryIntoPy::try_into_py)
+    }
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.mapping().__len__(py)
+        self.len(py)
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let name = Self::type_object(py).name()?;
-        let values = self.mapping().repr::<Self::M>(py)?;
-        Ok(format!("{name}({values})"))
+        self.repr(py)
     }
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
-        views::delitem(&mut self.mapping_mut(), index)
+        self.del_item(index)
     }
 }

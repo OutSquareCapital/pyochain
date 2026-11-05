@@ -1,7 +1,7 @@
 use crate::{inner::InnerData, prelude::*, types::VecPy};
 use derive_more::{AsMut, AsRef, Constructor, Deref, DerefMut};
 use pyo3::prelude::*;
-use pyo3_ext::types::PyFrozenClass;
+use pyo3_ext::{prelude::*, types::PyFrozenClass};
 use std::ops::{Deref, DerefMut};
 
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
@@ -42,7 +42,7 @@ macro_rules! impl_self_as_ref {
 }
 impl_self_as_ref!(List, KeyList);
 
-pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> {
+pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> + Init {
     type L: ListsMethods;
     type T: Deref<Target = InnerData>
         + DerefMut

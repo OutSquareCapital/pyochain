@@ -2,12 +2,12 @@ use crate::{
     abc,
     collections::sorted::{
         SortedItemsView, SortedKeysView, SortedValuesView,
-        core::SortedCollectionsMethods,
         views::{
-            SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView, SortedViewMethods,
+            PySortedViewMethods, SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView,
         },
     },
 };
+use derive_more::Deref;
 use parking_lot::RwLock;
 use pyo3::{
     prelude::*,
@@ -18,6 +18,7 @@ use pyochain_macros::py_abc;
 use sorted_rs::{KeyList, List, ListGetter, types};
 use tap::prelude::*;
 
+#[derive(Deref)]
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends= abc::PyoMutableMapping, mapping)]
 pub struct SortedDict(pub(super) RwLock<types::Dict<List>>);
 
@@ -40,6 +41,7 @@ impl SortedDictMethods for SortedDict {
     type KView = SortedKeysView;
     type VView = SortedValuesView;
 }
+#[derive(Deref)]
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableMapping, mapping)]
 
 pub struct SortedKeyDict(pub(super) RwLock<types::Dict<KeyList>>);
@@ -68,15 +70,11 @@ impl SortedDictMethods for SortedKeyDict {
 
 #[py_abc(SortedDict, SortedKeyDict)]
 pub(super) trait SortedDictMethods:
-    SortedCollectionsMethods
-    + ListGetter<T = types::Dict<<Self as ListGetter>::L>>
-    + Init
-    + From<types::Dict<<Self as ListGetter>::L>>
-    + PyFrozenClass
+    ListGetter<T = types::Dict<<Self as ListGetter>::L>> + From<types::Dict<Self::L>>
 {
-    type KView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;
-    type VView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;
-    type IView: SortedViewMethods<L = <Self as ListGetter>::L> + From<Py<Self>>;
+    type KView: PySortedViewMethods + From<Py<Self>>;
+    type VView: PySortedViewMethods + From<Py<Self>>;
+    type IView: PySortedViewMethods + From<Py<Self>>;
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.read().contains(value)
     }

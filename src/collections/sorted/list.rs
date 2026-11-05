@@ -1,7 +1,4 @@
-use crate::{
-    abc,
-    collections::sorted::core::{ObjOrVec, SortedCollectionsMethods},
-};
+use crate::{abc, collections::sorted::core::ObjOrVec};
 use parking_lot::RwLock;
 use pyo3::{exceptions::PyNotImplementedError, prelude::*};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
@@ -55,10 +52,7 @@ impl PyListsDataRef for SortedKeyList {
 }
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedListMethods:
-    SortedCollectionsMethods
-    + Init
-    + ListGetter<T = <Self as ListGetter>::L>
-    + PyListsDataRef<L = <Self as ListGetter>::L>
+    ListGetter<T = <Self as ListGetter>::L> + PyListsDataRef<L = <Self as ListGetter>::L>
 {
     fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
