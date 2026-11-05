@@ -1,10 +1,11 @@
 use crate::pyobject_native_type_named;
 use either::Either;
 use pyo3::{
-    BoundObject, PyClass, PyTypeInfo,
+    BoundObject, PyClass, PyTypeCheck, PyTypeInfo,
     exceptions::{PyKeyError, PyTypeError},
     ffi, intern,
     prelude::*,
+    pyclass::boolean_struct,
     sync::PyOnceLock,
     types::{
         PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator, PyList,
@@ -573,12 +574,12 @@ fn false_and_write(err: PyErr, object: &Bound<'_, PyAny>) -> bool {
     err.write_unraisable(object.py(), Some(object));
     false
 }
-/// Trait alias for pyclasses that are `safe`, i.e Frozen + Send + Sync.
+/// Trait alias for pyclasses that are `safe`, i.e Frozen + Send + Sync + `PyTypeCheck`.
 pub trait PyFrozenClass:
-    Send + Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+    Send + Sync + PyClass<Frozen = boolean_struct::True> + PyTypeCheck
 {
 }
 impl<T> PyFrozenClass for T where
-    T: Send + Sync + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+    T: Send + Sync + PyClass<Frozen = boolean_struct::True> + PyTypeCheck
 {
 }
