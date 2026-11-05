@@ -12,7 +12,6 @@ use tap::Conv;
 use crate::{
     bisect::Bisect,
     bounds::{Loc, RangeIdxs},
-    lengths::Lengths,
     traits::{ListsMethods, NestedVec},
     types::VecPy,
 };
@@ -122,10 +121,10 @@ pub enum Expand {
 impl Expand {
     #[inline(always)]
     #[must_use]
-    pub fn new(lists_len: usize, load: usize, lengths: &Lengths) -> Self {
-        if lists_len > load * 2 {
+    pub fn new(data: &impl ListsMethods, pos: usize) -> Self {
+        if data.keys()[pos].len() > data.load.higher_limit() {
             Self::LenAtPosGtDoubleLoad
-        } else if lengths.is_built() {
+        } else if data.lengths.is_built() {
             Self::IdxBuilt
         } else {
             Self::NoOp
@@ -144,7 +143,7 @@ impl Delete {
     #[must_use]
     pub fn new(data: &impl ListsMethods, loc: &Loc) -> Self {
         let len_at_pos = data.keys().loc_len(loc);
-        if len_at_pos > (data.load / 2) {
+        if len_at_pos > data.load.lower_limit() {
             Self::LenAtPosSupToHalfLoad
         } else if data.keys().len() > 1 {
             Self::ListsLenGTOne

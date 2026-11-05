@@ -5,7 +5,6 @@ use crate::collections::{
 use pyo3::prelude::*;
 use pyo3_ext::types::BoundedEither;
 use sorted_rs::{debug, prelude::*};
-use tap::prelude::*;
 
 #[pyfunction]
 pub fn check_sorted_dict(data: BoundedEither<'_, SortedDict, SortedKeyDict>) -> PyResult<()> {
@@ -19,8 +18,8 @@ pub fn check_sorted_dict(data: BoundedEither<'_, SortedDict, SortedKeyDict>) -> 
 #[pyfunction]
 pub fn check_sorted_set(data: BoundedEither<'_, SortedSet, SortedKeySet>) -> PyResult<()> {
     data.map_either(
-        |x| debug::check_set_len(x.py(), &x.get().read()),
-        |x| debug::check_set_len(x.py(), &x.get().read()),
+        |x| debug::check_set(x.py(), &x.get().read()),
+        |x| debug::check_set(x.py(), &x.get().read()),
     )
     .into_inner()
 }
@@ -35,7 +34,7 @@ pub fn assert_sorted_list_empty(lst: BoundedEither<'_, SortedList, SortedKeyList
 }
 #[pyfunction]
 pub fn check_sorted_list(data: &Bound<'_, SortedList>) -> PyResult<()> {
-    data.get().read().pipe(|x| debug::check_list(data.py(), &x))
+    debug::check_list(data.py(), data.get().read().as_ref())
 }
 #[pyfunction]
 pub fn check_sorted_key_list(data: &Bound<'_, SortedKeyList>) -> PyResult<()> {

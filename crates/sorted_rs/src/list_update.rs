@@ -90,7 +90,7 @@ where
 {
     list.clear(py);
     list.len = it.len();
-    let load = list.load;
+    let load = *list.load;
     std::iter::from_fn(|| {
         it.by_ref()
             .take(load)

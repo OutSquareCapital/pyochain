@@ -169,7 +169,7 @@ pub trait ListsMethods:
     fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
         let values = self.collapse(py);
         self.clear(py);
-        self.load = load;
+        self.load = load.into();
         self.extend(py, values.into())
     }
     fn set_item(&mut self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {

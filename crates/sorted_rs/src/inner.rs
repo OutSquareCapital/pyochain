@@ -6,6 +6,7 @@ use crate::{
     traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
+use derive_more::{Deref, From};
 use either::Either;
 use pyo3::{
     basic::CompareOp,
@@ -17,25 +18,35 @@ use pyo3_ext::{
     types::{FromCmp, PyCmpOut},
 };
 use std_tools::prelude::*;
+#[derive(Clone, Copy, Debug, From, Deref)]
+pub(super) struct Load(usize);
+impl Default for Load {
+    fn default() -> Self {
+        Self(1000)
+    }
+}
+impl Load {
+    /// This was present in the original `sortedcontainers` tests. Must check if really needed.
+    pub const fn test_limit(self) -> bool {
+        self.0 >= 4
+    }
+    #[inline(always)]
+    pub const fn higher_limit(self) -> usize {
+        self.0 * 2
+    }
+    #[inline(always)]
+    pub const fn lower_limit(self) -> usize {
+        self.0 / 2
+    }
+}
+#[derive(Default)]
 pub struct InnerData {
     pub(super) values: Vec<VecPy>,
-    pub maxes: VecPy,
+    pub(super) maxes: VecPy,
     /// Equivalent to `idx` and `offset` attributes in the original `sortedcontainers` implementation.
     pub(super) lengths: Lengths,
     pub len: usize,
-    pub(super) load: usize,
-}
-
-impl Default for InnerData {
-    fn default() -> Self {
-        Self {
-            values: Vec::default(),
-            maxes: Vec::default(),
-            lengths: Lengths::default(),
-            len: usize::default(),
-            load: 1000,
-        }
-    }
+    pub(super) load: Load,
 }
 impl InnerData {
     #[inline]
