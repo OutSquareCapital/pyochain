@@ -29,6 +29,7 @@ name = "pyochain"
 
 [dependencies]
 color-eyre = "0.6.5"
+derive-new = "0.7.0"
 derive_more = { version = "2.1.1", features = ["as_ref", "constructor", "deref", "deref_mut", "from", "into_iterator"] }
 either = "1.16.0"
 itertools = "0.15.0"
