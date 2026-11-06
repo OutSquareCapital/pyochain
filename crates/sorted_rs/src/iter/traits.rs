@@ -1,4 +1,4 @@
-use pyo3::{ffi, prelude::*, types::PyIterator};
+use pyo3::{ffi, prelude::*};
 use pyo3_ext::{prelude::*, types::PyFrozenClass};
 use std::{ops::Deref, ptr};
 use tap::Conv;
@@ -33,12 +33,8 @@ pub trait PySortedIter:
     #[must_use]
     /// Descriptor to wrap in `__next__` method of the pyclass.\
     /// Note that this will only be called if you do `iter(list).__next__()`, not in hot loops or via `next(it)`.
-    fn py_next(slf: Bound<'_, Self>) -> Option<Bound<'_, PyAny>> {
-        unsafe {
-            slf.cast_into_unchecked::<PyIterator>()
-                .next()
-                .map(|res| res.unwrap_unchecked())
-        }
+    fn py_next<'py>(slf: &Bound<'py, Self>) -> Option<Bound<'py, PyAny>> {
+        unsafe { slf.get().next().map(|x| Bound::from_owned_ptr(slf.py(), x)) }
     }
     /// Full roundtrip from python method call to returned `Iterator`.\
     /// `sorted_collection.method(*args)` -> (bounded collection + bounds, range specs, etc...) -> "pure rust" iterator -> pyclass wrapper -> bounded wrapper.
