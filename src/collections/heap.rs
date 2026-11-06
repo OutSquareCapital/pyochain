@@ -1,7 +1,7 @@
 use crate::{
     abc,
     core::{PyoVec, iterators},
-    traits::{IntoInit, PyWrapper},
+    traits::PyWrapper,
 };
 use derive_more::{Deref, From};
 use either::Either;
@@ -174,7 +174,7 @@ impl HeapType for HeapMin {
     fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>> {
         data.convert(pylibs::heapq::heapify)
             .map(Self)
-            .map(IntoInit::init)
+            .map(Init::init)
     }
     fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>> {
         Self(data.unbind()).into_bound(py)
@@ -204,7 +204,7 @@ impl HeapType for HeapMax {
     fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>> {
         data.convert(pylibs::heapq::heapify_max)
             .map(Self)
-            .map(IntoInit::init)
+            .map(Init::init)
     }
     fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>> {
         Self(data.unbind()).into_bound(py)

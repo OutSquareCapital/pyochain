@@ -1,7 +1,7 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
     core::{PyoVec, iterators},
-    traits::{FlexWrapper, IntoInit},
+    traits::FlexWrapper,
 };
 use derive_more::{Deref, From};
 use either::Either;

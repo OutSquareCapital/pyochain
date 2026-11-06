@@ -3,10 +3,85 @@
 //! More importantly, they factorize the common logic between the `SortedList` and `SortedKeyList` implementations.\
 //! They have very similar conditional checks, but different actions to take on each branch.
 
+use std::hint::unreachable_unchecked;
+
+use derive_more::From;
 use pyo3::prelude::*;
+use tap::Conv;
 
-use crate::{bisect::Bisect, bounds::Loc, errors, inner::InnerData, traits::NestedVec};
+use crate::{
+    bisect::Bisect,
+    bounds::{Loc, RangeIdxs},
+    traits::{ListsMethods, NestedVec},
+    types::VecPy,
+};
 
+#[derive(Debug, Clone, Copy)]
+pub(super) enum Nb {
+    GTOne(usize),
+    One,
+    Zero,
+    MinusOne,
+    LTMinusOne(isize),
+}
+impl From<isize> for Nb {
+    fn from(value: isize) -> Self {
+        match value {
+            0 => Self::Zero,
+            1 => Self::One,
+            -1 => Self::MinusOne,
+            _ if value > 1 => Self::GTOne(value.cast_unsigned()),
+            _ => Self::LTMinusOne(value),
+        }
+    }
+}
+#[derive(Debug, Clone, Copy, From)]
+pub(super) enum Slice {
+    #[from]
+    Forward(ForwardSlice),
+    ForwardStep(usize),
+    Backward,
+    BackwardStep(usize),
+    /// Negative step with nothing to iterate (mirrors Python's `range`, which is empty when `start <= stop` for a negative step).
+    NoOp,
+}
+impl Slice {
+    pub fn new(indices: RangeIdxs<usize>, step: Nb, length: usize) -> Self {
+        debug_assert!(indices.stop <= length);
+        match step {
+            // SAFETY: Constructors guarantee that `step` is not zero (slice.indices raises `ValueError` on `step == 0`).
+            Nb::Zero => unsafe { unreachable_unchecked() },
+            _ if indices.start >= indices.stop => Self::NoOp,
+            Nb::One => ForwardSlice::new(indices, length).into(),
+            Nb::GTOne(s) => Self::ForwardStep(s),
+            Nb::MinusOne => Self::Backward,
+            Nb::LTMinusOne(s) => Self::BackwardStep(s.unsigned_abs()),
+        }
+    }
+}
+#[derive(Debug, Clone, Copy)]
+pub(super) enum ForwardSlice {
+    /// Whole slice optimization: start to stop slices the whole sorted list.
+    Full,
+    Partial,
+    ToEnd,
+    Small,
+    SmallToAdjust,
+}
+impl ForwardSlice {
+    pub fn new(indices: RangeIdxs<usize>, length: usize) -> Self {
+        match (
+            indices.stop == length,
+            length <= 8 * (indices.stop - indices.start),
+        ) {
+            (true, _) if indices.start == 0 => Self::Full,
+            (true, true) => Self::Small,
+            (true, false) => Self::ToEnd,
+            (false, true) => Self::SmallToAdjust,
+            (false, false) => Self::Partial,
+        }
+    }
+}
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
 pub(super) enum Maxes {
     Empty,
@@ -17,126 +92,95 @@ pub(super) enum Maxes {
 impl Maxes {
     #[inline(always)]
     pub fn left(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
-        Self::new(maxes, value, Bisect::bisect_left)
+        Self::new::<true>(maxes, value)
     }
     #[inline(always)]
     pub fn right(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
-        Self::new(maxes, value, Bisect::bisect_right)
+        Self::new::<false>(maxes, value)
     }
     #[inline(always)]
-    fn new<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
-        maxes: &[Py<PyAny>],
-        value: &Bound<'_, PyAny>,
-        func: F,
-    ) -> Self {
+    fn new<const LEFT: bool>(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
         if maxes.is_empty() {
             Self::Empty
         } else {
-            func(maxes, value)
-                .map(Loc::with_pos)
-                .map_or_else(Self::BisectErr, |bound| {
-                    if bound.pos == maxes.len() {
-                        Self::LenEQPos(bound)
-                    } else {
-                        Self::LenNEPos(bound)
-                    }
-                })
+            match maxes.bisect::<LEFT>(value).map(Loc::with_pos) {
+                Err(e) => Self::BisectErr(e),
+                Ok(loc) if loc.pos == maxes.len() => Self::LenEQPos(loc),
+                Ok(loc) => Self::LenNEPos(loc),
+            }
         }
     }
 }
 
 /// Used in `expand`
 pub enum Expand {
-    PosLenGtLoad,
-    IdxNotEmpty,
-    Other,
+    LenAtPosGtDoubleLoad,
+    IdxBuilt,
+    NoOp,
 }
 impl Expand {
     #[inline(always)]
     #[must_use]
-    pub fn new(lists_len: usize, load: usize, idx: &[usize]) -> Self {
-        if lists_len > load << 1 {
-            Self::PosLenGtLoad
-        } else if !idx.is_empty() {
-            Self::IdxNotEmpty
+    pub fn new(data: &impl ListsMethods, pos: usize) -> Self {
+        if data.keys()[pos].len() > data.load.higher_limit() {
+            Self::LenAtPosGtDoubleLoad
+        } else if data.lengths.is_built() {
+            Self::IdxBuilt
         } else {
-            Self::Other
+            Self::NoOp
         }
     }
 }
 /// Used in `delete`
 pub enum Delete {
-    PosSupToLoad,
-    DataLenGTOne,
-    LenPosNotZero,
+    LenAtPosSupToHalfLoad,
+    ListsLenGTOne,
+    LenAtPosNotZero,
     Other,
 }
 impl Delete {
     #[inline(always)]
     #[must_use]
-    pub fn new(lists: &[Vec<Py<PyAny>>], load: usize, loc: &Loc) -> Self {
-        let len_pos = lists.loc_len(loc);
-        if len_pos > (load >> 1) {
-            Self::PosSupToLoad
-        } else if lists.len() > 1 {
-            Self::DataLenGTOne
-        } else if len_pos != 0 {
-            Self::LenPosNotZero
+    pub fn new(data: &impl ListsMethods, loc: &Loc) -> Self {
+        let len_at_pos = data.keys().loc_len(loc);
+        if len_at_pos > data.load.lower_limit() {
+            Self::LenAtPosSupToHalfLoad
+        } else if data.keys().len() > 1 {
+            Self::ListsLenGTOne
+        } else if len_at_pos != 0 {
+            Self::LenAtPosNotZero
         } else {
             Self::Other
         }
     }
 }
-/// `Loc`, `start`, and `stop` bounds for a search in a sorted list.
-type IdxBounds = (Loc, usize, usize);
-pub(super) enum Index<'py, 'a> {
-    NotFound(&'a Bound<'py, PyAny>),
-    Empty(&'a Bound<'py, PyAny>),
-    InvalidRange(&'a Bound<'py, PyAny>),
-    BisectErr(PyErr),
-    Searchable(IdxBounds),
+
+// Used in `pop` and `get_item`
+pub(super) enum Locate {
+    Empty,
+    Last,
+    First,
+    InFirstList(usize),
+    InLastList(isize),
+    InOtherList(usize),
+    InOtherListNeg(isize),
 }
-impl<'py, 'a> Index<'py, 'a> {
-    pub fn new(
-        data: &InnerData,
-        value: &'a Bound<'py, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> Self {
-        let length = data.len.cast_signed();
-        if length == 0 {
-            Self::Empty(value)
-        } else {
-            let mut start = start.unwrap_or(0);
-            let mut stop = stop.unwrap_or(length);
-            if start < 0 {
-                start += length;
+impl Locate {
+    #[inline]
+    pub fn new(length: usize, values: &[VecPy], index: isize) -> Self {
+        match (length, index.conv::<Nb>()) {
+            (1, Nb::Zero | Nb::MinusOne) => Self::First,
+            (0 | 1, _) => Self::Empty,
+            (_, Nb::Zero) => Self::First,
+            (_, Nb::MinusOne) => Self::Last,
+            (_, Nb::One) if 1 < values[0].len() => Self::InFirstList(1),
+            (_, Nb::One) => Self::InOtherList(1),
+            (_, Nb::GTOne(i)) if i < values[0].len() => Self::InFirstList(i),
+            (_, Nb::LTMinusOne(i)) if -values.last().unwrap().len().cast_signed() < i => {
+                Self::InLastList(i)
             }
-            start = start.max(0);
-            if stop < 0 {
-                stop += length;
-            }
-            stop = stop.min(length);
-            if stop <= start {
-                Self::InvalidRange(value)
-            } else {
-                match data.maxes.bisect_left(value).map(Loc::with_pos) {
-                    Ok(bound) if bound.pos == data.maxes.len() => Self::NotFound(value),
-                    Ok(bound) => {
-                        Self::Searchable((bound, start.cast_unsigned(), stop.cast_unsigned()))
-                    }
-                    Err(err) => Self::BisectErr(err),
-                }
-            }
-        }
-    }
-    pub fn into_res(self) -> PyResult<IdxBounds> {
-        match self {
-            Self::Searchable((bound, start, stop)) => Ok((bound, start, stop)),
-            Self::NotFound(value) | Self::Empty(value) | Self::InvalidRange(value) => {
-                Err(errors::not_in_list(&value.repr()?))
-            }
-            Self::BisectErr(err) => Err(err),
+            (_, Nb::GTOne(i)) => Self::InOtherList(i),
+            (_, Nb::LTMinusOne(i)) => Self::InOtherListNeg(i),
         }
     }
 }

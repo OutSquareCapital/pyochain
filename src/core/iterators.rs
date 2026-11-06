@@ -3,9 +3,9 @@ use std::collections::VecDeque;
 use crate::{
     abc,
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
-    traits::IntoInit,
 };
 use derive_more::{Constructor, Deref, From};
+use derive_new::new;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::{
     IntoPyObjectExt, PyTypeInfo,
@@ -52,8 +52,10 @@ impl MapJuxt {
 }
 /// TODO: speed is 0.76x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
+#[derive(new)]
 #[pyclass(module = "pyochain._iterators", frozen)]
 pub struct UniqueIdentity {
+    #[new(into)]
     iter: Py<PyIterator>,
     seen: Py<PySet>,
 }
@@ -93,30 +95,24 @@ impl UniqueIdentity {
 }
 /// TODO: speed is 0.95x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
+#[derive(new)]
 #[pyclass(module = "pyochain._iterators", frozen)]
 pub struct UniqueKey {
-    iter: Py<PyIterator>,
+    inner: UniqueIdentity,
+    #[new(into)]
     key: Py<PyAny>,
-    seen: Py<PySet>,
 }
 
 #[pymethods]
 impl UniqueKey {
     #[new]
-    pub fn new(data: Bound<'_, PyIterator>, key: Bound<'_, PyAny>) -> PyResult<Self> {
-        let py = data.py();
-        Self {
-            iter: data.unbind(),
-            key: key.unbind(),
-            seen: PySet::empty(py)?.unbind(),
-        }
-        .pipe(Ok)
+    pub fn try_new(data: Bound<'_, PyIterator>, key: Bound<'_, PyAny>) -> PyResult<Self> {
+        Self::new(UniqueIdentity::try_from(data)?, key).pipe(Ok)
     }
-
     fn __next__<'py>(&self, py: Python<'py>) -> NextOk<'py> {
-        let mut iter = self.iter.clone_ref(py).into_bound(py);
+        let mut iter = self.inner.iter.clone_ref(py).into_bound(py);
         let key = self.key.bind(py);
-        let seen = self.seen.bind(py);
+        let seen = self.inner.seen.bind(py);
 
         loop {
             match iter.next() {
@@ -670,21 +666,15 @@ mod position {
         }
     }
 }
-
+#[derive(new)]
 #[pyclass(module = "pyochain._iterators")]
 pub struct WithPosition {
+    #[new(into)]
     iter: Py<PyIterator>,
+    #[new(default)]
     did_iter: bool,
+    #[new(default)]
     peeked: Option<Py<PyAny>>,
-}
-impl From<Bound<'_, PyIterator>> for WithPosition {
-    fn from(data: Bound<'_, PyIterator>) -> Self {
-        Self {
-            iter: data.unbind(),
-            did_iter: false,
-            peeked: None,
-        }
-    }
 }
 #[pymethods]
 impl WithPosition {
@@ -949,18 +939,13 @@ impl<'py> Iterator for PyUnsafeIterator<'py> {
         }
     }
 }
+#[derive(new)]
 #[pyclass(module = "pyochain.core",generic, extends=abc::PyoIterator)]
 pub struct Peekable {
+    #[new(into)]
     iterator: Py<PyIterator>,
+    #[new(default)]
     peeked: Option<Py<PyAny>>,
-}
-impl From<Py<PyIterator>> for Peekable {
-    fn from(iterator: Py<PyIterator>) -> Self {
-        Self {
-            iterator,
-            peeked: None,
-        }
-    }
 }
 #[pymethods]
 impl Peekable {

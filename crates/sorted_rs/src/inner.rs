@@ -1,54 +1,61 @@
-use std::cmp::Ordering;
-
 use crate::{
-    Bounds, Loc, errors,
-    indexing::Nb,
+    bounds::Loc,
+    errors,
+    lengths::Lengths,
+    ops,
     traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
+use derive_more::{Deref, From};
 use either::Either;
-use itertools::Itertools;
 use pyo3::{
     basic::CompareOp,
-    exceptions::PyValueError,
     prelude::*,
-    types::{PyList, PyNotImplemented, PySlice, slice::PySliceIndices},
+    types::{PyList, PyNotImplemented},
 };
 use pyo3_ext::{
     prelude::*,
     types::{FromCmp, PyCmpOut},
 };
 use std_tools::prelude::*;
-use tap::prelude::*;
+#[derive(Clone, Copy, Debug, From, Deref)]
+pub(super) struct Load(usize);
+impl Default for Load {
+    fn default() -> Self {
+        Self(1000)
+    }
+}
+impl Load {
+    /// This was present in the original `sortedcontainers` tests. Must check if really needed.
+    pub const fn test_limit(self) -> bool {
+        self.0 >= 4
+    }
+    #[inline(always)]
+    pub const fn higher_limit(self) -> usize {
+        self.0 * 2
+    }
+    #[inline(always)]
+    pub const fn lower_limit(self) -> usize {
+        self.0 / 2
+    }
+}
+#[derive(Default)]
 pub struct InnerData {
     pub(super) values: Vec<VecPy>,
-    pub maxes: VecPy,
-    pub(super) idx: Vec<usize>,
+    pub(super) maxes: VecPy,
+    /// Equivalent to `idx` and `offset` attributes in the original `sortedcontainers` implementation.
+    pub(super) lengths: Lengths,
     pub len: usize,
-    pub(super) offset: usize,
-    pub(super) load: usize,
-}
-
-impl Default for InnerData {
-    fn default() -> Self {
-        Self {
-            values: Vec::default(),
-            maxes: Vec::default(),
-            idx: Vec::default(),
-            len: usize::default(),
-            offset: usize::default(),
-            load: 1000,
-        }
-    }
+    pub(super) load: Load,
 }
 impl InnerData {
     #[inline]
     pub fn clear(&mut self) {
         self.values.clear();
         self.maxes.clear();
-        self.idx.clear();
+        self.lengths.inner.clear();
         self.len = 0;
-        self.offset = 0;
+        self.lengths.offset = 0;
     }
     #[inline]
     #[must_use]
@@ -56,44 +63,24 @@ impl InnerData {
         self.iter_owned(py).collect()
     }
     #[inline(always)]
-    pub fn iter_owned(&self, py: Python<'_>) -> impl Iterator<Item = Py<PyAny>> {
+    pub fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
         self.iter().map(move |x| x.clone_ref(py))
     }
     #[inline(always)]
-    pub fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> {
         self.values.iter().flatten()
     }
     pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         self.iter().collect_bound::<PyList>(py)
     }
-    pub fn loc(&mut self, loc: &Loc) -> usize {
+    pub(super) fn loc(&mut self, loc: &Loc) -> usize {
         if loc.pos == 0 {
             loc.idx
         } else {
-            if self.idx.is_empty() {
-                self.build_index();
+            if self.lengths.is_not_built() {
+                self.lengths.build(&self.values);
             }
-            // Increment pos to point in the index to len(self.lists[pos]).
-            let mut i = loc.pos + self.offset;
-            // Iterate until reaching the root of the index tree at pos = 0.
-            let total = self.idx.pipe_ref_mut(|idx| {
-                let mut total = 0;
-                while i != 0 {
-                    // Right-child nodes are at even indices. At such indices
-                    // account the total below the left child node.
-
-                    if i.is_multiple_of(2) {
-                        total += idx[i - 1];
-                    }
-
-                    // Advance pos to the parent node.
-
-                    i = (i - 1) >> 1;
-                }
-                total
-            });
-
-            total + loc.idx
+            self.lengths.loc_at(loc)
         }
     }
     #[inline]
@@ -105,160 +92,35 @@ impl InnerData {
             .map(|x| x.clone_ref(py))
             .collect()
     }
-
+    #[inline]
+    pub(super) fn index_to_loc(&mut self, index: isize) -> PyResult<Loc> {
+        match ops::Locate::new(self.len, &self.values, index) {
+            ops::Locate::Empty => Err(errors::out_of_range()),
+            ops::Locate::Last => {
+                let pos = self.values.len() - 1;
+                let idx = self.values[pos].len() - 1_usize;
+                Ok(Loc::new(pos, idx))
+            }
+            ops::Locate::First => Ok(Loc::with_idx(0)),
+            ops::Locate::InFirstList(i) => Ok(Loc::with_idx(i)),
+            ops::Locate::InLastList(i) => {
+                let pos = self.values.len() - 1;
+                let idx = (self.values.last().unwrap().len().cast_signed() + i).cast_unsigned();
+                Ok(Loc::new(pos, idx))
+            }
+            ops::Locate::InOtherList(i) => self.set_pos_usize(i),
+            ops::Locate::InOtherListNeg(i) => self.set_pos(i),
+        }
+    }
     pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        if self.len == 0 {
-            Err(errors::out_of_range())
-        } else {
-            let first_list = &self.values[0];
-            let last_list = self.values.last().unwrap();
-            let len_last = last_list.len().cast_signed();
-            match index.conv::<Nb>() {
-                Nb::Zero => first_list[0].clone_ref(py).into_bound(py).pipe(Ok),
-                Nb::NegOne => last_list
-                    .last()
-                    .unwrap()
-                    .clone_ref(py)
-                    .into_bound(py)
-                    .pipe(Ok),
-                Nb::One | Nb::Pos if index < first_list.len().cast_signed() => first_list
-                    [index.cast_unsigned()]
-                .clone_ref(py)
-                .into_bound(py)
-                .pipe(Ok),
-                Nb::Neg if -len_last < index => last_list[(len_last + index).cast_unsigned()]
-                    .clone_ref(py)
-                    .into_bound(py)
-                    .pipe(Ok),
-                Nb::Neg | Nb::Pos | Nb::One => {
-                    let mut bounds = Bounds::default();
-                    self.set_pos(index, &mut bounds.min)?;
-                    self.values
-                        .loc(&bounds.min)
-                        .clone_ref(py)
-                        .into_bound(py)
-                        .pipe(Ok)
-                }
-            }
-        }
-    }
-    pub fn get_slice(&mut self, slice: &Bound<'_, PySlice>) -> PyResult<VecPy> {
-        let py = slice.py();
-        let PySliceIndices {
-            start, stop, step, ..
-        } = slice.indices(self.len.cast_signed())?;
-        let stop_eq_len = stop.cmp(&self.len.cast_signed());
-        let mut bounds = Bounds::default();
-        match (start.cmp(&stop), step.conv::<Nb>()) {
-            (_, Nb::Zero) => Err(PyValueError::new_err("slice step cannot be zero")),
-            // Whole slice optimization: start to stop slices the whole sorted list.
-            (Ordering::Less, Nb::One) if start == 0 && stop_eq_len.is_eq() => {
-                self.collapse(py).pipe(Ok)
-            }
-            (Ordering::Less, Nb::One) => {
-                self.set_pos(start, &mut bounds.min)?;
-                let start_list = &self.values[bounds.min.pos];
-                bounds.max.idx = bounds.min.idx + (stop - start).cast_unsigned();
-                match (start_list.len().cmp(&bounds.max.idx), stop_eq_len) {
-                    // Small slice optimization: start index and stop index are
-                    // within the start list.
-                    (Ordering::Equal | Ordering::Greater, _) => start_list
-                        [bounds.min.idx..bounds.max.idx]
-                        .iter()
-                        .map(|x| x.clone_ref(py))
-                        .collect::<Vec<_>>()
-                        .pipe(Ok),
-                    (Ordering::Less, Ordering::Equal) => {
-                        bounds.max.pos = self.values.len() - 1;
-                        bounds.max.idx = self.values.loc_len(&bounds.max);
-                        get_slice(&self.values, &bounds)
-                            .map(|x| x.clone_ref(py))
-                            .collect::<Vec<_>>()
-                            .pipe(Ok)
-                    }
-                    (Ordering::Less, Ordering::Greater | Ordering::Less) => {
-                        self.set_pos(stop, &mut bounds.max)?;
-                        get_slice(&self.values, &bounds)
-                            .map(|x| x.clone_ref(py))
-                            .collect::<Vec<_>>()
-                            .pipe(Ok)
-                    }
-                }
-            }
-            (Ordering::Greater, Nb::NegOne) => {
-                let mut result = self.get_slice(&PySlice::new(py, stop + 1, start + 1, 1))?;
-                result.reverse();
-                Ok(result)
-            }
-            // Negative step with nothing to iterate (mirrors Python's `range`,
-            // which is empty when `start <= stop` for a negative step).
-            (Ordering::Less | Ordering::Equal, Nb::NegOne | Nb::Neg) => Ok(Vec::new()),
-            (Ordering::Greater, Nb::Neg) => {
-                std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
-                    .map(|i| self.get_item(py, i))
-                    .map_ok(Bound::unbind)
-                    .collect()
-            }
-            // Return a list because a negative step could reverse the order
-            // of the items and this could be the desired behavior.
-            (_, Nb::One | Nb::Pos) => (start..stop)
-                .step_by(step.cast_unsigned())
-                .map(|i| self.get_item(py, i))
-                .map_ok(Bound::unbind)
-                .collect(),
-        }
+        self.index_to_loc(index)
+            .map(|loc| self.values.loc(&loc).clone_ref(py).into_bound(py))
     }
 
-    fn build_index(&mut self) {
-        let row0 = self.values.iter().map(Vec::len).collect::<Vec<usize>>();
-
-        if row0.len() == 1 {
-            self.idx.extend(&row0);
-            self.offset = 1;
-        }
-
-        let mut row1 = row0
-            .chunks(2)
-            .map(|pair| pair.iter().sum())
-            .collect::<Vec<usize>>();
-
-        if row1.len() == 1 {
-            let combined = row1.into_iter().chain(row0);
-            self.idx.clear();
-            self.idx.extend(combined);
-            self.offset = 1;
-        } else {
-            let size = 1usize << ((row1.len() - 1).ilog2() + 1);
-            row1.resize(size, 0);
-
-            let mut tree = vec![row0, row1];
-            while tree.last().unwrap().len() > 1 {
-                let row = tree
-                    .last()
-                    .unwrap()
-                    .chunks(2)
-                    .map(|pair| pair.iter().sum())
-                    .collect();
-                tree.push(row);
-            }
-
-            let flat = tree.into_iter().rev().flatten();
-            self.idx.extend(flat);
-            self.offset = size * 2 - 1;
-        }
-    }
-    pub(super) fn expand_on_empty_idx(&mut self, pos: usize) {
-        let mut child = self.offset + pos;
-        while child != 0 {
-            self.idx[child] += 1;
-            child = (child - 1) >> 1;
-        }
-        self.idx[0] += 1;
-    }
     pub(super) fn remove_pos(&mut self, loc: &Loc) {
         self.values.remove(loc.pos);
         self.maxes.remove(loc.pos);
-        self.idx.clear();
+        self.lengths.inner.clear();
     }
     pub(super) fn expand_at_pos(
         &mut self,
@@ -270,70 +132,34 @@ impl InnerData {
         self.maxes[pos] = new_max_at_pos;
         self.maxes.insert(pos + 1, last_max);
         self.values.insert(pos + 1, half);
-        self.idx.clear();
+        self.lengths.inner.clear();
     }
 
-    pub(super) fn delete_on_idx(&mut self, loc: &Loc, max_at_pos: Py<PyAny>) {
-        self.maxes[loc.pos] = max_at_pos;
-
-        if !self.idx.is_empty() {
-            let mut child = self.offset + loc.pos;
-            while child > 0 {
-                self.idx[child] -= 1;
-                child = (child - 1) >> 1;
+    pub(super) fn set_pos(&mut self, mut index: isize) -> PyResult<Loc> {
+        if index.is_negative() {
+            let last_len = self.values.last().unwrap().len().cast_signed();
+            if index >= -last_len {
+                let pos = self.values.len() - 1;
+                let idx = (last_len + index).cast_unsigned();
+                return Ok(Loc::new(pos, idx));
             }
-            self.idx[0] -= 1;
-        }
-    }
-
-    pub(super) fn set_pos(&mut self, mut idx: isize, loc: &mut Loc) -> PyResult<()> {
-        if idx < 0 {
-            if idx >= -self.values.last().unwrap().len().cast_signed() {
-                loc.pos = self.values.len() - 1;
-                loc.idx = (self.values.last().unwrap().len().cast_signed() + idx).cast_unsigned();
-                return Ok(());
-            }
-
-            idx += self.len.cast_signed();
-
-            if idx < 0 {
+            index += self.len.cast_signed();
+            if index.is_negative() {
                 return Err(errors::out_of_range());
             }
-        } else if idx >= self.len.cast_signed() {
-            return Err(errors::out_of_range());
         }
-
-        if idx < self.values[0].len().cast_signed() {
-            loc.pos = 0;
-            loc.idx = idx.cast_unsigned();
-            Ok(())
+        self.set_pos_usize(index.cast_unsigned())
+    }
+    pub(super) fn set_pos_usize(&mut self, index: usize) -> PyResult<Loc> {
+        if index >= self.len {
+            Err(errors::out_of_range())
+        } else if index < self.values[0].len() {
+            Ok(Loc::with_idx(index))
         } else {
-            if self.idx.is_empty() {
-                self.build_index();
+            if self.lengths.is_not_built() {
+                self.lengths.build(&self.values);
             }
-            let pos = self.idx.pipe_ref_mut(|index| {
-                let mut pos = 0;
-                let mut child = 1;
-                let len_index = index.len();
-
-                while child < len_index {
-                    let index_child = index[child].cast_signed();
-
-                    if idx < index_child {
-                        pos = child;
-                    } else {
-                        idx -= index_child;
-                        pos = child + 1;
-                    }
-
-                    child = (pos << 1) + 1;
-                }
-                pos
-            });
-
-            loc.pos = pos - self.offset;
-            loc.idx = idx.cast_unsigned();
-            Ok(())
+            Ok(self.lengths.pos_at(index))
         }
     }
 
@@ -355,13 +181,6 @@ impl InnerData {
     pub fn ge<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
         inner_cmp(self, other, CompareOp::Ge)
     }
-}
-
-fn get_slice<'a>(lists: &'a [VecPy], bounds: &Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {
-    lists[bounds.min.pos][bounds.min.idx..]
-        .iter()
-        .chain(lists[bounds.min.pos + 1..bounds.max.pos].iter().flatten())
-        .chain(lists[bounds.max.pos][0..bounds.max.idx].iter())
 }
 
 #[inline]

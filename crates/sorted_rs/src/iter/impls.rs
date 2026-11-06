@@ -1,89 +1,80 @@
 use crate::{
-    Bounds, Loc,
+    Bounds, ListGetter,
+    bounds::Loc,
     iter::{
-        core::{InnerIter, InnerRef},
+        core::{InnerIter, InnerIterBounded, InnerRef},
         cursor::Cursor,
-        traits::SortedNext,
+        traits::{Item, SortedNext},
     },
 };
-use derive_more::{Deref, From};
+use derive_more::Deref;
+use pyo3::prelude::*;
 
-use pyo3::ffi;
 use tap::prelude::*;
-
-pub enum IterKind {
-    Fwd,
-    Bwd,
-    Bounded(Bounds, bool),
-}
-
-#[derive(Debug, From, Deref)]
+type IntoBounded<'a, 'py, T> = (&'a Bound<'py, T>, Bounds);
+#[derive(Debug, Deref)]
 pub struct Iter(InnerIter);
 
-#[derive(Debug, From, Deref)]
+#[derive(Debug, Deref)]
 pub struct IterRev(InnerIter);
 
 #[derive(Debug, Deref)]
-pub struct IterBounded(#[deref] InnerIter, u64);
+pub struct IterBounded(InnerIterBounded);
 
 #[derive(Debug, Deref)]
-pub struct IterBoundedRev(#[deref] InnerIter, u64);
+pub struct IterBoundedRev(InnerIterBounded);
 
-impl Iter {
+impl<T: ListGetter> From<&Bound<'_, T>> for Iter {
     #[inline]
-    pub fn new(owner: impl Into<InnerRef>) -> Self {
-        InnerIter::new(owner.into(), Cursor::default()).into()
+    fn from(owner: &Bound<'_, T>) -> Self {
+        Self(InnerIter::new(owner.into(), Cursor::default()))
     }
 }
 
-impl IterRev {
+impl<T: ListGetter> From<&Bound<'_, T>> for IterRev {
     #[inline]
-    pub fn new(owner: impl Into<InnerRef>) -> Self {
-        let inner = owner.into();
-        let pos = inner.values.len().pipe(Loc::with_pos).into();
-        InnerIter::new(inner, pos).into()
+    fn from(owner: &Bound<'_, T>) -> Self {
+        let pyref = owner.conv::<InnerRef>();
+        let cursor = pyref.values.len().pipe(Loc::with_pos).into();
+        Self(InnerIter::new(pyref, cursor))
     }
 }
 
-impl IterBounded {
-    #[inline]
-    pub fn new(owner: impl Into<InnerRef>, bounds: Bounds) -> Self {
+impl<T: ListGetter> From<IntoBounded<'_, '_, T>> for IterBounded {
+    fn from((owner, bounds): IntoBounded<'_, '_, T>) -> Self {
         let inner = InnerIter::new(owner.into(), bounds.min.into());
-        Self(inner, bounds.max.into())
+        Self(InnerIterBounded::new(inner, bounds.max.into()))
     }
 }
 
-impl IterBoundedRev {
+impl<T: ListGetter> From<IntoBounded<'_, '_, T>> for IterBoundedRev {
     #[inline]
-    pub fn new(owner: impl Into<InnerRef>, bounds: Bounds) -> Self {
+    fn from((owner, bounds): IntoBounded<'_, '_, T>) -> Self {
         let inner = InnerIter::new(owner.into(), bounds.max.into());
-        Self(inner, bounds.min.into())
+        Self(InnerIterBounded::new(inner, bounds.min.into()))
     }
 }
-
 unsafe impl SortedNext for Iter {
     #[inline(always)]
-    unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next::<false, true>(0) }
+    unsafe fn next(&self) -> Item {
+        unsafe { self.0.next::<true>() }
     }
 }
-
 unsafe impl SortedNext for IterRev {
     #[inline(always)]
-    unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next::<false, false>(0) }
+    unsafe fn next(&self) -> Item {
+        unsafe { self.0.next::<false>() }
     }
 }
 unsafe impl SortedNext for IterBounded {
     #[inline(always)]
-    unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next::<true, true>(self.1) }
+    unsafe fn next(&self) -> Item {
+        unsafe { self.0.next::<true>() }
     }
 }
-
 unsafe impl SortedNext for IterBoundedRev {
     #[inline(always)]
-    unsafe fn next(&self) -> *mut ffi::PyObject {
-        unsafe { self.0.next::<true, false>(self.1) }
+    unsafe fn next(&self) -> Item {
+        unsafe { self.0.next::<false>() }
     }
 }

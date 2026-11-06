@@ -4,21 +4,18 @@ use pyo3::{
     types::{PyBool, PySet, PyTuple},
 };
 
-use super::{
-    core::{ObjOrVec, SortedCollectionsMethods},
-    getters::ListGetter,
-};
-use crate::{abc, traits::IntoInit};
+use super::core::ObjOrVec;
+use crate::abc;
 use parking_lot::RwLock;
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
 use sorted_rs::{
-    KeysListsData, ListsData, PySetDataRef, SetData, SetOp, SetPred, types::IntOrSlice,
+    KeyList, List, ListGetter, PySetDataRef, SetOp, SetPred, types, types::IntOrSlice,
 };
 use std_tools::prelude::ResultExt;
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedSet(pub(super) RwLock<SetData<ListsData>>);
+pub struct SortedSet(pub(super) RwLock<types::Set<List>>);
 #[pymethods]
 impl SortedSet {
     #[new]
@@ -27,14 +24,14 @@ impl SortedSet {
         py: Python<'_>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        SetData::<ListsData>::build(py, iterable)?
+        types::Set::<List>::build(py, iterable)?
             .conv::<Self>()
             .init()
             .pipe(Ok)
     }
 }
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
-pub struct SortedKeySet(pub(super) RwLock<SetData<KeysListsData>>);
+pub struct SortedKeySet(pub(super) RwLock<types::Set<KeyList>>);
 #[pymethods]
 impl SortedKeySet {
     #[new]
@@ -43,29 +40,26 @@ impl SortedKeySet {
         key: Bound<'_, PyAny>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        SetData::<KeysListsData>::build(key, iterable)?
+        types::Set::<KeyList>::build(key, iterable)?
             .conv::<Self>()
             .init()
             .pipe(Ok)
     }
 }
 impl PySetDataRef for SortedSet {
-    type L = ListsData;
+    type L = List;
 }
 impl PySetDataRef for SortedKeySet {
-    type L = KeysListsData;
+    type L = KeyList;
 }
 #[py_abc(SortedSet, SortedKeySet)]
 pub(super) trait SortedSetMethods:
-    SortedCollectionsMethods
-    + ListGetter<T = SetData<<Self as ListGetter>::L>>
-    + IntoInit
-    + PySetDataRef<L = <Self as ListGetter>::L>
+    ListGetter<T = types::Set<<Self as ListGetter>::L>> + PySetDataRef<L = <Self as ListGetter>::L>
 {
     #[getter]
     #[inline(always)]
     fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
-        self.lock().get_set(py)
+        self.read().get_set(py)
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.get_set(value.py()).contains(value)
@@ -97,7 +91,7 @@ pub(super) trait SortedSetMethods:
         self.comp(other, CompareOp::Ge)
     }
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.lock().__len__(py)
+        self.read().__len__(py)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
@@ -143,7 +137,7 @@ pub(super) trait SortedSetMethods:
         self.write().discard(&value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.lock().copy(py)?.conv::<Self>().into_bound(py)
+        self.read().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
         self.map_pred(other, SetPred::Disjoint)
@@ -159,7 +153,7 @@ pub(super) trait SortedSetMethods:
         self.write().clear(py);
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.lock().count(value)
+        self.read().count(value)
     }
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {

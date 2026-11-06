@@ -78,13 +78,14 @@ class SortedCollection[T](ABC):
         """
 
     @abstractmethod
-    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:
-        """Return first index of value in sorted list.
+    def index(
+        self, value: T, start: int | None = None, stop: int | None = None, /
+    ) -> int:
+        """Return first index of value in the `SortedCollection`.
 
-        Raise ValueError if *value* is not present.
+        Raise `ValueError` if *value* is not present.
 
-        Index must be between *start* and *stop* for the *value* to be
-        considered present.
+        Index must be between *start* and *stop* for the *value* to be considered present.
 
         The default value, `None`, for *start* and *stop* indicate the beginning and end of the `SortedCollection`.
 

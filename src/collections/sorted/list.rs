@@ -1,31 +1,24 @@
-use crate::{
-    abc,
-    collections::sorted::{
-        core::{ObjOrVec, SortedCollectionsMethods},
-        getters::ListGetter,
-    },
-    traits::IntoInit,
-};
+use crate::{abc, collections::sorted::core::ObjOrVec};
 use parking_lot::RwLock;
 use pyo3::{exceptions::PyNotImplementedError, prelude::*};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
 use sorted_rs::{
-    KeysListsData, ListsData, PyListsDataRef,
+    KeyList, List, PyListsDataRef,
     prelude::*,
     types::{IntOrSlice, SeqOrAny},
 };
 use std_tools::prelude::*;
 use tap::prelude::*;
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
-pub struct SortedList(pub(super) RwLock<ListsData>);
+pub struct SortedList(pub(super) RwLock<List>);
 
 #[pymethods]
 impl SortedList {
     #[new]
     #[pyo3(signature = (iterable = None))]
     fn py_new(iterable: Option<Bound<'_, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
-        let data = Self::from(ListsData::default());
+        let data = Self::from(List::default());
         if let Some(values) = iterable {
             data.extend(&values)?;
         }
@@ -34,7 +27,7 @@ impl SortedList {
 }
 
 #[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
-pub struct SortedKeyList(pub(super) RwLock<KeysListsData>);
+pub struct SortedKeyList(pub(super) RwLock<KeyList>);
 
 #[pymethods]
 impl SortedKeyList {
@@ -44,7 +37,7 @@ impl SortedKeyList {
         key: Bound<'_, PyAny>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let slf = key.unbind().pipe(KeysListsData::new).conv::<Self>();
+        let slf = key.unbind().pipe(KeyList::new).conv::<Self>();
         if let Some(iterable) = iterable {
             slf.extend(&iterable)?;
         }
@@ -52,48 +45,45 @@ impl SortedKeyList {
     }
 }
 impl PyListsDataRef for SortedList {
-    type L = ListsData;
+    type L = List;
 }
 impl PyListsDataRef for SortedKeyList {
-    type L = KeysListsData;
+    type L = KeyList;
 }
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedListMethods:
-    SortedCollectionsMethods
-    + IntoInit
-    + ListGetter<T = <Self as ListGetter>::L>
-    + PyListsDataRef<L = <Self as ListGetter>::L>
+    ListGetter<T = <Self as ListGetter>::L> + PyListsDataRef<L = <Self as ListGetter>::L>
 {
     fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let out = self.try_as_updatable(other)?;
-        self.lock().concat(py, out)?.conv::<Self>().into_bound(py)
+        self.read().concat(py, out)?.conv::<Self>().into_bound(py)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
     }
     fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().eq(other)
+        self.read().eq(other)
     }
 
     fn __ne__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().ne(other)
+        self.read().ne(other)
     }
 
     fn __lt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().lt(other)
+        self.read().lt(other)
     }
 
     fn __gt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().gt(other)
+        self.read().gt(other)
     }
 
     fn __le__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().le(other)
+        self.read().le(other)
     }
 
     fn __ge__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
-        self.lock().ge(other)
+        self.read().ge(other)
     }
 
     fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
@@ -106,7 +96,7 @@ pub(super) trait SortedListMethods:
             .and_then_left(Bound::try_into_py)
     }
     fn __len__(&self) -> usize {
-        self.lock().len
+        self.read().len
     }
 
     fn __radd__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -123,7 +113,7 @@ pub(super) trait SortedListMethods:
         self.extend(&other)
     }
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        self.lock()
+        self.read()
             .as_repeated(py, num)?
             .conv::<Self>()
             .into_bound(py)
@@ -132,7 +122,7 @@ pub(super) trait SortedListMethods:
         self.write().imul(py, num)
     }
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.lock().contains(value)
+        self.read().contains(value)
     }
     fn append(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.write().append(value)
@@ -144,7 +134,7 @@ pub(super) trait SortedListMethods:
         self.write().count(&value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.lock().copy(py)?.conv::<Self>().into_bound(py)
+        self.read().copy(py)?.conv::<Self>().into_bound(py)
     }
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.write().discard(value)

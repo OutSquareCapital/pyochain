@@ -78,6 +78,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "derive-new"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2cdc8d50f426189eef89dac62fabfa0abb27d5cc008f25bf4156a0203325becc"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "derive_more"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -337,6 +348,7 @@ dependencies = [
 name = "pyo3_ext"
 version = "0.1.0"
 dependencies = [
+ "derive-new",
  "derive_more",
  "either",
  "pyo3",
@@ -350,6 +362,7 @@ name = "pyochain"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
+ "derive-new",
  "derive_more",
  "either",
  "itertools",
@@ -450,6 +463,7 @@ checksum = "d0d5d4b1981b8bbbb7aed204cae5726d683d5d6ac7e74ec54122ea28f315e7c8"
 name = "sorted_rs"
 version = "0.1.0"
 dependencies = [
+ "derive-new",
  "derive_more",
  "either",
  "itertools",

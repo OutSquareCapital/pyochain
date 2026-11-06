@@ -159,7 +159,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     def bisect_right(self, value: K) -> int: ...
     @override
     def index(
-        self, value: K, start: int | None = None, stop: int | None = None
+        self, value: K, start: int | None = None, stop: int | None = None, /
     ) -> int: ...
     @override
     def islice(

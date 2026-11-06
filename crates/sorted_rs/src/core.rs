@@ -1,69 +1,64 @@
-use crate::{InnerData, prelude::*, types::VecPy};
-use derive_more::{Constructor, Deref, DerefMut};
-use pyo3::{
-    prelude::*,
-    types::{PyDict, PySet},
-};
+use crate::{inner::InnerData, prelude::*, types::VecPy};
+use derive_more::{AsMut, AsRef, Constructor, Deref, DerefMut};
+use derive_new::new;
+use pyo3::prelude::*;
+use pyo3_ext::{prelude::*, types::PyFrozenClass};
 use std::ops::{Deref, DerefMut};
 
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 #[derive(Default, Deref, DerefMut)]
-pub struct ListsData(pub(super) InnerData);
-pub struct KeysListsData(pub(super) InnerData, pub Vec<VecPy>, pub(super) Py<PyAny>);
-pub struct SetData<T: ListsDataMethods>(pub(super) T, pub Py<PySet>);
-#[derive(Constructor)]
-pub struct DictData<T: ListsDataMethods>(pub(super) T, pub Py<PyDict>);
-pub trait ListDataOwner {
-    type List: ListsDataMethods;
-    fn list(&self) -> &Self::List;
-    fn list_mut(&mut self) -> &mut Self::List;
-}
-impl<T: ListsDataMethods> ListDataOwner for T {
-    type List = T;
-    #[inline(always)]
-    fn list(&self) -> &Self::List {
-        self
-    }
-    #[inline(always)]
-    fn list_mut(&mut self) -> &mut Self::List {
-        self
-    }
-}
-impl std::ops::Deref for KeysListsData {
-    type Target = InnerData;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl std::ops::DerefMut for KeysListsData {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-macro_rules! impl_getters {
-    ($name:ident) => {
-        impl<T: ListsDataMethods> Deref for $name<T> {
-            type Target = InnerData;
-            fn deref(&self) -> &InnerData {
-                self.0.deref()
+pub struct List(pub(super) InnerData);
+#[derive(Deref, DerefMut, new)]
+pub struct KeyList(
+    #[deref]
+    #[deref_mut]
+    #[new(default)]
+    pub(super) InnerData,
+    #[new(default)] pub Vec<VecPy>,
+    pub(super) Py<PyAny>,
+);
+#[derive(Constructor, AsRef, AsMut, Deref, DerefMut)]
+pub struct Collection<T: ListsMethods, U>(
+    #[deref(forward)]
+    #[deref_mut(forward)]
+    pub(super) T,
+    pub Py<U>,
+);
+macro_rules! impl_self_as_ref {
+    ($($name:ty),+) => {
+        $(
+            impl AsRef<$name> for $name {
+                #[inline(always)]
+                fn as_ref(&self) -> &$name {
+                    self
+                }
             }
-        }
-        impl<T: ListsDataMethods> DerefMut for $name<T> {
-            fn deref_mut(&mut self) -> &mut InnerData {
-                self.0.deref_mut()
+            impl AsMut<$name> for $name {
+                #[inline(always)]
+                fn as_mut(&mut self) -> &mut $name {
+                    self
+                }
             }
-        }
-        impl<T: ListsDataMethods> ListDataOwner for $name<T> {
-            type List = T;
-            fn list(&self) -> &Self::List {
-                &self.0
-            }
-            fn list_mut(&mut self) -> &mut Self::List {
-                &mut self.0
-            }
-        }
+        )+
     };
 }
+impl_self_as_ref!(List, KeyList);
 
-impl_getters!(SetData);
-impl_getters!(DictData);
+pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> + Init {
+    type L: ListsMethods;
+    type T: Deref<Target = InnerData>
+        + DerefMut
+        + AsRef<Self::L>
+        + AsMut<Self::L>
+        + PyRepr
+        + Send
+        + Sync;
+    #[inline(always)]
+    fn read(&self) -> RwLockReadGuard<'_, Self::T> {
+        self.as_ref().try_read().unwrap()
+    }
+    #[inline(always)]
+    fn write(&self) -> RwLockWriteGuard<'_, Self::T> {
+        self.as_ref().try_write().unwrap()
+    }
+}

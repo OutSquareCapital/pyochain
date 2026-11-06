@@ -8,12 +8,12 @@ use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::prelude::*;
 
-use crate::{DictData, ListsData, prelude::*};
+use crate::{List, prelude::*, types::Dict};
 
-impl DictData<ListsData> {
+impl Dict<List> {
     #[must_use]
     pub fn empty(py: Python<'_>) -> Self {
-        Self::new(ListsData::default(), PyDict::new(py).unbind())
+        Self::new(List::default(), PyDict::new(py).unbind())
     }
     pub fn from_keys<'py>(
         iterable: &Bound<'py, PyAny>,
@@ -24,10 +24,10 @@ impl DictData<ListsData> {
         iterable
             .try_iter()?
             .map(|key| Ok((key?, value.clone())))
-            .pipe(|v| DictData::empty(py).copy_from_iter(py, v))
+            .pipe(|v| Self::empty(py).copy_from_iter(py, v))
     }
 }
-impl<T: ListsDataMethods> DictData<T> {
+impl<T: ListsMethods> Dict<T> {
     pub fn __len__(&self, py: Python<'_>) -> usize {
         self.1.bind(py).len()
     }
@@ -38,8 +38,7 @@ impl<T: ListsDataMethods> DictData<T> {
     pub fn or(&self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
         let py = value.py();
         let dict = self.1.bind(py).as_any();
-        self.0
-            .iter()
+        self.iter()
             .map(|x| x.clone_ref(py).into_bound(py))
             .map(|key| dict.get_item(&key).map(|value| (key, value)))
             .chain(value.items_view()?.iter())
@@ -53,8 +52,7 @@ impl<T: ListsDataMethods> DictData<T> {
             .items_view()?
             .iter()
             .chain(
-                self.0
-                    .iter()
+                self.iter()
                     .map(|x| x.clone_ref(py).into_bound(py))
                     .map(|key| dict.get_item(&key).map(|value| (key, value))),
             )
@@ -62,8 +60,7 @@ impl<T: ListsDataMethods> DictData<T> {
     }
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         let dict = self.1.bind(py).as_any();
-        self.0
-            .iter()
+        self.iter()
             .map(|x| x.clone_ref(py).into_bound(py))
             .map(|key| dict.get_item(&key).map(|value| (key, value)))
             .pipe(|v| self.copy_from_iter(py, v))
@@ -125,7 +122,7 @@ impl<T: ListsDataMethods> DictData<T> {
             })
             .collect::<PyResult<Vec<_>>>()?;
         let list = self.0.as_owned_from(py, unbounded)?;
-        DictData::new(list, inner.unbind()).pipe(Ok)
+        Self::new(list, inner.unbind()).pipe(Ok)
     }
 
     pub fn del_item(&mut self, key: &Bound<'_, PyAny>) -> PyResult<()> {

@@ -1,7 +1,10 @@
-use crate::abc;
+use crate::{abc, collections::sorted::core::IterRes};
 use derive_more::{Deref, From};
 use pyo3::prelude::*;
-use sorted_rs::iter;
+use sorted_rs::{
+    Bounds, ListGetter,
+    iter::{self, PySortedIter},
+};
 
 macro_rules! impl_sorted_iter {
     ($($iter:ty => $pyiter:ident),+ $(,)?) => {
@@ -9,15 +12,17 @@ macro_rules! impl_sorted_iter {
             #[derive(From, Deref)]
             #[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
             pub struct $pyiter($iter);
-            impl iter::PySortedIter<$iter> for $pyiter {}
+            impl iter::PySortedIter for $pyiter {
+                type Iter = $iter;
+            }
             #[pymethods]
             impl $pyiter {
                 fn __next__(slf: Bound<'_, Self>) -> Option<Bound<'_, PyAny>> {
-                    iter::PySortedIter::<$iter>::py_next(slf)
+                    iter::PySortedIter::py_next(slf)
                 }
                 fn __length_hint__(&self) -> usize {
                       self.0.len()
-                  }
+                }
             }
         )+
     };
@@ -29,3 +34,12 @@ impl_sorted_iter!(
     iter::IterBounded => SortedIterBounded,
     iter::IterBoundedRev => SortedIterBoundedRev,
 );
+
+#[inline(always)]
+pub fn bounded<'py>(slf: &Bound<'py, impl ListGetter>, bounds: Bounds, rev: bool) -> IterRes<'py> {
+    if rev {
+        SortedIterBoundedRev::build(slf.py(), (slf, bounds)).map(Bound::into_super)
+    } else {
+        SortedIterBounded::build(slf.py(), (slf, bounds)).map(Bound::into_super)
+    }
+}

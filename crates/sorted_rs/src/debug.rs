@@ -1,224 +1,154 @@
-use crate::{DictData, KeysListsData, SetData, inner::InnerData, prelude::*};
+//! Invariants checks ported from the original `sortedcontainers` test suite.
+use crate::{
+    KeyList,
+    inner::InnerData,
+    prelude::*,
+    types::{Dict, Set},
+};
 use pyo3::prelude::*;
 use std_tools::prelude::*;
 macro_rules! pyassert {
     ($cond:expr) => {
         if !$cond {
-            return Err(pyo3::exceptions::PyAssertionError::new_err(""));
+            let msg = format!("Assertion failed: {}", stringify!($cond));
+            Err(pyo3::exceptions::PyAssertionError::new_err(msg))
+        } else {
+            Ok(())
         }
     };
 }
 pub fn check_empty(slf: &InnerData) -> PyResult<()> {
-    pyassert!(slf.len == 0);
-    pyassert!(slf.maxes.is_empty());
-    pyassert!(slf.values.is_empty());
-    Ok(())
+    pyassert!(slf.len == 0)?;
+    pyassert!(slf.maxes.is_empty())?;
+    pyassert!(slf.values.is_empty())
 }
-pub fn check_dict<T: ListsDataMethods>(py: Python<'_>, data: &DictData<T>) -> PyResult<()> {
-    check_list(py, data)?;
-    let dict = data.1.bind(py);
-    pyassert!(dict.len() == data.len);
+pub fn check_dict<T: ListsMethods>(py: Python<'_>, slf: &Dict<T>) -> PyResult<()> {
+    check_list(py, &slf.0)?;
+    let dict = slf.1.bind(py);
+    pyassert!(dict.len() == slf.len)?;
     pyassert!(
-        data.iter()
+        slf.iter()
             .try_all(|item| { dict.contains(item.bind(py)) })?
-    );
-    Ok(())
+    )
 }
 
-pub fn check_set_len<T: ListsDataMethods>(py: Python<'_>, checked: &SetData<T>) -> PyResult<()> {
-    let set = checked.get_set(py);
-    pyassert!(set.len() == checked.len);
-    check_list(py, checked)?;
-    pyassert!(checked.iter().try_all(|x| set.contains(x))?);
-    Ok(())
+pub fn check_set<T: ListsMethods>(py: Python<'_>, slf: &Set<T>) -> PyResult<()> {
+    let set = slf.get_set(py);
+    pyassert!(set.len() == slf.len)?;
+    check_list(py, &slf.0)?;
+    pyassert!(slf.iter().try_all(|x| set.contains(x))?)
 }
-pub fn check_list(py: Python<'_>, slf: &InnerData) -> PyResult<()> {
-    pyassert!(slf.load >= 4);
-    pyassert!(slf.maxes.len() == slf.values.len());
-    pyassert!(slf.len == slf.values.iter().map(Vec::len).sum::<usize>());
-
-    // Check all sublists are sorted.
-
-    for sublist in &slf.values {
-        for pos in 1..sublist.len() {
-            pyassert!(sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?);
-        }
-    }
-
-    // Check beginning/end of sublists are sorted.
-
-    for pos in 1..slf.values.len() {
-        pyassert!(
-            slf.values[pos - 1]
-                .last()
-                .unwrap()
-                .bind(py)
-                .le(slf.values[pos][0].bind(py))?
-        );
-    }
-
-    // Check _maxes index is the last value of each sublist.
-
-    for pos in 0..slf.maxes.len() {
-        pyassert!(
-            slf.maxes[pos]
-                .bind(py)
-                .eq(slf.values[pos].last().unwrap().bind(py))?
-        );
-    }
-
-    // Check sublist lengths are less than double load-factor.
-
-    let double = slf.load << 1;
-    pyassert!(slf.values.iter().all(|sublist| sublist.len() <= double));
-
-    // Check sublist lengths are greater than half load-factor for all
-    // but the last sublist.
-
-    let half = slf.load >> 1;
-    for pos in 0..slf.values.len().saturating_sub(1) {
-        pyassert!(slf.values[pos].len() >= half);
-    }
-
-    if !slf.idx.is_empty() {
-        pyassert!(slf.len == slf.idx[0]);
-        pyassert!(slf.idx.len() == slf.offset + slf.values.len());
-
-        // Check index leaf nodes equal length of sublists.
-
-        for pos in 0..slf.values.len() {
-            let leaf = slf.idx[slf.offset + pos];
-            pyassert!(leaf.eq(&slf.values[pos].len()));
-        }
-
-        // Check index branch nodes are the sum of their children.
-
-        for pos in 0..slf.offset {
-            let child = (pos << 1) + 1;
-            if child >= slf.idx.len() {
-                pyassert!(slf.idx[pos].eq(&0));
-            } else if child + 1 == slf.idx.len() {
-                pyassert!(slf.idx[pos].eq(&slf.idx[child]));
-            } else {
-                let child_sum = slf.idx[child] + slf.idx[child + 1];
-                pyassert!(child_sum.eq(&slf.idx[pos]));
-            }
-        }
-    }
-
-    Ok(()).inspect_err(|e| show_list(py, e, slf))
+pub fn check_list<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
+    check_sublists(py, slf).inspect_err(|e| e.add_note(py, list_infos(slf)).unwrap())
 }
 
-pub fn check_key_list(py: Python<'_>, data: &KeysListsData) -> PyResult<()> {
+pub fn check_key_list(py: Python<'_>, slf: &KeyList) -> PyResult<()> {
+    check_sublists(py, slf)
+        .and_then(|()| check_values_match_keys(py, slf))
+        .inspect_err(|e| {
+            let infos = [
+                list_infos(slf),
+                format!("len_keys: {}", slf.keys().len()),
+                format!("keys: {:?}", slf.keys()),
+            ]
+            .join("\n");
+            e.add_note(py, infos).unwrap();
+        })
+}
+
+/// Check keys matches key mapped to lists.
+fn check_values_match_keys(py: Python<'_>, data: &KeyList) -> PyResult<()> {
     let key_fn = data.2.bind(py);
-    pyassert!(data.load >= 4);
-    pyassert!(data.maxes.len() == data.values.len() && data.values.len() == data.1.len());
-    pyassert!(data.len == data.values.iter().map(Vec::len).sum::<usize>());
+    data.values
+        .iter()
+        .zip(data.keys().iter())
+        .try_for_each(|(val_sublist, key_sublist)| {
+            pyassert!(val_sublist.len() == key_sublist.len())?;
+            val_sublist
+                .iter()
+                .zip(key_sublist.iter())
+                .try_for_each(|(val, key)| pyassert!(key_fn.call1((&val,))?.eq(key)?))
+        })
+}
 
+fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
+    pyassert!(slf.load.test_limit())?;
+    pyassert!(slf.maxes.len() == slf.values.len() && slf.values.len() == slf.keys().len())?;
+    pyassert!(slf.len == slf.values.iter().map(Vec::len).sum::<usize>())?;
     // Check all sublists are sorted.
-
-    for sublist in &data.1 {
-        for pos in 1..sublist.len() {
-            pyassert!(sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?);
-        }
-    }
-
+    slf.keys().iter().try_for_each(|sublist| {
+        (1..sublist.len())
+            .try_for_each(|pos| pyassert!(sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?))
+    })?;
     // Check beginning/end of sublists are sorted.
-
-    for pos in 1..data.1.len() {
+    (1..slf.keys().len()).try_for_each(|pos| {
         pyassert!(
-            data.1[pos - 1]
+            slf.keys()[pos - 1]
                 .last()
                 .unwrap()
                 .bind(py)
-                .le(data.1[pos][0].bind(py))?
-        );
-    }
-
-    // Check _keys matches _key mapped to _lists.
-
-    for (val_sublist, key_sublist) in data.values.iter().zip(data.1.iter()) {
-        pyassert!(val_sublist.len() == key_sublist.len());
-        for (val, key) in val_sublist.iter().zip(key_sublist.iter()) {
-            {
-                pyassert!(key_fn.call1((&val,))?.eq(key)?);
-            }
-        }
-    }
-
+                .le(slf.keys()[pos][0].bind(py))?
+        )
+    })?;
     // Check _maxes index is the last value of each sublist.
-
-    for pos in 0..data.maxes.len() {
-        pyassert!(
-            data.maxes[pos]
-                .bind(py)
-                .eq(data.1[pos].last().unwrap().bind(py))?
-        );
-    }
-
+    pyassert!(
+        slf.maxes
+            .iter()
+            .zip(slf.keys())
+            .try_all(|(max, sublist)| max.bind(py).eq(sublist.last().unwrap().bind(py)))?
+    )?;
     // Check sublist lengths are less than double load-factor.
-
-    let double = data.load << 1;
-    pyassert!(data.values.iter().all(|sublist| sublist.len() <= double));
-
+    pyassert!(
+        slf.values
+            .iter()
+            .all(|sublist| sublist.len() <= slf.load.higher_limit())
+    )?;
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
-
-    let half = data.load >> 1;
-    for pos in 0..data.values.len().saturating_sub(1) {
-        pyassert!(data.values[pos].len() >= half);
-    }
-
-    if !data.idx.is_empty() {
-        pyassert!(data.len == data.idx[0]);
-        pyassert!(data.idx.len() == data.offset + data.values.len());
-
+    pyassert!(
+        slf.values
+            .iter()
+            .rev()
+            .skip(1)
+            .all(|sublist| sublist.len() >= slf.load.lower_limit())
+    )?;
+    if slf.lengths.is_built() {
+        pyassert!(slf.len == slf.lengths.inner[0])?;
+        pyassert!(slf.lengths.inner.len() == slf.lengths.offset + slf.values.len())?;
         // Check index leaf nodes equal length of sublists.
-
-        for pos in 0..data.values.len() {
-            let leaf = data.idx[data.offset + pos];
-            pyassert!(leaf == data.values[pos].len());
-        }
-
+        slf.values
+            .iter()
+            .enumerate()
+            .try_for_each(|(val_idx, val)| {
+                let leaf = slf.lengths.inner[slf.lengths.offset + val_idx];
+                pyassert!(leaf == val.len())
+            })?;
         // Check index branch nodes are the sum of their children.
-
-        for pos in 0..data.offset {
+        for pos in 0..slf.lengths.offset {
             let child = (pos << 1) + 1;
-            if child >= data.idx.len() {
-                pyassert!(data.idx[pos] == 0);
-            } else if child + 1 == data.idx.len() {
-                pyassert!(data.idx[pos] == data.idx[child]);
+            if child >= slf.lengths.inner.len() {
+                pyassert!(slf.lengths.inner[pos] == 0)?;
+            } else if child + 1 == slf.lengths.inner.len() {
+                pyassert!(slf.lengths.inner[pos] == slf.lengths.inner[child])?;
             } else {
-                let child_sum = data.idx[child] + data.idx[child + 1];
-                pyassert!(child_sum == data.idx[pos]);
+                let child_sum = slf.lengths.inner[child] + slf.lengths.inner[child + 1];
+                pyassert!(child_sum == slf.lengths.inner[pos])?;
             }
         }
     }
-    Ok(()).inspect_err(|e| show_key_list(py, e, data))
+    Ok(())
 }
-
-fn show_list(py: Python<'_>, err: &PyErr, data: &InnerData) {
-    let infos = [
-        format!("len: {}", data.len),
-        format!("load: {}", data.load),
-        format!("offset: {}", data.offset),
-        format!("len_index: {}", data.idx.len()),
-        format!("index: {:?}", data.idx),
-        format!("len_maxes: {}", data.maxes.len()),
-        format!("maxes: {:?}", data.maxes),
-        format!("len_lists: {}", data.values.len()),
-        format!("lists: {:?}", data.values),
+fn list_infos(slf: &InnerData) -> String {
+    [
+        format!("len: {}", slf.len),
+        format!("load: {:?}", slf.load),
+        format!("offset: {}", slf.lengths.offset),
+        format!("len_index: {}", slf.lengths.inner.len()),
+        format!("index: {:?}", slf.lengths.inner),
+        format!("len_maxes: {}", slf.maxes.len()),
+        format!("maxes: {:?}", slf.maxes),
+        format!("len_lists: {}", slf.values.len()),
+        format!("lists: {:?}", slf.values),
     ]
-    .join("\n");
-
-    err.add_note(py, infos).unwrap();
-}
-
-fn show_key_list(py: Python<'_>, err: &PyErr, data: &KeysListsData) {
-    show_list(py, err, data);
-    let infos = [
-        format!("len_keys: {}", data.1.len()),
-        format!("keys: {:?}", data.1),
-    ];
-    err.add_note(py, infos.join("\n")).unwrap();
+    .join("\n")
 }

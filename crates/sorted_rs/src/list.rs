@@ -2,32 +2,28 @@ use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 
 use crate::{
-    ListsData,
+    Bounds, List,
     bisect::Bisect,
-    bounds::{Bounds, Loc},
+    bounds::{Loc, RangeIdxs, RawIrangeSpecs, RawRangeIdxs},
     errors,
     list_update::ListAdd,
     ops,
-    traits::{ListsDataMethods, NestedVec},
+    traits::{ListsMethods, NestedVec},
     types::VecPy,
 };
 
-impl ListsDataMethods for ListsData {
+impl ListsMethods for List {
+    fn keys(&self) -> &[VecPy] {
+        &self.values
+    }
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::default();
         new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
-    fn irange_specs<'py>(
-        &self,
-        _py: Python<'py>,
-        minimum: Option<Bound<'py, PyAny>>,
-        maximum: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-    ) -> PyResult<Bounds> {
-        Bounds::from_irange(&self.values, &self.maxes, minimum, maximum, inclusive)
+    fn irange(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds> {
+        self.irange_by_key(specs)
     }
-
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         match ops::Maxes::right(&self.0.maxes, &value) {
@@ -54,29 +50,8 @@ impl ListsDataMethods for ListsData {
         Ok(())
     }
     #[inline]
-    fn bisect<F: Fn(&[Py<PyAny>], &Bound<'_, PyAny>) -> PyResult<usize>>(
-        &mut self,
-        value: &Bound<'_, PyAny>,
-        func: F,
-    ) -> PyResult<usize> {
-        if self.maxes.is_empty() {
-            Ok(0)
-        } else {
-            let mut loc = Loc::new(0, 0);
-            loc.pos = func(&self.maxes, value)?;
-            if loc.pos == self.maxes.len() {
-                Ok(self.len)
-            } else {
-                loc.idx = func(&self.values[loc.pos], value)?;
-                Ok(self.loc(&loc))
-            }
-        }
-    }
-    fn bisect_left(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.bisect(value, Bisect::bisect_left)
-    }
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        self.bisect(value, Bisect::bisect_right)
+    fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        self.bisect_by_key::<LEFT>(value)
     }
     #[inline]
     fn clear(&mut self, _py: Python<'_>) {
@@ -109,15 +84,14 @@ impl ListsDataMethods for ListsData {
         }
     }
 
-    fn delete(&mut self, py: Python<'_>, loc: &mut Loc) -> PyResult<()> {
-        self.values.loc_remove(loc);
+    fn delete(&mut self, py: Python<'_>, mut loc: Loc) -> PyResult<()> {
+        self.values.loc_remove(&loc);
         self.len -= 1;
-        match ops::Delete::new(&self.values, self.load, loc) {
-            ops::Delete::PosSupToLoad => {
-                let max_at_pos = self.values.loc_last(loc).clone_ref(py);
-                self.delete_on_idx(loc, max_at_pos);
+        match ops::Delete::new(self, &loc) {
+            ops::Delete::LenAtPosSupToHalfLoad => {
+                self.delete_on_len_sup_to_half_load(py, loc);
             }
-            ops::Delete::DataLenGTOne => {
+            ops::Delete::ListsLenGTOne => {
                 if loc.pos == 0 {
                     loc.pos += 1;
                 }
@@ -127,27 +101,27 @@ impl ListsDataMethods for ListsData {
                     .map(|x| x.clone_ref(py))
                     .collect::<Vec<_>>();
                 self.values[prev].append(removed.as_mut());
-                self.remove_pos(loc);
-                self.maxes[prev] = self.values[prev].last().unwrap().clone_ref(py);
+                self.remove_pos(&loc);
+                self.maxes[prev] = self.keys()[prev].last().unwrap().clone_ref(py);
                 self.expand(py, prev);
             }
-            ops::Delete::LenPosNotZero => {
-                self.maxes[loc.pos] = self.values.loc_last(loc).clone_ref(py);
+            ops::Delete::LenAtPosNotZero => {
+                self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
             }
-            ops::Delete::Other => self.remove_pos(loc),
+            ops::Delete::Other => self.remove_pos(&loc),
         }
         Ok(())
     }
     fn expand(&mut self, py: Python<'_>, pos: usize) {
-        match ops::Expand::new(self.0.values[pos].len(), self.0.load, &self.0.idx) {
-            ops::Expand::PosLenGtLoad => {
-                let half = self.0.values[pos].split_off(self.0.load);
+        match ops::Expand::new(self, pos) {
+            ops::Expand::LenAtPosGtDoubleLoad => {
+                let half = self.0.values[pos].split_off(*self.0.load);
                 let new_max_at_pos = self.values[pos].last().unwrap().clone_ref(py);
                 let last_max = half.last().unwrap().clone_ref(py);
                 self.expand_at_pos(pos, half, last_max, new_max_at_pos);
             }
-            ops::Expand::IdxNotEmpty => self.expand_on_empty_idx(pos),
-            ops::Expand::Other => (),
+            ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
+            ops::Expand::NoOp => (),
         }
     }
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
@@ -158,32 +132,27 @@ impl ListsDataMethods for ListsData {
             None,
         )
     }
-    fn index(
-        &mut self,
-        value: &Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<usize> {
+    fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize> {
         let py = value.py();
-        let (mut loc, start, mut stop) = ops::Index::new(self, value, start, stop).into_res()?;
-        loc.idx = self.values[loc.pos].bisect_left(value)?;
-        if self.values.loc(&loc).bind(py).ne(value)? {
-            Err(errors::not_in_list(&value.repr()?))
-        } else {
-            stop -= 1;
-            let left = self.loc(&loc);
-            if start <= left {
-                if left <= stop {
-                    return Ok(left);
-                }
-            } else {
-                let right = self.bisect_right(value)? - 1;
-
-                if start <= right {
-                    return Ok(start);
+        let indices = RangeIdxs::from(indices);
+        match indices.into_index(self.len) {
+            None => Err(errors::not_in_list(value)),
+            Some(indices) => {
+                let loc = Loc::try_from_index(self, value)?;
+                if self.values.loc(&loc).bind(py).ne(value)? {
+                    Err(errors::not_in_list(value))
+                } else {
+                    let left = self.loc(&loc);
+                    if indices.start <= left {
+                        if left < indices.stop {
+                            return Ok(left);
+                        }
+                    } else if indices.start < self.bisect::<false>(value)? {
+                        return Ok(indices.start);
+                    }
+                    Err(errors::not_in_list(value))
                 }
             }
-            Err(errors::not_in_list(&value.repr()?))
         }
     }
     #[inline]

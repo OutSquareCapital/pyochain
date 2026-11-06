@@ -1,8 +1,198 @@
-use derive_more::Constructor;
-use pyo3::prelude::*;
+use derive_more::{Constructor, From};
+use pyo3::{prelude::*, types::slice::PySliceIndices};
 
-use crate::{InnerData, bisect::Bisect, types::VecPy};
+use crate::{bisect::Bisect, errors, inner::InnerData, traits::ListsMethods};
 
+pub type RawIrangeSpecs<'py> = (
+    Python<'py>,
+    Option<Bound<'py, PyAny>>,
+    Option<Bound<'py, PyAny>>,
+    (bool, bool),
+);
+
+pub type RawRangeIdxs = (Option<isize>, Option<isize>);
+#[derive(Constructor)]
+struct RangeBound<'py> {
+    value: Option<Bound<'py, PyAny>>,
+    inclusive: bool,
+}
+impl<'py> RangeBound<'py> {
+    fn with_key<'a>(self, key: &'a Bound<'py, PyAny>) -> PyResult<Self> {
+        self.value
+            .map(|value| key.call1((value,)))
+            .transpose()
+            .map(|v| Self::new(v, self.inclusive))
+    }
+}
+#[derive(Constructor)]
+pub(super) struct IrangeSpecs<'py> {
+    pub py: Python<'py>,
+    min: RangeBound<'py>,
+    max: RangeBound<'py>,
+}
+impl<'py> From<RawIrangeSpecs<'py>> for IrangeSpecs<'py> {
+    fn from((py, min, max, (incl_min, incl_max)): RawIrangeSpecs<'py>) -> Self {
+        Self {
+            py,
+            min: RangeBound::new(min, incl_min),
+            max: RangeBound::new(max, incl_max),
+        }
+    }
+}
+impl IrangeSpecs<'_> {
+    pub fn with_keys(values: impl Into<Self>, key: &Py<PyAny>) -> PyResult<Self> {
+        let mut slf = values.into();
+        let func = key.bind(slf.py);
+        slf.min = slf.min.with_key(func)?;
+        slf.max = slf.max.with_key(func)?;
+        Ok(slf)
+    }
+    pub fn into_bounds<T: ListsMethods>(self, data: &T) -> PyResult<Bounds> {
+        if data.maxes.is_empty() {
+            Ok(Bounds::default())
+        } else {
+            let min = match self.min.value {
+                None => Loc::default(),
+                Some(minimum) => {
+                    if self.min.inclusive {
+                        match min_bound::<_, true>(data, &minimum)? {
+                            Some(loc) => loc,
+                            None => return Ok(Bounds::default()),
+                        }
+                    } else {
+                        match min_bound::<_, false>(data, &minimum)? {
+                            Some(loc) => loc,
+                            None => return Ok(Bounds::default()),
+                        }
+                    }
+                }
+            };
+
+            // Calculate the maximum (pos, idx) pair. By default this location
+            // will be exclusive in our calculation.
+            let max = match self.max.value {
+                None => {
+                    let pos = data.maxes.len() - 1;
+                    let idx = data.keys()[pos].len();
+                    Loc::new(pos, idx)
+                }
+                Some(m) => {
+                    if self.max.inclusive {
+                        max_bound::<_, false>(data, &m)?
+                    } else {
+                        max_bound::<_, true>(data, &m)?
+                    }
+                }
+            };
+            if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
+                Ok(Bounds::default())
+            } else {
+                Ok(Bounds::new(min, max))
+            }
+        }
+    }
+}
+fn min_bound<T, const LEFT: bool>(data: &T, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>
+where
+    T: ListsMethods,
+{
+    let pos = data.maxes.bisect::<LEFT>(value)?;
+    if pos == data.maxes.len() {
+        return Ok(None);
+    }
+    let idx = data.keys()[pos].bisect::<LEFT>(value)?;
+    Ok(Some(Loc::new(pos, idx)))
+}
+fn max_bound<T, const LEFT: bool>(data: &T, value: &Bound<'_, PyAny>) -> PyResult<Loc>
+where
+    T: ListsMethods,
+{
+    let mut pos = data.maxes.bisect::<LEFT>(value)?;
+    let idx = if pos == data.maxes.len() {
+        pos -= 1;
+        data.keys()[pos].len()
+    } else {
+        data.keys()[pos].bisect::<LEFT>(value)?
+    };
+    Ok(Loc::new(pos, idx))
+}
+#[derive(PartialEq, Eq, Default, Clone, Copy, Constructor, Debug, From)]
+pub(super) struct RangeIdxs<T> {
+    pub start: T,
+    pub stop: T,
+}
+impl From<PySliceIndices> for RangeIdxs<usize> {
+    fn from(i: PySliceIndices) -> Self {
+        if i.step > 0 {
+            (i.start.cast_unsigned(), i.stop.cast_unsigned())
+        } else {
+            ((i.stop + 1).cast_unsigned(), (i.start + 1).cast_unsigned())
+        }
+        .into()
+    }
+}
+impl IntoIterator for RangeIdxs<usize> {
+    type Item = usize;
+    type IntoIter = std::ops::Range<usize>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.start..self.stop
+    }
+}
+impl RangeIdxs<Option<isize>> {
+    #[must_use]
+    pub fn into_index(self, length: usize) -> Option<RangeIdxs<usize>> {
+        let length = length.cast_signed();
+        if length == 0 {
+            None
+        } else {
+            let mut start = self.start.unwrap_or(0);
+            let mut stop = self.stop.unwrap_or(length);
+            if start < 0 {
+                start += length;
+            }
+            start = start.max(0);
+            if stop < 0 {
+                stop += length;
+            }
+            stop = stop.min(length);
+            if stop <= start {
+                None
+            } else {
+                Some(RangeIdxs::new(start.cast_unsigned(), stop.cast_unsigned()))
+            }
+        }
+    }
+    pub(super) fn into_bounds(self, data: &mut InnerData) -> PyResult<Bounds> {
+        let length = data.len;
+        if length == 0 {
+            Ok(Bounds::default())
+        } else {
+            let normalize_bound = |mut val: isize| {
+                if val < 0 {
+                    val += length.cast_signed();
+                    val.max(0).cast_unsigned()
+                } else {
+                    val.cast_unsigned().min(length)
+                }
+            };
+            let start = self.start.map_or(0, normalize_bound);
+            let stop = self.stop.map_or(length, normalize_bound);
+            if start >= stop {
+                Ok(Bounds::default())
+            } else {
+                let min = data.set_pos_usize(start)?;
+                let max = if stop == length {
+                    let max_pos = data.values.len() - 1;
+                    let max_idx = data.values.last().unwrap().len();
+                    Loc::new(max_pos, max_idx)
+                } else {
+                    data.set_pos_usize(stop)?
+                };
+                Ok(Bounds::new(min, max))
+            }
+        }
+    }
+}
 #[derive(PartialEq, Eq, Default, Clone, Copy, Constructor, Debug)]
 pub struct Loc {
     pub pos: usize,
@@ -10,127 +200,29 @@ pub struct Loc {
 }
 impl Loc {
     #[must_use]
-    pub fn with_idx(idx: usize) -> Self {
+    pub const fn with_idx(idx: usize) -> Self {
         Self::new(0, idx)
     }
     #[must_use]
-    pub fn with_pos(pos: usize) -> Self {
+    pub const fn with_pos(pos: usize) -> Self {
         Self::new(pos, 0)
     }
+    pub fn try_from_index<T>(list: &T, value: &Bound<'_, PyAny>) -> PyResult<Loc>
+    where
+        T: ListsMethods,
+    {
+        let pos = list.maxes.bisect_left(value)?;
+        if pos == list.maxes.len() {
+            Err(errors::not_in_list(value))
+        } else {
+            let idx = list.keys()[pos].bisect_left(value)?;
+            Ok(Self::new(pos, idx))
+        }
+    }
 }
 
-#[derive(PartialEq, Eq, Default, Constructor, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Default, Constructor, Clone, Copy)]
 pub struct Bounds {
-    pub min: Loc,
-    pub max: Loc,
-}
-impl Bounds {
-    pub fn from_irange(
-        lists: &[VecPy],
-        maxes: &[Py<PyAny>],
-        minimum: Option<Bound<'_, PyAny>>,
-        maximum: Option<Bound<'_, PyAny>>,
-        inclusive: (bool, bool),
-    ) -> PyResult<Bounds> {
-        if maxes.is_empty() {
-            Ok(Self::default())
-        } else {
-            let min = match minimum {
-                None => Loc::default(),
-                Some(minimum) => {
-                    if inclusive.0 {
-                        let min_pos = maxes.bisect_left(&minimum)?;
-
-                        if min_pos == maxes.len() {
-                            return Ok(Self::default());
-                        }
-                        let min_idx = lists[min_pos].bisect_left(&minimum)?;
-                        Loc::new(min_pos, min_idx)
-                    } else {
-                        let min_pos = maxes.bisect_right(&minimum)?;
-                        if min_pos == maxes.len() {
-                            return Ok(Self::default());
-                        }
-                        let min_idx = lists[min_pos].bisect_right(&minimum)?;
-                        Loc::new(min_pos, min_idx)
-                    }
-                }
-            };
-
-            // Calculate the maximum (pos, idx) pair. By default this location
-            // will be exclusive in our calculation.
-            let max = maximum.map_or_else(
-                || {
-                    let max_pos = maxes.len() - 1;
-                    let max_idx = lists[max_pos].len();
-                    Ok(Loc::new(max_pos, max_idx))
-                },
-                |m| {
-                    if inclusive.1 {
-                        let mut max_pos = maxes.bisect_right(&m)?;
-
-                        let max_idx = if max_pos == maxes.len() {
-                            max_pos -= 1;
-                            lists[max_pos].len()
-                        } else {
-                            lists[max_pos].bisect_right(&m)?
-                        };
-                        Ok::<_, PyErr>(Loc::new(max_pos, max_idx))
-                    } else {
-                        let mut max_pos = maxes.bisect_left(&m)?;
-
-                        let max_idx = if max_pos == maxes.len() {
-                            max_pos -= 1;
-                            lists[max_pos].len()
-                        } else {
-                            lists[max_pos].bisect_left(&m)?
-                        };
-                        Ok(Loc::new(max_pos, max_idx))
-                    }
-                },
-            )?;
-
-            if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
-                Ok(Self::default())
-            } else {
-                Ok(Self::new(min, max))
-            }
-        }
-    }
-    pub fn from_islice(
-        data: &mut InnerData,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<Self> {
-        let length = data.len.cast_signed();
-
-        if length == 0 {
-            Ok(Self::default())
-        } else {
-            let normalize_bound = |mut val: isize| {
-                if val < 0 {
-                    val += length;
-                    val.max(0)
-                } else {
-                    val.min(length)
-                }
-            };
-            let start = start.map_or(0, normalize_bound);
-            let stop = stop.map_or(length, normalize_bound);
-            if start >= stop {
-                Ok(Self::default())
-            } else {
-                let mut bounds = Self::default();
-                data.set_pos(start, &mut bounds.min)?;
-
-                if stop == length {
-                    bounds.max.pos = data.values.len() - 1;
-                    bounds.max.idx = data.values.last().unwrap().len();
-                } else {
-                    data.set_pos(stop, &mut bounds.max)?;
-                }
-                Ok(bounds)
-            }
-        }
-    }
+    pub(super) min: Loc,
+    pub(super) max: Loc,
 }

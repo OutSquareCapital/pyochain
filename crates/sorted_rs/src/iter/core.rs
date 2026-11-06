@@ -1,8 +1,11 @@
 use std::{ops::Deref, ptr};
 
-use crate::{inner::InnerData, iter::cursor::Cursor};
-use derive_more::Constructor;
-use parking_lot::{RawRwLock, lock_api::RwLockReadGuard};
+use crate::{
+    ListGetter,
+    inner::InnerData,
+    iter::{cursor::Cursor, traits::Item},
+};
+use derive_more::{Constructor, Deref};
 use pyo3::{ffi, prelude::*};
 use tap::prelude::*;
 /// Wrapper type to hold a pointer to the inner data of a sorted collection.
@@ -25,34 +28,41 @@ impl Deref for InnerRef {
 
 unsafe impl Send for InnerRef {}
 unsafe impl Sync for InnerRef {}
-impl<T> From<(RwLockReadGuard<'_, RawRwLock, T>, Py<PyAny>)> for InnerRef
-where
-    T: Deref<Target = InnerData> + Send + Sync + 'static,
-{
-    fn from((guard, owner): (RwLockReadGuard<'_, RawRwLock, T>, Py<PyAny>)) -> Self {
-        guard
+impl<T: ListGetter> From<&Bound<'_, T>> for InnerRef {
+    fn from(value: &Bound<'_, T>) -> Self {
+        value
+            .get()
+            .read()
             .deref()
             .deref()
-            .pipe(ptr::from_ref::<T::Target>)
-            .pipe(|data| Self::new(data, owner))
+            .pipe(ptr::from_ref::<InnerData>)
+            .pipe(|data| Self::new(data, value.clone().into_any().unbind()))
     }
 }
 #[derive(Debug, Constructor)]
 pub struct InnerIter {
-    inner: InnerRef,
+    pyref: InnerRef,
     cursor: Cursor,
+}
+#[derive(Debug, Constructor, Deref)]
+pub struct InnerIterBounded {
+    #[deref]
+    inner: InnerIter,
+    limit: u64,
 }
 impl InnerIter {
     #[inline(always)]
     pub fn len(&self) -> usize {
-        self.inner.len
+        self.pyref.len
     }
     #[inline(always)]
-    pub(super) unsafe fn next<const BOUNDED: bool, const FWD: bool>(
-        &self,
-        limit: u64,
-    ) -> *mut ffi::PyObject {
-        let values = &self.inner.values;
+    pub(super) unsafe fn next<const FWD: bool>(&self) -> Item {
+        self.inner_next::<FWD>()
+            .map(|(at, item)| self.yield_ptr(item, at))
+    }
+    #[inline(always)]
+    fn inner_next<const FWD: bool>(&self) -> Option<(u64, &Py<PyAny>)> {
+        let values = &self.pyref.values;
         let (at, pos, idx) = self.cursor.load();
         let current = values.get(pos);
         if FWD {
@@ -77,12 +87,21 @@ impl InnerIter {
                         .map(|obj| (Cursor::new_pos(p) | (v.len() - 1) as u64, obj))
                 })
         }
-        .filter(|&(at, _)| !BOUNDED || at == limit || (FWD && at < limit) || (!FWD && at > limit))
-        .map_or_else(ptr::null_mut, |(at, item)| {
-            self.cursor.store(at);
-            let ptr = item.as_ptr();
-            unsafe { ffi::Py_INCREF(ptr) };
-            ptr
-        })
+    }
+    fn yield_ptr(&self, item: &Py<PyAny>, at: u64) -> *mut ffi::PyObject {
+        self.cursor.store(at);
+        let ptr = item.as_ptr();
+        unsafe { ffi::Py_INCREF(ptr) };
+        ptr
+    }
+}
+impl InnerIterBounded {
+    #[inline(always)]
+    pub(super) unsafe fn next<const FWD: bool>(&self) -> Item {
+        self.inner_next::<FWD>()
+            .filter(|&(at, _)| {
+                at == self.limit || (FWD && at < self.limit) || (!FWD && at > self.limit)
+            })
+            .map(|(at, item)| self.inner.yield_ptr(item, at))
     }
 }
