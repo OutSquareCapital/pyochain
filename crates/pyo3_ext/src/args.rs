@@ -122,8 +122,13 @@ macro_rules! impl_arg_concat_tuple {
 impl_arg_concat_tuple!(A:0, B:1);
 impl_arg_concat_tuple!(A:0, B:1, C:2);
 impl_arg_concat_tuple!(A:0, B:1, C:2, D:3);
+mod sealed {
+    pub trait Sealed {}
+}
 
-pub trait ArgBuffer: Sized {
+impl sealed::Sealed for VecOfPtr {}
+impl<const N: usize> sealed::Sealed for FixedBuf<N> {}
+pub trait ArgBuffer: Sized + sealed::Sealed {
     fn from_args<'py, A: IntoArgs<'py>>(args: A) -> Self;
     fn push_ptr(&mut self, ptr: *mut ffi::PyObject);
     fn as_ptr(&self) -> *const *mut ffi::PyObject;
