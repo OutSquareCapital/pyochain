@@ -18,9 +18,9 @@ macro_rules! dispatch {
         seq_macro::seq!(i in 1..=8 {
             match $args.len_unpacked() {
                 #(
-                i => FixedBuf::<i>::from_args($args).call($func,$kwargs),
+                i => FixedBuf::<i>::from_args(&$args).call($func,$kwargs),
                 )*
-                _ => VecOfPtr::from_args($args).call($func, $kwargs),
+                _ => VecOfPtr::from_args(&$args).call($func, $kwargs),
             }
         })
     };
@@ -31,9 +31,9 @@ macro_rules! dispatch1 {
         seq_macro::seq!(i in 1..=8 {
             match $args.len_unpacked() {
                 #(
-                i => FixedBuf::<i>::from_args($args).call1($func),
+                i => FixedBuf::<i>::from_args(&$args).call1($func),
                 )*
-                _ => VecOfPtr::from_args($args).call1($func),
+                _ => VecOfPtr::from_args(&$args).call1($func),
             }
         })
     };
@@ -125,11 +125,8 @@ impl_arg_concat_tuple!(A:0, B:1, C:2, D:3);
 mod sealed {
     pub trait Sealed {}
 }
-
-impl sealed::Sealed for VecOfPtr {}
-impl<const N: usize> sealed::Sealed for FixedBuf<N> {}
 pub trait ArgBuffer: Sized + sealed::Sealed {
-    fn from_args<'py, A: IntoArgs<'py>>(args: A) -> Self;
+    fn from_args<'py, A: IntoArgs<'py>>(args: &A) -> Self;
     fn push_ptr(&mut self, ptr: *mut ffi::PyObject);
     fn as_ptr(&self) -> *const *mut ffi::PyObject;
     fn len(&self) -> usize;
@@ -155,7 +152,7 @@ pub trait ArgBuffer: Sized + sealed::Sealed {
 }
 struct VecOfPtr(SmallVec<[*mut ffi::PyObject; 16]>);
 impl ArgBuffer for VecOfPtr {
-    fn from_args<'py, A: IntoArgs<'py>>(args: A) -> Self {
+    fn from_args<'py, A: IntoArgs<'py>>(args: &A) -> Self {
         let mut buf = Self(SmallVec::with_capacity(args.len_unpacked()));
         args.extend_buf(&mut buf);
         buf
@@ -178,7 +175,7 @@ struct FixedBuf<const N: usize> {
 
 impl<const N: usize> ArgBuffer for FixedBuf<N> {
     #[inline(always)]
-    fn from_args<'py, A: IntoArgs<'py>>(args: A) -> Self {
+    fn from_args<'py, A: IntoArgs<'py>>(args: &A) -> Self {
         let mut buf = Self {
             slice: [const { MaybeUninit::uninit() }; N],
             len: 0,
@@ -200,3 +197,6 @@ impl<const N: usize> ArgBuffer for FixedBuf<N> {
         N
     }
 }
+
+impl sealed::Sealed for VecOfPtr {}
+impl<const N: usize> sealed::Sealed for FixedBuf<N> {}
