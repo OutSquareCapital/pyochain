@@ -29,10 +29,10 @@ macro_rules! impl_sorted_iter {
 }
 
 impl_sorted_iter!(
-    iter::Iter => SortedIter,
-    iter::IterRev => SortedIterRev,
-    iter::IterBounded => SortedIterBounded,
-    iter::IterBoundedRev => SortedIterBoundedRev,
+    iter::Iter<true> => SortedIter,
+    iter::Iter<false> => SortedIterRev,
+    iter::IterBounded<true> => SortedIterBounded,
+    iter::IterBounded<false> => SortedIterBoundedRev,
 );
 
 #[inline(always)]
