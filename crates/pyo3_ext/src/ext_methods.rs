@@ -1,14 +1,14 @@
 //! Traits extending the functionality of various pre-existing Pyo3 types
 use pyo3::{
-    BoundObject, IntoPyObjectExt, PyTypeInfo,
+    BoundObject, IntoPyObjectExt, PyTypeCheck, PyTypeInfo,
     basic::CompareOp,
     call::PyCallArgs,
     exceptions::PyTypeError,
     ffi, intern,
     prelude::*,
     types::{
-        PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator,
-        PyList, PyMapping, PyRange, PySet, PyString, PyTuple,
+        DerefToPyAny, PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt,
+        PyIterator, PyList, PyMapping, PyRange, PySet, PyString, PyTuple,
     },
 };
 use tap::prelude::*;
@@ -39,7 +39,7 @@ macro_rules! tuple {
 pub trait ABCMethods<'py>: PyTypeInfo {
     fn register<T: PyTypeInfo>(py: Python<'_>) -> PyResult<()> {
         let ty = T::type_object(py);
-        Self::type_object(py).call_method1("register", (ty,))?;
+        Self::type_object(py).call_method1(intern!(py, "register"), (ty,))?;
         Ok(())
     }
 }
@@ -84,29 +84,20 @@ macro_rules! impl_sequence_ext_methods {
         $(
             impl<'py> PySequenceExtMethods<'py> for Bound<'py, $t> {
                 fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-                    self.call_method1(intern!(self.py(), "count"), (value,))
-                        .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+                    sequence_count(self, value)
                 }
-
                 fn index(
                     &self,
                     value: &Bound<'py, PyAny>,
                     start: Option<&Bound<'py, PyAny>>,
                     stop: Option<&Bound<'py, PyAny>>,
                 ) -> PyResult<Bound<'py, PyAny>> {
-                    let method_name = intern!(self.py(), "index");
-                    match (start, stop) {
-                        (Some(start), Some(stop)) => self.call_method1(method_name, (value, start, stop)),
-                        (Some(start), None) => self.call_method1(method_name, (value, start)),
-                        (None, Some(stop)) => self.call_method1(method_name, (value, stop)),
-                        (None, None) => self.call_method1(method_name, (value,)),
-                    }
+                    sequence_index(self, value, start, stop)
                 }
             }
         )*
     };
 }
-
 impl_sequence_ext_methods!(PyList, PyTuple, types::PyDeque, PyString);
 /// The `index` method is different on `range`, so we need to implement it separately.
 pub trait PyRangeExtMethods<'py> {
@@ -115,12 +106,38 @@ pub trait PyRangeExtMethods<'py> {
 }
 impl<'py> PyRangeExtMethods<'py> for Bound<'py, PyRange> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        self.call_method1(intern!(self.py(), "count"), (value,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+        sequence_count(self, value)
     }
     fn index(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        self.call_method1(intern!(self.py(), "index"), (value,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+        sequence_index(self, value, None, None).map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+    }
+}
+fn sequence_count<'py, T>(
+    obj: &Bound<'py, T>,
+    value: &Bound<'py, PyAny>,
+) -> PyResult<Bound<'py, PyInt>>
+where
+    T: PyTypeCheck + DerefToPyAny,
+{
+    obj.call_method1(intern!(obj.py(), "count"), (value,))
+        .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+}
+#[inline(always)]
+fn sequence_index<'py, T>(
+    obj: &Bound<'py, T>,
+    value: &Bound<'py, PyAny>,
+    start: Option<&Bound<'py, PyAny>>,
+    stop: Option<&Bound<'py, PyAny>>,
+) -> PyResult<Bound<'py, PyAny>>
+where
+    T: PyTypeCheck + DerefToPyAny,
+{
+    let method_name = intern!(obj.py(), "index");
+    match (start, stop) {
+        (Some(start), Some(stop)) => obj.call_method1(method_name, (value, start, stop)),
+        (Some(start), None) => obj.call_method1(method_name, (value, start)),
+        (None, Some(stop)) => obj.call_method1(method_name, (value, stop)),
+        (None, None) => obj.call_method1(method_name, (value,)),
     }
 }
 pub trait PySetExtMethods<'py>: Sized {
@@ -167,8 +184,7 @@ macro_rules! impl_set_ext_methods {
         $(
             impl<'py> PySetExtMethods<'py> for Bound<'py, $t> {
                 fn copy(&self) -> PyResult<Self> {
-                    self.call_method0(intern!(self.py(), "copy"))
-                        .map(|x| unsafe { x.cast_into_unchecked::<$t>() })
+                    copy_method(self)
                 }
                 fn isdisjoint<T: IntoPyObject<'py>>(&self, s: T) -> PyResult<Bound<'py, PyBool>> {
                     self.call_method1(intern!(self.py(), "isdisjoint"), (s,))
@@ -219,8 +235,7 @@ pub trait PyListExtMethods<'py>: Sized {
 }
 impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
     fn copy(&self) -> PyResult<Self> {
-        self.call_method0(intern!(self.py(), "copy"))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+        copy_method(self)
     }
     fn pop(&self, index: usize) -> PyResult<Bound<'py, PyAny>> {
         let v = self.get_item(index)?;
@@ -259,6 +274,11 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
         self.call_method(intern!(py, "sort"), (), Some(&kwargs))?;
         Ok(())
     }
+}
+#[inline(always)]
+fn copy_method<'py, T: DerefToPyAny>(obj: &Bound<'py, T>) -> PyResult<Bound<'py, T>> {
+    obj.call_method0(intern!(obj.py(), "copy"))
+        .map(|x| unsafe { x.cast_into_unchecked::<T>() })
 }
 pub trait PyDictExtConstructors: PyTypeInfo {
     fn from_keys<'py, T: PyTypeInfo>(keys: &Bound<'py, T>) -> PyResult<Bound<'py, Self>>;
