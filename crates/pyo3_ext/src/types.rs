@@ -1,19 +1,17 @@
-use crate::pyobject_native_type_named;
+use crate::{pylibs::registery, pyobject_native_type_named};
 use either::Either;
 use pyo3::{
     BoundObject, PyClass, PyTypeCheck, PyTypeInfo,
-    exceptions::{PyKeyError, PyTypeError},
+    exceptions::PyKeyError,
     ffi, intern,
     prelude::*,
     pyclass::boolean_struct,
-    sync::PyOnceLock,
     types::{
         PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator, PyList,
-        PyNotImplemented, PySet, PySlice, PyType,
+        PyNotImplemented, PySet, PySlice,
     },
 };
 use tap::prelude::*;
-const COLLECTIONS_ABC: &str = "collections.abc";
 /// Return type from python comparison dunders, returning either `T` in case of success, or `NotImplemented`.
 pub type PyCmpOut<'py, T> = PyResult<Either<T, Bound<'py, PyNotImplemented>>>;
 pub type BoundedEither<'py, T, U> = Either<Bound<'py, T>, Bound<'py, U>>;
@@ -55,10 +53,7 @@ pyobject_native_type_named!(PySupportsIndex);
 unsafe impl PyTypeInfo for PySupportsIndex {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, "typing", "SupportsIndex")
-            .unwrap()
-            .as_type_ptr()
+        registery::typing::SUPPORTS_INDEX.type_object_raw(py)
     }
 
     #[inline]
@@ -78,10 +73,7 @@ pyobject_native_type_named!(PyMappingView);
 unsafe impl PyTypeInfo for PyMappingView {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "MappingView")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::MAPPING_VIEW.type_object_raw(py)
     }
 
     #[inline]
@@ -101,10 +93,7 @@ pyobject_native_type_named!(PyMutableMapping);
 unsafe impl PyTypeInfo for PyMutableMapping {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "MutableMapping")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::MUTABLE_MAPPING.type_object_raw(py)
     }
 
     #[inline]
@@ -122,10 +111,7 @@ pyobject_native_type_named!(PyKeysView);
 unsafe impl PyTypeInfo for PyKeysView {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "KeysView")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::KEYS_VIEW.type_object_raw(py)
     }
 
     #[inline]
@@ -154,10 +140,7 @@ pyobject_native_type_named!(PyValuesView);
 unsafe impl PyTypeInfo for PyValuesView {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "ValuesView")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::VALUES_VIEW.type_object_raw(py)
     }
 
     #[inline]
@@ -175,10 +158,7 @@ pyobject_native_type_named!(PyItemsView);
 unsafe impl PyTypeInfo for PyItemsView {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "ItemsView")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::ITEMS_VIEW.type_object_raw(py)
     }
 
     #[inline]
@@ -205,10 +185,7 @@ pyobject_native_type_named!(PyIterable);
 unsafe impl PyTypeInfo for PyIterable {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "Iterable")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::ITERABLE.type_object_raw(py)
     }
     // NOTE: Even if `PySequence_Check` won't return always return `True` on `isinstance(x, Iterable)` (e.g for `__getitem__`-only objects),\
     // not using it here would mean runtime errors on objects that are perfectly valid when calling `try_iter()` on them.
@@ -227,10 +204,7 @@ pyobject_native_type_named!(PySized);
 unsafe impl PyTypeInfo for PySized {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "Sized")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::SIZED.type_object_raw(py)
     }
     #[inline]
     fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
@@ -249,10 +223,7 @@ pyobject_native_type_named!(PyContainer);
 unsafe impl PyTypeInfo for PyContainer {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "Container")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::CONTAINER.type_object_raw(py)
     }
     #[inline]
     fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
@@ -272,10 +243,7 @@ pyobject_native_type_named!(PyCollection);
 unsafe impl PyTypeInfo for PyCollection {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "Collection")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::COLLECTION.type_object_raw(py)
     }
     #[inline]
     fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
@@ -291,10 +259,7 @@ pyobject_native_type_named!(PyReversible);
 unsafe impl PyTypeInfo for PyReversible {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "Reversible")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::REVERSIBLE.type_object_raw(py)
     }
     #[inline]
     fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
@@ -313,10 +278,7 @@ pyobject_native_type_named!(PyMutableSequence);
 unsafe impl PyTypeInfo for PyMutableSequence {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "MutableSequence")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::MUTABLE_SEQUENCE.type_object_raw(py)
     }
 
     #[inline]
@@ -357,10 +319,7 @@ pyobject_native_type_named!(PyAbstractSet);
 unsafe impl PyTypeInfo for PyAbstractSet {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "Set")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::SET.type_object_raw(py)
     }
 
     #[inline]
@@ -379,10 +338,7 @@ pyobject_native_type_named!(PyMutableSet);
 unsafe impl PyTypeInfo for PyMutableSet {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "MutableSet")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::MUTABLE_SET.type_object_raw(py)
     }
 
     #[inline]
@@ -415,10 +371,7 @@ pyobject_native_type_named!(PyDeque);
 unsafe impl PyTypeInfo for PyDeque {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, "collections", "deque")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::DEQUE.type_object_raw(py)
     }
 
     #[inline]
@@ -506,10 +459,7 @@ pyobject_native_type_named!(PySupportsItems);
 unsafe impl PyTypeInfo for PySupportsItems {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, COLLECTIONS_ABC, "SupportsItems")
-            .unwrap()
-            .as_type_ptr()
+        registery::collections::abc::SUPPORTS_ITEMS.type_object_raw(py)
     }
 
     #[inline]
@@ -526,10 +476,7 @@ pub trait PySupportsItemsMethods<'py> {
 impl<'py> PySupportsItemsMethods<'py> for Bound<'py, PySupportsItems> {
     fn items(&self) -> PyResult<Bound<'py, PyAbstractSet>> {
         self.call_method0(intern!(self.py(), "items"))
-            .and_then(|x| {
-                x.cast_into::<PyAbstractSet>()
-                    .map_err(|_| PyTypeError::new_err(""))
-            })
+            .and_then(|x| x.cast_into::<PyAbstractSet>().map_err(Into::into))
     }
 }
 pub mod pyitertools {
@@ -541,10 +488,7 @@ pub mod pyitertools {
     unsafe impl PyTypeInfo for PyRepeat {
         #[inline]
         fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
-            static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-            TYPE.import(py, "itertools", "repeat")
-                .unwrap()
-                .as_type_ptr()
+            registery::itertools::REPEAT.type_object_raw(py)
         }
 
         #[inline]

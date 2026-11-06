@@ -1,8 +1,14 @@
-use pyo3::{PyTypeCheck, prelude::*, types::PyDict};
+use pyo3::{
+    PyTypeCheck, ffi,
+    prelude::*,
+    types::{PyDict, PyType},
+};
 
 use derive_more::{Constructor, From};
 use pyo3::sync::PyOnceLock;
 type Builtin = PyBuiltin<Py<PyAny>>;
+type Class = PyBuiltin<Py<PyType>>;
+
 #[derive(Debug, Clone, Copy, Constructor, From)]
 struct PyStdMod(&'static str);
 impl PyStdMod {
@@ -10,7 +16,7 @@ impl PyStdMod {
         PyBuiltin::new(self.0, name)
     }
 }
-pub(super) struct PyBuiltin<T> {
+pub(crate) struct PyBuiltin<T> {
     inner: PyOnceLock<T>,
     module: &'static str,
     name: &'static str,
@@ -33,6 +39,12 @@ impl<T: PyTypeCheck> PyBuiltin<Py<T>> {
             .expect("Failed to import {module}::{name}")
     }
 }
+impl PyBuiltin<Py<PyType>> {
+    #[inline(always)]
+    pub fn type_object_raw(&self, py: Python<'_>) -> *mut ffi::PyTypeObject {
+        self.import(py).as_type_ptr()
+    }
+}
 mod modules {
     use super::*;
     pub const BUILTINS: PyStdMod = PyStdMod::new("builtins");
@@ -41,6 +53,14 @@ mod modules {
     pub const SYS: PyStdMod = PyStdMod::new("sys");
     pub const HEAPQ: PyStdMod = PyStdMod::new("heapq");
     pub const OPERATOR: PyStdMod = PyStdMod::new("operator");
+    pub const COLLECTIONS: PyStdMod = PyStdMod::new("collections");
+    pub const COLLECTIONS_ABC: PyStdMod = PyStdMod::new("collections.abc");
+    pub const TYPING: PyStdMod = PyStdMod::new("typing");
+}
+
+pub(crate) mod typing {
+    use super::*;
+    pub static SUPPORTS_INDEX: Class = modules::TYPING.register("SupportsIndex");
 }
 pub(super) mod builtins {
     use super::*;
@@ -56,7 +76,7 @@ pub(super) mod builtins {
     pub static SORTED: Builtin = modules::BUILTINS.register("sorted");
     pub static ZIP: Builtin = modules::BUILTINS.register("zip");
 }
-pub(super) mod itertools {
+pub(crate) mod itertools {
     use super::*;
     pub static ACCUMULATE: Builtin = modules::ITERTOOLS.register("accumulate");
     pub static BATCHED: Builtin = modules::ITERTOOLS.register("batched");
@@ -78,6 +98,7 @@ pub(super) mod itertools {
     pub static PERMUTATIONS: Builtin = modules::ITERTOOLS.register("permutations");
     pub static ISLICE: Builtin = modules::ITERTOOLS.register("islice");
     pub static CHAIN: Builtin = modules::ITERTOOLS.register("chain");
+    pub static REPEAT: Class = modules::ITERTOOLS.register("repeat");
 }
 pub(super) mod heapq {
     use super::*;
@@ -90,6 +111,27 @@ pub(super) mod heapq {
     pub static HEAPPUSH: Builtin = modules::HEAPQ.register("heappush");
     pub static HEAPPUSHPOP: Builtin = modules::HEAPQ.register("heappushpop");
     pub static HEAPREPLACE: Builtin = modules::HEAPQ.register("heapreplace");
+}
+pub mod collections {
+    use super::*;
+    pub static DEQUE: Class = modules::COLLECTIONS.register("deque");
+    pub mod abc {
+        use super::*;
+        pub static SIZED: Class = modules::COLLECTIONS_ABC.register("Sized");
+        pub static ITERABLE: Class = modules::COLLECTIONS_ABC.register("Iterable");
+        pub static MAPPING_VIEW: Class = modules::COLLECTIONS_ABC.register("MappingView");
+        pub static SET: Class = modules::COLLECTIONS_ABC.register("Set");
+        pub static MUTABLE_SEQUENCE: Class = modules::COLLECTIONS_ABC.register("MutableSequence");
+        pub static MUTABLE_MAPPING: Class = modules::COLLECTIONS_ABC.register("MutableMapping");
+        pub static MUTABLE_SET: Class = modules::COLLECTIONS_ABC.register("MutableSet");
+        pub static KEYS_VIEW: Class = modules::COLLECTIONS_ABC.register("KeysView");
+        pub static VALUES_VIEW: Class = modules::COLLECTIONS_ABC.register("ValuesView");
+        pub static ITEMS_VIEW: Class = modules::COLLECTIONS_ABC.register("ItemsView");
+        pub static CONTAINER: Class = modules::COLLECTIONS_ABC.register("Container");
+        pub static COLLECTION: Class = modules::COLLECTIONS_ABC.register("Collection");
+        pub static REVERSIBLE: Class = modules::COLLECTIONS_ABC.register("reversible");
+        pub static SUPPORTS_ITEMS: Class = modules::COLLECTIONS_ABC.register("SupportsItems");
+    }
 }
 
 pub(super) static REDUCE: Builtin = modules::FUNCTOOLS.register("reduce");
