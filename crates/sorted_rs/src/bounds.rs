@@ -12,17 +12,28 @@ pub type RawIrangeSpecs<'py> = (
 );
 
 pub type RawRangeIdxs = (Option<isize>, Option<isize>);
-#[derive(Constructor)]
-struct RangeBound<'py> {
-    value: Option<Bound<'py, PyAny>>,
-    inclusive: bool,
+#[derive(Debug, Clone)]
+enum RangeBound<'py> {
+    None,
+    Inclusive(Bound<'py, PyAny>),
+    Exclusive(Bound<'py, PyAny>),
 }
 impl<'py> RangeBound<'py> {
+    #[inline]
+    fn new(value: Option<Bound<'py, PyAny>>, inclusive: bool) -> Self {
+        match (value, inclusive) {
+            (None, _) => Self::None,
+            (Some(v), true) => Self::Inclusive(v),
+            (Some(v), false) => Self::Exclusive(v),
+        }
+    }
+    #[inline]
     fn with_key<'a>(self, key: &'a Bound<'py, PyAny>) -> PyResult<Self> {
-        self.value
-            .map(|value| key.call1((value,)))
-            .transpose()
-            .map(|v| Self::new(v, self.inclusive))
+        match self {
+            Self::None => Ok(Self::None),
+            Self::Inclusive(value) => key.call1((value,)).map(Self::Inclusive),
+            Self::Exclusive(value) => key.call1((value,)).map(Self::Exclusive),
+        }
     }
 }
 #[derive(Constructor)]
@@ -52,32 +63,15 @@ impl IrangeSpecs<'_> {
         if data.maxes.is_empty() {
             None
         } else {
-            let min = match self.min.value {
-                None => Ok(Loc::default()),
-                Some(minimum) => {
-                    if self.min.inclusive {
-                        min_bound::<_, true>(data, &minimum)?
-                    } else {
-                        min_bound::<_, false>(data, &minimum)?
-                    }
-                }
+            let min = match self.min {
+                RangeBound::None => Ok(Loc::default()),
+                RangeBound::Inclusive(m) => min_bound::<_, true>(data, &m)?,
+                RangeBound::Exclusive(m) => min_bound::<_, false>(data, &m)?,
             };
-
-            // Calculate the maximum (pos, idx) pair. By default this location
-            // will be exclusive in our calculation.
-            let max = match self.max.value {
-                None => {
-                    let pos = data.maxes.len() - 1;
-                    let idx = data.keys()[pos].len();
-                    Ok(Loc::new(pos, idx))
-                }
-                Some(m) => {
-                    if self.max.inclusive {
-                        max_bound::<_, false>(data, &m)
-                    } else {
-                        max_bound::<_, true>(data, &m)
-                    }
-                }
+            let max = match self.max {
+                RangeBound::None => Ok(Loc::new_inclusive_max(data)),
+                RangeBound::Inclusive(m) => max_bound::<_, false>(data, &m),
+                RangeBound::Exclusive(m) => max_bound::<_, true>(data, &m),
             };
             match (min, max) {
                 (_, Err(e)) | (Err(e), _) => Some(Err(e)),
@@ -104,7 +98,6 @@ where
             .pipe(Some),
     }
 }
-
 fn max_bound<T, const LEFT: bool>(data: &T, value: &Bound<'_, PyAny>) -> PyResult<Loc>
 where
     T: ListsMethods,
@@ -208,6 +201,12 @@ impl Loc {
     #[must_use]
     pub const fn with_pos(pos: usize) -> Self {
         Self::new(pos, 0)
+    }
+    #[inline]
+    fn new_inclusive_max<T: ListsMethods>(data: &T) -> Self {
+        let pos = data.maxes.len() - 1;
+        let idx = data.keys()[pos].len();
+        Self::new(pos, idx)
     }
     pub fn try_from_index<T>(list: &T, value: &Bound<'_, PyAny>) -> PyResult<Loc>
     where
