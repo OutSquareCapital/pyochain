@@ -21,7 +21,7 @@ impl ListsMethods for List {
         new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
-    fn irange(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds> {
+    fn irange(&self, specs: RawIrangeSpecs<'_>) -> Option<PyResult<Bounds>> {
         self.irange_by_key(specs)
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {

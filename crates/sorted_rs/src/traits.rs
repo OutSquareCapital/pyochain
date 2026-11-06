@@ -64,7 +64,7 @@ pub trait ListsMethods:
     fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()>;
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()>;
     fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize>;
-    fn irange(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds>;
+    fn irange(&self, specs: RawIrangeSpecs<'_>) -> Option<PyResult<Bounds>>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn delete_on_len_sup_to_half_load(&mut self, py: Python<'_>, loc: Loc) {
         self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
@@ -148,7 +148,7 @@ pub trait ListsMethods:
     fn islice_specs(&mut self, specs: RawRangeIdxs) -> PyResult<Bounds> {
         specs.conv::<RangeIdxs<_>>().into_bounds(self)
     }
-    fn irange_by_key(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds> {
+    fn irange_by_key(&self, specs: RawIrangeSpecs<'_>) -> Option<PyResult<Bounds>> {
         specs.conv::<IrangeSpecs>().into_bounds(self)
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {

@@ -82,12 +82,12 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> IterRes<'py> {
-        let bounds = slf
-            .get()
+        slf.get()
             .read()
             .as_ref()
-            .irange((slf.py(), minimum, maximum, inclusive))?;
-        iter::bounded(slf, bounds, reverse)
+            .irange((slf.py(), minimum, maximum, inclusive))
+            .transpose()
+            .and_then(|bounds| iter::bounded(slf, bounds.unwrap_or_default(), reverse))
     }
     #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
     fn islice<'py>(
@@ -117,12 +117,12 @@ where
         inclusive: (bool, bool),
         reverse: bool,
     ) -> IterRes<'py> {
-        let bounds =
-            slf.get()
-                .read()
-                .as_ref()
-                .irange_by_key((slf.py(), min_key, max_key, inclusive))?;
-        iter::bounded(slf, bounds, reverse)
+        slf.get()
+            .read()
+            .as_ref()
+            .irange_by_key((slf.py(), min_key, max_key, inclusive))
+            .transpose()
+            .and_then(|bounds| iter::bounded(slf, bounds.unwrap_or_default(), reverse))
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.write().as_mut().bisect_by_key::<true>(key)

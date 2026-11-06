@@ -1,5 +1,6 @@
 use derive_more::{Constructor, From};
 use pyo3::{prelude::*, types::slice::PySliceIndices};
+use tap::prelude::*;
 
 use crate::{bisect::Bisect, errors, inner::InnerData, traits::ListsMethods};
 
@@ -47,23 +48,17 @@ impl IrangeSpecs<'_> {
         slf.max = slf.max.with_key(func)?;
         Ok(slf)
     }
-    pub fn into_bounds<T: ListsMethods>(self, data: &T) -> PyResult<Bounds> {
+    pub fn into_bounds<T: ListsMethods>(self, data: &T) -> Option<PyResult<Bounds>> {
         if data.maxes.is_empty() {
-            Ok(Bounds::default())
+            None
         } else {
             let min = match self.min.value {
-                None => Loc::default(),
+                None => Ok(Loc::default()),
                 Some(minimum) => {
                     if self.min.inclusive {
-                        match min_bound::<_, true>(data, &minimum)? {
-                            Some(loc) => loc,
-                            None => return Ok(Bounds::default()),
-                        }
+                        min_bound::<_, true>(data, &minimum)?
                     } else {
-                        match min_bound::<_, false>(data, &minimum)? {
-                            Some(loc) => loc,
-                            None => return Ok(Bounds::default()),
-                        }
+                        min_bound::<_, false>(data, &minimum)?
                     }
                 }
             };
@@ -74,35 +69,42 @@ impl IrangeSpecs<'_> {
                 None => {
                     let pos = data.maxes.len() - 1;
                     let idx = data.keys()[pos].len();
-                    Loc::new(pos, idx)
+                    Ok(Loc::new(pos, idx))
                 }
                 Some(m) => {
                     if self.max.inclusive {
-                        max_bound::<_, false>(data, &m)?
+                        max_bound::<_, false>(data, &m)
                     } else {
-                        max_bound::<_, true>(data, &m)?
+                        max_bound::<_, true>(data, &m)
                     }
                 }
             };
-            if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) {
-                Ok(Bounds::default())
-            } else {
-                Ok(Bounds::new(min, max))
+            match (min, max) {
+                (_, Err(e)) | (Err(e), _) => Some(Err(e)),
+                (Ok(min), Ok(max))
+                    if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) =>
+                {
+                    None
+                }
+                (Ok(min), Ok(max)) => Some(Ok(Bounds::new(min, max))),
             }
         }
     }
 }
-fn min_bound<T, const LEFT: bool>(data: &T, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>
+fn min_bound<T, const LEFT: bool>(data: &T, value: &Bound<'_, PyAny>) -> Option<PyResult<Loc>>
 where
     T: ListsMethods,
 {
-    let pos = data.maxes.bisect::<LEFT>(value)?;
-    if pos == data.maxes.len() {
-        return Ok(None);
+    match data.maxes.bisect::<LEFT>(value) {
+        Ok(pos) if pos == data.maxes.len() => None,
+        Err(e) => Some(Err(e)),
+        Ok(pos) => data.keys()[pos]
+            .bisect::<LEFT>(value)
+            .map(|idx| Loc::new(pos, idx))
+            .pipe(Some),
     }
-    let idx = data.keys()[pos].bisect::<LEFT>(value)?;
-    Ok(Some(Loc::new(pos, idx)))
 }
+
 fn max_bound<T, const LEFT: bool>(data: &T, value: &Bound<'_, PyAny>) -> PyResult<Loc>
 where
     T: ListsMethods,

@@ -25,8 +25,11 @@ impl ListsMethods for KeyList {
         new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
-    fn irange(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds> {
-        IrangeSpecs::with_keys(specs, &self.2)?.into_bounds(self)
+    fn irange(&self, specs: RawIrangeSpecs<'_>) -> Option<PyResult<Bounds>> {
+        IrangeSpecs::with_keys(specs, &self.2)
+            .map(|x| x.into_bounds(self))
+            .transpose()
+            .map(Result::flatten)
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let key = self.extract_key(&value)?;
