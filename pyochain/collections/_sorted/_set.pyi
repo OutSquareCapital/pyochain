@@ -203,7 +203,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
     def bisect_right(self, value: T) -> int: ...
     @override
     def index(
-        self, value: T, start: int | None = None, stop: int | None = None
+        self, value: T, start: int | None = None, stop: int | None = None, /
     ) -> int: ...
     @override
     def islice(
