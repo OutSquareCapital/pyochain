@@ -129,7 +129,7 @@ pub mod collections {
         pub static ITEMS_VIEW: Class = modules::COLLECTIONS_ABC.register("ItemsView");
         pub static CONTAINER: Class = modules::COLLECTIONS_ABC.register("Container");
         pub static COLLECTION: Class = modules::COLLECTIONS_ABC.register("Collection");
-        pub static REVERSIBLE: Class = modules::COLLECTIONS_ABC.register("reversible");
+        pub static REVERSIBLE: Class = modules::COLLECTIONS_ABC.register("Reversible");
         pub static SUPPORTS_ITEMS: Class = modules::COLLECTIONS_ABC.register("SupportsItems");
     }
 }
