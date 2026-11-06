@@ -7,6 +7,7 @@ use crate::{
     errors,
     inner::InnerData,
     list_update::ListAdd,
+    ops,
     reprs::PyRepr,
     slice::SliceIdxs,
     types::{IntOrSlice, ListOrAny, VecPy},
@@ -57,7 +58,7 @@ pub trait ListsMethods:
     /// Equivalent to `bisect_ky_key` if the collection is sorted **by value**.\
     /// If the collection is sorted **by key**, *value* is first transformed by the *key* function before the bisect operation.
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn expand(&mut self, py: Python<'_>, pos: usize);
+    fn expand_splitted(&mut self, py: Python<'_>, pos: usize) -> (VecPy, Py<PyAny>);
     fn clear(&mut self, py: Python<'_>);
     fn delete(&mut self, py: Python<'_>, loc: Loc) -> PyResult<()>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
@@ -109,6 +110,19 @@ pub trait ListsMethods:
                 .collect::<PyResult<_>>()?,
         };
         self.as_owned_from(py, out)
+    }
+    fn expand(&mut self, py: Python<'_>, pos: usize) {
+        match ops::Expand::new(self, pos) {
+            ops::Expand::MustSplit => {
+                let (half, last_max) = self.expand_splitted(py, pos);
+                self.maxes[pos] = self.keys()[pos].last().unwrap().clone_ref(py);
+                self.maxes.insert(pos + 1, last_max);
+                self.values.insert(pos + 1, half);
+                self.lengths.inner.clear();
+            }
+            ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
+            ops::Expand::NoOp => (),
+        }
     }
     fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         match index {

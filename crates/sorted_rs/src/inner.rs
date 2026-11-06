@@ -122,18 +122,6 @@ impl InnerData {
         self.maxes.remove(loc.pos);
         self.lengths.inner.clear();
     }
-    pub(super) fn expand_at_pos(
-        &mut self,
-        pos: usize,
-        half: VecPy,
-        last_max: Py<PyAny>,
-        new_max_at_pos: Py<PyAny>,
-    ) {
-        self.maxes[pos] = new_max_at_pos;
-        self.maxes.insert(pos + 1, last_max);
-        self.values.insert(pos + 1, half);
-        self.lengths.inner.clear();
-    }
 
     pub(super) fn set_pos(&mut self, mut index: isize) -> PyResult<Loc> {
         if index.is_negative() {
