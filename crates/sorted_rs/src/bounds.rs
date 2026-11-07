@@ -158,10 +158,10 @@ impl RangeIdxs<Option<isize>> {
         }
     }
     pub(super) fn into_bounds(self, data: &mut InnerData) -> PyResult<Bounds> {
-        let length = data.len;
-        if length == 0 {
+        if data.is_empty() {
             Ok(Bounds::default())
         } else {
+            let length = data.len();
             let normalize_bound = |mut val: isize| {
                 if val < 0 {
                     val += length.cast_signed();

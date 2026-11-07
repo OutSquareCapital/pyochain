@@ -96,7 +96,7 @@ pub(super) trait SortedListMethods:
             .and_then_left(Bound::try_into_py)
     }
     fn __len__(&self) -> usize {
-        self.read().len
+        self.read().len()
     }
 
     fn __radd__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {

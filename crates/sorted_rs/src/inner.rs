@@ -45,10 +45,18 @@ pub struct InnerData {
     pub(super) maxes: VecPy,
     /// Equivalent to `idx` and `offset` attributes in the original `sortedcontainers` implementation.
     pub(super) lengths: Lengths,
-    pub len: usize,
+    pub(super) len: usize,
     pub(super) load: Load,
 }
 impl InnerData {
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.len
+    }
+    #[inline(always)]
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
     #[inline]
     pub fn clear(&mut self) {
         self.values.clear();

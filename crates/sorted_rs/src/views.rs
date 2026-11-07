@@ -51,7 +51,7 @@ where
         try_cast! {
             match index {
                 Case::PySlice(pyslice) => {
-                    let slice = SliceIdxs::new(pyslice, mapping.len)?;
+                    let slice = SliceIdxs::new(pyslice, mapping.len())?;
                     let keys = slice.extract_from(py,&mut mapping)?;
                     slice.delete_from(py,&mut mapping.0)?;
                     for key in keys {
@@ -79,7 +79,7 @@ where
         let mut mapping = self.mapping_mut();
         try_cast! {
             match index {
-                Case::PySlice(slice) => SliceIdxs::new(slice, mapping.len)?
+                Case::PySlice(slice) => SliceIdxs::new(slice, mapping.len())?
                     .extract_from(py, &mut mapping)?
                     .iter()
                     .collect_bound::<PyList>(py)
@@ -102,7 +102,7 @@ where
         let dict = mapping.1.clone_ref(py).into_bound(py).into_any();
         try_cast! {
             match index {
-                Case::PySlice(slice) => SliceIdxs::new(slice, mapping.len)?
+                Case::PySlice(slice) => SliceIdxs::new(slice, mapping.len())?
                     .extract_from(py, &mut mapping)?
                     .iter()
                     .map(|key| dict.get_item(key))
@@ -128,7 +128,7 @@ where
         let dict = mapping.1.clone_ref(py).into_bound(py).into_any();
         try_cast! {
             match index {
-                Case::PySlice(slice) => SliceIdxs::new(slice, mapping.len)?
+                Case::PySlice(slice) => SliceIdxs::new(slice, mapping.len())?
                     .extract_from(py, &mut mapping)?
                     .iter()
                     .map(|key| tuple!(key.bind(py), &dict.get_item(key)?))

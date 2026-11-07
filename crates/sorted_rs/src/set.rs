@@ -118,7 +118,7 @@ impl<T: ListsMethods> Set<T> {
     pub fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         let py = index.py();
         match index {
-            Either::Right(pyslice) => SliceIdxs::new(&pyslice, self.len)?
+            Either::Right(pyslice) => SliceIdxs::new(&pyslice, self.len())?
                 .extract_from(py, self)?
                 .iter()
                 .collect_bound::<PyList>(py)
@@ -131,7 +131,7 @@ impl<T: ListsMethods> Set<T> {
         let py = index.py();
         match index {
             Either::Right(pyslice) => {
-                let slice = SliceIdxs::new(&pyslice, self.len)?;
+                let slice = SliceIdxs::new(&pyslice, self.len())?;
                 let values = slice
                     .extract_from(py, &mut self.0)?
                     .iter()

@@ -18,14 +18,14 @@ macro_rules! pyassert {
     };
 }
 pub fn check_empty(slf: &InnerData) -> PyResult<()> {
-    pyassert!(slf.len == 0)?;
+    pyassert!(slf.is_empty())?;
     pyassert!(slf.maxes.is_empty())?;
     pyassert!(slf.values.is_empty())
 }
 pub fn check_dict<T: ListsMethods>(py: Python<'_>, slf: &Dict<T>) -> PyResult<()> {
     check_list(py, &slf.0)?;
     let dict = slf.1.bind(py);
-    pyassert!(dict.len() == slf.len)?;
+    pyassert!(dict.len() == slf.len())?;
     pyassert!(
         slf.iter()
             .try_all(|item| { dict.contains(item.bind(py)) })?
@@ -34,7 +34,7 @@ pub fn check_dict<T: ListsMethods>(py: Python<'_>, slf: &Dict<T>) -> PyResult<()
 
 pub fn check_set<T: ListsMethods>(py: Python<'_>, slf: &Set<T>) -> PyResult<()> {
     let set = slf.get_set(py);
-    pyassert!(set.len() == slf.len)?;
+    pyassert!(set.len() == slf.len())?;
     check_list(py, &slf.0)?;
     pyassert!(slf.iter().try_all(|x| set.contains(x))?)
 }
@@ -74,7 +74,7 @@ fn check_values_match_keys(py: Python<'_>, data: &KeyList) -> PyResult<()> {
 fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     pyassert!(slf.load.test_limit())?;
     pyassert!(slf.maxes.len() == slf.values.len() && slf.values.len() == slf.keys().len())?;
-    pyassert!(slf.len == slf.values.iter().map(Vec::len).sum::<usize>())?;
+    pyassert!(slf.len() == slf.values.iter().map(Vec::len).sum::<usize>())?;
     // Check all sublists are sorted.
     slf.keys().iter().try_for_each(|sublist| {
         (1..sublist.len())
@@ -113,7 +113,7 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
             .all(|sublist| sublist.len() >= slf.load.lower_limit())
     )?;
     if slf.lengths.is_built() {
-        pyassert!(slf.len == slf.lengths.inner[0])?;
+        pyassert!(slf.len() == slf.lengths.inner[0])?;
         pyassert!(slf.lengths.inner.len() == slf.lengths.offset + slf.values.len())?;
         // Check index leaf nodes equal length of sublists.
         slf.values
@@ -140,7 +140,7 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
 }
 fn list_infos(slf: &InnerData) -> String {
     [
-        format!("len: {}", slf.len),
+        format!("len: {}", slf.len()),
         format!("load: {:?}", slf.load),
         format!("offset: {}", slf.lengths.offset),
         format!("len_index: {}", slf.lengths.inner.len()),

@@ -53,7 +53,7 @@ pub struct InnerIterBounded {
 impl InnerIter {
     #[inline(always)]
     pub fn len(&self) -> usize {
-        self.pyref.len
+        self.pyref.len()
     }
     #[inline(always)]
     pub(super) unsafe fn next<const FWD: bool>(&self) -> Item {

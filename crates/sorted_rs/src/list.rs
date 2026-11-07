@@ -68,7 +68,7 @@ impl ListsMethods for List {
 
                 if right.pos == self.maxes.len() {
                     let left_loc = self.loc(&left);
-                    Ok(self.len - left_loc)
+                    Ok(self.len() - left_loc)
                 } else {
                     right.idx = self.values[right.pos].bisect_right(value)?;
 
@@ -128,7 +128,7 @@ impl ListsMethods for List {
     fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize> {
         let py = value.py();
         let indices = RangeIdxs::from(indices);
-        match indices.into_index(self.len) {
+        match indices.into_index(self.len()) {
             None => Err(errors::not_in_list(value)),
             Some(indices) => {
                 let loc = Loc::try_from_index(self, value)?;

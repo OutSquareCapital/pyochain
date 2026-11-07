@@ -61,7 +61,7 @@ impl<T: ListsMethods> ListAdd<'_, T> {
         };
         if list.maxes.is_empty() {
             update_chunked(list, py, values.into_iter())
-        } else if 4 * values.len() >= list.len {
+        } else if 4 * values.len() >= list.len() {
             list.iter()
                 .chain(values.iter())
                 .collect_bound::<PyList>(py)

@@ -80,7 +80,7 @@ pub trait ListsMethods:
             let mut loc = Loc::new(0, 0);
             loc.pos = self.maxes.bisect::<LEFT>(value)?;
             if loc.pos == self.maxes.len() {
-                Ok(self.len)
+                Ok(self.len())
             } else {
                 loc.idx = self.keys()[loc.pos].bisect::<LEFT>(value)?;
                 Ok(self.loc(&loc))
@@ -126,7 +126,7 @@ pub trait ListsMethods:
     }
     fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
         match index {
-            Either::Right(slice) => SliceIdxs::new(&slice, self.len)?
+            Either::Right(slice) => SliceIdxs::new(&slice, self.len())?
                 .extract_from(slice.py(), self)?
                 .iter()
                 .collect_bound::<PyList>(slice.py())
@@ -138,12 +138,14 @@ pub trait ListsMethods:
     }
     fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
-            Either::Right(slice) => SliceIdxs::new(&slice, self.len)?.delete_from(slice.py(), self),
+            Either::Right(slice) => {
+                SliceIdxs::new(&slice, self.len())?.delete_from(slice.py(), self)
+            }
             Either::Left(index) => self.del_item(index.py(), index.extract()?),
         }
     }
     fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
-        if self.len == 0 {
+        if self.is_empty() {
             Err(errors::out_of_range())
         } else {
             let loc = self.set_pos(index)?;
