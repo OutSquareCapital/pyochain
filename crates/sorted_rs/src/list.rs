@@ -21,7 +21,7 @@ impl ListsMethods for List {
         new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
-    fn irange(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds> {
+    fn irange(&self, specs: RawIrangeSpecs<'_>) -> Option<PyResult<Bounds>> {
         self.irange_by_key(specs)
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
@@ -112,17 +112,10 @@ impl ListsMethods for List {
         }
         Ok(())
     }
-    fn expand(&mut self, py: Python<'_>, pos: usize) {
-        match ops::Expand::new(self, pos) {
-            ops::Expand::LenAtPosGtDoubleLoad => {
-                let half = self.0.values[pos].split_off(*self.0.load);
-                let new_max_at_pos = self.values[pos].last().unwrap().clone_ref(py);
-                let last_max = half.last().unwrap().clone_ref(py);
-                self.expand_at_pos(pos, half, last_max, new_max_at_pos);
-            }
-            ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
-            ops::Expand::NoOp => (),
-        }
+    fn expand_splitted(&mut self, py: Python<'_>, pos: usize) -> (VecPy, Py<PyAny>) {
+        let half = self.0.values[pos].split_off(*self.0.load);
+        let last_max = half.last().unwrap().clone_ref(py);
+        (half, last_max)
     }
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
         values.merge_with(

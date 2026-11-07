@@ -114,7 +114,7 @@ impl Maxes {
 
 /// Used in `expand`
 pub enum Expand {
-    LenAtPosGtDoubleLoad,
+    MustSplit,
     IdxBuilt,
     NoOp,
 }
@@ -123,7 +123,7 @@ impl Expand {
     #[must_use]
     pub fn new(data: &impl ListsMethods, pos: usize) -> Self {
         if data.keys()[pos].len() > data.load.higher_limit() {
-            Self::LenAtPosGtDoubleLoad
+            Self::MustSplit
         } else if data.lengths.is_built() {
             Self::IdxBuilt
         } else {

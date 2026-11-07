@@ -25,8 +25,11 @@ impl ListsMethods for KeyList {
         new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
-    fn irange(&self, specs: RawIrangeSpecs<'_>) -> PyResult<Bounds> {
-        IrangeSpecs::with_keys(specs, &self.2)?.into_bounds(self)
+    fn irange(&self, specs: RawIrangeSpecs<'_>) -> Option<PyResult<Bounds>> {
+        IrangeSpecs::with_keys(specs, &self.2)
+            .map(|x| x.into_bounds(self))
+            .transpose()
+            .map(Result::flatten)
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let key = self.extract_key(&value)?;
@@ -137,19 +140,12 @@ impl ListsMethods for KeyList {
         }
         Ok(())
     }
-    fn expand(&mut self, py: Python<'_>, pos: usize) {
-        match ops::Expand::new(self, pos) {
-            ops::Expand::LenAtPosGtDoubleLoad => {
-                let half_keys = self.1[pos].split_off(*self.0.load);
-                let half = self.0.values[pos].split_off(*self.0.load);
-                let new_max_at_pos = self.keys()[pos].last().unwrap().clone_ref(py);
-                let last_max = half_keys.last().unwrap().clone_ref(py);
-                self.1.insert(pos + 1, half_keys);
-                self.expand_at_pos(pos, half, last_max, new_max_at_pos);
-            }
-            ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
-            ops::Expand::NoOp => (),
-        }
+    fn expand_splitted(&mut self, py: Python<'_>, pos: usize) -> (VecPy, Py<PyAny>) {
+        let half_keys = self.1[pos].split_off(*self.0.load);
+        let half = self.0.values[pos].split_off(*self.0.load);
+        let last_max = half_keys.last().unwrap().clone_ref(py);
+        self.1.insert(pos + 1, half_keys);
+        (half, last_max)
     }
 
     fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize> {

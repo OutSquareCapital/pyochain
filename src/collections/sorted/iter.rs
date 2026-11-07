@@ -17,7 +17,7 @@ macro_rules! impl_sorted_iter {
             }
             #[pymethods]
             impl $pyiter {
-                fn __next__(slf: Bound<'_, Self>) -> Option<Bound<'_, PyAny>> {
+                fn __next__<'py>(slf: &Bound<'py, Self>) -> Option<Bound<'py, PyAny>> {
                     iter::PySortedIter::py_next(slf)
                 }
                 fn __length_hint__(&self) -> usize {
@@ -29,10 +29,10 @@ macro_rules! impl_sorted_iter {
 }
 
 impl_sorted_iter!(
-    iter::Iter => SortedIter,
-    iter::IterRev => SortedIterRev,
-    iter::IterBounded => SortedIterBounded,
-    iter::IterBoundedRev => SortedIterBoundedRev,
+    iter::Iter<true> => SortedIter,
+    iter::Iter<false> => SortedIterRev,
+    iter::IterBounded<true> => SortedIterBounded,
+    iter::IterBounded<false> => SortedIterBoundedRev,
 );
 
 #[inline(always)]

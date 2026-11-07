@@ -6,5 +6,5 @@ pub mod builtins;
 pub mod heapq;
 pub mod iter;
 pub mod operator;
-mod registery;
+pub(crate) mod registery;
 pub mod sys;
