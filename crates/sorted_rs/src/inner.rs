@@ -58,7 +58,7 @@ impl InnerData {
         self.len == 0
     }
     #[inline]
-    pub fn clear(&mut self) {
+    pub(super) fn clear(&mut self) {
         self.values.clear();
         self.maxes.clear();
         self.lengths.inner.clear();
@@ -67,18 +67,18 @@ impl InnerData {
     }
     #[inline]
     #[must_use]
-    pub fn collapse(&self, py: Python<'_>) -> VecPy {
+    pub(super) fn collapse(&self, py: Python<'_>) -> VecPy {
         self.iter_owned(py).collect()
     }
     #[inline(always)]
-    pub fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
+    pub(super) fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
         self.iter().map(move |x| x.clone_ref(py))
     }
     #[inline(always)]
-    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> {
+    pub(super) fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> {
         self.values.iter().flatten()
     }
-    pub fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
+    pub(super) fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         self.iter().collect_bound::<PyList>(py)
     }
     pub(super) fn loc(&mut self, loc: &Loc) -> usize {
@@ -93,7 +93,7 @@ impl InnerData {
     }
     #[inline]
     #[must_use]
-    pub fn repeat(&self, py: Python<'_>, num: usize) -> VecPy {
+    pub(super) fn repeat(&self, py: Python<'_>, num: usize) -> VecPy {
         let values = self.collapse(py);
         (0..num)
             .flat_map(|_| values.iter())
@@ -120,7 +120,11 @@ impl InnerData {
             ops::Locate::InOtherListNeg(i) => self.set_pos(i),
         }
     }
-    pub fn get_item<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
+    pub(super) fn get_item<'py>(
+        &mut self,
+        py: Python<'py>,
+        index: isize,
+    ) -> PyResult<Bound<'py, PyAny>> {
         self.index_to_loc(index)
             .map(|loc| self.values.loc(&loc).clone_ref(py).into_bound(py))
     }
