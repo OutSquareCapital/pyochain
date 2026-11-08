@@ -157,9 +157,9 @@ impl RangeIdxs<Option<isize>> {
             }
         }
     }
-    pub(super) fn into_bounds(self, data: &mut InnerData) -> PyResult<Bounds> {
+    pub(super) fn into_bounds(self, data: &mut InnerData) -> Option<PyResult<Bounds>> {
         if data.is_empty() {
-            Ok(Bounds::default())
+            None
         } else {
             let length = data.len();
             let normalize_bound = |mut val: isize| {
@@ -173,17 +173,20 @@ impl RangeIdxs<Option<isize>> {
             let start = self.start.map_or(0, normalize_bound);
             let stop = self.stop.map_or(length, normalize_bound);
             if start >= stop {
-                Ok(Bounds::default())
+                None
             } else {
-                let min = data.set_pos_usize(start)?;
+                let min = data.set_pos_usize(start);
                 let max = if stop == length {
                     let max_pos = data.values.len() - 1;
                     let max_idx = data.values.last().unwrap().len();
-                    Loc::new(max_pos, max_idx)
+                    Ok(Loc::new(max_pos, max_idx))
                 } else {
-                    data.set_pos_usize(stop)?
+                    data.set_pos_usize(stop)
                 };
-                Ok(Bounds::new(min, max))
+                match (min, max) {
+                    (Err(e), _) | (_, Err(e)) => Some(Err(e)),
+                    (Ok(min), Ok(max)) => Some(Ok(Bounds::new(min, max))),
+                }
             }
         }
     }

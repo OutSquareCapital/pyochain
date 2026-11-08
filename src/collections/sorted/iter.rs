@@ -36,10 +36,15 @@ impl_sorted_iter!(
 );
 
 #[inline(always)]
-pub fn bounded<'py>(slf: &Bound<'py, impl ListGetter>, bounds: Bounds, rev: bool) -> IterRes<'py> {
+pub fn bounded<'py>(
+    slf: &Bound<'py, impl ListGetter>,
+    bounds: Option<Bounds>,
+    rev: bool,
+) -> IterRes<'py> {
+    let args = (slf, bounds.unwrap_or_default());
     if rev {
-        SortedIterBoundedRev::build(slf.py(), (slf, bounds)).map(Bound::into_super)
+        SortedIterBoundedRev::build(slf.py(), args).map(Bound::into_super)
     } else {
-        SortedIterBounded::build(slf.py(), (slf, bounds)).map(Bound::into_super)
+        SortedIterBounded::build(slf.py(), args).map(Bound::into_super)
     }
 }
