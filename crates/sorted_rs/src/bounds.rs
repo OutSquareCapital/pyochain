@@ -139,21 +139,23 @@ impl RangeIdxs<Option<isize>> {
         if data.is_empty() {
             None
         } else {
-            let length = data.len().cast_signed();
-            let mut start = self.start.unwrap_or(0);
-            let mut stop = self.stop.unwrap_or(length);
-            if start < 0 {
-                start += length;
-            }
-            start = start.max(0);
-            if stop < 0 {
-                stop += length;
-            }
-            stop = stop.min(length);
+            let length = data.len();
+            let start = self.start.map_or_default(|mut s| {
+                if s.is_negative() {
+                    s += length.cast_signed();
+                }
+                s.max(0).cast_unsigned()
+            });
+            let stop = self.stop.map_or(length, |mut s| {
+                if s.is_negative() {
+                    s += length.cast_signed();
+                }
+                s.cast_unsigned().min(length)
+            });
             if stop <= start {
                 None
             } else {
-                Some(RangeIdxs::new(start.cast_unsigned(), stop.cast_unsigned()))
+                Some(RangeIdxs::new(start, stop))
             }
         }
     }
@@ -163,23 +165,23 @@ impl RangeIdxs<Option<isize>> {
         } else {
             let length = data.len();
             let normalize_bound = |mut val: isize| {
-                if val < 0 {
+                if val.is_negative() {
                     val += length.cast_signed();
                     val.max(0).cast_unsigned()
                 } else {
                     val.cast_unsigned().min(length)
                 }
             };
-            let start = self.start.map_or(0, normalize_bound);
+            let start = self.start.map_or_default(normalize_bound);
             let stop = self.stop.map_or(length, normalize_bound);
             if start >= stop {
                 None
             } else {
                 let min = data.set_pos_usize(start);
                 let max = if stop == length {
-                    let max_pos = data.values.len() - 1;
-                    let max_idx = data.values.last().unwrap().len();
-                    Ok(Loc::new(max_pos, max_idx))
+                    let pos = data.values.len() - 1;
+                    let idx = data.values.last().unwrap().len();
+                    Ok(Loc::new(pos, idx))
                 } else {
                     data.set_pos_usize(stop)
                 };
