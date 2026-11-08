@@ -82,12 +82,13 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> IterRes<'py> {
-        slf.get()
+        let bounds = slf
+            .get()
             .read()
             .as_ref()
             .irange((slf.py(), minimum, maximum, inclusive))
-            .transpose()
-            .and_then(|bounds| iter::bounded(slf, bounds, reverse))
+            .transpose()?;
+        iter::bounded(slf, bounds, reverse)
     }
     #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
     fn islice<'py>(
@@ -96,12 +97,13 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         stop: Option<isize>,
         reverse: bool,
     ) -> IterRes<'py> {
-        slf.get()
+        let bounds = slf
+            .get()
             .write()
             .as_mut()
             .islice((start, stop))
-            .transpose()
-            .and_then(|bounds| iter::bounded(slf, bounds, reverse))
+            .transpose()?;
+        iter::bounded(slf, bounds, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
         self.write().as_mut().reset(py, load)
@@ -121,12 +123,13 @@ where
         inclusive: (bool, bool),
         reverse: bool,
     ) -> IterRes<'py> {
-        slf.get()
+        let bounds = slf
+            .get()
             .read()
             .as_ref()
             .irange_by_key((slf.py(), min_key, max_key, inclusive))
-            .transpose()
-            .and_then(|bounds| iter::bounded(slf, bounds, reverse))
+            .transpose()?;
+        iter::bounded(slf, bounds, reverse)
     }
     fn bisect_key_left(&self, key: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.write().as_mut().bisect_by_key::<true>(key)
