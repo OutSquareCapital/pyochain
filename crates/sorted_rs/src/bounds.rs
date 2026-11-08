@@ -135,11 +135,11 @@ impl IntoIterator for RangeIdxs<usize> {
 }
 impl RangeIdxs<Option<isize>> {
     #[must_use]
-    pub fn into_index(self, length: usize) -> Option<RangeIdxs<usize>> {
-        let length = length.cast_signed();
-        if length == 0 {
+    pub fn into_index(self, data: &InnerData) -> Option<RangeIdxs<usize>> {
+        if data.is_empty() {
             None
         } else {
+            let length = data.len().cast_signed();
             let mut start = self.start.unwrap_or(0);
             let mut stop = self.stop.unwrap_or(length);
             if start < 0 {

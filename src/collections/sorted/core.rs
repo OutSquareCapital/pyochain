@@ -96,7 +96,7 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
         stop: Option<isize>,
         reverse: bool,
     ) -> IterRes<'py> {
-        let bounds = slf.get().write().as_mut().islice_specs((start, stop))?;
+        let bounds = slf.get().write().as_mut().islice((start, stop))?;
         iter::bounded(slf, bounds, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {

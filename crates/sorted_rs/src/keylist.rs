@@ -151,7 +151,7 @@ impl ListsMethods for KeyList {
     fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize> {
         let py = value.py();
         let indices = RangeIdxs::from(indices);
-        match indices.into_index(self.len()) {
+        match indices.into_index(self) {
             None => Err(errors::not_in_list(value)),
             Some(indices) => {
                 let key = self.extract_key(value)?;

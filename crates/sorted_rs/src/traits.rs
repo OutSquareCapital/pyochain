@@ -161,7 +161,7 @@ pub trait ListsMethods:
         self.clear(py);
         self.extend(py, values.into())
     }
-    fn islice_specs(&mut self, specs: RawRangeIdxs) -> PyResult<Bounds> {
+    fn islice(&mut self, specs: RawRangeIdxs) -> PyResult<Bounds> {
         specs.conv::<RangeIdxs<_>>().into_bounds(self)
     }
     fn irange_by_key(&self, specs: RawIrangeSpecs<'_>) -> Option<PyResult<Bounds>> {
