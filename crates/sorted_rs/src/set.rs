@@ -1,3 +1,4 @@
+use derive_more::Constructor;
 use parking_lot::RwLock;
 use std::cmp::Ordering;
 
@@ -11,7 +12,7 @@ use either::Either;
 use pyo3::{
     basic::CompareOp,
     prelude::*,
-    types::{PyBool, PyList, PyNotImplemented, PySet, PyTuple},
+    types::{PyBool, PyNotImplemented, PySet, PyTuple},
 };
 use pyo3_ext::{
     prelude::*,
@@ -19,7 +20,9 @@ use pyo3_ext::{
 };
 use pyochain_macros::try_cast_into;
 use tap::prelude::*;
-pub trait PySetDataRef: PyFrozenClass + AsRef<RwLock<Set<Self::L>>> + From<Set<Self::L>> {
+pub trait PySetDataRef:
+    PyFrozenClass + AsRef<RwLock<Set<Self::L>>> + From<Set<Self::L>> + Init
+{
     type L: ListsMethods;
 
     #[inline(always)]
@@ -40,30 +43,36 @@ pub trait PySetDataRef: PyFrozenClass + AsRef<RwLock<Set<Self::L>>> + From<Set<S
         }
     }
     #[inline]
-    fn map_any(&self, other: Bound<'_, PyAny>, op: SetOp) -> PyResult<Self> {
-        let other_set = Args::from_any(self, other);
-        self.as_ref().read().map_set(other_set, op).map(Self::from)
+    fn op<'py, T>(&self, other: Bound<'py, T>, op: SetOp) -> PyResult<Bound<'py, Self>>
+    where
+        for<'a> Args<'py>: From<IntoArgs<'a, 'py, Self, T>>,
+    {
+        let py = other.py();
+        let other_set = IntoArgs::new(self, other).conv::<Args<'py>>();
+        let slf = self.as_ref().read();
+        op.call(slf.1.bind(py), other_set)
+            .and_then(|x| slf.wrap(x))?
+            .conv::<Self>()
+            .into_bound(py)
     }
     #[inline]
-    fn map_any_mut(&self, other: Bound<'_, PyAny>, op: SetOp) -> PyResult<()> {
-        let other_set = Args::from_any(self, other);
-        self.as_ref().write().update(other_set, op)
+    fn op_mut<'py, T>(&self, other: Bound<'py, T>, op: SetOp) -> PyResult<()>
+    where
+        for<'a> Args<'py>: From<IntoArgs<'a, 'py, Self, T>>,
+    {
+        let py = other.py();
+        let args = IntoArgs::new(self, other).conv::<Args<'_>>();
+        let mut slf = self.as_ref().write();
+        let set = &slf.1.clone_ref(py).into_bound(py);
+        op.call_mut(set, args)?;
+        slf.0.clear(py);
+        slf.0.extend(py, set.iter_py().into())
     }
     #[inline]
     fn map_pred<'py>(&self, other: Bound<'py, PyAny>, op: SetPred) -> PyResult<Bound<'py, PyBool>> {
         let py = other.py();
-        let args = Args::from_any(self, other);
+        let args = IntoArgs::new(self, other).conv::<Args<'py>>();
         op.call(self.as_ref().read().1.bind(py), args)
-    }
-    #[inline]
-    fn map_iter(&self, tuple: Bound<'_, PyTuple>, op: SetOp) -> PyResult<Self> {
-        let args = Args::from_tuple(self, tuple);
-        self.as_ref().read().map_set(args, op).map(Self::from)
-    }
-    #[inline(always)]
-    fn map_iter_mut(&self, tuple: Bound<'_, PyTuple>, op: SetOp) -> PyResult<()> {
-        let args = Args::from_tuple(self, tuple);
-        self.as_ref().write().update(args, op)
     }
 }
 impl Set<List> {
@@ -121,7 +130,7 @@ impl<T: ListsMethods> Set<T> {
             Either::Right(pyslice) => SliceIdxs::new(&pyslice, self.len())?
                 .extract_from(py, self)?
                 .iter()
-                .collect_bound::<PyList>(py)
+                .collect_bound(py)
                 .map(Either::Left),
             Either::Left(index) => self.get_item(py, index.extract()?).map(Either::Right),
         }
@@ -147,7 +156,6 @@ impl<T: ListsMethods> Set<T> {
             }
         }
     }
-
     pub fn __len__(&self, py: Python<'_>) -> usize {
         self.1.bind(py).len()
     }
@@ -185,19 +193,6 @@ impl<T: ListsMethods> Set<T> {
         self.1.bind(value.py()).remove(value)?;
         self.0.remove(value)
     }
-    #[inline(always)]
-    fn map_set(&self, other: Args<'_>, op: SetOp) -> PyResult<Self> {
-        op.call(self.1.bind(other.py()), other)
-            .and_then(|x| self.wrap(x))
-    }
-    #[inline(always)]
-    fn update(&mut self, other: Args<'_>, op: SetOp) -> PyResult<()> {
-        let py = other.py();
-        let set = &self.1.clone_ref(py).into_bound(py);
-        op.call_mut(set, other)?;
-        self.0.clear(py);
-        self.0.extend(py, set.iter_py().into())
-    }
 }
 #[derive(Clone, Copy)]
 pub enum SetPred {
@@ -210,11 +205,11 @@ impl SetPred {
     fn call<'py>(self, set: &Bound<'py, PySet>, other: Args<'py>) -> PyResult<Bound<'py, PyBool>> {
         match (self, other) {
             (_, Args::Tuple(_)) => unreachable!(),
-            (Self::Subset | Self::Superset, Args::None(py) | Args::Slf(py)) => {
-                Ok(PyBool::new(py, true).to_owned())
+            (Self::Subset | Self::Superset, Args::None | Args::Slf) => {
+                Ok(PyBool::new(set.py(), true).to_owned())
             }
-            (Self::Disjoint, Args::None(py) | Args::Slf(py)) => {
-                Ok(PyBool::new(py, set.is_empty()).to_owned())
+            (Self::Disjoint, Args::None | Args::Slf) => {
+                Ok(PyBool::new(set.py(), set.is_empty()).to_owned())
             }
             (Self::Subset, Args::Any(other)) => set.issubset(other),
             (Self::Superset, Args::Any(other)) => set.issuperset(other),
@@ -222,38 +217,36 @@ impl SetPred {
         }
     }
 }
+#[derive(Constructor)]
+pub struct IntoArgs<'a, 'py, C, T> {
+    pyref: &'a C,
+    obj: Bound<'py, T>,
+}
 pub enum Args<'py> {
     /// An empty tuple.
-    None(Python<'py>),
+    None,
     /// An identity reference between the two sets used as operands
-    Slf(Python<'py>),
+    Slf,
     /// A tuple of arguments with length greater than 1.
     Tuple(Bound<'py, PyTuple>),
     /// Any other type of argument.
     Any(Bound<'py, PyAny>),
 }
-impl<'py> Args<'py> {
-    fn py(&self) -> Python<'py> {
-        match self {
-            Self::Tuple(set) => set.py(),
-            Self::Any(any) => any.py(),
-            Self::None(py) | Self::Slf(py) => *py,
-        }
-    }
+impl<'py, C> From<IntoArgs<'_, 'py, C, PyTuple>> for Args<'py>
+where
+    C: PySetDataRef,
+{
     #[inline(always)]
-    fn from_tuple<C>(left: &C, tuple: Bound<'py, PyTuple>) -> Self
-    where
-        C: PySetDataRef,
-    {
-        let py = tuple.py();
-        match tuple.len().cmp(&1) {
-            Ordering::Less => Self::None(py),
-            Ordering::Equal => Self::from_any(left, unsafe { tuple.get_item_unchecked(0) }),
-            Ordering::Greater => tuple
+    fn from(args: IntoArgs<'_, 'py, C, PyTuple>) -> Self {
+        let py = args.obj.py();
+        match args.obj.len().cmp(&1) {
+            Ordering::Less => Self::None,
+            Ordering::Equal => IntoArgs::new(args.pyref, unsafe { args.obj.get_item_unchecked(0) }).into(),
+            Ordering::Greater => args.obj
                 .into_iter()
                 .map(|other| match other.cast_exact::<C>().map(Bound::get) {
-                    Ok(other) if std::ptr::eq(other, left) => {
-                        left.as_ref().read().get_set(py).into_any()
+                    Ok(other) if std::ptr::eq(other, args.pyref) => {
+                        args.pyref.as_ref().read().get_set(py).into_any()
                     }
                     Ok(other) => other.as_ref().read().get_set(py).into_any(),
                     Err(_) => other,
@@ -263,16 +256,19 @@ impl<'py> Args<'py> {
                 .pipe(Self::Tuple),
         }
     }
+}
+
+impl<'py, C> From<IntoArgs<'_, 'py, C, PyAny>> for Args<'py>
+where
+    C: PySetDataRef,
+{
     #[inline(always)]
-    fn from_any<C>(left: &C, any: Bound<'py, PyAny>) -> Self
-    where
-        C: PySetDataRef,
-    {
-        let py = any.py();
-        match any.cast_exact::<C>().map(Bound::get) {
-            Ok(other) if std::ptr::eq(other, left) => Self::Slf(py),
+    fn from(args: IntoArgs<'_, 'py, C, PyAny>) -> Self {
+        let py = args.obj.py();
+        match args.obj.cast_exact::<C>().map(Bound::get) {
+            Ok(other) if std::ptr::eq(other, args.pyref) => Self::Slf,
             Ok(other) => Self::Any(other.as_ref().read().get_set(py).into_any()),
-            Err(_) => Self::Any(any),
+            Err(_) => Self::Any(args.obj),
         }
     }
 }
@@ -291,10 +287,10 @@ impl SetOp {
         other: Args<'py>,
     ) -> PyResult<Bound<'py, PySet>> {
         match (self, other) {
-            (Self::Union | Self::Intersection | Self::Difference, Args::None(_))
-            | (Self::Union | Self::Intersection, Args::Slf(_)) => set.copy(),
-            (Self::Difference | Self::SymmetricDifference, Args::Slf(py))
-            | (Self::SymmetricDifference, Args::None(py)) => PySet::empty(py),
+            (Self::Union | Self::Intersection | Self::Difference, Args::None)
+            | (Self::Union | Self::Intersection, Args::Slf) => set.copy(),
+            (Self::Difference | Self::SymmetricDifference, Args::Slf)
+            | (Self::SymmetricDifference, Args::None) => PySet::empty(set.py()),
             (Self::Difference, Args::Any(any)) => set.difference((any,)),
             (Self::Intersection, Args::Any(any)) => set.intersection((any,)),
             (Self::Union, Args::Any(any)) => set.union((any,)),
@@ -308,10 +304,10 @@ impl SetOp {
     #[inline(always)]
     pub fn call_mut<'py>(self, set: &Bound<'py, PySet>, other: Args<'py>) -> PyResult<()> {
         match (self, other) {
-            (Self::Union | Self::Intersection | Self::Difference, Args::None(_))
-            | (Self::Union | Self::Intersection, Args::Slf(_)) => Ok(()),
-            (Self::SymmetricDifference, Args::None(_))
-            | (Self::Difference | Self::SymmetricDifference, Args::Slf(_)) => {
+            (Self::Union | Self::Intersection | Self::Difference, Args::None)
+            | (Self::Union | Self::Intersection, Args::Slf) => Ok(()),
+            (Self::SymmetricDifference, Args::None)
+            | (Self::Difference | Self::SymmetricDifference, Args::Slf) => {
                 set.clear();
                 Ok(())
             }

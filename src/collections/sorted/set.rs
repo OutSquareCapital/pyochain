@@ -97,26 +97,25 @@ pub(super) trait SortedSetMethods:
         self.copy(py)
     }
     fn __sub__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.map_into_bound(other, SetOp::Difference)
+        self.op(other, SetOp::Difference)
     }
     fn __isub__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.map_any_mut(other, SetOp::Difference)
+        self.op_mut(other, SetOp::Difference)
     }
     fn __and__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.map_into_bound(other, SetOp::Intersection)
+        self.op(other, SetOp::Intersection)
     }
     fn __rand__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__and__(other)
     }
-
     fn __iand__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.map_any_mut(other, SetOp::Intersection)
+        self.op_mut(other, SetOp::Intersection)
     }
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.map_any_mut(other, SetOp::Union)
+        self.op_mut(other, SetOp::Union)
     }
     fn __or__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.map_into_bound(other, SetOp::Union)
+        self.op(other, SetOp::Union)
     }
     fn __ror__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__or__(other)
@@ -145,7 +144,6 @@ pub(super) trait SortedSetMethods:
     fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
         self.map_pred(other, SetPred::Subset)
     }
-
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
         self.map_pred(other, SetPred::Superset)
     }
@@ -161,56 +159,35 @@ pub(super) trait SortedSetMethods:
     }
     #[pyo3(signature = (*iterables))]
     fn difference<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.map_tup_into_bound(iterables, SetOp::Difference)
+        self.op(iterables, SetOp::Difference)
     }
     #[pyo3(signature = (*iterables))]
     fn difference_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
-        self.map_iter_mut(iterables, SetOp::Difference)
+        self.op_mut(iterables, SetOp::Difference)
     }
     #[pyo3(signature = (*iterables))]
     fn intersection<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.map_tup_into_bound(iterables, SetOp::Intersection)
+        self.op(iterables, SetOp::Intersection)
     }
     #[pyo3(signature = (*iterables))]
     fn intersection_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
-        self.map_iter_mut(iterables, SetOp::Intersection)
+        self.op_mut(iterables, SetOp::Intersection)
     }
-
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         self.write().remove(value)
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.map_into_bound(other, SetOp::SymmetricDifference)
+        self.op(other, SetOp::SymmetricDifference)
     }
     fn symmetric_difference_update(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.map_any_mut(other, SetOp::SymmetricDifference)
+        self.op_mut(other, SetOp::SymmetricDifference)
     }
     #[pyo3(signature= (*iterables))]
     fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.map_tup_into_bound(iterables, SetOp::Union)
+        self.op(iterables, SetOp::Union)
     }
     #[pyo3(signature = (*iterables))]
     fn update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<()> {
-        self.map_iter_mut(iterables, SetOp::Union)
-    }
-    #[skip]
-    #[inline]
-    fn map_tup_into_bound<'py>(
-        &self,
-        tup: Bound<'py, PyTuple>,
-        op: SetOp,
-    ) -> PyResult<Bound<'py, Self>> {
-        let py = tup.py();
-        self.map_iter(tup, op)?.into_bound(py)
-    }
-    #[skip]
-    #[inline]
-    fn map_into_bound<'py>(
-        &self,
-        other: Bound<'py, PyAny>,
-        op: SetOp,
-    ) -> PyResult<Bound<'py, Self>> {
-        let py = other.py();
-        self.map_any(other, op)?.into_bound(py)
+        self.op_mut(iterables, SetOp::Union)
     }
 }
