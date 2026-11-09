@@ -265,10 +265,10 @@ where
     #[inline(always)]
     fn from(args: IntoArgs<'_, 'py, C, PyAny>) -> Self {
         let py = args.obj.py();
-        match args.obj.cast_exact::<C>().map(Bound::get) {
-            Ok(other) if std::ptr::eq(other, args.pyref) => Self::Slf,
-            Ok(other) => Self::Any(other.as_ref().read().get_set(py).into_any()),
-            Err(_) => Self::Any(args.obj),
+        match args.obj.cast_exact::<C>().map(Bound::get).ok() {
+            Some(other) if std::ptr::eq(other, args.pyref) => Self::Slf,
+            Some(other) => Self::Any(other.as_ref().read().get_set(py).into_any()),
+            None => Self::Any(args.obj),
         }
     }
 }

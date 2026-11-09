@@ -21,10 +21,10 @@ pub trait PyListsDataRef: PyFrozenClass + AsRef<RwLock<Self::L>> + From<Self::L>
         &self,
         right: &'py Bound<'py, PyAny>,
     ) -> PyResult<ListAdd<'py, Self::L>> {
-        match right.cast_exact::<Self>().map(Bound::get) {
-            Ok(list) if std::ptr::eq(list, self) => Ok(ListAdd::Identity),
-            Ok(list) => list.as_ref().read().pipe(ListAdd::Sorted).pipe(Ok),
-            Err(_) => right.try_iter().map(ListAdd::Iterator),
+        match right.cast_exact::<Self>().map(Bound::get).ok() {
+            Some(list) if std::ptr::eq(list, self) => Ok(ListAdd::Identity),
+            Some(list) => list.as_ref().read().pipe(ListAdd::Sorted).pipe(Ok),
+            None => right.try_iter().map(ListAdd::Iterator),
         }
     }
 }
