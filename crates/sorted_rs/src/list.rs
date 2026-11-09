@@ -93,11 +93,11 @@ impl ListsMethods for List {
     fn delete(&mut self, py: Python<'_>, mut loc: Loc) -> PyResult<()> {
         self.values.loc_remove(&loc);
         self.len -= 1;
-        match ops::Delete::new(self, &loc) {
-            ops::Delete::LenAtPosSupToHalfLoad => {
+        match ops::SubListState::new(self, loc.pos) {
+            ops::SubListState::LenSupToHalfLoad => {
                 self.delete_on_len_sup_to_half_load(py, loc);
             }
-            ops::Delete::ListsLenGTOne => {
+            ops::SubListState::ManySublists => {
                 if loc.pos == 0 {
                     loc.pos += 1;
                 }
@@ -111,10 +111,10 @@ impl ListsMethods for List {
                 self.maxes[prev] = self.keys()[prev].last().unwrap().clone_ref(py);
                 self.expand(py, prev);
             }
-            ops::Delete::LenAtPosNotZero => {
+            ops::SubListState::NonEmpty => {
                 self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
             }
-            ops::Delete::Other => self.remove_pos(&loc),
+            ops::SubListState::Empty => self.remove_pos(&loc),
         }
         Ok(())
     }

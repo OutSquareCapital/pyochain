@@ -12,7 +12,7 @@ use tap::Conv;
 use crate::{
     bisect::Bisect,
     bounds::{Loc, RangeIdxs},
-    traits::{ListsMethods, NestedVec},
+    traits::ListsMethods,
     types::VecPy,
 };
 
@@ -132,25 +132,25 @@ impl Expand {
     }
 }
 /// Used in `delete`
-pub enum Delete {
-    LenAtPosSupToHalfLoad,
-    ListsLenGTOne,
-    LenAtPosNotZero,
-    Other,
+pub enum SubListState {
+    LenSupToHalfLoad,
+    ManySublists,
+    NonEmpty,
+    Empty,
 }
-impl Delete {
+impl SubListState {
     #[inline(always)]
     #[must_use]
-    pub fn new(data: &impl ListsMethods, loc: &Loc) -> Self {
-        let len_at_pos = data.keys().loc_len(loc);
-        if len_at_pos > data.load.lower_limit() {
-            Self::LenAtPosSupToHalfLoad
+    pub fn new(data: &impl ListsMethods, pos: usize) -> Self {
+        let sublist = &data.keys()[pos];
+        if sublist.len() > data.load.lower_limit() {
+            Self::LenSupToHalfLoad
         } else if data.keys().len() > 1 {
-            Self::ListsLenGTOne
-        } else if len_at_pos != 0 {
-            Self::LenAtPosNotZero
+            Self::ManySublists
+        } else if sublist.is_empty() {
+            Self::Empty
         } else {
-            Self::Other
+            Self::NonEmpty
         }
     }
 }

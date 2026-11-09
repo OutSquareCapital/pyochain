@@ -111,11 +111,11 @@ impl ListsMethods for KeyList {
         self.1.loc_remove(&loc);
         self.values.loc_remove(&loc);
         self.len -= 1;
-        match ops::Delete::new(self, &loc) {
-            ops::Delete::LenAtPosSupToHalfLoad => {
+        match ops::SubListState::new(self, loc.pos) {
+            ops::SubListState::LenSupToHalfLoad => {
                 self.delete_on_len_sup_to_half_load(py, loc);
             }
-            ops::Delete::ListsLenGTOne => {
+            ops::SubListState::ManySublists => {
                 if loc.pos == 0 {
                     loc.pos += 1;
                 }
@@ -132,10 +132,10 @@ impl ListsMethods for KeyList {
                 self.1.remove(loc.pos);
                 self.expand(py, prev);
             }
-            ops::Delete::LenAtPosNotZero => {
+            ops::SubListState::NonEmpty => {
                 self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
             }
-            ops::Delete::Other => {
+            ops::SubListState::Empty => {
                 self.remove_pos(&loc);
                 self.1.remove(loc.pos);
             }
