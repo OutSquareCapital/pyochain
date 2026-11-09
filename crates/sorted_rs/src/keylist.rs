@@ -1,8 +1,9 @@
 use crate::{
-    Bounds, KeyList,
+    KeyList,
     bisect::Bisect,
-    bounds::{IrangeSpecs, Loc, RangeIdxs, RawIrangeSpecs, RawRangeIdxs},
+    bounds::{Loc, RangeIdxs, RawIrangeSpecs},
     errors,
+    iter::{IrangeSpecs, builder::RawRangeIdxs},
     list_update::ListAdd,
     ops,
     traits::{ListsMethods, NestedVec},
@@ -25,11 +26,12 @@ impl ListsMethods for KeyList {
         new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
-    fn irange(&self, specs: RawIrangeSpecs<'_>) -> Option<PyResult<Bounds>> {
-        IrangeSpecs::with_keys(specs, &self.2)
-            .map(|x| x.into_bounds(self))
-            .transpose()
-            .map(Result::flatten)
+    fn irange<'py>(
+        &self,
+        py: Python<'py>,
+        specs: RawIrangeSpecs<'py>,
+    ) -> PyResult<IrangeSpecs<'py>> {
+        IrangeSpecs::with_keys(py, specs, &self.2)
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let key = self.extract_key(&value)?;

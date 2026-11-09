@@ -4,7 +4,6 @@ use pyo3::{prelude::*, types::PySlice};
 use tap::prelude::*;
 
 use crate::{
-    Bounds,
     bounds::{Loc, RangeIdxs},
     inner::InnerData,
     ops::{self, ForwardSlice},
@@ -105,23 +104,22 @@ impl SliceIdxs {
             list: &mut InnerData,
         ) -> PyResult<VecPy> {
             let min = list.set_pos_usize(slf.start)?;
-            let max = Loc::with_idx(min.idx + (slf.stop - slf.start));
-            let mut bounds = Bounds::new(min, max);
-            let start_list = &list.values[bounds.min.pos];
-            match (start_list.len() >= bounds.max.idx, TO_END) {
+            let mut max = Loc::with_idx(min.idx + (slf.stop - slf.start));
+            let start_list = &list.values[min.pos];
+            match (start_list.len() >= max.idx, TO_END) {
                 // Small slice optimization: start index and stop index are within the start list.
-                (true, _) => start_list[bounds.min.idx..bounds.max.idx]
+                (true, _) => start_list[min.idx..max.idx]
                     .iter()
                     .map(|x| x.clone_ref(py))
                     .collect(),
                 (false, true) => {
-                    bounds.max.pos = list.values.len() - 1;
-                    bounds.max.idx = list.values.loc_len(&bounds.max);
-                    get_slice(py, &list.values, &bounds)
+                    max.pos = list.values.len() - 1;
+                    max.idx = list.values.loc_len(&max);
+                    get_slice(py, &list.values, min, max)
                 }
                 (false, false) => {
-                    bounds.max = list.set_pos_usize(slf.stop)?;
-                    get_slice(py, &list.values, &bounds)
+                    max = list.set_pos_usize(slf.stop)?;
+                    get_slice(py, &list.values, min, max)
                 }
             }
             .pipe(Ok)
@@ -173,11 +171,11 @@ where
             .collect()
     }
 }
-fn get_slice(py: Python<'_>, lists: &[VecPy], bounds: &Bounds) -> VecPy {
-    lists[bounds.min.pos][bounds.min.idx..]
+fn get_slice(py: Python<'_>, lists: &[VecPy], min: Loc, max: Loc) -> VecPy {
+    lists[min.pos][min.idx..]
         .iter()
-        .chain(lists[bounds.min.pos + 1..bounds.max.pos].iter().flatten())
-        .chain(lists[bounds.max.pos][0..bounds.max.idx].iter())
+        .chain(lists[min.pos + 1..max.pos].iter().flatten())
+        .chain(lists[max.pos][0..max.idx].iter())
         .map(|x| x.clone_ref(py))
         .collect()
 }

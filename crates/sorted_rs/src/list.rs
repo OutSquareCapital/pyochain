@@ -1,11 +1,13 @@
 use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
+use tap::{Conv, Pipe};
 
 use crate::{
-    Bounds, List,
+    List,
     bisect::Bisect,
-    bounds::{Loc, RangeIdxs, RawIrangeSpecs, RawRangeIdxs},
+    bounds::{Loc, RangeIdxs, RawIrangeSpecs},
     errors,
+    iter::{IrangeSpecs, builder::RawRangeIdxs},
     list_update::ListAdd,
     ops,
     traits::{ListsMethods, NestedVec},
@@ -21,8 +23,12 @@ impl ListsMethods for List {
         new_inst.extend(py, values.into())?;
         Ok(new_inst)
     }
-    fn irange(&self, specs: RawIrangeSpecs<'_>) -> Option<PyResult<Bounds>> {
-        self.irange_by_key(specs)
+    fn irange<'py>(
+        &self,
+        _py: Python<'py>,
+        specs: RawIrangeSpecs<'py>,
+    ) -> PyResult<IrangeSpecs<'py>> {
+        specs.conv::<IrangeSpecs>().pipe(Ok)
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();

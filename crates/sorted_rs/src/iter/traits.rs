@@ -9,11 +9,20 @@ pub(super) type Item = Option<*mut ffi::PyObject>;
 /// # Safety
 /// All implementers must ensure that all pointers are correctly managed,\
 /// and that all call sites are restricted to contexts with a valid Python interpreter.
-pub unsafe trait SortedNext {
+pub unsafe trait SortedNext: Sized {
+    type Rev: SortedNext;
     /// Concrete logic of the python `Iterator`.
     /// # Safety
     /// The caller must ensure that the Iterator is wrapped in a pyclass.
     unsafe fn next(&self) -> Item;
+    fn rev(&self, py: Python<'_>) -> Self::Rev;
+    #[inline(always)]
+    fn into_py<T>(self, py: Python<'_>) -> PyResult<Bound<'_, T>>
+    where
+        T: PySortedIter<Iter = Self>,
+    {
+        self.conv::<T>().into_bound(py)
+    }
 }
 
 /// Trait for the Pyclasses that effectively wrap implementors of `SortedNext`.\
@@ -22,6 +31,7 @@ pub trait PySortedIter:
     PyFrozenClass + Deref<Target = Self::Iter> + Init + From<Self::Iter>
 {
     type Iter: SortedNext;
+    type IterRev: PySortedIter<Iter = <Self::Iter as SortedNext>::Rev>;
     fn install(py: Python<'_>) {
         unsafe {
             let ty = Self::type_object_raw(py);
@@ -36,11 +46,12 @@ pub trait PySortedIter:
     fn py_next<'py>(slf: &Bound<'py, Self>) -> Option<Bound<'py, PyAny>> {
         unsafe { slf.get().next().map(|x| Bound::from_owned_ptr(slf.py(), x)) }
     }
-    /// Full roundtrip from python method call to returned `Iterator`.\
-    /// `sorted_collection.method(*args)` -> (bounded collection + bounds, range specs, etc...) -> "pure rust" iterator -> pyclass wrapper -> bounded wrapper.
     #[inline(always)]
-    fn build(py: Python<'_>, value: impl Into<Self::Iter>) -> PyResult<Bound<'_, Self>> {
-        value.conv::<Self::Iter>().conv::<Self>().into_bound(py)
+    fn rev<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self::IterRev>> {
+        slf.get()
+            .rev(slf.py())
+            .conv::<Self::IterRev>()
+            .into_bound(slf.py())
     }
 }
 

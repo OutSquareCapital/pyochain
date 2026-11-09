@@ -1,19 +1,17 @@
-use crate::{abc, collections::sorted::core::IterRes};
+use crate::abc;
 use derive_more::{Deref, From};
 use pyo3::prelude::*;
-use sorted_rs::{
-    Bounds, ListGetter,
-    iter::{self, PySortedIter},
-};
+use sorted_rs::iter::{self, PySortedIter};
 
 macro_rules! impl_sorted_iter {
-    ($($iter:ty => $pyiter:ident),+ $(,)?) => {
+    ($($iter:ty => [$pyiter:ident, $pyiterrev:ty]),+ $(,)?) => {
         $(
             #[derive(From, Deref)]
             #[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
             pub struct $pyiter($iter);
             impl iter::PySortedIter for $pyiter {
                 type Iter = $iter;
+                type IterRev = $pyiterrev;
             }
             #[pymethods]
             impl $pyiter {
@@ -23,28 +21,17 @@ macro_rules! impl_sorted_iter {
                 fn __length_hint__(&self) -> usize {
                       self.0.len()
                 }
+                fn rev<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, <Self as PySortedIter>::IterRev>> {
+                    iter::PySortedIter::rev(slf)
+                }
             }
         )+
     };
 }
 
 impl_sorted_iter!(
-    iter::Iter<true> => SortedIter,
-    iter::Iter<false> => SortedIterRev,
-    iter::IterBounded<true> => SortedIterBounded,
-    iter::IterBounded<false> => SortedIterBoundedRev,
+    iter::IterFwd => [SortedIter, SortedIterRev],
+    iter::IterRev => [SortedIterRev, SortedIter],
+    iter::IterBounded => [SortedIterBounded, SortedIterBoundedRev],
+    iter::IterBoundedRev => [SortedIterBoundedRev, SortedIterBounded],
 );
-
-#[inline(always)]
-pub fn bounded<'py>(
-    slf: &Bound<'py, impl ListGetter>,
-    bounds: Option<Bounds>,
-    rev: bool,
-) -> IterRes<'py> {
-    let args = (slf, bounds.unwrap_or_default());
-    if rev {
-        SortedIterBoundedRev::build(slf.py(), args).map(Bound::into_super)
-    } else {
-        SortedIterBounded::build(slf.py(), args).map(Bound::into_super)
-    }
-}
