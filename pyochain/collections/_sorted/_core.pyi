@@ -1,28 +1,24 @@
 # Adapted from python-sortedcontainers (https://github.com/grantjenks/python-sortedcontainers)
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections.abc import Callable
 from typing import Self, type_check_only
 
 from _typeshed import SupportsRichComparison
 
-from pyochain.abc import PyoIterator
+from pyochain.abc import DoubleEndedIterator
 
 type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 
 @type_check_only
 class SortedCollection[T](ABC):
     """Base class for sorted collections."""
-
-    @abstractmethod
     def __contains__(self, value: object, /) -> bool: ...
-    @abstractmethod
     def bisect_left(self, value: T) -> int:
         """Return an index to insert *value* in the `SortedCollection`.
 
-        If the *value* is already present, the insertion point will be before
-        (to the left of) any existing values.
+        If the *value* is already present, the insertion point will be before (to the left of) any existing values.
 
         Similar to the `bisect` module in the standard library.
 
@@ -47,7 +43,6 @@ class SortedCollection[T](ABC):
         ```
         """
 
-    @abstractmethod
     def bisect_right(self, value: T) -> int:
         """Return an index to insert `value` in the `SortedCollection`.
 
@@ -76,8 +71,6 @@ class SortedCollection[T](ABC):
             assert skl.bisect_right(1) == 5
             ```
         """
-
-    @abstractmethod
     def index(
         self, value: T, start: int | None = None, stop: int | None = None, /
     ) -> int:
@@ -122,16 +115,13 @@ class SortedCollection[T](ABC):
             ```
         """
 
-    @abstractmethod
     def irange(
         self,
         minimum: T | None = None,
         maximum: T | None = None,
         inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]:
-        """Create an iterator of values between `minimum` and `maximum`.
+    ) -> DoubleEndedIterator[T]:
+        """Create a [`DoubleEndedIterator`][] of values between `minimum` and `maximum`.
 
         Both `minimum` and `maximum` default to `None` which is automatically inclusive of the beginning and end of the `SortedCollection`.
 
@@ -139,10 +129,9 @@ class SortedCollection[T](ABC):
             minimum (T | None): minimum value to start iterating
             maximum (T | None): maximum value to stop iterating
             inclusive (tuple[bool, bool]): Whether the minimum and maximum ought to be included in the range, respectively. The default is `(True, True)` such that the range is inclusive of both minimum and maximum.
-            reverse (bool): When `True`, the values are yielded in reverse order. Defaults to `False`.
 
         Returns:
-            PyoIterator[T]: an iterator of values between `minimum` and `maximum`
+            DoubleEndedIterator[T]: an `Iterator` of values between `minimum` and `maximum`
 
         Examples:
             ```python
@@ -158,33 +147,21 @@ class SortedCollection[T](ABC):
             assert list(it) == [14, 13, 12]
             ```
         """
-
-    @abstractmethod
     def islice(
-        self,
-        start: int | None = None,
-        stop: int | None = None,
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]:
-        """Return an iterator that slices sorted list from `start` to `stop`.
+        self, start: int | None = None, stop: int | None = None
+    ) -> DoubleEndedIterator[T]:
+        """Return a [`DoubleEndedIterator`][] that slices the `SortedCollection` from `start` to `stop`.
 
-        The `start` and `stop` index are treated inclusive and exclusive,
-        respectively.
+        The `start` and `stop` index are treated inclusive and exclusive, respectively.
 
-        Both `start` and `stop` default to `None` which is automatically
-        inclusive of the beginning and end of the sorted list.
-
-        When `reverse` is `True` the values are yielded from the iterator in
-        reverse order; `reverse` defaults to `False`.
+        Both `start` and `stop` default to `None` which is automatically inclusive of the beginning and end of the sorted list.
 
         Args:
             start (int | None): start index (inclusive)
             stop (int | None): stop index (exclusive)
-            reverse (bool): yield values in reverse order
 
         Returns:
-            PyoIterator[T]: iterator
+            DoubleEndedIterator[T]: an `Iterator` over a slice from `start` to `stop`
 
         Examples:
             ```python
@@ -195,14 +172,12 @@ class SortedCollection[T](ABC):
             assert list(it) == ["c", "d", "e", "f"]
             ```
         """
-
-    @abstractmethod
     def reset(self, load: int) -> None:
-        """Reset sorted list load factor.
+        """Reset the load factor of the `SortedCollection`.
 
-        The `load` specifies the load-factor of the list. The default load
-        factor of 1000 works well for lists from tens to tens-of-millions of
-        values.
+        The `load` specifies the load-factor of the list.
+
+        The default load factor of 1000 works well for collections from tens to tens-of-millions of values.
 
         Good practice is to use a value that is the cube root of the list size.
 
@@ -213,11 +188,9 @@ class SortedCollection[T](ABC):
         Runtime complexity: `O(n)`
 
         Args:
-            load (int): load-factor for sorted list sublists
+            load (int): load-factor for the sub-vectors of the `SortedCollection`
 
         """
-
-    @abstractmethod
     def clear(self) -> None:
         """Remove all values from the `SortedCollection`.
 
@@ -226,9 +199,8 @@ class SortedCollection[T](ABC):
         """
 
 class BaseSortedListSet[T](SortedCollection[T], ABC):
-    @abstractmethod
     def discard(self, value: T) -> None:
-        """Remove `value` from sorted-key list if it is a member.
+        """Remove `value` from the `SortedCollection` if it is a member.
 
         If `value` is not a member, do nothing.
 
@@ -253,8 +225,6 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
         assert skl == [5, 4, 3, 2]
         ```
         """
-
-    @abstractmethod
     def remove(self, value: T, /) -> None:
         """Remove `value` from the `SortedCollection`.
 
@@ -292,8 +262,6 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
             assert str(e) == "0 not in list"
         ```
         """
-
-    @abstractmethod
     def copy(self) -> Self:
         """Return a shallow copy of the `SortedCollection`.
 
@@ -302,4 +270,88 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
         Returns:
             Self: new sorted-key list
 
+        """
+
+class KeyedCollection[T, OT: SupportsRichComparison](SortedCollection[T], ABC):
+    """Common interface for sorted collections whose values are sorted based on a key function."""
+    def irange_key(
+        self,
+        min_key: OT | None = None,
+        max_key: OT | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+    ) -> DoubleEndedIterator[T]:
+        """Create a [`DoubleEndedIterator`][] of values between `min_key` and `max_key`.
+
+        Both `min_key` and `max_key` default to `None` which is automatically inclusive of the beginning and end of `Self`.
+
+        Args:
+            min_key (OT | None): minimum key to start iterating
+            max_key (OT | None): maximum key to stop iterating
+            inclusive (tuple[bool, bool]): Whether the minimum and maximum ought to be included in the range, respectively. The default is ``(True, True)`` such that the range is inclusive of both minimum and maximum.
+
+        Returns:
+            DoubleEndedIterator[T]: `Iterator` of values between `min_key` and `max_key`
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedKeyList
+        from operator import neg
+
+        skl = SortedKeyList(neg, [11, 12, 13, 14, 15])
+        it = skl.irange_key(-14, -12)
+        assert list(it) == [14, 13, 12]
+        ```
+
+        """
+
+    def bisect_key_left(self, key: OT) -> int:
+        """Return an index to insert `key` in the `SortedCollection`.
+
+        If the `key` is already present, the insertion point will be before (to the left of) any existing keys.
+
+        Similar to the `bisect` module in the standard library.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+
+        Args:
+            key (OT): insertion index of key in sorted-key list
+
+        Returns:
+            int: index
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedKeyList
+        from operator import neg
+
+        skl = SortedKeyList(neg, [5, 4, 3, 2, 1])
+        assert skl.bisect_key_left(-1) == 4
+        ```
+        """
+
+    def bisect_key_right(self, key: OT) -> int:
+        """Return an index to insert `key` in the `SortedCollection`.
+
+        Similar to `bisect_key_left`, but if `key` is already present, the insertion point will be after (to the right of) any existing keys.
+
+        Similar to the `bisect` module in the standard library.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+
+        Args:
+            key (OT): insertion index of key in sorted-key list
+
+        Returns:
+            int: index
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedKeyList
+        from operator import neg
+
+        skl = SortedKeyList(neg, [5, 4, 3, 2, 1])
+        assert skl.bisect_key_right(-1) == 5
+        ```
         """

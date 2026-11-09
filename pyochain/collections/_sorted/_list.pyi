@@ -378,24 +378,6 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         assert sl == SortedList(["a", "b", "d", "e", "f"])
         ```
         """
-
-    @override
-    def irange(
-        self,
-        minimum: T | None = None,
-        maximum: T | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]: ...
-    @override
-    def islice(
-        self,
-        start: int | None = None,
-        stop: int | None = None,
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]: ...
     @override
     def append(self, value: T) -> None:
         """Add `value` to the `SortedList`.
@@ -428,11 +410,6 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         assert skl == [3, 2, 1]
         ```
         """
-
-    @override
-    def discard(self, value: T) -> None: ...
-    @override
-    def remove(self, value: T, /) -> None: ...
     @override
     def count(self, value: T) -> int:
         """Return number of occurrences of `value` in the sorted list.
@@ -502,17 +479,6 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         assert sl == SortedList(["a", "b", "d"])
         ```
         """
-
-    @override
-    def bisect_left(self, value: T) -> int: ...
-    @override
-    def bisect_right(self, value: T) -> int: ...
-    @override
-    def index(
-        self, value: T, start: int | None = None, stop: int | None = None, /
-    ) -> int: ...
-    @override
-    def reset(self, load: int) -> None: ...
     @override
     def extend(self, iterable: Iterable[T]) -> None:
         """Add all the values from *iterable* to the `BaseSortedList`.

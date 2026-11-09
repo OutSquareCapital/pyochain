@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from _pytest.mark import MarkDecorator
     from _pytest.mark.structures import ParameterSet
 
+    from pyochain.abc import DoubleEndedIterator
+
 type IntoIter[T] = Callable[[T], Iterator[object]]
 type List = list[int] | SortedList[int] | PySortedList[int]
 type AnySet = set[int] | SortedSet[int] | SortedSetPy[int]
@@ -53,6 +55,34 @@ def list_slice(
     return itertools.islice(it, *bounds)
 
 
+def _irange(
+    obj: SortedList[int],
+    minimum: int | None = None,
+    maximum: int | None = None,
+    inclusive: tuple[bool, bool] = (True, True),
+    *,
+    reverse: bool = False,
+) -> DoubleEndedIterator[int]:
+    return _may_rev(obj.irange(minimum, maximum, inclusive), reverse)
+
+
+def _islice(
+    obj: SortedList[int],
+    start: int | None = None,
+    stop: int | None = None,
+    *,
+    reverse: bool = False,
+) -> DoubleEndedIterator[int]:
+    return _may_rev(obj.islice(start, stop), reverse)
+
+
+def _may_rev(it: DoubleEndedIterator[int], reverse: bool) -> DoubleEndedIterator[int]:
+    if reverse:
+        return it.rev()
+    else:
+        return it
+
+
 INTO_ITER_PARAMS = pytest.mark.parametrize("into_iter", (iter, reversed))
 UPDATE_PARAMS = bool_param("update")
 REVERSE_PARAM = bool_param("reverse")
@@ -61,8 +91,8 @@ BOUNDED_PARAMS = pytest.mark.parametrize(
     ((
         method_param(PySortedList, PySortedList[int].irange),
         method_param(PySortedList, PySortedList[int].islice),
-        method_param(SortedList, SortedList[int].irange),
-        method_param(SortedList, SortedList[int].islice),
+        method_param(SortedList, _irange),
+        method_param(SortedList, _islice),
         pytest.param(list, list_slice),
     )),
 )

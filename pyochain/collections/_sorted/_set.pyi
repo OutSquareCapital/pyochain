@@ -194,34 +194,10 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ```
 
         """
-
-    @override
-    def reset(self, load: int) -> None: ...
-    @override
-    def bisect_left(self, value: T) -> int: ...
-    @override
-    def bisect_right(self, value: T) -> int: ...
     @override
     def index(
         self, value: T, start: int | None = None, stop: int | None = None, /
     ) -> int: ...
-    @override
-    def islice(
-        self,
-        start: int | None = None,
-        stop: int | None = None,
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]: ...
-    @override
-    def irange(
-        self,
-        minimum: T | None = None,
-        maximum: T | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]: ...
     @override
     def is_disjoint(self, other: Iterable[object]) -> bool: ...
     @override

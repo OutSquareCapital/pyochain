@@ -414,16 +414,16 @@ def test_islice() -> None:
     for start in range(nb):
         for stop in range(nb):
             assert (
-                list(sl.islice(start, stop, reverse=True)) == values[start:stop][::-1]
+                sl.islice(start, stop).rev().collect(list) == values[start:stop][::-1]
             )
 
     for start in range(nb):
         assert list(sl.islice(start=start)) == values[start:]
-        assert list(sl.islice(start=start, reverse=True)) == values[start:][::-1]
+        assert sl.islice(start=start).rev().collect(list) == values[start:][::-1]
 
     for stop in range(nb):
         assert list(sl.islice(stop=stop)) == values[:stop]
-        assert list(sl.islice(stop=stop, reverse=True)) == values[:stop][::-1]
+        assert sl.islice(stop=stop).rev().collect(list) == values[:stop][::-1]
 
 
 IRANGE_TST_VALUES = Range(100).iter().sort_by(modulo)
@@ -440,7 +440,7 @@ def test_irange(load: int) -> None:  # ruff:ignore[complex-structure]
             temp = list(slt.irange(start, end))
             assert temp == IRANGE_TST_VALUES[(start * 10) : ((end + 1) * 10)]
 
-            temp = list(slt.irange(start, end, reverse=True))
+            temp = slt.irange(start, end).rev().collect(list)
             assert temp == IRANGE_TST_VALUES[(start * 10) : ((end + 1) * 10)][::-1]
 
     for start in range(10):
@@ -479,7 +479,7 @@ def test_irange_key(load: int) -> None:  # ruff:ignore[complex-structure]
             temp = list(slt.irange_key(start, end))
             assert temp == IRANGE_TST_VALUES[(start * 10) : ((end + 1) * 10)]
 
-            temp = list(slt.irange_key(start, end, reverse=True))
+            temp = slt.irange_key(start, end).rev().collect(list)
             assert temp == IRANGE_TST_VALUES[(start * 10) : ((end + 1) * 10)][::-1]
 
     for start in r:

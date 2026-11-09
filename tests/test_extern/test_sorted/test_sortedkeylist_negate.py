@@ -337,16 +337,16 @@ def test_islice() -> None:
     for start in range(53):
         for stop in range(53):
             assert (
-                list(slt.islice(start, stop, reverse=True)) == values[start:stop][::-1]
+                slt.islice(start, stop).rev().collect(list) == values[start:stop][::-1]
             )
 
     for start in range(53):
         assert list(slt.islice(start=start)) == values[start:]
-        assert list(slt.islice(start=start, reverse=True)) == values[start:][::-1]
+        assert slt.islice(start=start).rev().collect(list) == values[start:][::-1]
 
     for stop in range(53):
         assert list(slt.islice(stop=stop)) == values[:stop]
-        assert list(slt.islice(stop=stop, reverse=True)) == values[:stop][::-1]
+        assert slt.islice(stop=stop).rev().collect(list) == values[:stop][::-1]
 
 
 def test_irange() -> None:  # ruff:ignore[complex-structure]
@@ -365,8 +365,7 @@ def test_irange() -> None:  # ruff:ignore[complex-structure]
                 slt.irange(end, start).collect(list) == values[start : (end + 1)][::-1]
             )
             assert (
-                slt.irange(end, start, reverse=True).collect(list)
-                == values[start : (end + 1)]
+                slt.irange(end, start).rev().collect(list) == values[start : (end + 1)]
             )
 
     for start in range(nb):

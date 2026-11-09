@@ -1,6 +1,14 @@
 from abc import abstractmethod
 from collections.abc import Callable, Iterable, Iterator, MutableSequence, Sequence
-from typing import Any, Protocol, Self, overload, override, runtime_checkable
+from typing import (
+    Any,
+    Protocol,
+    Self,
+    overload,
+    override,
+    runtime_checkable,
+    type_check_only,
+)
 
 from pyochain import Option
 from pyochain.abc import PyoCollection, PyoIterable, PyoIterator
@@ -23,6 +31,23 @@ class PyoReversible[T](PyoIterable[T], Protocol):
             assert Range(5).rev().collect(Seq) == Seq(4, 3, 2, 1, 0)
             ```
         """
+
+@type_check_only
+class DoubleEndedIterator[T](PyoIterator[T], Protocol):
+    """An `Iterator` that can be reversed.
+
+    This is similar to `PyoReversible`, but for iterators instead of sequences.
+
+    Note:
+        This currently is only provided for type checking purposes when using bounded sorted collections iterators.
+
+        Proper support for this protocol will be added in the future (ABC handling, etc...)
+
+    See Also:
+        - [irange][collections._sorted._core.SortedCollection.irange]
+        - [islice][collections._sorted._core.SortedCollection.islice].
+    """
+    def rev(self) -> DoubleEndedIterator[T]: ...
 
 # For some reason, `Sequence` is not a Protocol, so we have to "fake" heritance from it to make typing work.
 # pyrefly: ignore [implicit-abstract-class]

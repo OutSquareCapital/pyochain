@@ -170,19 +170,16 @@ def test_islice() -> None:
     for start in range(nb):
         for stop in range(nb):
             assert (
-                ss.islice(start, stop, reverse=True).collect(list)
-                == values[start:stop][::-1]
+                ss.islice(start, stop).rev().collect(list) == values[start:stop][::-1]
             )
 
     for start in range(nb):
         assert ss.islice(start=start).collect(list) == values[start:]
-        assert (
-            ss.islice(start=start, reverse=True).collect(list) == values[start:][::-1]
-        )
+        assert ss.islice(start=start).rev().collect(list) == values[start:][::-1]
 
     for stop in range(nb):
         assert ss.islice(stop=stop).collect(list) == values[:stop]
-        assert ss.islice(stop=stop, reverse=True).collect(list) == values[:stop][::-1]
+        assert ss.islice(stop=stop).rev().collect(list) == values[:stop][::-1]
 
 
 def test_irange() -> None:  # ruff:ignore[complex-structure]
@@ -199,7 +196,7 @@ def test_irange() -> None:  # ruff:ignore[complex-structure]
         for end in range(start, nb):
             assert ss.irange(start, end).collect(list) == values[start : (end + 1)]
             assert (
-                ss.irange(start, end, reverse=True).collect(list)
+                ss.irange(start, end).rev().collect(list)
                 == values[start : (end + 1)][::-1]
             )
     for start in range(nb):
@@ -244,7 +241,7 @@ def test_irange_key() -> None:  # ruff:ignore[complex-structure]
                 temp = list(ss.irange_key(start, end))
                 assert temp == values[(start * 10) : ((end + 1) * 10)]
 
-                temp = list(ss.irange_key(start, end, reverse=True))
+                temp = ss.irange_key(start, end).rev().collect(list)
                 assert temp == values[(start * 10) : ((end + 1) * 10)][::-1]
 
         for start in range(10):

@@ -18,11 +18,17 @@ from ._iterable import PyoIterable
 from ._iterator import PyoIterator
 from ._mappings import PyoMapping, PyoMutableMapping
 from ._mutable_set import PyoMutableSet
-from ._sequences import PyoMutableSequence, PyoReversible, PyoSequence
+from ._sequences import (
+    DoubleEndedIterator,
+    PyoMutableSequence,
+    PyoReversible,
+    PyoSequence,
+)
 from ._set import PyoSet
 from ._views import PyoItemsView, PyoKeysView, PyoMappingView, PyoValuesView
 
 __all__ = [
+    "DoubleEndedIterator",
     "PyoCollection",
     "PyoContainer",
     "PyoItemsView",

@@ -23,6 +23,7 @@ The main takeaways are:
 - All classes are explicit: There's no implicit dynamic dispatch from a `SortedList` to a `SortedKeyList` if a `key` is provided. `SortedKeySet` and `SortedKeyDict` are also not "hidden".
 - Method aliases, such as `bisect` for `bisect_left`, are not provided.
 - Mutability and iteration edge cases are a bit different. Expect `pyochain::SortedList` to be closer to python `list` than `sortedcontainers::SortedList` in some cases. Tests at [tests\test_sorted] demonstrate the differences.
+- `irange` and `islice` _reverse_ argument does not exit anymore. Instead, call the `rev` method on the returned `DoubleEnderIterator` to reverse the iteration order. Calling it again will restore the original order.
 
 ## SortedList/SortedKeyList
 

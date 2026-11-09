@@ -5,16 +5,18 @@ from collections.abc import Iterable
 from typing import Self, final, override
 
 from pyochain._types import SupportsHashableAndRichComparison
-from pyochain.abc import PyoIterator
 
-from ._core import KeyFunc
+from ._core import KeyedCollection, KeyFunc
 from ._set import BaseSortedSet
 
 type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 
 @final
 # pyrefly: ignore [bad-specialization]
-class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments] # ty: ignore[invalid-type-arguments]
+class SortedKeySet[T, OT: SupportsHashableAndRichComparison](
+    BaseSortedSet[T],  # pyright: ignore[reportInvalidTypeArguments] # ty: ignore[invalid-type-arguments],
+    KeyedCollection[T, OT],
+):
     def __new__(
         cls, key: SetKeyFunc[T, OT], iterable: Iterable[T] | None = None, /
     ) -> Self:
@@ -43,17 +45,6 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
             ```
 
         """
-
-    def irange_key[T1, OT1: SupportsHashableAndRichComparison](
-        self: SortedKeySet[T1, OT1],
-        min_key: OT1 | None = None,
-        max_key: OT1 | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T1]: ...
-    def bisect_key_left(self, key: OT) -> int: ...
-    def bisect_key_right(self, key: OT) -> int: ...
     @override
     def union[T1, OT1: SupportsHashableAndRichComparison](
         self: SortedKeySet[T1, OT1], *iterables: Iterable[T1]

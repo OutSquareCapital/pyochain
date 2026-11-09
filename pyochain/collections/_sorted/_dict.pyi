@@ -9,14 +9,18 @@ from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
 from pyochain import Dict
 from pyochain._types import SupportsHashableAndRichComparison
-from pyochain.abc import PyoIterator, PyoMutableMapping, PyoReversible
+from pyochain.abc import (
+    PyoIterator,
+    PyoMutableMapping,
+    PyoReversible,
+)
 from pyochain.collections import (
     SortedItemsView,
     SortedKeysView,
     SortedValuesView,
 )
 
-from ._core import SortedCollection
+from ._core import KeyedCollection, SortedCollection
 
 type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]
 
@@ -140,7 +144,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
     @property
     def inner(self) -> Dict[K, V]: ...
-    @abstractmethod
     def copy(self) -> Self:
         """Return a shallow copy of the sorted dict.
 
@@ -150,34 +153,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             Self: new sorted dict
 
         """
-
-    @override
-    def reset(self, load: int) -> None: ...
-    @override
-    def bisect_left(self, value: K) -> int: ...
-    @override
-    def bisect_right(self, value: K) -> int: ...
-    @override
-    def index(
-        self, value: K, start: int | None = None, stop: int | None = None, /
-    ) -> int: ...
-    @override
-    def islice(
-        self,
-        start: int | None = None,
-        stop: int | None = None,
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[K]: ...
-    @override
-    def irange(
-        self,
-        minimum: K | None = None,
-        maximum: K | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[K]: ...
     @override
     def clear(self) -> None:
         """Remove all items from sorted dict.
@@ -451,7 +426,7 @@ class SortedKeyDict[
     K: SupportsHashableAndRichComparison,
     V,
     OT: SupportsHashableAndRichComparison,
-](BaseSortedDict[K, V]):
+](BaseSortedDict[K, V], KeyedCollection[K, OT]):
     """Sorted dict with key-function for sorting keys.
 
     *key* argument defines a `Callable` that, like the `key`
@@ -503,15 +478,3 @@ class SortedKeyDict[
     def __or__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-method-override]
         self, value: Mapping[K, T2], /
     ) -> SortedKeyDict[K, V | T2, OT]: ...
-    @override
-    def copy(self) -> Self: ...
-    def irange_key(
-        self,
-        min_key: OT | None = None,
-        max_key: OT | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[K]: ...
-    def bisect_key_left(self, key: OT) -> int: ...
-    def bisect_key_right(self, key: OT) -> int: ...
