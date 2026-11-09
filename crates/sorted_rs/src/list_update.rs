@@ -13,7 +13,7 @@ use pyo3_ext::{
 };
 use tap::prelude::*;
 
-use crate::{traits::ListsMethods, types::VecPy};
+use crate::{ops, traits::ListsMethods, types::VecPy};
 
 pub trait PyListsDataRef: PyFrozenClass + AsRef<RwLock<Self::L>> + From<Self::L> {
     type L: ListsMethods;
@@ -59,10 +59,10 @@ impl<T: ListsMethods> ListAdd<'_, T> {
                 .map(Bound::unbind)
                 .collect(),
         };
-        if list.maxes.is_empty() {
-            update_chunked(list, py, values.into_iter())
-        } else if 4 * values.len() >= list.len() {
-            list.iter()
+        match ops::Update::new(list, &values) {
+            ops::Update::EmptyMaxes => update_chunked(list, py, values.into_iter()),
+            ops::Update::Big => list
+                .iter()
                 .chain(values.iter())
                 .collect_bound::<PyList>(py)
                 .and_then(|pylist| {
@@ -72,12 +72,11 @@ impl<T: ListsMethods> ListAdd<'_, T> {
                 })?
                 .iter()
                 .map(Bound::unbind)
-                .pipe(|pylist| update_chunked(list, py, pylist))
-        } else {
-            values
+                .pipe(|pylist| update_chunked(list, py, pylist)),
+            ops::Update::Small => values
                 .into_iter()
                 .map(|x| x.into_bound(py))
-                .try_for_each(|val| list.append(val))
+                .try_for_each(|val| list.append(val)),
         }
     }
 }

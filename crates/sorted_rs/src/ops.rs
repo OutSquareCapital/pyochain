@@ -12,6 +12,7 @@ use tap::Conv;
 use crate::{
     bisect::Bisect,
     bounds::{Loc, RangeIdxs},
+    inner::InnerData,
     traits::ListsMethods,
     types::VecPy,
 };
@@ -128,6 +129,22 @@ impl Expand {
             Self::IdxBuilt
         } else {
             Self::NoOp
+        }
+    }
+}
+pub enum Update {
+    EmptyMaxes,
+    Small,
+    Big,
+}
+impl Update {
+    pub fn new(list: &InnerData, values: &[Py<PyAny>]) -> Self {
+        if list.maxes.is_empty() {
+            Self::EmptyMaxes
+        } else if 4 * values.len() >= list.len() {
+            Self::Big
+        } else {
+            Self::Small
         }
     }
 }
