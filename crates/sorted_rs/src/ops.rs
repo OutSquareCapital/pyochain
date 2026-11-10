@@ -138,7 +138,7 @@ pub enum Update {
     Big,
 }
 impl Update {
-    pub fn new(list: &InnerData, values: &[Py<PyAny>]) -> Self {
+    pub fn new(list: &InnerData, values: &impl ExactSizeIterator<Item = Py<PyAny>>) -> Self {
         if list.maxes.is_empty() {
             Self::EmptyMaxes
         } else if 4 * values.len() >= list.len() {

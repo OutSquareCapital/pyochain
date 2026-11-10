@@ -8,7 +8,7 @@ use crate::{
     bounds::{Loc, RangeIdxs, RawIrangeSpecs},
     errors,
     iter::{IrangeSpecs, builder::RawRangeIdxs},
-    list_update::ListAdd,
+    list_update::{ListAdd, Updater},
     ops,
     traits::{ListsMethods, NestedVec},
     types::VecPy,
@@ -124,12 +124,8 @@ impl ListsMethods for List {
         (half, last_max)
     }
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
-        values.merge_with(
-            self,
-            py,
-            |a, b| a.bind(py).compare_fast(b.bind(py)).unwrap(),
-            None,
-        )
+        Updater::new(py, self, None)
+            .merge_with(values, |a, b| a.bind(py).compare_fast(b.bind(py)).unwrap())
     }
     fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize> {
         let py = value.py();

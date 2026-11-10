@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use derive_more::From;
+use derive_more::{Constructor, From};
 use itertools::Itertools;
 use parking_lot::{RwLock, RwLockReadGuard};
 use pyo3::{
@@ -35,66 +35,75 @@ pub enum ListAdd<'py, T> {
     Vec(VecPy),
     Iterator(Bound<'py, PyIterator>),
 }
-impl<T: ListsMethods> ListAdd<'_, T> {
+#[derive(Constructor)]
+pub struct Updater<'py, T> {
+    py: Python<'py>,
+    list: &'py mut T,
+    py_func: Option<&'py Bound<'py, PyAny>>,
+}
+impl<'py, T: ListsMethods> Updater<'py, T> {
     #[inline]
     pub fn merge_with(
-        self,
-        list: &mut T,
-        py: Python<'_>,
+        mut self,
+        values: ListAdd<'py, T>,
         func: impl FnMut(&Py<PyAny>, &Py<PyAny>) -> Ordering,
-        py_func: Option<&Bound<'_, PyAny>>,
     ) -> PyResult<()> {
-        //TODO: Find a way to avoid unecessary intermediate Vecs by flattening `ListAdd` and length checking paths branches,
-        // with precise cases instead of two sequential steps,
-        // without bloating the code.
         //TODO: Check `itertools::merge` to see if it can be beneficial here.
-        let values = match self {
-            Self::Identity => list.iter_owned(py).sorted_by(func).collect(),
-            Self::Vec(vec) => vec.tap_mut(|v| v.sort_by(func)),
-            Self::Sorted(sorted) => sorted.iter_owned(py).sorted_by(func).collect(),
-            Self::Iterator(it) => it
+        match values {
+            ListAdd::Identity => self
+                .list
+                .iter_owned(self.py)
+                .sorted_by(func)
+                .pipe(|sorted| self.strategy(sorted)),
+            ListAdd::Vec(vec) => vec
+                .tap_mut(|v| v.sort_by(func))
+                .into_iter()
+                .pipe(|sorted| self.strategy(sorted)),
+            ListAdd::Sorted(sorted) => sorted
+                .iter_owned(self.py)
+                .sorted_by(func)
+                .pipe(|sorted| self.strategy(sorted)),
+            ListAdd::Iterator(it) => it
                 .into_native()
-                .sorted(false, py_func)?
-                .iter()
+                .sorted(false, self.py_func)?
+                .into_iter()
                 .map(Bound::unbind)
-                .collect(),
-        };
-        match ops::Update::new(list, &values) {
-            ops::Update::EmptyMaxes => update_chunked(list, py, values.into_iter()),
-            ops::Update::Big => list
-                .iter()
-                .chain(values.iter())
-                .collect_bound::<PyList>(py)
+                .pipe(|sorted| self.strategy(sorted)),
+        }
+    }
+    fn strategy(&mut self, it: impl ExactSizeIterator<Item = Py<PyAny>>) -> PyResult<()> {
+        match ops::Update::new(self.list, &it) {
+            ops::Update::EmptyMaxes => self.update_chunked(it),
+            ops::Update::Big => self
+                .list
+                .iter_owned(self.py)
+                .chain(it)
+                .collect_bound::<PyList>(self.py)
                 .and_then(|pylist| {
-                    py_func
+                    self.py_func
                         .map_or_else(|| pylist.sort(), |key| pylist.sort_by(key, false))
                         .map(|()| pylist)
                 })?
-                .iter()
-                .map(Bound::unbind)
-                .pipe(|pylist| update_chunked(list, py, pylist)),
-            ops::Update::Small => values
                 .into_iter()
-                .map(|x| x.into_bound(py))
-                .try_for_each(|val| list.append(val)),
+                .map(Bound::unbind)
+                .pipe(|pylist| self.update_chunked(pylist)),
+            ops::Update::Small => it
+                .map(|x| x.into_bound(self.py))
+                .try_for_each(|val| self.list.append(val)),
         }
     }
-}
 
-#[inline]
-fn update_chunked<T, I>(list: &mut T, py: Python<'_>, mut it: I) -> PyResult<()>
-where
-    T: ListsMethods,
-    I: ExactSizeIterator<Item = Py<PyAny>>,
-{
-    list.clear(py);
-    list.len = it.len();
-    let load = *list.load;
-    std::iter::from_fn(|| {
-        it.by_ref()
-            .take(load)
-            .collect::<VecPy>()
-            .pipe(|chunk| (!chunk.is_empty()).then_some(chunk))
-    })
-    .pipe(|chunked| list.finalize_update(py, chunked))
+    #[inline]
+    fn update_chunked(&mut self, mut it: impl ExactSizeIterator<Item = Py<PyAny>>) -> PyResult<()> {
+        self.list.clear(self.py);
+        self.list.len = it.len();
+        let load = *self.list.load;
+        std::iter::from_fn(|| {
+            it.by_ref()
+                .take(load)
+                .collect::<VecPy>()
+                .pipe(|chunk| (!chunk.is_empty()).then_some(chunk))
+        })
+        .pipe(|chunked| self.list.finalize_update(self.py, chunked))
+    }
 }

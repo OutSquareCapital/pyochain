@@ -4,7 +4,7 @@ use crate::{
     bounds::{Loc, RangeIdxs, RawIrangeSpecs},
     errors,
     iter::{IrangeSpecs, builder::RawRangeIdxs},
-    list_update::ListAdd,
+    list_update::{ListAdd, Updater},
     ops,
     traits::{ListsMethods, NestedVec},
     types::VecPy,
@@ -233,17 +233,12 @@ impl ListsMethods for KeyList {
     }
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
         let key_fn = &self.2.clone_ref(py).into_bound(py);
-        values.merge_with(
-            self,
-            py,
-            |a, b| {
-                key_fn
-                    .call1((a,))
-                    .unwrap()
-                    .compare_fast(&key_fn.call1((b,)).unwrap())
-                    .unwrap()
-            },
-            Some(key_fn),
-        )
+        Updater::new(py, self, Some(key_fn)).merge_with(values, |a, b| {
+            key_fn
+                .call1((a,))
+                .unwrap()
+                .compare_fast(&key_fn.call1((b,)).unwrap())
+                .unwrap()
+        })
     }
 }
