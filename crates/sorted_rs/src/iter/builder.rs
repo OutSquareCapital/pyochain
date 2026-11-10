@@ -66,13 +66,13 @@ where
     } else {
         let min = match specs.min {
             RangeBound::None => Ok(Loc::default()),
-            RangeBound::Inclusive(m) => min_bound::<true, T>(list, &m)?,
-            RangeBound::Exclusive(m) => min_bound::<false, T>(list, &m)?,
+            RangeBound::Inclusive(m) => get_bound::<true, false, T>(list, &m)?,
+            RangeBound::Exclusive(m) => get_bound::<false, false, T>(list, &m)?,
         };
         let max = match specs.max {
             RangeBound::None => Ok(last_sublist(list)),
-            RangeBound::Inclusive(m) => max_bound::<false, T>(list, &m)?,
-            RangeBound::Exclusive(m) => max_bound::<true, T>(list, &m)?,
+            RangeBound::Inclusive(m) => get_bound::<false, true, T>(list, &m)?,
+            RangeBound::Exclusive(m) => get_bound::<true, true, T>(list, &m)?,
         };
         match (min, max) {
             (_, Err(e)) | (Err(e), _) => Some(Err(e)),
@@ -100,24 +100,17 @@ fn islice_bounds(list: &mut InnerList, specs: Bounds<Option<isize>>) -> IterBoun
         (Ok(min), Ok(max)) => Some(Ok((min, max))),
     }
 }
-fn min_bound<const LEFT: bool, T>(list: &T, value: &Bound<'_, PyAny>) -> Option<PyResult<Loc>>
+fn get_bound<const LEFT: bool, const MAX: bool, T>(
+    list: &T,
+    value: &Bound<'_, PyAny>,
+) -> Option<PyResult<Loc>>
 where
     T: ListsMethods,
 {
     match list.try_bisect::<LEFT>(value) {
         Err(e) => Some(Err(e)),
+        Ok(ops::Bisect::LenEQPos) if MAX => Some(Ok(last_sublist(list))),
         Ok(ops::Bisect::Empty | ops::Bisect::LenEQPos) => None,
-        Ok(ops::Bisect::LenNEPos(loc)) => Some(Ok(loc)),
-    }
-}
-fn max_bound<const LEFT: bool, T>(list: &T, value: &Bound<'_, PyAny>) -> Option<PyResult<Loc>>
-where
-    T: ListsMethods,
-{
-    match list.try_bisect::<LEFT>(value) {
-        Err(e) => Some(Err(e)),
-        Ok(ops::Bisect::Empty) => None,
-        Ok(ops::Bisect::LenEQPos) => Some(Ok(last_sublist(list))),
         Ok(ops::Bisect::LenNEPos(loc)) => Some(Ok(loc)),
     }
 }
