@@ -141,11 +141,11 @@ impl ListsMethods for KeyList {
     }
 
     fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize> {
-        let py = value.py();
-        let indices = RangeIdxs::from(indices);
-        match indices.into_index(self) {
-            None => Err(errors::not_in_list(value)),
-            Some(indices) => {
+        RangeIdxs::from(indices)
+            .try_into_index(self)
+            .ok_or_else(|| errors::not_in_list(value))
+            .and_then(|indices| {
+                let py = value.py();
                 let key = self.call_fn(value)?;
                 let mut loc = self.bisect_or_err(&key)?;
                 let len_keys = self.keys().len();
@@ -170,8 +170,7 @@ impl ListsMethods for KeyList {
                         loc.idx = 0;
                     }
                 }
-            }
-        }
+            })
     }
 
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {

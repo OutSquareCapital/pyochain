@@ -118,11 +118,11 @@ impl ListsMethods for List {
             .merge_with(values, |a, b| a.bind(py).compare_fast(b.bind(py)).unwrap())
     }
     fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize> {
-        let py = value.py();
-        let indices = RangeIdxs::from(indices);
-        match indices.into_index(self) {
-            None => Err(errors::not_in_list(value)),
-            Some(indices) => {
+        RangeIdxs::from(indices)
+            .try_into_index(self)
+            .ok_or_else(|| errors::not_in_list(value))
+            .and_then(|indices| {
+                let py = value.py();
                 let loc = self.bisect_or_err(value)?;
                 if self.values.loc(&loc).bind(py).ne(value)? {
                     Err(errors::not_in_list(value))
@@ -137,8 +137,7 @@ impl ListsMethods for List {
                     }
                     Err(errors::not_in_list(value))
                 }
-            }
-        }
+            })
     }
     #[inline]
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {

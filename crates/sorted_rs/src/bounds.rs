@@ -33,7 +33,7 @@ impl IntoIterator for RangeIdxs<usize> {
 }
 impl RangeIdxs<Option<isize>> {
     #[must_use]
-    pub fn into_index(self, list: &InnerList) -> Option<RangeIdxs<usize>> {
+    pub fn try_into_index(self, list: &InnerList) -> Option<RangeIdxs<usize>> {
         if list.is_empty() {
             None
         } else {
