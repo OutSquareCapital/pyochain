@@ -10,11 +10,11 @@ pub type RawIrangeSpecs<'py> = (
 );
 
 #[derive(PartialEq, Eq, Default, Clone, Copy, Constructor, Debug, From)]
-pub(super) struct RangeIdxs<T> {
+pub(super) struct Bounds<T> {
     pub start: T,
     pub stop: T,
 }
-impl From<PySliceIndices> for RangeIdxs<usize> {
+impl From<PySliceIndices> for Bounds<usize> {
     fn from(i: PySliceIndices) -> Self {
         if i.step > 0 {
             (i.start.cast_unsigned(), i.stop.cast_unsigned())
@@ -24,36 +24,34 @@ impl From<PySliceIndices> for RangeIdxs<usize> {
         .into()
     }
 }
-impl IntoIterator for RangeIdxs<usize> {
+impl IntoIterator for Bounds<usize> {
     type Item = usize;
     type IntoIter = std::ops::Range<usize>;
     fn into_iter(self) -> Self::IntoIter {
         self.start..self.stop
     }
 }
-impl RangeIdxs<Option<isize>> {
+impl Bounds<Option<isize>> {
     #[must_use]
-    pub fn try_into_index(self, list: &InnerList) -> Option<RangeIdxs<usize>> {
+    pub fn try_normalize(self, list: &InnerList) -> Option<Bounds<usize>> {
         if list.is_empty() {
             None
         } else {
-            let length = list.len();
-            let start = self.start.map_or_default(|mut s| {
-                if s.is_negative() {
-                    s += length.cast_signed();
-                }
-                s.max(0).cast_unsigned()
-            });
-            let stop = self.stop.map_or(length, |mut s| {
-                if s.is_negative() {
-                    s += length.cast_signed();
-                }
-                s.max(0).cast_unsigned().min(length)
-            });
-            if stop <= start {
+            let length = list.len().cast_signed();
+            let start = match self.start {
+                None => 0,
+                Some(s) if s.is_negative() => (s + length).max(0),
+                Some(s) => s,
+            };
+            let stop = match self.stop {
+                None => length,
+                Some(s) if s.is_negative() => s + length,
+                Some(s) => s.min(length),
+            };
+            if start >= stop {
                 None
             } else {
-                Some(RangeIdxs::new(start, stop))
+                Some(Bounds::new(start.cast_unsigned(), stop.cast_unsigned()))
             }
         }
     }

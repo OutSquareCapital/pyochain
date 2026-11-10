@@ -1,6 +1,6 @@
 use crate::{
     ListGetter,
-    bounds::{Loc, RangeIdxs, RawIrangeSpecs},
+    bounds::{Bounds, Loc, RawIrangeSpecs},
     inner::InnerList,
     iter::{BoundedFwd, IterMethods, PySortedIter, core::InnerRef, cursor::Cursor},
     ops,
@@ -42,7 +42,7 @@ where
     }
     #[must_use]
     pub fn islice(mut self, specs: RawRangeIdxs) -> Self {
-        self.bounds = islice_bounds(self.inner.write().as_mut(), specs.conv::<RangeIdxs<_>>());
+        self.bounds = islice_bounds(self.inner.write().as_mut(), specs.conv::<Bounds<_>>());
         self
     }
     pub fn irange<const BY_KEY: bool>(mut self, specs: RawIrangeSpecs) -> PyResult<Self> {
@@ -85,37 +85,19 @@ where
         }
     }
 }
-fn islice_bounds(list: &mut InnerList, specs: RangeIdxs<Option<isize>>) -> IterBounds {
-    if list.is_empty() {
-        None
+fn islice_bounds(list: &mut InnerList, specs: Bounds<Option<isize>>) -> IterBounds {
+    let bounds = specs.try_normalize(list)?;
+    let min = list.set_pos_usize(bounds.start);
+    let max = if bounds.stop == list.len() {
+        let pos = list.values.len() - 1;
+        let idx = list.values.last().unwrap().len();
+        Ok(Loc::new(pos, idx))
     } else {
-        let length = list.len();
-        let normalize_bound = |mut val: isize| {
-            if val.is_negative() {
-                val += length.cast_signed();
-                val.max(0).cast_unsigned()
-            } else {
-                val.cast_unsigned().min(length)
-            }
-        };
-        let start = specs.start.map_or_default(normalize_bound);
-        let stop = specs.stop.map_or(length, normalize_bound);
-        if start >= stop {
-            None
-        } else {
-            let min = list.set_pos_usize(start);
-            let max = if stop == length {
-                let pos = list.values.len() - 1;
-                let idx = list.values.last().unwrap().len();
-                Ok(Loc::new(pos, idx))
-            } else {
-                list.set_pos_usize(stop)
-            };
-            match (min, max) {
-                (Err(e), _) | (_, Err(e)) => Some(Err(e)),
-                (Ok(min), Ok(max)) => Some(Ok((min, max))),
-            }
-        }
+        list.set_pos_usize(bounds.stop)
+    };
+    match (min, max) {
+        (Err(e), _) | (_, Err(e)) => Some(Err(e)),
+        (Ok(min), Ok(max)) => Some(Ok((min, max))),
     }
 }
 fn min_bound<const LEFT: bool, T>(list: &T, value: &Bound<'_, PyAny>) -> Option<PyResult<Loc>>

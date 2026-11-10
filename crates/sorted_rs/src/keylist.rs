@@ -1,6 +1,6 @@
 use crate::{
     KeyList,
-    bounds::{Loc, RangeIdxs, RawIrangeSpecs},
+    bounds::{Bounds, Loc, RawIrangeSpecs},
     errors,
     inner::Values,
     iter::{IrangeSpecs, builder::RawRangeIdxs},
@@ -141,8 +141,8 @@ impl ListsMethods for KeyList {
     }
 
     fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize> {
-        RangeIdxs::from(indices)
-            .try_into_index(self)
+        Bounds::from(indices)
+            .try_normalize(self)
             .ok_or_else(|| errors::not_in_list(value))
             .and_then(|indices| {
                 let py = value.py();

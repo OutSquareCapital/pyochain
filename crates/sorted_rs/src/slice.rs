@@ -4,7 +4,7 @@ use pyo3::{prelude::*, types::PySlice};
 use tap::prelude::*;
 
 use crate::{
-    bounds::{Loc, RangeIdxs},
+    bounds::{Bounds, Loc},
     inner::InnerList,
     ops::{self, ForwardSlice},
     traits::ListsMethods,
@@ -14,7 +14,7 @@ use crate::{
 #[derive(Clone, Copy, Deref)]
 pub(super) struct SliceIdxs {
     #[deref]
-    indices: RangeIdxs<usize>,
+    indices: Bounds<usize>,
     step: ops::Nb,
     /// Length of the referenced sequence.
     ref_len: usize,
@@ -179,7 +179,7 @@ fn get_slice(py: Python<'_>, lists: &[VecPy], min: Loc, max: Loc) -> VecPy {
         .map(|x| x.clone_ref(py))
         .collect()
 }
-fn reset_slice<T: Into<RangeIdxs<usize>>>(indices: T, ref_len: usize) -> SliceIdxs {
+fn reset_slice<T: Into<Bounds<usize>>>(indices: T, ref_len: usize) -> SliceIdxs {
     SliceIdxs {
         indices: indices.into(),
         step: ops::Nb::One,
