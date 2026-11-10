@@ -5,7 +5,7 @@ use tap::prelude::*;
 
 use crate::{
     bounds::{Loc, RangeIdxs},
-    inner::InnerData,
+    inner::InnerList,
     ops::{self, ForwardSlice},
     traits::ListsMethods,
     types::VecPy,
@@ -33,7 +33,7 @@ impl SliceIdxs {
     fn kind(&self) -> ops::Slice {
         ops::Slice::new(self.indices, self.step, self.ref_len)
     }
-    pub fn extract_from(&self, py: Python<'_>, list: &mut InnerData) -> PyResult<VecPy> {
+    pub fn extract_from(&self, py: Python<'_>, list: &mut InnerList) -> PyResult<VecPy> {
         match self.kind() {
             ops::Slice::NoOp => Ok(Vec::new()),
             ops::Slice::Forward(fwd) => self.extract_fwd(py, fwd, list),
@@ -96,12 +96,12 @@ impl SliceIdxs {
         &self,
         py: Python<'_>,
         fwd: ForwardSlice,
-        list: &mut InnerData,
+        list: &mut InnerList,
     ) -> PyResult<VecPy> {
         fn fwd_extract<const TO_END: bool>(
             slf: &SliceIdxs,
             py: Python<'_>,
-            list: &mut InnerData,
+            list: &mut InnerList,
         ) -> PyResult<VecPy> {
             let min = list.set_pos_usize(slf.start)?;
             let mut max = Loc::with_idx(min.idx + (slf.stop - slf.start));
@@ -163,7 +163,7 @@ where
             list.delete(py, loc)
         })
     }
-    fn get_all(self, list: &mut InnerData, py: Python<'_>) -> PyResult<VecPy> {
+    fn get_all(self, list: &mut InnerList, py: Python<'_>) -> PyResult<VecPy> {
         self.0
             .map(usize::cast_signed)
             .map(|i| list.get_item(py, i))

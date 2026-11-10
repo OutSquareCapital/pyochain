@@ -2,7 +2,7 @@ use crate::{
     ListGetter,
     bisect::Bisect,
     bounds::{Loc, RangeIdxs, RawIrangeSpecs},
-    inner::InnerData,
+    inner::InnerList,
     iter::{BoundedFwd, IterMethods, PySortedIter, core::InnerRef, cursor::Cursor},
     traits::ListsMethods,
 };
@@ -85,11 +85,11 @@ where
         }
     }
 }
-fn islice_bounds(data: &mut InnerData, specs: RangeIdxs<Option<isize>>) -> IterBounds {
-    if data.is_empty() {
+fn islice_bounds(list: &mut InnerList, specs: RangeIdxs<Option<isize>>) -> IterBounds {
+    if list.is_empty() {
         None
     } else {
-        let length = data.len();
+        let length = list.len();
         let normalize_bound = |mut val: isize| {
             if val.is_negative() {
                 val += length.cast_signed();
@@ -103,13 +103,13 @@ fn islice_bounds(data: &mut InnerData, specs: RangeIdxs<Option<isize>>) -> IterB
         if start >= stop {
             None
         } else {
-            let min = data.set_pos_usize(start);
+            let min = list.set_pos_usize(start);
             let max = if stop == length {
-                let pos = data.values.len() - 1;
-                let idx = data.values.last().unwrap().len();
+                let pos = list.values.len() - 1;
+                let idx = list.values.last().unwrap().len();
                 Ok(Loc::new(pos, idx))
             } else {
-                data.set_pos_usize(stop)
+                list.set_pos_usize(stop)
             };
             match (min, max) {
                 (Err(e), _) | (_, Err(e)) => Some(Err(e)),

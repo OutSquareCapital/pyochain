@@ -1,7 +1,7 @@
 use derive_more::{Constructor, From};
 use pyo3::{prelude::*, types::slice::PySliceIndices};
 
-use crate::{bisect::Bisect, errors, inner::InnerData, traits::ListsMethods};
+use crate::{bisect::Bisect, errors, inner::InnerList, traits::ListsMethods};
 
 pub type RawIrangeSpecs<'py> = (
     Option<Bound<'py, PyAny>>,
@@ -33,11 +33,11 @@ impl IntoIterator for RangeIdxs<usize> {
 }
 impl RangeIdxs<Option<isize>> {
     #[must_use]
-    pub fn into_index(self, data: &InnerData) -> Option<RangeIdxs<usize>> {
-        if data.is_empty() {
+    pub fn into_index(self, list: &InnerList) -> Option<RangeIdxs<usize>> {
+        if list.is_empty() {
             None
         } else {
-            let length = data.len();
+            let length = list.len();
             let start = self.start.map_or_default(|mut s| {
                 if s.is_negative() {
                     s += length.cast_signed();

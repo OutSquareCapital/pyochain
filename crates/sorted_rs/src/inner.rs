@@ -84,7 +84,7 @@ impl Values {
     }
 }
 #[derive(Default)]
-pub struct InnerData {
+pub struct InnerList {
     pub(super) values: Values,
     pub(super) maxes: VecPy,
     /// Equivalent to `idx` and `offset` attributes in the original `sortedcontainers` implementation.
@@ -92,7 +92,7 @@ pub struct InnerData {
     pub(super) len: usize,
     pub(super) load: Load,
 }
-impl InnerData {
+impl InnerList {
     #[inline(always)]
     pub fn len(&self) -> usize {
         self.len

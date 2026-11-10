@@ -1,7 +1,7 @@
 //! Invariants checks ported from the original `sortedcontainers` test suite.
 use crate::{
     KeyList,
-    inner::InnerData,
+    inner::InnerList,
     prelude::*,
     types::{Dict, Set},
 };
@@ -17,7 +17,7 @@ macro_rules! pyassert {
         }
     };
 }
-pub fn check_empty(slf: &InnerData) -> PyResult<()> {
+pub fn check_empty(slf: &InnerList) -> PyResult<()> {
     pyassert!(slf.is_empty())?;
     pyassert!(slf.maxes.is_empty())?;
     pyassert!(slf.values.is_empty())
@@ -139,7 +139,7 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     }
     Ok(())
 }
-fn list_infos(slf: &InnerData) -> String {
+fn list_infos(slf: &InnerList) -> String {
     [
         format!("len: {}", slf.len()),
         format!("load: {:?}", slf.load),

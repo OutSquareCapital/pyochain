@@ -4,7 +4,7 @@ use crate::{
     bisect::Bisect,
     bounds::{Loc, RawIrangeSpecs},
     errors,
-    inner::{InnerData, Values},
+    inner::{InnerList, Values},
     iter::{IrangeSpecs, builder::RawRangeIdxs},
     list_update::ListAdd,
     ops,
@@ -18,7 +18,7 @@ use pyo3::{prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
 use tap::prelude::*;
 pub trait ListsMethods:
-    Deref<Target = InnerData> + DerefMut + PyRepr + Sized + Send + Sync
+    Deref<Target = InnerList> + DerefMut + PyRepr + Sized + Send + Sync
 {
     /// Returns a reference to the "keys" of the collection.\
     /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\

@@ -1,5 +1,5 @@
 use crate::{
-    inner::{InnerData, Values},
+    inner::{InnerList, Values},
     prelude::*,
 };
 use derive_more::{AsMut, AsRef, Constructor, Deref, DerefMut};
@@ -10,13 +10,13 @@ use std::ops::{Deref, DerefMut};
 
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 #[derive(Default, Deref, DerefMut)]
-pub struct List(pub(super) InnerData);
+pub struct List(pub(super) InnerList);
 #[derive(Deref, DerefMut, new)]
 pub struct KeyList(
     #[deref]
     #[deref_mut]
     #[new(default)]
-    pub(super) InnerData,
+    pub(super) InnerList,
     #[new(default)] pub Values,
     pub(super) Py<PyAny>,
 );
@@ -49,7 +49,7 @@ impl_self_as_ref!(List, KeyList);
 
 pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> + Init {
     type L: ListsMethods;
-    type T: Deref<Target = InnerData>
+    type T: Deref<Target = InnerList>
         + DerefMut
         + AsRef<Self::L>
         + AsMut<Self::L>

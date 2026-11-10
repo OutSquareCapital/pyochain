@@ -12,7 +12,7 @@ use tap::Conv;
 use crate::{
     bisect::Bisect,
     bounds::{Loc, RangeIdxs},
-    inner::InnerData,
+    inner::InnerList,
     traits::ListsMethods,
     types::VecPy,
 };
@@ -138,7 +138,7 @@ pub enum Update {
     Big,
 }
 impl Update {
-    pub fn new(list: &InnerData, values: &impl ExactSizeIterator<Item = Py<PyAny>>) -> Self {
+    pub fn new(list: &InnerList, values: &impl ExactSizeIterator<Item = Py<PyAny>>) -> Self {
         if list.maxes.is_empty() {
             Self::EmptyMaxes
         } else if 4 * values.len() >= list.len() {
