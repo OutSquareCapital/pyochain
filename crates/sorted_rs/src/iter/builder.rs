@@ -159,9 +159,8 @@ impl<'py> From<RawIrangeSpecs<'py>> for IrangeSpecs<'py> {
     }
 }
 impl<'py> IrangeSpecs<'py> {
-    pub fn with_keys(py: Python<'py>, values: impl Into<Self>, key: &Py<PyAny>) -> PyResult<Self> {
+    pub fn with_keys(values: impl Into<Self>, func: &Bound<'py, PyAny>) -> PyResult<Self> {
         let mut slf = values.into();
-        let func = key.bind(py);
         slf.min = slf.min.with_key(func)?;
         slf.max = slf.max.with_key(func)?;
         Ok(slf)

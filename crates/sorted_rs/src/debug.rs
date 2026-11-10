@@ -59,7 +59,7 @@ pub fn check_key_list(py: Python<'_>, slf: &KeyList) -> PyResult<()> {
 
 /// Check keys matches key mapped to lists.
 fn check_values_match_keys(py: Python<'_>, data: &KeyList) -> PyResult<()> {
-    let key_fn = data.2.bind(py);
+    let key_fn = data.func.bind(py);
     data.values
         .iter_chunks()
         .zip(data.keys().iter_chunks())

@@ -34,7 +34,7 @@ impl PyRepr for KeyList {
         self.values.as_pylist(py)?.repr()
     }
     fn key_repr<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyString>>> {
-        self.2.bind(py).repr().map(Some)
+        self.func.bind(py).repr().map(Some)
     }
 }
 impl<T: ListsMethods> PyRepr for Set<T> {

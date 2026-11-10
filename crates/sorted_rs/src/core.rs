@@ -12,14 +12,20 @@ use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 #[derive(Default, Deref, DerefMut)]
 pub struct List(pub(super) InnerList);
 #[derive(Deref, DerefMut, new)]
-pub struct KeyList(
+pub struct KeyList {
     #[deref]
     #[deref_mut]
     #[new(default)]
-    pub(super) InnerList,
-    #[new(default)] pub Values,
-    pub(super) Py<PyAny>,
-);
+    pub(super) inner: InnerList,
+    #[new(default)]
+    pub keys: Values,
+    pub(super) func: Py<PyAny>,
+}
+impl KeyList {
+    pub(super) fn call_fn<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        self.func.bind(value.py()).call1((&value,))
+    }
+}
 #[derive(Constructor, AsRef, AsMut, Deref, DerefMut)]
 pub struct Collection<T: ListsMethods, U>(
     #[deref(forward)]
