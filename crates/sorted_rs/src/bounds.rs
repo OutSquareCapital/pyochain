@@ -48,7 +48,7 @@ impl RangeIdxs<Option<isize>> {
                 if s.is_negative() {
                     s += length.cast_signed();
                 }
-                s.cast_unsigned().min(length)
+                s.max(0).cast_unsigned().min(length)
             });
             if stop <= start {
                 None
