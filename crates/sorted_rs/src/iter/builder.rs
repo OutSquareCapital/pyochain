@@ -6,7 +6,6 @@ use crate::{
     ops,
     traits::ListsMethods,
 };
-use derive_more::Constructor;
 use pyo3::prelude::*;
 use tap::prelude::*;
 
@@ -48,7 +47,7 @@ where
     pub fn irange<const BY_KEY: bool>(mut self, specs: RawIrangeSpecs) -> PyResult<Self> {
         let guard = self.inner.read();
         let bounds = if BY_KEY {
-            specs.conv::<IrangeSpecs>()
+            specs.conv::<IrangeBounds>()
         } else {
             guard.as_ref().irange(self.pyref.py(), specs)?
         };
@@ -57,22 +56,22 @@ where
     }
 }
 
-fn irange_bounds<T>(list: &T, specs: IrangeSpecs<'_>) -> IterBounds
+fn irange_bounds<T>(list: &T, specs: IrangeBounds<'_>) -> IterBounds
 where
     T: ListsMethods,
 {
     if list.maxes.is_empty() {
         None
     } else {
-        let min = match specs.min {
-            RangeBound::None => Ok(Loc::default()),
-            RangeBound::Inclusive(m) => get_bound::<true, false, T>(list, &m)?,
-            RangeBound::Exclusive(m) => get_bound::<false, false, T>(list, &m)?,
+        let min = match specs.start {
+            None => Ok(Loc::default()),
+            Some(BoundKind::Inclusive(m)) => get_bound::<true, false, T>(list, &m)?,
+            Some(BoundKind::Exclusive(m)) => get_bound::<false, false, T>(list, &m)?,
         };
-        let max = match specs.max {
-            RangeBound::None => Ok(last_sublist(list)),
-            RangeBound::Inclusive(m) => get_bound::<false, true, T>(list, &m)?,
-            RangeBound::Exclusive(m) => get_bound::<true, true, T>(list, &m)?,
+        let max = match specs.stop {
+            None => Ok(last_sublist(list)),
+            Some(BoundKind::Inclusive(m)) => get_bound::<false, true, T>(list, &m)?,
+            Some(BoundKind::Exclusive(m)) => get_bound::<true, true, T>(list, &m)?,
         };
         match (min, max) {
             (_, Err(e)) | (Err(e), _) => Some(Err(e)),
@@ -120,47 +119,38 @@ fn last_sublist<T: ListsMethods>(list: &T) -> Loc {
     let idx = list.keys()[pos].len();
     Loc::new(pos, idx)
 }
-#[derive(Constructor)]
-pub struct IrangeSpecs<'py> {
-    min: RangeBound<'py>,
-    max: RangeBound<'py>,
-}
-impl<'py> From<RawIrangeSpecs<'py>> for IrangeSpecs<'py> {
+type IrangeBounds<'py> = Bounds<Option<BoundKind<'py>>>;
+impl<'py> From<RawIrangeSpecs<'py>> for IrangeBounds<'py> {
     fn from((min, max, (incl_min, incl_max)): RawIrangeSpecs<'py>) -> Self {
-        Self {
-            min: RangeBound::new(min, incl_min),
-            max: RangeBound::new(max, incl_max),
-        }
+        Self::new(BoundKind::new(min, incl_min), BoundKind::new(max, incl_max))
     }
 }
-impl<'py> IrangeSpecs<'py> {
+impl<'py> IrangeBounds<'py> {
     pub fn with_keys(values: impl Into<Self>, func: &Bound<'py, PyAny>) -> PyResult<Self> {
         let mut slf = values.into();
-        slf.min = slf.min.with_key(func)?;
-        slf.max = slf.max.with_key(func)?;
+        slf.start = slf.start.map(|x| x.with_key(func)).transpose()?;
+        slf.stop = slf.stop.map(|x| x.with_key(func)).transpose()?;
         Ok(slf)
     }
 }
 
 #[derive(Debug, Clone)]
-enum RangeBound<'py> {
-    None,
+enum BoundKind<'py> {
     Inclusive(Bound<'py, PyAny>),
     Exclusive(Bound<'py, PyAny>),
 }
-impl<'py> RangeBound<'py> {
+impl<'py> BoundKind<'py> {
     #[inline]
-    fn new(value: Option<Bound<'py, PyAny>>, inclusive: bool) -> Self {
+    fn new(value: Option<Bound<'py, PyAny>>, inclusive: bool) -> Option<Self> {
         match (value, inclusive) {
-            (None, _) => Self::None,
-            (Some(v), true) => Self::Inclusive(v),
-            (Some(v), false) => Self::Exclusive(v),
+            (None, _) => None,
+            (Some(v), true) => Some(Self::Inclusive(v)),
+            (Some(v), false) => Some(Self::Exclusive(v)),
         }
     }
     #[inline]
     fn with_key<'a>(self, key: &'a Bound<'py, PyAny>) -> PyResult<Self> {
         match self {
-            Self::None => Ok(Self::None),
             Self::Inclusive(value) => key.call1((value,)).map(Self::Inclusive),
             Self::Exclusive(value) => key.call1((value,)).map(Self::Exclusive),
         }
