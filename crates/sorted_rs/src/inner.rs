@@ -122,7 +122,7 @@ impl InnerList {
             ops::Locate::InFirstList(i) => Ok(Loc::with_idx(i)),
             ops::Locate::InLastList(i) => {
                 let pos = self.values.len() - 1;
-                let idx = (self.values.last().unwrap().len().cast_signed() + i).cast_unsigned();
+                let idx = (self.values[pos].len().cast_signed() + i).cast_unsigned();
                 Ok(Loc::new(pos, idx))
             }
             ops::Locate::InOtherList(i) => self.set_pos_usize(i),
@@ -146,9 +146,9 @@ impl InnerList {
 
     pub(super) fn set_pos(&mut self, mut index: isize) -> PyResult<Loc> {
         if index.is_negative() {
-            let last_len = self.values.last().unwrap().len().cast_signed();
+            let pos = self.values.len() - 1;
+            let last_len = self.values[pos].len().cast_signed();
             if index >= -last_len {
-                let pos = self.values.len() - 1;
                 let idx = (last_len + index).cast_unsigned();
                 return Ok(Loc::new(pos, idx));
             }

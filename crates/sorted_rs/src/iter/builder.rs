@@ -90,7 +90,7 @@ fn islice_bounds(list: &mut InnerList, specs: Bounds<Option<isize>>) -> IterBoun
     let min = list.set_pos_usize(bounds.start);
     let max = if bounds.stop == list.len() {
         let pos = list.values.len() - 1;
-        let idx = list.values.last().unwrap().len();
+        let idx = list.values[pos].len();
         Ok(Loc::new(pos, idx))
     } else {
         list.set_pos_usize(bounds.stop)
