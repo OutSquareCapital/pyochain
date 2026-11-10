@@ -9,17 +9,17 @@ pub(super) type Item = Option<*mut ffi::PyObject>;
 /// # Safety
 /// All implementers must ensure that all pointers are correctly managed,\
 /// and that all call sites are restricted to contexts with a valid Python interpreter.
-pub unsafe trait SortedNext: Sized {
-    type Rev: SortedNext;
+pub unsafe trait IterMethods: Sized {
+    type Reversed: IterMethods;
     /// Concrete logic of the python `Iterator`.
     /// # Safety
     /// The caller must ensure that the Iterator is wrapped in a pyclass.
     unsafe fn next(&self) -> Item;
-    fn rev(&self, py: Python<'_>) -> Self::Rev;
+    fn rev(&self, py: Python<'_>) -> Self::Reversed;
     #[inline(always)]
     fn into_py<T>(self, py: Python<'_>) -> PyResult<Bound<'_, T>>
     where
-        T: PySortedIter<Iter = Self>,
+        T: PySortedIter<Inner = Self>,
     {
         self.conv::<T>().into_bound(py)
     }
@@ -28,10 +28,10 @@ pub unsafe trait SortedNext: Sized {
 /// Trait for the Pyclasses that effectively wrap implementors of `SortedNext`.\
 /// You can consider `SortedNext` as the "logic provider" from rust and `PySortedIter` as the "interface provider" for Python.
 pub trait PySortedIter:
-    PyFrozenClass + Deref<Target = Self::Iter> + Init + From<Self::Iter>
+    PyFrozenClass + Deref<Target = Self::Inner> + Init + From<Self::Inner>
 {
-    type Iter: SortedNext;
-    type IterRev: PySortedIter<Iter = <Self::Iter as SortedNext>::Rev>;
+    type Inner: IterMethods;
+    type InnerRev: PySortedIter<Inner = <Self::Inner as IterMethods>::Reversed>;
     fn install(py: Python<'_>) {
         unsafe {
             let ty = Self::type_object_raw(py);
@@ -47,10 +47,10 @@ pub trait PySortedIter:
         unsafe { slf.get().next().map(|x| Bound::from_owned_ptr(slf.py(), x)) }
     }
     #[inline(always)]
-    fn rev<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self::IterRev>> {
+    fn rev<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self::InnerRev>> {
         slf.get()
             .rev(slf.py())
-            .conv::<Self::IterRev>()
+            .conv::<Self::InnerRev>()
             .into_bound(slf.py())
     }
 }

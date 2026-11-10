@@ -4,5 +4,5 @@ mod cursor;
 mod impls;
 mod traits;
 pub use builder::{Builder, IrangeSpecs};
-pub use impls::{Iter, IterBounded, IterBoundedRev, IterFwd, IterRev};
-pub use traits::{PySortedIter, SortedNext};
+pub use impls::{BoundedFwd, BoundedRev, Fwd, Iter, Rev};
+pub use traits::{IterMethods, PySortedIter};

@@ -4,16 +4,16 @@ use crate::{
     iter::{
         core::InnerRef,
         cursor::{BoundedCursor, Cursor, CursorMethods},
-        traits::{Item, SortedNext},
+        traits::{Item, IterMethods},
     },
 };
 use derive_more::Constructor;
 use pyo3::{ffi, prelude::*};
 use tap::prelude::*;
-pub type IterFwd = Iter<true, Cursor>;
-pub type IterRev = Iter<false, Cursor>;
-pub type IterBounded = Iter<true, BoundedCursor>;
-pub type IterBoundedRev = Iter<false, BoundedCursor>;
+pub type Fwd = Iter<true, Cursor>;
+pub type Rev = Iter<false, Cursor>;
+pub type BoundedFwd = Iter<true, BoundedCursor>;
+pub type BoundedRev = Iter<false, BoundedCursor>;
 
 #[derive(Debug, Constructor)]
 pub struct Iter<const FWD: bool, T> {
@@ -21,19 +21,19 @@ pub struct Iter<const FWD: bool, T> {
     cursor: T,
 }
 
-impl<T: ListGetter> From<&Bound<'_, T>> for IterFwd {
+impl<T: ListGetter> From<&Bound<'_, T>> for Fwd {
     #[inline]
     fn from(owner: &Bound<'_, T>) -> Self {
         InnerRef::from_owner(owner, owner.get()).into_iterator(Cursor::default())
     }
 }
-impl<T: ListGetter> From<&Bound<'_, T>> for IterRev {
+impl<T: ListGetter> From<&Bound<'_, T>> for Rev {
     #[inline]
     fn from(owner: &Bound<'_, T>) -> Self {
         InnerRef::from_owner(owner, owner.get()).into()
     }
 }
-impl From<InnerRef> for IterRev {
+impl From<InnerRef> for Rev {
     #[inline]
     fn from(pyref: InnerRef) -> Self {
         let cursor = pyref.values.len().pipe(Loc::with_pos).into();
@@ -88,50 +88,50 @@ impl<const FWD: bool, T: CursorMethods> Iter<FWD, T> {
     }
 }
 
-unsafe impl SortedNext for IterFwd {
-    type Rev = Iter<false, Cursor>;
+unsafe impl IterMethods for Fwd {
+    type Reversed = Iter<false, Cursor>;
     #[inline(always)]
     unsafe fn next(&self) -> Item {
         self.inner_next().map(|(at, item)| self.yield_ptr(item, at))
     }
-    fn rev(&self, py: Python<'_>) -> Self::Rev {
+    fn rev(&self, py: Python<'_>) -> Self::Reversed {
         self.pyref.clone_ref(py).into()
     }
 }
 
-unsafe impl SortedNext for IterRev {
-    type Rev = Iter<true, Cursor>;
+unsafe impl IterMethods for Rev {
+    type Reversed = Iter<true, Cursor>;
     #[inline(always)]
     unsafe fn next(&self) -> Item {
         self.inner_next_back()
             .map(|(at, item)| self.yield_ptr(item, at))
     }
-    fn rev(&self, py: Python<'_>) -> Self::Rev {
+    fn rev(&self, py: Python<'_>) -> Self::Reversed {
         self.pyref.clone_ref(py).into_iterator(Cursor::default())
     }
 }
 
-unsafe impl SortedNext for IterBounded {
-    type Rev = Iter<false, BoundedCursor>;
+unsafe impl IterMethods for BoundedFwd {
+    type Reversed = Iter<false, BoundedCursor>;
     #[inline(always)]
     unsafe fn next(&self) -> Item {
         self.inner_next()
             .filter(|&(at, _)| at <= self.cursor.limit)
             .map(|(at, item)| self.yield_ptr(item, at))
     }
-    fn rev(&self, py: Python<'_>) -> Self::Rev {
+    fn rev(&self, py: Python<'_>) -> Self::Reversed {
         self.pyref.clone_ref(py).into_iterator(self.cursor.swap())
     }
 }
-unsafe impl SortedNext for IterBoundedRev {
-    type Rev = Iter<true, BoundedCursor>;
+unsafe impl IterMethods for BoundedRev {
+    type Reversed = Iter<true, BoundedCursor>;
     #[inline(always)]
     unsafe fn next(&self) -> Item {
         self.inner_next_back()
             .filter(|&(at, _)| at >= self.cursor.limit)
             .map(|(at, item)| self.yield_ptr(item, at))
     }
-    fn rev(&self, py: Python<'_>) -> Self::Rev {
+    fn rev(&self, py: Python<'_>) -> Self::Reversed {
         self.pyref.clone_ref(py).into_iterator(self.cursor.swap())
     }
 }

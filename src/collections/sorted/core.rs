@@ -11,7 +11,7 @@ use pyo3::prelude::*;
 use pyochain_macros::py_abc;
 use sorted_rs::{
     KeyList, List,
-    iter::{self, SortedNext},
+    iter::{self, IterMethods},
     prelude::*,
     types,
 };
@@ -62,11 +62,11 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     }
     fn __iter__<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, SortedIter>> {
         let py = slf.py();
-        iter::IterFwd::from(slf).into_py(py)
+        iter::Fwd::from(slf).into_py(py)
     }
     fn __reversed__<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, SortedIterRev>> {
         let py = slf.py();
-        iter::IterRev::from(slf).into_py(py)
+        iter::Rev::from(slf).into_py(py)
     }
     fn bisect_left(&self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.write().as_mut().bisect::<true>(value)

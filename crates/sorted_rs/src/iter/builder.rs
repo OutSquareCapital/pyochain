@@ -3,7 +3,7 @@ use crate::{
     bisect::Bisect,
     bounds::{Loc, RangeIdxs, RawIrangeSpecs},
     inner::InnerData,
-    iter::{IterBounded, PySortedIter, SortedNext, core::InnerRef, cursor::Cursor},
+    iter::{BoundedFwd, IterMethods, PySortedIter, core::InnerRef, cursor::Cursor},
     traits::ListsMethods,
 };
 use derive_more::Constructor;
@@ -33,7 +33,7 @@ where
     }
     pub fn build<I>(self) -> PyResult<Bound<'py, I>>
     where
-        I: PySortedIter<Iter = IterBounded>,
+        I: PySortedIter<Inner = BoundedFwd>,
     {
         let (min, max) = self.bounds.transpose()?.unwrap_or_default();
         InnerRef::from_owner(self.pyref, self.inner)

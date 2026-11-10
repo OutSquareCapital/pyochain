@@ -10,8 +10,8 @@ macro_rules! impl_sorted_iter {
             #[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
             pub struct $pyiter($iter);
             impl iter::PySortedIter for $pyiter {
-                type Iter = $iter;
-                type IterRev = $pyiterrev;
+                type Inner = $iter;
+                type InnerRev = $pyiterrev;
             }
             #[pymethods]
             impl $pyiter {
@@ -21,7 +21,7 @@ macro_rules! impl_sorted_iter {
                 fn __length_hint__(&self) -> usize {
                       self.0.len()
                 }
-                fn rev<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, <Self as PySortedIter>::IterRev>> {
+                fn rev<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, <Self as PySortedIter>::InnerRev>> {
                     iter::PySortedIter::rev(slf)
                 }
             }
@@ -30,8 +30,8 @@ macro_rules! impl_sorted_iter {
 }
 
 impl_sorted_iter!(
-    iter::IterFwd => [SortedIter, SortedIterRev],
-    iter::IterRev => [SortedIterRev, SortedIter],
-    iter::IterBounded => [SortedIterBounded, SortedIterBoundedRev],
-    iter::IterBoundedRev => [SortedIterBoundedRev, SortedIterBounded],
+    iter::Fwd => [SortedIter, SortedIterRev],
+    iter::Rev => [SortedIterRev, SortedIter],
+    iter::BoundedFwd => [SortedIterBounded, SortedIterBoundedRev],
+    iter::BoundedRev => [SortedIterBoundedRev, SortedIterBounded],
 );
