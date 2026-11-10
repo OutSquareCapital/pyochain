@@ -38,7 +38,8 @@ impl<T: ListsMethods> Dict<T> {
     pub fn or(&self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
         let py = value.py();
         let dict = self.1.bind(py).as_any();
-        self.iter()
+        self.values
+            .iter()
             .map(|x| x.clone_ref(py).into_bound(py))
             .map(|key| dict.get_item(&key).map(|value| (key, value)))
             .chain(value.items_view()?.iter())
@@ -52,7 +53,8 @@ impl<T: ListsMethods> Dict<T> {
             .items_view()?
             .iter()
             .chain(
-                self.iter()
+                self.values
+                    .iter()
                     .map(|x| x.clone_ref(py).into_bound(py))
                     .map(|key| dict.get_item(&key).map(|value| (key, value))),
             )
@@ -60,7 +62,8 @@ impl<T: ListsMethods> Dict<T> {
     }
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         let dict = self.1.bind(py).as_any();
-        self.iter()
+        self.values
+            .iter()
             .map(|x| x.clone_ref(py).into_bound(py))
             .map(|key| dict.get_item(&key).map(|value| (key, value)))
             .pipe(|v| self.copy_from_iter(py, v))

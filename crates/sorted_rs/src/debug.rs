@@ -27,7 +27,8 @@ pub fn check_dict<T: ListsMethods>(py: Python<'_>, slf: &Dict<T>) -> PyResult<()
     let dict = slf.1.bind(py);
     pyassert!(dict.len() == slf.len())?;
     pyassert!(
-        slf.iter()
+        slf.values
+            .iter()
             .try_all(|item| { dict.contains(item.bind(py)) })?
     )
 }
@@ -36,7 +37,7 @@ pub fn check_set<T: ListsMethods>(py: Python<'_>, slf: &Set<T>) -> PyResult<()> 
     let set = slf.get_set(py);
     pyassert!(set.len() == slf.len())?;
     check_list(py, &slf.0)?;
-    pyassert!(slf.iter().try_all(|x| set.contains(x))?)
+    pyassert!(slf.values.iter().try_all(|x| set.contains(x))?)
 }
 pub fn check_list<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     check_sublists(py, slf).inspect_err(|e| e.add_note(py, list_infos(slf)).unwrap())
@@ -60,8 +61,8 @@ pub fn check_key_list(py: Python<'_>, slf: &KeyList) -> PyResult<()> {
 fn check_values_match_keys(py: Python<'_>, data: &KeyList) -> PyResult<()> {
     let key_fn = data.2.bind(py);
     data.values
-        .iter()
-        .zip(data.keys().iter())
+        .iter_chunks()
+        .zip(data.keys().iter_chunks())
         .try_for_each(|(val_sublist, key_sublist)| {
             pyassert!(val_sublist.len() == key_sublist.len())?;
             val_sublist
@@ -74,9 +75,9 @@ fn check_values_match_keys(py: Python<'_>, data: &KeyList) -> PyResult<()> {
 fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     pyassert!(slf.load.test_limit())?;
     pyassert!(slf.maxes.len() == slf.values.len() && slf.values.len() == slf.keys().len())?;
-    pyassert!(slf.len() == slf.values.iter().map(Vec::len).sum::<usize>())?;
+    pyassert!(slf.len() == slf.values.iter_chunks().map(Vec::len).sum::<usize>())?;
     // Check all sublists are sorted.
-    slf.keys().iter().try_for_each(|sublist| {
+    slf.keys().iter_chunks().try_for_each(|sublist| {
         (1..sublist.len())
             .try_for_each(|pos| pyassert!(sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?))
     })?;
@@ -94,20 +95,20 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     pyassert!(
         slf.maxes
             .iter()
-            .zip(slf.keys())
+            .zip(slf.keys().iter_chunks())
             .try_all(|(max, sublist)| max.bind(py).eq(sublist.last().unwrap().bind(py)))?
     )?;
     // Check sublist lengths are less than double load-factor.
     pyassert!(
         slf.values
-            .iter()
+            .iter_chunks()
             .all(|sublist| sublist.len() <= slf.load.higher_limit())
     )?;
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
     pyassert!(
         slf.values
-            .iter()
+            .iter_chunks()
             .rev()
             .skip(1)
             .all(|sublist| sublist.len() >= slf.load.lower_limit())
@@ -117,7 +118,7 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
         pyassert!(slf.lengths.inner.len() == slf.lengths.offset + slf.values.len())?;
         // Check index leaf nodes equal length of sublists.
         slf.values
-            .iter()
+            .iter_chunks()
             .enumerate()
             .try_for_each(|(val_idx, val)| {
                 let leaf = slf.lengths.inner[slf.lengths.offset + val_idx];

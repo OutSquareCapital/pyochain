@@ -52,6 +52,7 @@ impl<'py, T: ListsMethods> Updater<'py, T> {
         match values {
             ListAdd::Identity => self
                 .list
+                .values
                 .iter_owned(self.py)
                 .sorted_by(func)
                 .pipe(|sorted| self.strategy(sorted)),
@@ -60,6 +61,7 @@ impl<'py, T: ListsMethods> Updater<'py, T> {
                 .into_iter()
                 .pipe(|sorted| self.strategy(sorted)),
             ListAdd::Sorted(sorted) => sorted
+                .values
                 .iter_owned(self.py)
                 .sorted_by(func)
                 .pipe(|sorted| self.strategy(sorted)),
@@ -76,6 +78,7 @@ impl<'py, T: ListsMethods> Updater<'py, T> {
             ops::Update::EmptyMaxes => self.update_chunked(it),
             ops::Update::Big => self
                 .list
+                .values
                 .iter_owned(self.py)
                 .chain(it)
                 .collect_bound::<PyList>(self.py)

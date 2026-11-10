@@ -1,4 +1,7 @@
-use crate::{inner::InnerData, prelude::*, types::VecPy};
+use crate::{
+    inner::{InnerData, Values},
+    prelude::*,
+};
 use derive_more::{AsMut, AsRef, Constructor, Deref, DerefMut};
 use derive_new::new;
 use pyo3::prelude::*;
@@ -14,7 +17,7 @@ pub struct KeyList(
     #[deref_mut]
     #[new(default)]
     pub(super) InnerData,
-    #[new(default)] pub Vec<VecPy>,
+    #[new(default)] pub Values,
     pub(super) Py<PyAny>,
 );
 #[derive(Constructor, AsRef, AsMut, Deref, DerefMut)]

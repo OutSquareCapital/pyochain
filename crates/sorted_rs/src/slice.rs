@@ -7,7 +7,7 @@ use crate::{
     bounds::{Loc, RangeIdxs},
     inner::InnerData,
     ops::{self, ForwardSlice},
-    traits::{ListsMethods, NestedVec},
+    traits::ListsMethods,
     types::VecPy,
 };
 
@@ -125,7 +125,7 @@ impl SliceIdxs {
             .pipe(Ok)
         }
         match fwd {
-            ForwardSlice::Full => list.collapse(py).pipe(Ok),
+            ForwardSlice::Full => list.values.iter_owned(py).collect::<Vec<_>>().pipe(Ok),
             ForwardSlice::Partial | ForwardSlice::SmallToAdjust => {
                 fwd_extract::<false>(self, py, list)
             }

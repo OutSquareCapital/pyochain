@@ -1,4 +1,4 @@
-use crate::{bounds::Loc, types::VecPy};
+use crate::{bounds::Loc, inner::Values};
 /// Quoting Grant Jenks:
 /// > "a tree of pair-wise sums of the lengths of the lists. The tree is maintained as a dense binary tree."
 ///
@@ -68,8 +68,8 @@ impl Lengths {
         Loc::new(pos - self.offset, index)
     }
     //TODO: I'm almost sure this is one of the only places were we concretely diverge from the original implementation. Must check what changes exactly, and how we could further improve this.
-    pub fn build<'a>(&mut self, values: impl IntoIterator<Item = &'a VecPy>) {
-        let row0 = values.into_iter().map(Vec::len).collect::<Vec<usize>>();
+    pub fn build(&mut self, values: &Values) {
+        let row0 = values.iter_chunks().map(Vec::len).collect::<Vec<usize>>();
 
         if row0.len() == 1 {
             self.inner.extend(&row0);

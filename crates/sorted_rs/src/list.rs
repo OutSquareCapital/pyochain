@@ -7,15 +7,16 @@ use crate::{
     bisect::Bisect,
     bounds::{Loc, RangeIdxs, RawIrangeSpecs},
     errors,
+    inner::Values,
     iter::{IrangeSpecs, builder::RawRangeIdxs},
     list_update::{ListAdd, Updater},
     ops,
-    traits::{ListsMethods, NestedVec},
+    traits::ListsMethods,
     types::VecPy,
 };
 
 impl ListsMethods for List {
-    fn keys(&self) -> &[VecPy] {
+    fn keys(&self) -> &Values {
         &self.values
     }
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {

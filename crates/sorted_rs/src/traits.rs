@@ -4,7 +4,7 @@ use crate::{
     bisect::Bisect,
     bounds::{Loc, RawIrangeSpecs},
     errors,
-    inner::InnerData,
+    inner::{InnerData, Values},
     iter::{IrangeSpecs, builder::RawRangeIdxs},
     list_update::ListAdd,
     ops,
@@ -17,42 +17,13 @@ use itertools::Itertools;
 use pyo3::{prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
 use tap::prelude::*;
-pub(super) trait NestedVec {
-    fn loc(&self, loc: &Loc) -> &Py<PyAny>;
-    fn loc_insert(&mut self, loc: &Loc, value: Py<PyAny>);
-    fn loc_remove(&mut self, loc: &Loc);
-    fn loc_push(&mut self, loc: &Loc, value: Py<PyAny>);
-    fn loc_last(&self, loc: &Loc) -> &Py<PyAny>;
-    fn loc_len(&self, loc: &Loc) -> usize;
-}
-impl NestedVec for [Vec<Py<PyAny>>] {
-    fn loc(&self, loc: &Loc) -> &Py<PyAny> {
-        &self[loc.pos][loc.idx]
-    }
-    fn loc_insert(&mut self, loc: &Loc, value: Py<PyAny>) {
-        self[loc.pos].insert(loc.idx, value);
-    }
-    fn loc_remove(&mut self, loc: &Loc) {
-        self[loc.pos].remove(loc.idx);
-    }
-    fn loc_push(&mut self, loc: &Loc, value: Py<PyAny>) {
-        self[loc.pos].push(value);
-    }
-    fn loc_last(&self, loc: &Loc) -> &Py<PyAny> {
-        self[loc.pos].last().unwrap()
-    }
-    fn loc_len(&self, loc: &Loc) -> usize {
-        self[loc.pos].len()
-    }
-}
-
 pub trait ListsMethods:
     Deref<Target = InnerData> + DerefMut + PyRepr + Sized + Send + Sync
 {
     /// Returns a reference to the "keys" of the collection.\
     /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
     /// For collections sorted by *key*, this is equivalent to `KeysListsData::1`.
-    fn keys(&self) -> &[VecPy];
+    fn keys(&self) -> &Values;
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
     /// Equivalent to `bisect_ky_key` if the collection is sorted **by value**.\
@@ -96,18 +67,20 @@ pub trait ListsMethods:
         self.find(value).map(|x| x.is_some())
     }
     fn copy(&self, py: Python<'_>) -> PyResult<Self> {
-        self.as_owned_from(py, self.collapse(py))
+        self.as_owned_from(py, self.values.iter_owned(py).collect_vec())
     }
     fn concat(&self, py: Python<'_>, other: ListAdd<'_, Self>) -> PyResult<Self> {
         let out = match other {
-            ListAdd::Identity => self.repeat(py, 2),
+            ListAdd::Identity => self.values.repeat(py, 2),
             ListAdd::Sorted(list) => self
+                .values
                 .iter()
-                .chain(list.iter())
+                .chain(list.values.iter())
                 .map(|x| x.clone_ref(py))
                 .collect(),
             ListAdd::Vec(values) => values,
             ListAdd::Iterator(it) => self
+                .values
                 .iter()
                 .map(|x| x.clone_ref(py).pipe(Ok::<Py<PyAny>, PyErr>))
                 .chain(it.map_ok(Bound::unbind))
@@ -161,7 +134,7 @@ pub trait ListsMethods:
             .map_or(Ok(()), |loc| self.delete(value.py(), loc))
     }
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let values = self.repeat(py, num);
+        let values = self.values.repeat(py, num);
         self.clear(py);
         self.extend(py, values.into())
     }
@@ -178,10 +151,10 @@ pub trait ListsMethods:
         }
     }
     fn as_repeated(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
-        self.as_owned_from(py, self.repeat(py, num))
+        self.as_owned_from(py, self.values.repeat(py, num))
     }
     fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
-        let values = self.collapse(py);
+        let values = self.values.iter_owned(py).collect_vec();
         self.clear(py);
         self.load = load.into();
         self.extend(py, values.into())

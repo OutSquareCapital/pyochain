@@ -3,10 +3,9 @@ use crate::{
     errors,
     lengths::Lengths,
     ops,
-    traits::NestedVec,
     types::{SeqOrAny, VecPy},
 };
-use derive_more::{Deref, From};
+use derive_more::{Deref, DerefMut, From, IntoIterator};
 use either::Either;
 use pyo3::{
     basic::CompareOp,
@@ -39,9 +38,54 @@ impl Load {
         self.0 / 2
     }
 }
+#[derive(Deref, DerefMut, From, Debug, Default, IntoIterator)]
+pub struct Values(Vec<VecPy>);
+impl Values {
+    #[inline]
+    #[must_use]
+    pub(super) fn repeat(&self, py: Python<'_>, num: usize) -> VecPy {
+        let values = self.iter_owned(py).collect::<Vec<_>>();
+        (0..num)
+            .flat_map(|_| values.iter())
+            .map(|x| x.clone_ref(py))
+            .collect()
+    }
+    #[inline(always)]
+    pub(super) fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
+        self.iter().map(move |x| x.clone_ref(py))
+    }
+    #[inline(always)]
+    pub(super) fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> {
+        self.0.iter().flatten()
+    }
+    pub(super) fn iter_chunks(&self) -> impl DoubleEndedIterator<Item = &VecPy> {
+        self.0.iter()
+    }
+    pub(super) fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
+        self.iter().collect_bound(py)
+    }
+    pub(super) fn loc(&self, loc: &Loc) -> &Py<PyAny> {
+        &self[loc.pos][loc.idx]
+    }
+    pub(super) fn loc_insert(&mut self, loc: &Loc, value: Py<PyAny>) {
+        self[loc.pos].insert(loc.idx, value);
+    }
+    pub(super) fn loc_remove(&mut self, loc: &Loc) {
+        self[loc.pos].remove(loc.idx);
+    }
+    pub(super) fn loc_push(&mut self, loc: &Loc, value: Py<PyAny>) {
+        self[loc.pos].push(value);
+    }
+    pub(super) fn loc_last(&self, loc: &Loc) -> &Py<PyAny> {
+        self[loc.pos].last().unwrap()
+    }
+    pub(super) fn loc_len(&self, loc: &Loc) -> usize {
+        self[loc.pos].len()
+    }
+}
 #[derive(Default)]
 pub struct InnerData {
-    pub(super) values: Vec<VecPy>,
+    pub(super) values: Values,
     pub(super) maxes: VecPy,
     /// Equivalent to `idx` and `offset` attributes in the original `sortedcontainers` implementation.
     pub(super) lengths: Lengths,
@@ -65,22 +109,6 @@ impl InnerData {
         self.len = 0;
         self.lengths.offset = 0;
     }
-    #[inline]
-    #[must_use]
-    pub(super) fn collapse(&self, py: Python<'_>) -> VecPy {
-        self.iter_owned(py).collect()
-    }
-    #[inline(always)]
-    pub(super) fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
-        self.iter().map(move |x| x.clone_ref(py))
-    }
-    #[inline(always)]
-    pub(super) fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> {
-        self.values.iter().flatten()
-    }
-    pub(super) fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
-        self.iter().collect_bound::<PyList>(py)
-    }
     pub(super) fn loc(&mut self, loc: &Loc) -> usize {
         if loc.pos == 0 {
             loc.idx
@@ -90,15 +118,6 @@ impl InnerData {
             }
             self.lengths.loc_at(loc)
         }
-    }
-    #[inline]
-    #[must_use]
-    pub(super) fn repeat(&self, py: Python<'_>, num: usize) -> VecPy {
-        let values = self.collapse(py);
-        (0..num)
-            .flat_map(|_| values.iter())
-            .map(|x| x.clone_ref(py))
-            .collect()
     }
     #[inline]
     pub(super) fn index_to_loc(&mut self, index: isize) -> PyResult<Loc> {
@@ -164,60 +183,60 @@ impl InnerData {
     }
 
     pub fn eq<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        inner_cmp(self, other, CompareOp::Eq)
+        self.inner_cmp(other, CompareOp::Eq)
     }
     pub fn ne<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        inner_cmp(self, other, CompareOp::Ne)
+        self.inner_cmp(other, CompareOp::Ne)
     }
     pub fn lt<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        inner_cmp(self, other, CompareOp::Lt)
+        self.inner_cmp(other, CompareOp::Lt)
     }
     pub fn gt<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        inner_cmp(self, other, CompareOp::Gt)
+        self.inner_cmp(other, CompareOp::Gt)
     }
     pub fn le<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        inner_cmp(self, other, CompareOp::Le)
+        self.inner_cmp(other, CompareOp::Le)
     }
     pub fn ge<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
-        inner_cmp(self, other, CompareOp::Ge)
+        self.inner_cmp(other, CompareOp::Ge)
     }
-}
 
-#[inline]
-fn inner_cmp<'py>(data: &InnerData, other: SeqOrAny<'py>, op: CompareOp) -> PyCmpOut<'py, bool> {
-    let py = other.py();
-    let it = data.iter().map(|a| a.bind(py));
-    match (other, op) {
-        (Either::Left(seq), CompareOp::Eq) => {
-            if data.len == seq.len()? {
-                it.zip(seq.iter_py())
-                    .try_all(|(a, b)| a.eq(b?))
-                    .map(Either::Left)
-            } else {
-                Ok(Either::Left(false))
-            }
-        }
-        (Either::Left(seq), CompareOp::Ne) => {
-            if data.len == seq.len()? {
-                it.zip(seq.iter_py())
-                    .try_any(|(a, b)| a.ne(b?))
-                    .map(Either::Left)
-            } else {
-                Ok(Either::Left(true))
-            }
-        }
-        (Either::Left(seq), op) => it
-            .zip(seq.iter_py())
-            .try_find_map(|(a, b)| {
-                let b = b?;
-                if a.ne(&b)? {
-                    a.rich_compare_bool(&b, op).map(Some)
+    #[inline]
+    fn inner_cmp<'py>(&self, other: SeqOrAny<'py>, op: CompareOp) -> PyCmpOut<'py, bool> {
+        let py = other.py();
+        let it = self.values.iter().map(|a| a.bind(py));
+        match (other, op) {
+            (Either::Left(seq), CompareOp::Eq) => {
+                if self.len == seq.len()? {
+                    it.zip(seq.iter_py())
+                        .try_all(|(a, b)| a.eq(b?))
+                        .map(Either::Left)
                 } else {
-                    Ok(None)
+                    Ok(Either::Left(false))
                 }
-            })?
-            .map_or_else(|| Ok(op.as_fn::<usize>()(&data.len, &seq.len()?)), Ok)
-            .map(Either::Left),
-        (Either::Right(any), _) => PyNotImplemented::from_cmp(any.py()),
+            }
+            (Either::Left(seq), CompareOp::Ne) => {
+                if self.len == seq.len()? {
+                    it.zip(seq.iter_py())
+                        .try_any(|(a, b)| a.ne(b?))
+                        .map(Either::Left)
+                } else {
+                    Ok(Either::Left(true))
+                }
+            }
+            (Either::Left(seq), op) => it
+                .zip(seq.iter_py())
+                .try_find_map(|(a, b)| {
+                    let b = b?;
+                    if a.ne(&b)? {
+                        a.rich_compare_bool(&b, op).map(Some)
+                    } else {
+                        Ok(None)
+                    }
+                })?
+                .map_or_else(|| Ok(op.as_fn::<usize>()(&self.len, &seq.len()?)), Ok)
+                .map(Either::Left),
+            (Either::Right(any), _) => PyNotImplemented::from_cmp(any.py()),
+        }
     }
 }
