@@ -72,4 +72,14 @@ impl Loc {
     pub const fn with_pos(pos: usize) -> Self {
         Self::new(pos, 0)
     }
+    pub(super) fn into_index(self, list: &mut InnerList) -> usize {
+        if self.pos == 0 {
+            self.idx
+        } else {
+            if list.lengths.is_not_built() {
+                list.lengths.build(&list.values);
+            }
+            list.lengths.loc_at(&self)
+        }
+    }
 }

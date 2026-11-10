@@ -154,10 +154,10 @@ impl ListsMethods for KeyList {
                         return Err(errors::not_in_list(value));
                     }
                     if self.values.loc(&loc).bind(py).eq(value)? {
-                        let loc = self.loc(&loc);
-                        if indices.start <= loc && loc < indices.stop {
-                            return Ok(loc);
-                        } else if loc >= indices.stop {
+                        let index = loc.into_index(self);
+                        if indices.start <= index && index < indices.stop {
+                            return Ok(index);
+                        } else if index >= indices.stop {
                             return Err(errors::not_in_list(value));
                         }
                     }

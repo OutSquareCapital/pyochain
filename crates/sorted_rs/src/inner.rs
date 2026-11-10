@@ -109,16 +109,6 @@ impl InnerList {
         self.len = 0;
         self.lengths.offset = 0;
     }
-    pub(super) fn loc(&mut self, loc: &Loc) -> usize {
-        if loc.pos == 0 {
-            loc.idx
-        } else {
-            if self.lengths.is_not_built() {
-                self.lengths.build(&self.values);
-            }
-            self.lengths.loc_at(loc)
-        }
-    }
     #[inline]
     pub(super) fn index_to_loc(&mut self, index: isize) -> PyResult<Loc> {
         match ops::Locate::new(self.len, &self.values, index) {

@@ -66,14 +66,14 @@ impl ListsMethods for List {
             ops::Bisect::Empty | ops::Bisect::LenEQPos => Ok(0),
             ops::Bisect::LenNEPos(left) => match self.try_bisect_right(value)? {
                 ops::Bisect::Empty => unreachable!(),
-                ops::Bisect::LenEQPos => Ok(self.len() - self.loc(&left)),
+                ops::Bisect::LenEQPos => Ok(self.len() - left.into_index(self)),
                 ops::Bisect::LenNEPos(right) => {
                     if left.pos == right.pos {
                         Ok(right.idx - left.idx)
                     } else {
-                        let right_loc = self.loc(&right);
-                        let left_loc = self.loc(&left);
-                        Ok(right_loc - left_loc)
+                        let right_idx = right.into_index(self);
+                        let left_idx = left.into_index(self);
+                        Ok(right_idx - left_idx)
                     }
                 }
             },
@@ -127,10 +127,10 @@ impl ListsMethods for List {
                 if self.values.loc(&loc).bind(py).ne(value)? {
                     Err(errors::not_in_list(value))
                 } else {
-                    let left = self.loc(&loc);
-                    if indices.start <= left {
-                        if left < indices.stop {
-                            return Ok(left);
+                    let index = loc.into_index(self);
+                    if indices.start <= index {
+                        if index < indices.stop {
+                            return Ok(index);
                         }
                     } else if indices.start < self.bisect_by_key::<false>(value)? {
                         return Ok(indices.start);
