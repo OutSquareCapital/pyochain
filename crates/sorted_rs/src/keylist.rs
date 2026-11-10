@@ -3,7 +3,7 @@ use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
     errors,
     inner::Values,
-    iter::{IrangeSpecs, builder::RawRangeIdxs},
+    iter::{IrangeBounds, builder::RawRangeIdxs},
     list_update::{ListAdd, Updater},
     ops,
     traits::ListsMethods,
@@ -25,8 +25,8 @@ impl ListsMethods for KeyList {
         &self,
         py: Python<'py>,
         specs: RawIrangeSpecs<'py>,
-    ) -> PyResult<IrangeSpecs<'py>> {
-        IrangeSpecs::with_keys(specs, self.func.bind(py))
+    ) -> PyResult<IrangeBounds<'py>> {
+        IrangeBounds::with_keys(specs, self.func.bind(py))
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let key = self.call_fn(&value)?;

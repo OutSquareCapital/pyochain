@@ -10,7 +10,7 @@ pub type RawIrangeSpecs<'py> = (
 );
 
 #[derive(PartialEq, Eq, Default, Clone, Copy, Constructor, Debug, From)]
-pub(super) struct Bounds<T> {
+pub struct Bounds<T> {
     pub start: T,
     pub stop: T,
 }

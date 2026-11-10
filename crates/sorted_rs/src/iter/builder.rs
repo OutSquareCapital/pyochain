@@ -119,7 +119,7 @@ fn last_sublist<T: ListsMethods>(list: &T) -> Loc {
     let idx = list.keys()[pos].len();
     Loc::new(pos, idx)
 }
-type IrangeBounds<'py> = Bounds<Option<BoundKind<'py>>>;
+pub type IrangeBounds<'py> = Bounds<Option<BoundKind<'py>>>;
 impl<'py> From<RawIrangeSpecs<'py>> for IrangeBounds<'py> {
     fn from((min, max, (incl_min, incl_max)): RawIrangeSpecs<'py>) -> Self {
         Self::new(BoundKind::new(min, incl_min), BoundKind::new(max, incl_max))
@@ -135,7 +135,7 @@ impl<'py> IrangeBounds<'py> {
 }
 
 #[derive(Debug, Clone)]
-enum BoundKind<'py> {
+pub enum BoundKind<'py> {
     Inclusive(Bound<'py, PyAny>),
     Exclusive(Bound<'py, PyAny>),
 }

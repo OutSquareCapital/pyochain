@@ -7,7 +7,7 @@ use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
     errors,
     inner::Values,
-    iter::{IrangeSpecs, builder::RawRangeIdxs},
+    iter::{IrangeBounds, builder::RawRangeIdxs},
     list_update::{ListAdd, Updater},
     ops,
     traits::ListsMethods,
@@ -27,8 +27,8 @@ impl ListsMethods for List {
         &self,
         _py: Python<'py>,
         specs: RawIrangeSpecs<'py>,
-    ) -> PyResult<IrangeSpecs<'py>> {
-        specs.conv::<IrangeSpecs>().pipe(Ok)
+    ) -> PyResult<IrangeBounds<'py>> {
+        specs.conv::<IrangeBounds>().pipe(Ok)
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();

@@ -4,7 +4,7 @@ use crate::{
     bounds::{Loc, RawIrangeSpecs},
     errors,
     inner::{InnerList, Values},
-    iter::{IrangeSpecs, builder::RawRangeIdxs},
+    iter::{IrangeBounds, builder::RawRangeIdxs},
     list_update::ListAdd,
     ops,
     reprs::PyRepr,
@@ -41,7 +41,7 @@ pub trait ListsMethods:
         &self,
         py: Python<'py>,
         specs: RawIrangeSpecs<'py>,
-    ) -> PyResult<IrangeSpecs<'py>>;
+    ) -> PyResult<IrangeBounds<'py>>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn delete_on_len_sup_to_half_load(&mut self, py: Python<'_>, loc: Loc) {
         self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
