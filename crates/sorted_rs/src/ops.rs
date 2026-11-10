@@ -7,14 +7,13 @@ use std::hint::unreachable_unchecked;
 
 use derive_more::From;
 use pyo3::prelude::*;
-use tap::Conv;
+use tap::{Conv, Pipe};
 
 use crate::{
-    bisect::Bisect,
+    bisect::bisect,
     bounds::{Loc, RangeIdxs},
-    inner::InnerList,
+    inner::{InnerList, Values},
     traits::ListsMethods,
-    types::VecPy,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -84,30 +83,29 @@ impl ForwardSlice {
     }
 }
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
-pub(super) enum Maxes {
+pub enum Bisect {
     Empty,
-    LenEQPos(Loc),
+    LenEQPos,
     LenNEPos(Loc),
-    BisectErr(PyErr),
 }
-impl Maxes {
+impl Bisect {
     #[inline(always)]
-    pub fn left(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
-        Self::new::<true>(maxes, value)
-    }
-    #[inline(always)]
-    pub fn right(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
-        Self::new::<false>(maxes, value)
-    }
-    #[inline(always)]
-    fn new<const LEFT: bool>(maxes: &[Py<PyAny>], value: &Bound<'_, PyAny>) -> Self {
-        if maxes.is_empty() {
-            Self::Empty
+    pub fn new<const LEFT: bool, T>(list: &T, value: &Bound<'_, PyAny>) -> PyResult<Self>
+    where
+        T: ListsMethods,
+    {
+        if list.maxes.is_empty() {
+            Ok(Self::Empty)
         } else {
-            match maxes.bisect::<LEFT>(value).map(Loc::with_pos) {
-                Err(e) => Self::BisectErr(e),
-                Ok(loc) if loc.pos == maxes.len() => Self::LenEQPos(loc),
-                Ok(loc) => Self::LenNEPos(loc),
+            let pos = bisect::<LEFT>(&list.maxes, value)?;
+            if pos == list.maxes.len() {
+                Ok(Self::LenEQPos)
+            } else {
+                list.keys()[pos]
+                    .as_slice()
+                    .pipe(|v| bisect::<LEFT>(v, value))
+                    .map(|idx| Loc::new(pos, idx))
+                    .map(Self::LenNEPos)
             }
         }
     }
@@ -184,7 +182,7 @@ pub(super) enum Locate {
 }
 impl Locate {
     #[inline]
-    pub fn new(length: usize, values: &[VecPy], index: isize) -> Self {
+    pub fn new(length: usize, values: &Values, index: isize) -> Self {
         match (length, index.conv::<Nb>()) {
             (1, Nb::Zero | Nb::MinusOne) => Self::First,
             (0 | 1, _) => Self::Empty,

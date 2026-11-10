@@ -6,32 +6,17 @@ use std::ops::Not;
 /// May fail if the `__lt__` dunder can raise an exception.
 type BisectRes = PyResult<usize>;
 
-/// Trait for bisect functions, adapted from the Python standard library's bisect module.
-pub trait Bisect {
-    fn bisect<const LEFT: bool>(&self, item: &Bound<'_, PyAny>) -> BisectRes;
-    fn bisect_left(&self, item: &Bound<'_, PyAny>) -> BisectRes;
-    fn bisect_right(&self, item: &Bound<'_, PyAny>) -> BisectRes;
-}
-impl Bisect for [Py<PyAny>] {
-    #[inline(always)]
-    fn bisect<const LEFT: bool>(&self, item: &Bound<'_, PyAny>) -> BisectRes {
-        if LEFT {
-            resolve(self, item, |item, mid| {
-                mid.rich_compare_bool(item, CompareOp::Lt).map(Not::not)
-            })
-        } else {
-            resolve(self, item, |item, mid| {
-                item.rich_compare_bool(mid, CompareOp::Lt)
-            })
-        }
-    }
-    #[inline(always)]
-    fn bisect_left(&self, item: &Bound<'_, PyAny>) -> BisectRes {
-        self.bisect::<true>(item)
-    }
-    #[inline(always)]
-    fn bisect_right(&self, item: &Bound<'_, PyAny>) -> BisectRes {
-        self.bisect::<false>(item)
+/// bisect function, adapted from the Python standard library's bisect module.
+#[inline(always)]
+pub fn bisect<const LEFT: bool>(list: &[Py<PyAny>], item: &Bound<'_, PyAny>) -> BisectRes {
+    if LEFT {
+        resolve(list, item, |item, mid| {
+            mid.rich_compare_bool(item, CompareOp::Lt).map(Not::not)
+        })
+    } else {
+        resolve(list, item, |item, mid| {
+            item.rich_compare_bool(mid, CompareOp::Lt)
+        })
     }
 }
 

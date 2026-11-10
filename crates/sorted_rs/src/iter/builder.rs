@@ -1,14 +1,14 @@
 use crate::{
     ListGetter,
-    bisect::Bisect,
     bounds::{Loc, RangeIdxs, RawIrangeSpecs},
     inner::InnerList,
     iter::{BoundedFwd, IterMethods, PySortedIter, core::InnerRef, cursor::Cursor},
+    ops,
     traits::ListsMethods,
 };
 use derive_more::Constructor;
 use pyo3::prelude::*;
-use tap::{Conv, Pipe};
+use tap::prelude::*;
 
 pub type RawRangeIdxs = (Option<isize>, Option<isize>);
 type IterBounds = Option<PyResult<(Loc, Loc)>>;
@@ -57,22 +57,22 @@ where
     }
 }
 
-fn irange_bounds<T>(data: &T, specs: IrangeSpecs<'_>) -> IterBounds
+fn irange_bounds<T>(list: &T, specs: IrangeSpecs<'_>) -> IterBounds
 where
     T: ListsMethods,
 {
-    if data.maxes.is_empty() {
+    if list.maxes.is_empty() {
         None
     } else {
         let min = match specs.min {
             RangeBound::None => Ok(Loc::default()),
-            RangeBound::Inclusive(m) => min_bound::<true, T>(data, &m)?,
-            RangeBound::Exclusive(m) => min_bound::<false, T>(data, &m)?,
+            RangeBound::Inclusive(m) => min_bound::<true, T>(list, &m)?,
+            RangeBound::Exclusive(m) => min_bound::<false, T>(list, &m)?,
         };
         let max = match specs.max {
-            RangeBound::None => Ok(new_inclusive_max(data)),
-            RangeBound::Inclusive(m) => max_bound::<false, T>(data, &m),
-            RangeBound::Exclusive(m) => max_bound::<true, T>(data, &m),
+            RangeBound::None => Ok(last_sublist(list)),
+            RangeBound::Inclusive(m) => max_bound::<false, T>(list, &m)?,
+            RangeBound::Exclusive(m) => max_bound::<true, T>(list, &m)?,
         };
         match (min, max) {
             (_, Err(e)) | (Err(e), _) => Some(Err(e)),
@@ -118,31 +118,32 @@ fn islice_bounds(list: &mut InnerList, specs: RangeIdxs<Option<isize>>) -> IterB
         }
     }
 }
-fn min_bound<const LEFT: bool, T>(data: &T, value: &Bound<'_, PyAny>) -> Option<PyResult<Loc>>
+fn min_bound<const LEFT: bool, T>(list: &T, value: &Bound<'_, PyAny>) -> Option<PyResult<Loc>>
 where
     T: ListsMethods,
 {
-    match data.maxes.bisect::<LEFT>(value) {
+    match list.try_bisect::<LEFT>(value) {
         Err(e) => Some(Err(e)),
-        Ok(pos) if pos == data.maxes.len() => None,
-        Ok(pos) => data.keys()[pos]
-            .bisect::<LEFT>(value)
-            .map(|idx| Loc::new(pos, idx))
-            .pipe(Some),
+        Ok(ops::Bisect::Empty | ops::Bisect::LenEQPos) => None,
+        Ok(ops::Bisect::LenNEPos(loc)) => Some(Ok(loc)),
     }
 }
-fn max_bound<const LEFT: bool, T>(data: &T, value: &Bound<'_, PyAny>) -> PyResult<Loc>
+fn max_bound<const LEFT: bool, T>(list: &T, value: &Bound<'_, PyAny>) -> Option<PyResult<Loc>>
 where
     T: ListsMethods,
 {
-    let mut pos = data.maxes.bisect::<LEFT>(value)?;
-    let idx = if pos == data.maxes.len() {
-        pos -= 1;
-        data.keys()[pos].len()
-    } else {
-        data.keys()[pos].bisect::<LEFT>(value)?
-    };
-    Ok(Loc::new(pos, idx))
+    match list.try_bisect::<LEFT>(value) {
+        Err(e) => Some(Err(e)),
+        Ok(ops::Bisect::Empty) => None,
+        Ok(ops::Bisect::LenEQPos) => Some(Ok(last_sublist(list))),
+        Ok(ops::Bisect::LenNEPos(loc)) => Some(Ok(loc)),
+    }
+}
+#[inline]
+fn last_sublist<T: ListsMethods>(list: &T) -> Loc {
+    let pos = list.maxes.len() - 1;
+    let idx = list.keys()[pos].len();
+    Loc::new(pos, idx)
 }
 #[derive(Constructor)]
 pub struct IrangeSpecs<'py> {
@@ -165,12 +166,6 @@ impl<'py> IrangeSpecs<'py> {
         slf.max = slf.max.with_key(func)?;
         Ok(slf)
     }
-}
-#[inline]
-fn new_inclusive_max<T: ListsMethods>(data: &T) -> Loc {
-    let pos = data.maxes.len() - 1;
-    let idx = data.keys()[pos].len();
-    Loc::new(pos, idx)
 }
 
 #[derive(Debug, Clone)]

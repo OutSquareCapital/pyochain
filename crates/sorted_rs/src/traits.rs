@@ -1,7 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    bisect::Bisect,
     bounds::{Loc, RawIrangeSpecs},
     errors,
     inner::{InnerList, Values},
@@ -17,6 +16,8 @@ use itertools::Itertools;
 use pyo3::{prelude::*, types::PyList};
 use pyo3_ext::prelude::*;
 use tap::prelude::*;
+
+pub type BisectRes = PyResult<ops::Bisect>;
 pub trait ListsMethods:
     Deref<Target = InnerList> + DerefMut + PyRepr + Sized + Send + Sync
 {
@@ -46,20 +47,6 @@ pub trait ListsMethods:
         self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
         if self.lengths.is_built() {
             self.lengths.delete_at(loc.pos);
-        }
-    }
-    fn bisect_by_key<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        if self.maxes.is_empty() {
-            Ok(0)
-        } else {
-            let mut loc = Loc::new(0, 0);
-            loc.pos = self.maxes.bisect::<LEFT>(value)?;
-            if loc.pos == self.maxes.len() {
-                Ok(self.len())
-            } else {
-                loc.idx = self.keys()[loc.pos].bisect::<LEFT>(value)?;
-                Ok(self.loc(&loc))
-            }
         }
     }
     #[inline]
@@ -162,5 +149,32 @@ pub trait ListsMethods:
     fn set_item(&mut self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.del_item(value.py(), index)?;
         self.append(value)
+    }
+
+    #[inline(always)]
+    fn try_bisect<const LEFT: bool>(&self, value: &Bound<'_, PyAny>) -> BisectRes {
+        ops::Bisect::new::<LEFT, Self>(self, value)
+    }
+    #[inline(always)]
+    fn try_bisect_left(&self, value: &Bound<'_, PyAny>) -> BisectRes {
+        self.try_bisect::<true>(value)
+    }
+    #[inline(always)]
+    fn try_bisect_right(&self, value: &Bound<'_, PyAny>) -> BisectRes {
+        self.try_bisect::<false>(value)
+    }
+    fn bisect_by_key<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        match self.try_bisect::<LEFT>(value)? {
+            ops::Bisect::Empty => Ok(0),
+            ops::Bisect::LenEQPos => Ok(self.len()),
+            ops::Bisect::LenNEPos(loc) => Ok(self.loc(&loc)),
+        }
+    }
+    fn bisect_or_err(&self, value: &Bound<'_, PyAny>) -> PyResult<Loc> {
+        match self.try_bisect_left(value)? {
+            ops::Bisect::Empty => unreachable!(),
+            ops::Bisect::LenEQPos => Err(errors::not_in_list(value)),
+            ops::Bisect::LenNEPos(loc) => Ok(loc),
+        }
     }
 }

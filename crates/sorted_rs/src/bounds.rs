@@ -1,7 +1,7 @@
 use derive_more::{Constructor, From};
 use pyo3::{prelude::*, types::slice::PySliceIndices};
 
-use crate::{bisect::Bisect, errors, inner::InnerList, traits::ListsMethods};
+use crate::inner::InnerList;
 
 pub type RawIrangeSpecs<'py> = (
     Option<Bound<'py, PyAny>>,
@@ -71,17 +71,5 @@ impl Loc {
     #[must_use]
     pub const fn with_pos(pos: usize) -> Self {
         Self::new(pos, 0)
-    }
-    pub fn try_from_index<T>(list: &T, value: &Bound<'_, PyAny>) -> PyResult<Loc>
-    where
-        T: ListsMethods,
-    {
-        let pos = list.maxes.bisect_left(value)?;
-        if pos == list.maxes.len() {
-            Err(errors::not_in_list(value))
-        } else {
-            let idx = list.keys()[pos].bisect_left(value)?;
-            Ok(Self::new(pos, idx))
-        }
     }
 }

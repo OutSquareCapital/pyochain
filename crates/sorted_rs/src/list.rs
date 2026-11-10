@@ -4,7 +4,6 @@ use tap::{Conv, Pipe};
 
 use crate::{
     List,
-    bisect::Bisect,
     bounds::{Loc, RangeIdxs, RawIrangeSpecs},
     errors,
     inner::Values,
@@ -33,23 +32,21 @@ impl ListsMethods for List {
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
-        match ops::Maxes::right(&self.0.maxes, &value) {
-            ops::Maxes::BisectErr(err) => return Err(err),
-            ops::Maxes::Empty => {
+        match self.try_bisect_right(&value)? {
+            ops::Bisect::Empty => {
                 let unbounded = value.unbind();
-                self.0.values.push(vec![unbounded.clone_ref(py)]);
-                self.0.maxes.push(unbounded);
+                self.values.push(vec![unbounded.clone_ref(py)]);
+                self.maxes.push(unbounded);
             }
-            ops::Maxes::LenEQPos(mut loc) => {
-                loc.pos -= 1;
+            ops::Bisect::LenEQPos => {
+                let pos = self.maxes.len() - 1;
                 let unbounded = value.unbind();
-                self.0.values.loc_push(&loc, unbounded.clone_ref(py));
-                self.0.maxes[loc.pos] = unbounded;
-                self.expand(py, loc.pos);
+                self.values[pos].push(unbounded.clone_ref(py));
+                self.maxes[pos] = unbounded;
+                self.expand(py, pos);
             }
-            ops::Maxes::LenNEPos(loc) => {
-                let res = self.0.values[loc.pos].bisect_right(&value)?;
-                self.0.values[loc.pos].insert(res, value.unbind());
+            ops::Bisect::LenNEPos(loc) => {
+                self.values[loc.pos].insert(loc.idx, value.unbind());
                 self.expand(py, loc.pos);
             }
         }
@@ -65,20 +62,12 @@ impl ListsMethods for List {
         self.0.clear();
     }
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        match ops::Maxes::left(&self.maxes, value) {
-            ops::Maxes::BisectErr(err) => Err(err),
-            ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(0),
-            ops::Maxes::LenNEPos(mut left) => {
-                let mut right = Loc::default();
-                left.idx = self.values[left.pos].bisect_left(value)?;
-                right.pos = self.maxes.bisect_right(value)?;
-
-                if right.pos == self.maxes.len() {
-                    let left_loc = self.loc(&left);
-                    Ok(self.len() - left_loc)
-                } else {
-                    right.idx = self.values[right.pos].bisect_right(value)?;
-
+        match self.try_bisect_left(value)? {
+            ops::Bisect::Empty | ops::Bisect::LenEQPos => Ok(0),
+            ops::Bisect::LenNEPos(left) => match self.try_bisect_right(value)? {
+                ops::Bisect::Empty => unreachable!(),
+                ops::Bisect::LenEQPos => Ok(self.len() - self.loc(&left)),
+                ops::Bisect::LenNEPos(right) => {
                     if left.pos == right.pos {
                         Ok(right.idx - left.idx)
                     } else {
@@ -87,7 +76,7 @@ impl ListsMethods for List {
                         Ok(right_loc - left_loc)
                     }
                 }
-            }
+            },
         }
     }
 
@@ -134,7 +123,7 @@ impl ListsMethods for List {
         match indices.into_index(self) {
             None => Err(errors::not_in_list(value)),
             Some(indices) => {
-                let loc = Loc::try_from_index(self, value)?;
+                let loc = self.bisect_or_err(value)?;
                 if self.values.loc(&loc).bind(py).ne(value)? {
                     Err(errors::not_in_list(value))
                 } else {
@@ -143,7 +132,7 @@ impl ListsMethods for List {
                         if left < indices.stop {
                             return Ok(left);
                         }
-                    } else if indices.start < self.bisect::<false>(value)? {
+                    } else if indices.start < self.bisect_by_key::<false>(value)? {
                         return Ok(indices.start);
                     }
                     Err(errors::not_in_list(value))
@@ -153,17 +142,13 @@ impl ListsMethods for List {
     }
     #[inline]
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {
-        match ops::Maxes::left(&self.maxes, value) {
-            ops::Maxes::BisectErr(err) => Err(err),
-            ops::Maxes::Empty | ops::Maxes::LenEQPos(_) => Ok(None),
-            ops::Maxes::LenNEPos(mut loc) => {
-                loc.idx = self.values[loc.pos].bisect_left(value)?;
-                match self.values.loc(&loc).bind(value.py()).eq(value) {
-                    Ok(true) => Ok(Some(loc)),
-                    Ok(false) => Ok(None),
-                    Err(err) => Err(err),
-                }
-            }
+        match self.try_bisect_left(value)? {
+            ops::Bisect::Empty | ops::Bisect::LenEQPos => Ok(None),
+            ops::Bisect::LenNEPos(loc) => match self.values.loc(&loc).bind(value.py()).eq(value) {
+                Ok(true) => Ok(Some(loc)),
+                Ok(false) => Ok(None),
+                Err(err) => Err(err),
+            },
         }
     }
     fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()> {

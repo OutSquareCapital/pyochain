@@ -38,6 +38,9 @@ impl Load {
         self.0 / 2
     }
 }
+
+#[derive(Deref, DerefMut, From, Debug, Default, IntoIterator)]
+pub struct Maxes(VecPy);
 #[derive(Deref, DerefMut, From, Debug, Default, IntoIterator)]
 pub struct Values(Vec<VecPy>);
 impl Values {
@@ -73,9 +76,6 @@ impl Values {
     pub(super) fn loc_remove(&mut self, loc: &Loc) {
         self[loc.pos].remove(loc.idx);
     }
-    pub(super) fn loc_push(&mut self, loc: &Loc, value: Py<PyAny>) {
-        self[loc.pos].push(value);
-    }
     pub(super) fn loc_last(&self, loc: &Loc) -> &Py<PyAny> {
         self[loc.pos].last().unwrap()
     }
@@ -86,7 +86,7 @@ impl Values {
 #[derive(Default)]
 pub struct InnerList {
     pub(super) values: Values,
-    pub(super) maxes: VecPy,
+    pub(super) maxes: Maxes,
     /// Equivalent to `idx` and `offset` attributes in the original `sortedcontainers` implementation.
     pub(super) lengths: Lengths,
     pub(super) len: usize,
