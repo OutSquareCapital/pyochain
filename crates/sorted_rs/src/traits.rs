@@ -1,7 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    bounds::{Loc, RawIrangeSpecs},
+    bounds::{Bounds, Loc, RawIrangeSpecs},
     errors,
     inner::{InnerList, Values},
     iter::{IrangeBounds, builder::RawRangeIdxs},
@@ -36,7 +36,7 @@ pub trait ListsMethods:
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()>;
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()>;
-    fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize>;
+    fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize>;
     fn irange<'py>(
         &self,
         py: Python<'py>,
@@ -124,6 +124,13 @@ pub trait ListsMethods:
         let values = self.values.repeat(py, num);
         self.clear(py);
         self.extend(py, values.into())
+    }
+
+    fn index(&mut self, value: &Bound<'_, PyAny>, (start, stop): RawRangeIdxs) -> PyResult<usize> {
+        Bounds::new(start, stop)
+            .try_normalize(self)
+            .ok_or_else(|| errors::not_in_list(value))
+            .and_then(|indices| self.index_inner(value, indices))
     }
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let loc = self.index_to_loc(index)?;

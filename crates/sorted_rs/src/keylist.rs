@@ -3,7 +3,7 @@ use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
     errors,
     inner::Values,
-    iter::{IrangeBounds, builder::RawRangeIdxs},
+    iter::IrangeBounds,
     list_update::{ListAdd, Updater},
     ops,
     traits::ListsMethods,
@@ -140,37 +140,32 @@ impl ListsMethods for KeyList {
         (half, last_max)
     }
 
-    fn index(&mut self, value: &Bound<'_, PyAny>, indices: RawRangeIdxs) -> PyResult<usize> {
-        Bounds::from(indices)
-            .try_normalize(self)
-            .ok_or_else(|| errors::not_in_list(value))
-            .and_then(|indices| {
-                let py = value.py();
-                let key = self.call_fn(value)?;
-                let mut loc = self.bisect_or_err(&key)?;
-                let len_keys = self.keys().len();
-                loop {
-                    if self.keys().loc(&loc).bind(py).ne(&key)? {
-                        return Err(errors::not_in_list(value));
-                    }
-                    if self.values.loc(&loc).bind(py).eq(value)? {
-                        let index = loc.into_index(self);
-                        if indices.start <= index && index < indices.stop {
-                            return Ok(index);
-                        } else if index >= indices.stop {
-                            return Err(errors::not_in_list(value));
-                        }
-                    }
-                    loc.idx += 1;
-                    if loc.idx == self.keys().loc_len(&loc) {
-                        loc.pos += 1;
-                        if loc.pos == len_keys {
-                            return Err(errors::not_in_list(value));
-                        }
-                        loc.idx = 0;
-                    }
+    fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize> {
+        let py = value.py();
+        let key = self.call_fn(value)?;
+        let mut loc = self.bisect_or_err(&key)?;
+        let len_keys = self.keys().len();
+        loop {
+            if self.keys().loc(&loc).bind(py).ne(&key)? {
+                return Err(errors::not_in_list(value));
+            }
+            if self.values.loc(&loc).bind(py).eq(value)? {
+                let index = loc.into_index(self);
+                if indices.start <= index && index < indices.stop {
+                    return Ok(index);
+                } else if index >= indices.stop {
+                    return Err(errors::not_in_list(value));
                 }
-            })
+            }
+            loc.idx += 1;
+            if loc.idx == self.keys().loc_len(&loc) {
+                loc.pos += 1;
+                if loc.pos == len_keys {
+                    return Err(errors::not_in_list(value));
+                }
+                loc.idx = 0;
+            }
+        }
     }
 
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {
