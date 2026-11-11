@@ -40,18 +40,18 @@ impl Bounds<Option<isize>> {
             let length = list.len().cast_signed();
             let start = match self.start {
                 None => 0,
-                Some(s) if s.is_negative() => (s + length).max(0),
-                Some(s) => s,
+                Some(s) if s.is_negative() => (s + length).max(0).cast_unsigned(),
+                Some(s) => s.cast_unsigned(),
             };
             let stop = match self.stop {
                 None => length,
                 Some(s) if s.is_negative() => s + length,
                 Some(s) => s.min(length),
             };
-            if start >= stop {
+            if start.cast_signed() >= stop {
                 None
             } else {
-                Some(Bounds::new(start.cast_unsigned(), stop.cast_unsigned()))
+                Some(Bounds::new(start, stop.cast_unsigned()))
             }
         }
     }
