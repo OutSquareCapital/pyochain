@@ -57,18 +57,18 @@ where
             ops::Bisect::LenNEPos(loc) => Ok(Search::new(list, loc, value, key)),
         }
     }
-    pub fn index_by_val(self, indices: Bounds<usize>) -> PyResult<usize> {
+    pub fn index_by_val(self, bounds: Bounds<usize>) -> PyResult<usize> {
         match self.found_in_values() {
             Ok(true) => {
                 let index = self.loc.into_index(self.list);
-                if indices.start <= index {
-                    if index < indices.stop {
+                if bounds.start <= index {
+                    if index < bounds.stop {
                         Ok(index)
                     } else {
                         Err(self.not_in_list())
                     }
-                } else if indices.start < self.list.bisect_by_key::<false>(self.value)? {
-                    Ok(indices.start)
+                } else if bounds.start < self.list.bisect_by_key::<false>(self.value)? {
+                    Ok(bounds.start)
                 } else {
                     Err(self.not_in_list())
                 }
@@ -77,7 +77,7 @@ where
             Err(e) => Err(e),
         }
     }
-    pub fn index_by_key(mut self, indices: Bounds<usize>) -> PyResult<usize> {
+    pub fn index_by_key(mut self, bounds: Bounds<usize>) -> PyResult<usize> {
         loop {
             match self.found_in_keys() {
                 Err(e) => return Err(e),
@@ -85,8 +85,8 @@ where
                 Ok(true) => match self.found_in_values() {
                     Ok(true) => {
                         let index = self.loc.into_index(self.list);
-                        match index.cmp(&indices.stop) {
-                            Ordering::Less if indices.start <= index => return Ok(index),
+                        match index.cmp(&bounds.stop) {
+                            Ordering::Less if bounds.start <= index => return Ok(index),
                             Ordering::Less => {
                                 if self.increment() {
                                     return Err(self.not_in_list());
