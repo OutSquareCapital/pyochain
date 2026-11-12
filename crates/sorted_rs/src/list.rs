@@ -5,11 +5,11 @@ use tap::{Conv, Pipe};
 use crate::{
     List,
     bounds::{Bounds, Loc, RawIrangeSpecs},
-    errors,
     inner::Values,
     iter::IrangeBounds,
     list_update::{ListAdd, Updater},
     ops,
+    search::Search,
     traits::ListsMethods,
     types::VecPy,
 };
@@ -118,21 +118,7 @@ impl ListsMethods for List {
             .merge_with(values, |a, b| a.bind(py).compare_fast(b.bind(py)).unwrap())
     }
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize> {
-        let py = value.py();
-        let loc = self.bisect_or_err(value)?;
-        if self.values.loc(&loc).bind(py).ne(value)? {
-            Err(errors::not_in_list(value))
-        } else {
-            let index = loc.into_index(self);
-            if indices.start <= index {
-                if index < indices.stop {
-                    return Ok(index);
-                }
-            } else if indices.start < self.bisect_by_key::<false>(value)? {
-                return Ok(indices.start);
-            }
-            Err(errors::not_in_list(value))
-        }
+        Search::on_index(self, value, value)?.index_by_val(indices)
     }
     #[inline]
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {

@@ -177,11 +177,4 @@ pub trait ListsMethods:
             ops::Bisect::LenNEPos(loc) => Ok(loc.into_index(self)),
         }
     }
-    fn bisect_or_err(&self, value: &Bound<'_, PyAny>) -> PyResult<Loc> {
-        match self.try_bisect_left(value)? {
-            ops::Bisect::Empty => unreachable!(),
-            ops::Bisect::LenEQPos => Err(errors::not_in_list(value)),
-            ops::Bisect::LenNEPos(loc) => Ok(loc),
-        }
-    }
 }

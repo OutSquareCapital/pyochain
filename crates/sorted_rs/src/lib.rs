@@ -13,6 +13,7 @@ mod list_update;
 mod ops;
 pub mod prelude;
 mod reprs;
+mod search;
 mod set;
 mod slice;
 mod traits;

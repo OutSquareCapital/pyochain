@@ -1,11 +1,11 @@
 use crate::{
     KeyList,
     bounds::{Bounds, Loc, RawIrangeSpecs},
-    errors,
     inner::Values,
     iter::IrangeBounds,
     list_update::{ListAdd, Updater},
     ops,
+    search::Search,
     traits::ListsMethods,
     types::VecPy,
 };
@@ -70,29 +70,7 @@ impl ListsMethods for KeyList {
         let key = self.call_fn(value)?;
         match self.try_bisect_left(&key)? {
             ops::Bisect::Empty | ops::Bisect::LenEQPos => Ok(0),
-            ops::Bisect::LenNEPos(mut loc) => {
-                let py = value.py();
-                let mut total = 0;
-                let len_keys = self.keys().len();
-                let mut len_sublist = self.keys()[loc.pos].len();
-                loop {
-                    if self.keys().loc(&loc).bind(py).ne(&key)? {
-                        return Ok(total);
-                    }
-                    if self.values.loc(&loc).bind(py).eq(value)? {
-                        total += 1;
-                    }
-                    loc.idx += 1;
-                    if loc.idx == len_sublist {
-                        loc.pos += 1;
-                        if loc.pos == len_keys {
-                            return Ok(total);
-                        }
-                        len_sublist = self.keys().loc_len(&loc);
-                        loc.idx = 0;
-                    }
-                }
-            }
+            ops::Bisect::LenNEPos(loc) => Search::new(self, loc, value, &key).count(),
         }
     }
 
@@ -141,58 +119,15 @@ impl ListsMethods for KeyList {
     }
 
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize> {
-        let py = value.py();
         let key = self.call_fn(value)?;
-        let mut loc = self.bisect_or_err(&key)?;
-        let len_keys = self.keys().len();
-        loop {
-            if self.keys().loc(&loc).bind(py).ne(&key)? {
-                return Err(errors::not_in_list(value));
-            }
-            if self.values.loc(&loc).bind(py).eq(value)? {
-                let index = loc.into_index(self);
-                if indices.start <= index && index < indices.stop {
-                    return Ok(index);
-                } else if index >= indices.stop {
-                    return Err(errors::not_in_list(value));
-                }
-            }
-            loc.idx += 1;
-            if loc.idx == self.keys().loc_len(&loc) {
-                loc.pos += 1;
-                if loc.pos == len_keys {
-                    return Err(errors::not_in_list(value));
-                }
-                loc.idx = 0;
-            }
-        }
+        Search::on_index(self, value, &key)?.index_by_key(indices)
     }
 
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {
         let key = self.call_fn(value)?;
         match self.try_bisect_left(&key)? {
             ops::Bisect::Empty | ops::Bisect::LenEQPos => Ok(None),
-            ops::Bisect::LenNEPos(mut loc) => {
-                let py = value.py();
-                let len_keys = self.keys().len();
-                loop {
-                    if self.keys().loc(&loc).bind(py).ne(&key)? {
-                        return Ok(None);
-                    }
-                    if self.values.loc(&loc).bind(py).eq(value)? {
-                        return Ok(Some(loc));
-                    }
-                    loc.idx += 1;
-                    if loc.idx == self.keys().loc_len(&loc) {
-                        loc.pos += 1;
-
-                        if loc.pos == len_keys {
-                            return Ok(None);
-                        }
-                        loc.idx = 0;
-                    }
-                }
-            }
+            ops::Bisect::LenNEPos(loc) => Search::new(self, loc, value, &key).find(),
         }
     }
     fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()> {
