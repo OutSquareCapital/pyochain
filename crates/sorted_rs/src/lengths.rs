@@ -10,10 +10,10 @@ pub struct Lengths {
 }
 
 impl Lengths {
-    pub fn is_built(&self) -> bool {
+    pub const fn is_built(&self) -> bool {
         !self.inner.is_empty()
     }
-    pub fn is_not_built(&self) -> bool {
+    pub const fn is_not_built(&self) -> bool {
         self.inner.is_empty()
     }
     pub fn delete_at(&mut self, pos: usize) {

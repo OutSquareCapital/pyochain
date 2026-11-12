@@ -46,13 +46,13 @@ pub(super) enum Slice {
     NoOp,
 }
 impl Slice {
-    pub fn new(indices: Bounds<usize>, step: Nb, length: usize) -> Self {
+    pub const fn new(indices: Bounds<usize>, step: Nb, length: usize) -> Self {
         debug_assert!(indices.stop <= length);
         match step {
             // SAFETY: Constructors guarantee that `step` is not zero (slice.indices raises `ValueError` on `step == 0`).
             Nb::Zero => unsafe { unreachable_unchecked() },
             _ if indices.start >= indices.stop => Self::NoOp,
-            Nb::One => ForwardSlice::new(indices, length).into(),
+            Nb::One => Self::Forward(ForwardSlice::new(indices, length)),
             Nb::GTOne(s) => Self::ForwardStep(s),
             Nb::MinusOne => Self::Backward,
             Nb::LTMinusOne(s) => Self::BackwardStep(s.unsigned_abs()),
@@ -69,7 +69,7 @@ pub(super) enum ForwardSlice {
     SmallToAdjust,
 }
 impl ForwardSlice {
-    pub fn new(indices: Bounds<usize>, length: usize) -> Self {
+    pub const fn new(indices: Bounds<usize>, length: usize) -> Self {
         match (
             indices.stop == length,
             length <= 8 * (indices.stop - indices.start),
