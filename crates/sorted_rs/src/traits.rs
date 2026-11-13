@@ -191,7 +191,7 @@ pub trait ListsMethods:
             loc.pos += 1;
         }
         let prev = loc.pos - 1;
-        let mut removed = self.remove_pos(loc);
+        let mut removed = self.remove_at(loc);
         self.values[prev].append(removed.as_mut());
         prev
     }

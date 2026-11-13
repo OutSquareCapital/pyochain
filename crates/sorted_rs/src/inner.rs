@@ -138,7 +138,7 @@ impl InnerList {
             .map(|loc| self.values.loc(&loc).clone_ref(py).into_bound(py))
     }
 
-    pub(super) fn remove_pos(&mut self, loc: &Loc) -> VecPy {
+    pub(super) fn remove_at(&mut self, loc: &Loc) -> VecPy {
         self.maxes.remove(loc.pos);
         self.lengths.inner.clear();
         self.values.remove(loc.pos)

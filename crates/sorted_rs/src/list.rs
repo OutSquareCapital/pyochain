@@ -95,7 +95,7 @@ impl ListsMethods for List {
                 self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
             }
             ops::SubListState::Empty => {
-                self.remove_pos(&loc);
+                self.remove_at(&loc);
             }
         }
         Ok(())
