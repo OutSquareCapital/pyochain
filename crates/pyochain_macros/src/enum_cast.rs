@@ -146,3 +146,39 @@ fn bound_inner(ty: &Type) -> SynResult<&Type> {
 fn expected_bound_err(ty: &Type) -> syn::Error {
     syn::Error::new_spanned(ty, "expected Bound<'py, T>")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::get_arm_and_name;
+    use syn::{Variant, parse_quote};
+
+    #[test]
+    fn extract_attribute_on_variant_is_honored() {
+        let variant: Variant = parse_quote!(#[extract] Usize(usize));
+        let (arm, name) = get_arm_and_name(&variant).unwrap();
+        assert_eq!(name, "usize");
+        assert!(arm.to_string().contains("extract"));
+    }
+
+    #[test]
+    fn bound_variant_defaults_to_cast() {
+        let variant: Variant = parse_quote!(PySlice(Bound<'py, PySlice>));
+        let (arm, name) = get_arm_and_name(&variant).unwrap();
+        assert_eq!(name, "PySlice");
+        assert!(arm.to_string().contains("is_instance_of"));
+    }
+
+    #[test]
+    fn cast_exact_attribute_on_variant_is_honored() {
+        let variant: Variant = parse_quote!(#[cast_exact] List(Bound<'py, PyList>));
+        let (arm, name) = get_arm_and_name(&variant).unwrap();
+        assert_eq!(name, "PyList");
+        assert!(arm.to_string().contains("is_exact_instance_of"));
+    }
+
+    #[test]
+    fn non_bound_type_without_extract_is_rejected() {
+        let variant: Variant = parse_quote!(Usize(usize));
+        assert!(get_arm_and_name(&variant).is_err());
+    }
+}
