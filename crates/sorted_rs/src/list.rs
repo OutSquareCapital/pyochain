@@ -87,14 +87,16 @@ impl ListsMethods for List {
                 self.delete_on_len_sup_to_half_load(py, loc);
             }
             ops::SubListState::ManySublists => {
-                let prev = self.delete_many(py, &mut loc);
+                let prev = self.delete_many(&mut loc);
                 self.maxes[prev] = self.values[prev].last().unwrap().clone_ref(py);
                 self.expand(py, prev);
             }
             ops::SubListState::NonEmpty => {
                 self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
             }
-            ops::SubListState::Empty => self.remove_pos(&loc),
+            ops::SubListState::Empty => {
+                self.remove_pos(&loc);
+            }
         }
         Ok(())
     }

@@ -81,7 +81,7 @@ impl ListsMethods for KeyList {
                 self.delete_on_len_sup_to_half_load(py, loc);
             }
             ops::SubListState::ManySublists => {
-                let prev = self.delete_many(py, &mut loc);
+                let prev = self.delete_many(&mut loc);
                 let (left, right) = self.keys.split_at_mut(loc.pos);
                 left[prev].append(&mut right[0]);
                 self.maxes[prev] = left[prev].last().unwrap().clone_ref(py);

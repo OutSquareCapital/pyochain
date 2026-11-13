@@ -64,9 +64,6 @@ impl Values {
     pub(super) fn iter_chunks(&self) -> impl DoubleEndedIterator<Item = &VecPy> {
         self.0.iter()
     }
-    pub(super) fn sublist_at(&self, pos: usize, py: Python<'_>) -> VecPy {
-        self.0[pos].iter().map(|x| x.clone_ref(py)).collect()
-    }
     pub(super) fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         self.iter().collect_bound(py)
     }
@@ -141,10 +138,10 @@ impl InnerList {
             .map(|loc| self.values.loc(&loc).clone_ref(py).into_bound(py))
     }
 
-    pub(super) fn remove_pos(&mut self, loc: &Loc) {
-        self.values.remove(loc.pos);
+    pub(super) fn remove_pos(&mut self, loc: &Loc) -> VecPy {
         self.maxes.remove(loc.pos);
         self.lengths.inner.clear();
+        self.values.remove(loc.pos)
     }
 
     pub(super) fn set_pos(&mut self, mut index: isize) -> PyResult<Loc> {

@@ -186,14 +186,13 @@ pub trait ListsMethods:
             ops::Bisect::LenNEPos(loc) => Ok(loc.into_index(self)),
         }
     }
-    fn delete_many(&mut self, py: Python<'_>, loc: &mut Loc) -> usize {
+    fn delete_many(&mut self, loc: &mut Loc) -> usize {
         if loc.pos == 0 {
             loc.pos += 1;
         }
         let prev = loc.pos - 1;
-        let mut removed = self.values.sublist_at(loc.pos, py);
+        let mut removed = self.remove_pos(loc);
         self.values[prev].append(removed.as_mut());
-        self.remove_pos(loc);
         prev
     }
 }
