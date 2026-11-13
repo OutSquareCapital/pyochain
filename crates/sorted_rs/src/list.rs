@@ -39,7 +39,7 @@ impl ListsMethods for List {
             ops::Bisect::Empty => {
                 self.push_chunk(py, vec![value.unbind()]);
             }
-            ops::Bisect::LenEQPos => {
+            ops::Bisect::MaxesLen => {
                 let pos = self.maxes.len() - 1;
                 self.push_val(py, pos, value.unbind());
                 self.expand(py, pos);
@@ -62,10 +62,10 @@ impl ListsMethods for List {
     }
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         match self.try_bisect_left(value)? {
-            ops::Bisect::Empty | ops::Bisect::LenEQPos => Ok(0),
+            ops::Bisect::Empty | ops::Bisect::MaxesLen => Ok(0),
             ops::Bisect::LenNEPos(left) => match self.try_bisect_right(value)? {
                 ops::Bisect::Empty => unreachable!(),
-                ops::Bisect::LenEQPos => Ok(self.len() - left.into_index(self)),
+                ops::Bisect::MaxesLen => Ok(self.len() - left.into_index(self)),
                 ops::Bisect::LenNEPos(right) => {
                     if left.pos == right.pos {
                         Ok(right.idx - left.idx)
@@ -110,7 +110,7 @@ impl ListsMethods for List {
     #[inline]
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {
         match self.try_bisect_left(value)? {
-            ops::Bisect::Empty | ops::Bisect::LenEQPos => Ok(None),
+            ops::Bisect::Empty | ops::Bisect::MaxesLen => Ok(None),
             ops::Bisect::LenNEPos(loc) => match self.values.loc(&loc).bind(value.py()).eq(value) {
                 Ok(true) => Ok(Some(loc)),
                 Ok(false) => Ok(None),

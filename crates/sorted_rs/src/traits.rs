@@ -193,7 +193,7 @@ pub trait ListsMethods:
     fn bisect_by_key<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         match self.try_bisect::<LEFT>(value)? {
             ops::Bisect::Empty => Ok(0),
-            ops::Bisect::LenEQPos => Ok(self.len()),
+            ops::Bisect::MaxesLen => Ok(self.len()),
             ops::Bisect::LenNEPos(loc) => Ok(loc.into_index(self)),
         }
     }

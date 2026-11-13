@@ -85,7 +85,7 @@ impl ForwardSlice {
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
 pub enum Bisect {
     Empty,
-    LenEQPos,
+    MaxesLen,
     LenNEPos(Loc),
 }
 impl Bisect {
@@ -99,7 +99,7 @@ impl Bisect {
         } else {
             let pos = bisect::<LEFT>(&list.maxes, value)?;
             if pos == list.maxes.len() {
-                Ok(Self::LenEQPos)
+                Ok(Self::MaxesLen)
             } else {
                 list.keys()[pos]
                     .as_slice()

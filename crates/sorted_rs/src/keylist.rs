@@ -38,7 +38,7 @@ impl ListsMethods for KeyList {
                 self.values.push(vec![value.unbind()]);
                 self.push_chunk(py, vec![key.unbind()]);
             }
-            ops::Bisect::LenEQPos => {
+            ops::Bisect::MaxesLen => {
                 let pos = self.maxes.len() - 1;
                 self.values[pos].push(value.unbind());
                 self.push_val(py, pos, key.unbind());
@@ -67,7 +67,7 @@ impl ListsMethods for KeyList {
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         let key = self.call_fn(value)?;
         match self.try_bisect_left(&key)? {
-            ops::Bisect::Empty | ops::Bisect::LenEQPos => Ok(0),
+            ops::Bisect::Empty | ops::Bisect::MaxesLen => Ok(0),
             ops::Bisect::LenNEPos(loc) => Search::new(self, loc, value, &key).count(),
         }
     }
@@ -106,7 +106,7 @@ impl ListsMethods for KeyList {
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {
         let key = self.call_fn(value)?;
         match self.try_bisect_left(&key)? {
-            ops::Bisect::Empty | ops::Bisect::LenEQPos => Ok(None),
+            ops::Bisect::Empty | ops::Bisect::MaxesLen => Ok(None),
             ops::Bisect::LenNEPos(loc) => Search::new(self, loc, value, &key).find(),
         }
     }

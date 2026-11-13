@@ -108,8 +108,8 @@ where
 {
     match list.try_bisect::<LEFT>(value) {
         Err(e) => Some(Err(e)),
-        Ok(ops::Bisect::LenEQPos) if MAX => Some(Ok(last_sublist(list))),
-        Ok(ops::Bisect::Empty | ops::Bisect::LenEQPos) => None,
+        Ok(ops::Bisect::MaxesLen) if MAX => Some(Ok(last_sublist(list))),
+        Ok(ops::Bisect::Empty | ops::Bisect::MaxesLen) => None,
         Ok(ops::Bisect::LenNEPos(loc)) => Some(Ok(loc)),
     }
 }
