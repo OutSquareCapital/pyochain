@@ -43,7 +43,7 @@ where
         false
     }
     fn not_in_list(&self) -> PyErr {
-        errors::not_in_list(self.key)
+        errors::not_in_list(self.value)
     }
 }
 impl<'a, 'py, T> Search<'a, 'py, &'a mut T>
@@ -53,7 +53,7 @@ where
     pub fn on_index(list: &'a mut T, value: &'a PyVal<'py>, key: &'a PyVal<'py>) -> PyResult<Self> {
         match list.try_bisect_left(key)? {
             ops::Bisect::Empty => unreachable!(),
-            ops::Bisect::LenEQPos => Err(errors::not_in_list(key)),
+            ops::Bisect::LenEQPos => Err(errors::not_in_list(value)),
             ops::Bisect::LenNEPos(loc) => Ok(Search::new(list, loc, value, key)),
         }
     }
