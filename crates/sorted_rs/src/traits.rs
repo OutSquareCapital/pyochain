@@ -43,12 +43,6 @@ pub trait ListsMethods:
         specs: RawIrangeSpecs<'py>,
     ) -> PyResult<IrangeBounds<'py>>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn delete_on_len_sup_to_half_load(&mut self, py: Python<'_>, loc: Loc) {
-        self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
-        if self.lengths.is_built() {
-            self.lengths.delete_at(loc.pos);
-        }
-    }
     #[inline]
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.find(value).map(|x| x.is_some())
@@ -119,6 +113,21 @@ pub trait ListsMethods:
             self.delete(py, loc)
         }
     }
+    fn delete_on_len_sup_to_half_load(&mut self, py: Python<'_>, loc: Loc) {
+        self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
+        if self.lengths.is_built() {
+            self.lengths.delete_at(loc.pos);
+        }
+    }
+    fn delete_many(&mut self, loc: &mut Loc) -> usize {
+        if loc.pos == 0 {
+            loc.pos += 1;
+        }
+        let prev = loc.pos - 1;
+        let mut removed = self.remove_at(loc);
+        self.values[prev].append(removed.as_mut());
+        prev
+    }
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.find(&value)?
             .map_or(Ok(()), |loc| self.delete(value.py(), loc))
@@ -187,14 +196,5 @@ pub trait ListsMethods:
             ops::Bisect::LenEQPos => Ok(self.len()),
             ops::Bisect::LenNEPos(loc) => Ok(loc.into_index(self)),
         }
-    }
-    fn delete_many(&mut self, loc: &mut Loc) -> usize {
-        if loc.pos == 0 {
-            loc.pos += 1;
-        }
-        let prev = loc.pos - 1;
-        let mut removed = self.remove_at(loc);
-        self.values[prev].append(removed.as_mut());
-        prev
     }
 }
