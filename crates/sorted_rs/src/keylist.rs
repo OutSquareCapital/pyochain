@@ -98,15 +98,6 @@ impl ListsMethods for KeyList {
         }
         Ok(())
     }
-    fn expand_splitted(&mut self, py: Python<'_>, pos: usize) -> (VecPy, Py<PyAny>) {
-        let load = *self.load;
-        let half_keys = self.keys[pos].split_off(load);
-        let half = self.values[pos].split_off(load);
-        let last_max = half_keys.last().unwrap().clone_ref(py);
-        self.keys.insert(pos + 1, half_keys);
-        (half, last_max)
-    }
-
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize> {
         let key = self.call_fn(value)?;
         Search::on_index(self, value, &key)?.index_by_key(indices)
@@ -128,5 +119,9 @@ impl ListsMethods for KeyList {
                 .compare_fast(&key_fn.call1((b,)).unwrap())
                 .unwrap()
         })
+    }
+    fn split_values(&mut self, pos: usize, load: usize) {
+        let half = self.values[pos].split_off(load);
+        self.values.insert(pos + 1, half);
     }
 }

@@ -100,11 +100,6 @@ impl ListsMethods for List {
         }
         Ok(())
     }
-    fn expand_splitted(&mut self, py: Python<'_>, pos: usize) -> (VecPy, Py<PyAny>) {
-        let half = self.0.values[pos].split_off(*self.0.load);
-        let last_max = half.last().unwrap().clone_ref(py);
-        (half, last_max)
-    }
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
         Updater::new(py, self, None)
             .merge_with(values, |a, b| a.bind(py).compare_fast(b.bind(py)).unwrap())
@@ -123,4 +118,5 @@ impl ListsMethods for List {
             },
         }
     }
+    fn split_values(&mut self, _pos: usize, _load: usize) {}
 }

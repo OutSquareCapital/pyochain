@@ -31,12 +31,12 @@ pub trait ListsMethods:
     /// Equivalent to `bisect_ky_key` if the collection is sorted **by value**.\
     /// If the collection is sorted **by key**, *value* is first transformed by the *key* function before the bisect operation.
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn expand_splitted(&mut self, py: Python<'_>, pos: usize) -> (VecPy, Py<PyAny>);
     fn clear(&mut self, py: Python<'_>);
     fn delete(&mut self, py: Python<'_>, loc: Loc) -> PyResult<()>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()>;
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize>;
+    fn split_values(&mut self, pos: usize, load: usize);
     fn irange<'py>(
         &self,
         py: Python<'py>,
@@ -78,10 +78,13 @@ pub trait ListsMethods:
     fn expand(&mut self, py: Python<'_>, pos: usize) {
         match ops::Expand::new(self, pos) {
             ops::Expand::MustSplit => {
-                let (half, last_max) = self.expand_splitted(py, pos);
-                self.maxes[pos] = self.keys()[pos].last().unwrap().clone_ref(py);
+                let load = *self.load;
+                let half = self.keys_mut()[pos].split_off(load);
+                let last_max = half.last().unwrap().clone_ref(py);
                 self.maxes.insert(pos + 1, last_max);
-                self.values.insert(pos + 1, half);
+                self.maxes[pos] = self.keys()[pos].last().unwrap().clone_ref(py);
+                self.keys_mut().insert(pos + 1, half);
+                self.split_values(pos, load);
                 self.lengths.inner.clear();
             }
             ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
@@ -166,7 +169,6 @@ pub trait ListsMethods:
         self.del_item(value.py(), index)?;
         self.append(value)
     }
-
     #[inline(always)]
     fn try_bisect<const LEFT: bool>(&self, value: &Bound<'_, PyAny>) -> BisectRes {
         ops::Bisect::new::<LEFT, Self>(self, value)
