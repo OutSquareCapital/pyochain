@@ -27,12 +27,12 @@ impl KeyList {
     }
 }
 #[derive(Constructor, AsRef, AsMut, Deref, DerefMut)]
-pub struct Collection<T: ListsMethods, U>(
+pub struct Collection<T: ListsMethods, U> {
     #[deref(forward)]
     #[deref_mut(forward)]
-    pub(super) T,
-    pub Py<U>,
-);
+    pub(super) list: T,
+    pub data: Py<U>,
+}
 macro_rules! impl_self_as_ref {
     ($($name:ty),+) => {
         $(

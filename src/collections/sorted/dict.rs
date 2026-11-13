@@ -80,7 +80,7 @@ pub(super) trait SortedDictMethods:
     }
     #[getter]
     fn get_dict<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
-        self.read().1.clone_ref(py).into_bound(py)
+        self.read().data.clone_ref(py).into_bound(py)
     }
     fn keys(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::KView>> {
         let py = slf.py();

@@ -3,7 +3,7 @@ use parking_lot::RwLock;
 use either::Either;
 use pyo3::{
     prelude::*,
-    types::{PyDict, PyInt, PyList, PySequence, PySet, PySlice},
+    types::{PyDict, PyList, PySequence, PySet, PySlice},
 };
 
 use crate::Collection;
@@ -15,7 +15,7 @@ pub type VecPy = Vec<Py<PyAny>>;
 
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
 pub type ListOrAny<'py> = Either<Bound<'py, PyList>, Bound<'py, PyAny>>;
-pub type IntOrSlice<'py> = Either<Bound<'py, PyInt>, Bound<'py, PySlice>>;
+pub type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
 pub type Dict<T> = Collection<T, PyDict>;
 pub type Set<T> = Collection<T, PySet>;
 pub type DictRef<T> = Py<RwLock<Dict<T>>>;

@@ -85,24 +85,26 @@ pub trait ListsMethods:
             ops::Expand::NoOp => (),
         }
     }
-    fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
+    fn get_item_or_slice<'py>(
+        &mut self,
+        py: Python<'py>,
+        index: IntOrSlice<'py>,
+    ) -> PyResult<ListOrAny<'py>> {
         match index {
             Either::Right(slice) => SliceIdxs::new(&slice, self.len())?
                 .extract_from(slice.py(), self)?
                 .iter()
                 .collect_bound(slice.py())
                 .map(Either::Left),
-            Either::Left(index) => self
-                .get_item(index.py(), index.extract()?)
-                .map(Either::Right),
+            Either::Left(index) => self.get_item(py, index).map(Either::Right),
         }
     }
-    fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
+    fn del_item_or_slice(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
             Either::Right(slice) => {
                 SliceIdxs::new(&slice, self.len())?.delete_from(slice.py(), self)
             }
-            Either::Left(index) => self.del_item(index.py(), index.extract()?),
+            Either::Left(index) => self.del_item(py, index),
         }
     }
     fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {

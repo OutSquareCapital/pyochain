@@ -86,13 +86,13 @@ pub(super) trait SortedListMethods:
         self.read().ge(other)
     }
 
-    fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
-        self.write().del_item_or_slice(index)
+    fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+        self.write().del_item_or_slice(py, index)
     }
 
-    fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
+    fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
         self.write()
-            .get_item_or_slice(index)
+            .get_item_or_slice(py, index)
             .and_then_left(Bound::try_into_py)
     }
     fn __len__(&self) -> usize {

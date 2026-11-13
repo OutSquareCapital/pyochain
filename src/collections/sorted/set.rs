@@ -64,13 +64,13 @@ pub(super) trait SortedSetMethods:
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.get_set(value.py()).contains(value)
     }
-    fn __getitem__<'py>(&self, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
+    fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
         self.write()
-            .get_item_or_slice(index)
+            .get_item_or_slice(py, index)
             .and_then_left(Bound::try_into_py)
     }
-    fn __delitem__(&self, index: IntOrSlice<'_>) -> PyResult<()> {
-        self.write().del_item_or_slice(index)
+    fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+        self.write().del_item_or_slice(py, index)
     }
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         self.comp(other, CompareOp::Eq)

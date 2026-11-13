@@ -39,15 +39,15 @@ impl PyRepr for KeyList {
 }
 impl<T: ListsMethods> PyRepr for Set<T> {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
-        self.0.items_repr(py)
+        self.list.items_repr(py)
     }
     fn key_repr<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyString>>> {
-        self.0.key_repr(py)
+        self.list.key_repr(py)
     }
 }
 impl<T: ListsMethods> PyRepr for Dict<T> {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
-        let dict = self.1.bind(py).as_any();
+        let dict = self.data.bind(py).as_any();
         self.values
             .iter()
             .map(|x| x.bind(py))
@@ -61,6 +61,6 @@ impl<T: ListsMethods> PyRepr for Dict<T> {
             .map(|s| format!("{{{s}}}"))
     }
     fn key_repr<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyString>>> {
-        self.0.key_repr(py)
+        self.list.key_repr(py)
     }
 }

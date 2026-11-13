@@ -23,8 +23,8 @@ pub fn check_empty(slf: &InnerList) -> PyResult<()> {
     pyassert!(slf.values.is_empty())
 }
 pub fn check_dict<T: ListsMethods>(py: Python<'_>, slf: &Dict<T>) -> PyResult<()> {
-    check_list(py, &slf.0)?;
-    let dict = slf.1.bind(py);
+    check_list(py, &slf.list)?;
+    let dict = slf.data.bind(py);
     pyassert!(dict.len() == slf.len())?;
     pyassert!(
         slf.values
@@ -36,7 +36,7 @@ pub fn check_dict<T: ListsMethods>(py: Python<'_>, slf: &Dict<T>) -> PyResult<()
 pub fn check_set<T: ListsMethods>(py: Python<'_>, slf: &Set<T>) -> PyResult<()> {
     let set = slf.get_set(py);
     pyassert!(set.len() == slf.len())?;
-    check_list(py, &slf.0)?;
+    check_list(py, &slf.list)?;
     pyassert!(slf.values.iter().try_all(|x| set.contains(x))?)
 }
 pub fn check_list<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {

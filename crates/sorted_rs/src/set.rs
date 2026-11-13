@@ -35,7 +35,7 @@ pub trait PySetDataRef:
                     op.on_identity().pipe(Either::Left).pipe(Ok)
                 }
                 CaseExact::Self(sorted) => slf
-                    .rich_compare_bool(sorted.get().as_ref().read().1.bind(py), op)
+                    .rich_compare_bool(sorted.get().as_ref().read().data.bind(py), op)
                     .map(Either::Left),
                 Case::PySet(pyset) => slf.rich_compare_bool(pyset, op).map(Either::Left),
                 _ => PyNotImplemented::from_cmp(py),
@@ -50,7 +50,7 @@ pub trait PySetDataRef:
         let py = other.py();
         let other_set = IntoArgs::new(self, other).conv::<Args<'py>>();
         let slf = self.as_ref().read();
-        op.call(slf.1.bind(py), other_set)
+        op.call(slf.data.bind(py), other_set)
             .and_then(|x| slf.wrap(x))?
             .conv::<Self>()
             .into_bound(py)
@@ -63,16 +63,16 @@ pub trait PySetDataRef:
         let py = other.py();
         let args = IntoArgs::new(self, other).conv::<Args<'_>>();
         let mut slf = self.as_ref().write();
-        let set = &slf.1.clone_ref(py).into_bound(py);
+        let set = &slf.data.clone_ref(py).into_bound(py);
         op.call_mut(set, args)?;
-        slf.0.clear(py);
-        slf.0.extend(py, set.iter_py().into())
+        slf.list.clear(py);
+        slf.list.extend(py, set.iter_py().into())
     }
     #[inline]
     fn map_pred<'py>(&self, other: Bound<'py, PyAny>, op: SetPred) -> PyResult<Bound<'py, PyBool>> {
         let py = other.py();
         let args = IntoArgs::new(self, other).conv::<Args<'py>>();
-        op.call(self.as_ref().read().1.bind(py), args)
+        op.call(self.as_ref().read().data.bind(py), args)
     }
 }
 impl Set<List> {
@@ -105,79 +105,80 @@ impl<T: ListsMethods> Set<T> {
             it.try_iter()?
                 .try_for_each(|value| try_add(&mut list, &set, value?))?;
         }
-        Ok(Self(list, set.unbind()))
+        Ok(Self::new(list, set.unbind()))
     }
     pub fn get_set<'py>(&self, py: Python<'py>) -> Bound<'py, PySet> {
-        self.1.clone_ref(py).into_bound(py)
+        self.data.clone_ref(py).into_bound(py)
     }
     fn wrap(&self, values: Bound<'_, PySet>) -> PyResult<Self> {
         let py = values.py();
         let list = self
-            .0
+            .list
             .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
-        Self(list, values.unbind()).pipe(Ok)
+        Self::new(list, values.unbind()).pipe(Ok)
     }
     pub fn clear(&mut self, py: Python<'_>) {
-        self.0.clear(py);
-        self.1.bind(py).clear();
+        self.list.clear(py);
+        self.data.bind(py).clear();
     }
     pub fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.0.reset(py, load)
+        self.list.reset(py, load)
     }
-    pub fn get_item_or_slice<'py>(&mut self, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
-        let py = index.py();
+    pub fn get_item_or_slice<'py>(
+        &mut self,
+        py: Python<'py>,
+        index: IntOrSlice<'py>,
+    ) -> PyResult<ListOrAny<'py>> {
         match index {
             Either::Right(pyslice) => SliceIdxs::new(&pyslice, self.len())?
                 .extract_from(py, self)?
                 .iter()
                 .collect_bound(py)
                 .map(Either::Left),
-            Either::Left(index) => self.get_item(py, index.extract()?).map(Either::Right),
+            Either::Left(index) => self.get_item(py, index).map(Either::Right),
         }
     }
 
-    pub fn del_item_or_slice(&mut self, index: IntOrSlice<'_>) -> PyResult<()> {
-        let py = index.py();
+    pub fn del_item_or_slice(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
         match index {
             Either::Right(pyslice) => {
                 let slice = SliceIdxs::new(&pyslice, self.len())?;
                 let values = slice
-                    .extract_from(py, &mut self.0)?
+                    .extract_from(py, &mut self.list)?
                     .iter()
                     .collect_bound::<PySet>(py)?;
-                self.1.bind(py).difference_update((values,))?;
-                slice.delete_from(py, &mut self.0)
+                self.data.bind(py).difference_update((values,))?;
+                slice.delete_from(py, &mut self.list)
             }
             Either::Left(int) => {
-                let idx = int.extract::<isize>()?;
-                let value = self.0.get_item(py, idx)?;
-                self.1.bind(py).remove(&value)?;
-                self.0.del_item(py, idx)
+                let value = self.list.get_item(py, int)?;
+                self.data.bind(py).remove(&value)?;
+                self.list.del_item(py, int)
             }
         }
     }
     pub fn __len__(&self, py: Python<'_>) -> usize {
-        self.1.bind(py).len()
+        self.data.bind(py).len()
     }
     pub fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        try_add(&mut self.0, self.1.bind(value.py()), value)
+        try_add(&mut self.list, self.data.bind(value.py()), value)
     }
     pub fn discard(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        let set = self.1.bind(value.py());
+        let set = self.data.bind(value.py());
         match set.contains(value) {
             Ok(true) => {
                 set.remove(value)?;
-                self.0.remove(value)
+                self.list.remove(value)
             }
             Ok(false) => Ok(()),
             Err(err) => Err(err),
         }
     }
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
-        self.1.bind(py).copy().and_then(|x| self.wrap(x))
+        self.data.bind(py).copy().and_then(|x| self.wrap(x))
     }
     pub fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        match self.1.bind(value.py()).contains(value) {
+        match self.data.bind(value.py()).contains(value) {
             Ok(true) => Ok(1),
             Ok(false) => Ok(0),
             Err(e) => Err(e),
@@ -185,13 +186,13 @@ impl<T: ListsMethods> Set<T> {
     }
 
     pub fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let value = self.0.pop(py, index)?;
-        self.1.bind(py).remove(&value)?;
+        let value = self.list.pop(py, index)?;
+        self.data.bind(py).remove(&value)?;
         Ok(value)
     }
     pub fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.1.bind(value.py()).remove(value)?;
-        self.0.remove(value)
+        self.data.bind(value.py()).remove(value)?;
+        self.list.remove(value)
     }
 }
 #[derive(Clone, Copy)]

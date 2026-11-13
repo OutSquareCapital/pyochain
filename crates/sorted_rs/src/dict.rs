@@ -29,15 +29,12 @@ impl Dict<List> {
 }
 impl<T: ListsMethods> Dict<T> {
     pub fn __len__(&self, py: Python<'_>) -> usize {
-        self.1.bind(py).len()
-    }
-    pub fn extract_index<'py>(&mut self, int: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        self.0.get_item(int.py(), int.extract::<isize>()?)
+        self.data.bind(py).len()
     }
 
     pub fn or(&self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
         let py = value.py();
-        let dict = self.1.bind(py).as_any();
+        let dict = self.data.bind(py).as_any();
         self.values
             .iter()
             .map(|x| x.clone_ref(py).into_bound(py))
@@ -48,7 +45,7 @@ impl<T: ListsMethods> Dict<T> {
 
     pub fn ror(&self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
         let py = value.py();
-        let dict = self.1.bind(py).as_any();
+        let dict = self.data.bind(py).as_any();
         value
             .items_view()?
             .iter()
@@ -61,7 +58,7 @@ impl<T: ListsMethods> Dict<T> {
             .pipe(|x| self.copy_from_iter(py, x))
     }
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
-        let dict = self.1.bind(py).as_any();
+        let dict = self.data.bind(py).as_any();
         self.values
             .iter()
             .map(|x| x.clone_ref(py).into_bound(py))
@@ -69,13 +66,13 @@ impl<T: ListsMethods> Dict<T> {
             .pipe(|v| self.copy_from_iter(py, v))
     }
     pub fn get_item<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        self.1.bind(key.py()).as_any().get_item(key)
+        self.data.bind(key.py()).as_any().get_item(key)
     }
     pub fn set_item(&mut self, key: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = key.py();
-        let dict = self.1.bind(py);
+        let dict = self.data.bind(py);
         if !dict.contains(&key)? {
-            self.0.append(key.clone())?;
+            self.list.append(key.clone())?;
         }
         dict.set_item(key, value)
     }
@@ -84,7 +81,7 @@ impl<T: ListsMethods> Dict<T> {
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        let key = self.0.get_item(py, index)?;
+        let key = self.list.get_item(py, index)?;
         self.get_item(&key).map(|value| (key, value))
     }
     pub fn setdefault<'py>(
@@ -93,21 +90,21 @@ impl<T: ListsMethods> Dict<T> {
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Option<Bound<'py, PyAny>>> {
         let py = key.py();
-        let dict = self.1.bind(py);
+        let dict = self.data.bind(py);
         if dict.contains(&key)? {
             dict.as_any().get_item(&key).map(Some)
         } else {
             dict.set_item(&key, &default)?;
-            self.0.append(key)?;
+            self.list.append(key)?;
             Ok(default)
         }
     }
     pub fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.1.bind(value.py()).contains(value)
+        self.data.bind(value.py()).contains(value)
     }
     pub fn clear(&mut self, py: Python<'_>) {
-        self.1.bind(py).clear();
-        self.0.clear(py);
+        self.data.bind(py).clear();
+        self.list.clear(py);
     }
     pub fn copy_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
         &self,
@@ -124,25 +121,25 @@ impl<T: ListsMethods> Dict<T> {
                 })
             })
             .collect::<PyResult<Vec<_>>>()?;
-        let list = self.0.as_owned_from(py, unbounded)?;
+        let list = self.list.as_owned_from(py, unbounded)?;
         Self::new(list, inner.unbind()).pipe(Ok)
     }
 
     pub fn del_item(&mut self, key: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.1.bind(key.py()).as_any().del_item(key)?;
-        self.0.remove(key)
+        self.data.bind(key.py()).as_any().del_item(key)?;
+        self.list.remove(key)
     }
     pub fn popitem<'py>(
         &mut self,
         py: Python<'py>,
         index: isize,
     ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
-        let dict = self.1.bind(py);
+        let dict = self.data.bind(py);
         if dict.is_empty() {
             let msg = "popitem(): dictionary is empty";
             Err(PyKeyError::new_err(msg))
         } else {
-            let key = self.0.pop(py, index)?;
+            let key = self.list.pop(py, index)?;
             let value = dict.pop_or_err(&key).into_pyresult()?;
             Ok((key, value))
         }
@@ -153,9 +150,9 @@ impl<T: ListsMethods> Dict<T> {
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = key.py();
-        let dict = self.1.bind(py);
+        let dict = self.data.bind(py);
         if dict.contains(key)? {
-            self.0.remove(key)?;
+            self.list.remove(key)?;
             dict.pop_or_err(key).into_pyresult()
         } else {
             default.ok_or_else(|| PyKeyError::new_err(key.to_string()))
@@ -168,7 +165,7 @@ impl<T: ListsMethods> Dict<T> {
         m: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let inner = self.1.bind(py);
+        let inner = self.data.bind(py);
         if inner.is_empty() {
             try_cast! {
                     match m {
@@ -181,7 +178,7 @@ impl<T: ListsMethods> Dict<T> {
             if let Some(kw) = kwargs {
                 inner.update(kw.as_mapping())?;
             }
-            self.0.extend(inner.py(), inner.iter_py().into())
+            self.list.extend(inner.py(), inner.iter_py().into())
         } else {
             let pairs = try_cast_into! {
                 match (m, kwargs) {
@@ -208,8 +205,8 @@ impl<T: ListsMethods> Dict<T> {
             };
             if (10 * pairs.len()) > inner.len() {
                 inner.update(pairs.as_mapping())?;
-                self.0.clear(py);
-                self.0.extend(inner.py(), inner.iter_py().into())
+                self.list.clear(py);
+                self.list.extend(inner.py(), inner.iter_py().into())
             } else {
                 pairs.keys_view().iter_py().try_for_each(|key| {
                     let k = key?;
