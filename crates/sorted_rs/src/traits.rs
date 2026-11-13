@@ -25,6 +25,7 @@ pub trait ListsMethods:
     /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
     /// For collections sorted by *key*, this is equivalent to `KeysListsData::1`.
     fn keys(&self) -> &Values;
+    fn keys_mut(&mut self) -> &mut Values;
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
     /// Equivalent to `bisect_ky_key` if the collection is sorted **by value**.\
@@ -34,7 +35,6 @@ pub trait ListsMethods:
     fn clear(&mut self, py: Python<'_>);
     fn delete(&mut self, py: Python<'_>, loc: Loc) -> PyResult<()>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
-    fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()>;
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()>;
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize>;
     fn irange<'py>(
@@ -125,7 +125,6 @@ pub trait ListsMethods:
         self.clear(py);
         self.extend(py, values.into())
     }
-
     fn index(&mut self, value: &Bound<'_, PyAny>, (start, stop): RawRangeIdxs) -> PyResult<usize> {
         Bounds::new(start, stop)
             .try_normalize(self)
@@ -137,6 +136,16 @@ pub trait ListsMethods:
         let val = self.values.loc(&loc).clone_ref(py);
         self.delete(py, loc)?;
         Ok(val.into_bound(py))
+    }
+    #[inline(always)]
+    fn push_chunk(&mut self, py: Python<'_>, chunk: VecPy) {
+        self.maxes.push(chunk.last().unwrap().clone_ref(py));
+        self.keys_mut().push(chunk);
+    }
+    #[inline(always)]
+    fn push_val(&mut self, py: Python<'_>, pos: usize, value: Py<PyAny>) {
+        self.maxes[pos] = value.clone_ref(py);
+        self.keys_mut()[pos].push(value);
     }
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         match self.find(value)? {
@@ -176,5 +185,15 @@ pub trait ListsMethods:
             ops::Bisect::LenEQPos => Ok(self.len()),
             ops::Bisect::LenNEPos(loc) => Ok(loc.into_index(self)),
         }
+    }
+    fn delete_many(&mut self, py: Python<'_>, loc: &mut Loc) -> usize {
+        if loc.pos == 0 {
+            loc.pos += 1;
+        }
+        let prev = loc.pos - 1;
+        let mut removed = self.values.sublist_at(loc.pos, py);
+        self.values[prev].append(removed.as_mut());
+        self.remove_pos(loc);
+        prev
     }
 }

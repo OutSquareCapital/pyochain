@@ -38,10 +38,10 @@ pub enum ListAdd<'py, T> {
 #[derive(Constructor)]
 pub struct Updater<'py, T> {
     py: Python<'py>,
-    list: &'py mut T,
+    list: T,
     py_func: Option<&'py Bound<'py, PyAny>>,
 }
-impl<'py, T: ListsMethods> Updater<'py, T> {
+impl<'py, T: ListsMethods> Updater<'py, &'py mut T> {
     #[inline]
     pub fn merge_with(
         mut self,
@@ -108,7 +108,7 @@ impl<'py, T: ListsMethods> Updater<'py, T> {
                 .pipe(|chunk| (!chunk.is_empty()).then_some(chunk))
         });
         match self.py_func {
-            None => chunked.for_each(|chunk| push_chunk(py, self.list, chunk)),
+            None => chunked.for_each(|chunk| self.list.push_chunk(py, chunk)),
             Some(key_fn) => chunked.try_for_each(|val_chunk| {
                 val_chunk
                     .iter()
@@ -117,16 +117,11 @@ impl<'py, T: ListsMethods> Updater<'py, T> {
                     .collect::<PyResult<VecPy>>()
                     .map(|key_chunk| (val_chunk, key_chunk))
                     .map(|(val_chunk, chunk)| {
-                        push_chunk(py, self.list, chunk);
+                        self.list.push_chunk(py, chunk);
                         self.list.values.push(val_chunk);
                     })
             })?,
         }
         Ok(())
     }
-}
-#[inline(always)]
-fn push_chunk<T: ListsMethods>(py: Python<'_>, list: &mut T, chunk: VecPy) {
-    list.maxes.push(chunk.last().unwrap().clone_ref(py));
-    list.keys_mut().push(chunk);
 }

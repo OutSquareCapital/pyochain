@@ -64,6 +64,9 @@ impl Values {
     pub(super) fn iter_chunks(&self) -> impl DoubleEndedIterator<Item = &VecPy> {
         self.0.iter()
     }
+    pub(super) fn sublist_at(&self, pos: usize, py: Python<'_>) -> VecPy {
+        self.0[pos].iter().map(|x| x.clone_ref(py)).collect()
+    }
     pub(super) fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         self.iter().collect_bound(py)
     }

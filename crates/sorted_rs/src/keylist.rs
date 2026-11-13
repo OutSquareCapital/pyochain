@@ -15,6 +15,9 @@ impl ListsMethods for KeyList {
     fn keys(&self) -> &Values {
         &self.keys
     }
+    fn keys_mut(&mut self) -> &mut Values {
+        &mut self.keys
+    }
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::new(self.func.clone_ref(py));
         new_inst.extend(py, values.into())?;
@@ -33,21 +36,17 @@ impl ListsMethods for KeyList {
         match self.try_bisect_right(&key)? {
             ops::Bisect::Empty => {
                 self.values.push(vec![value.unbind()]);
-                let v = key.unbind();
-                self.keys.push(vec![v.clone_ref(py)]);
-                self.maxes.push(v);
+                self.push_chunk(py, vec![key.unbind()]);
             }
             ops::Bisect::LenEQPos => {
                 let pos = self.maxes.len() - 1;
-                let v = key.unbind();
                 self.values[pos].push(value.unbind());
-                self.keys[pos].push(v.clone_ref(py));
-                self.maxes[pos] = v;
+                self.push_val(py, pos, key.unbind());
                 self.expand(py, pos);
             }
             ops::Bisect::LenNEPos(loc) => {
                 self.values.loc_insert(&loc, value.unbind());
-                self.keys.loc_insert(&loc, key.unbind());
+                self.keys_mut().loc_insert(&loc, key.unbind());
                 self.expand(py, loc.pos);
             }
         }
@@ -82,18 +81,9 @@ impl ListsMethods for KeyList {
                 self.delete_on_len_sup_to_half_load(py, loc);
             }
             ops::SubListState::ManySublists => {
-                if loc.pos == 0 {
-                    loc.pos += 1;
-                }
-                let prev = loc.pos - 1;
+                let prev = self.delete_many(py, &mut loc);
                 let (left, right) = self.keys.split_at_mut(loc.pos);
                 left[prev].append(&mut right[0]);
-                let mut removed = self.inner.values[loc.pos]
-                    .iter()
-                    .map(|x| x.clone_ref(py))
-                    .collect::<Vec<_>>();
-                self.inner.values[prev].append(removed.as_mut());
-                self.inner.remove_pos(&loc);
                 self.maxes[prev] = left[prev].last().unwrap().clone_ref(py);
                 self.keys.remove(loc.pos);
                 self.expand(py, prev);

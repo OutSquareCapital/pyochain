@@ -18,6 +18,9 @@ impl ListsMethods for List {
     fn keys(&self) -> &Values {
         &self.values
     }
+    fn keys_mut(&mut self) -> &mut Values {
+        &mut self.values
+    }
     fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
         let mut new_inst = Self::default();
         new_inst.extend(py, values.into())?;
@@ -34,19 +37,15 @@ impl ListsMethods for List {
         let py = value.py();
         match self.try_bisect_right(&value)? {
             ops::Bisect::Empty => {
-                let unbounded = value.unbind();
-                self.values.push(vec![unbounded.clone_ref(py)]);
-                self.maxes.push(unbounded);
+                self.push_chunk(py, vec![value.unbind()]);
             }
             ops::Bisect::LenEQPos => {
                 let pos = self.maxes.len() - 1;
-                let unbounded = value.unbind();
-                self.values[pos].push(unbounded.clone_ref(py));
-                self.maxes[pos] = unbounded;
+                self.push_val(py, pos, value.unbind());
                 self.expand(py, pos);
             }
             ops::Bisect::LenNEPos(loc) => {
-                self.values[loc.pos].insert(loc.idx, value.unbind());
+                self.keys_mut()[loc.pos].insert(loc.idx, value.unbind());
                 self.expand(py, loc.pos);
             }
         }
@@ -88,17 +87,8 @@ impl ListsMethods for List {
                 self.delete_on_len_sup_to_half_load(py, loc);
             }
             ops::SubListState::ManySublists => {
-                if loc.pos == 0 {
-                    loc.pos += 1;
-                }
-                let prev = loc.pos - 1;
-                let mut removed = self.values[loc.pos]
-                    .iter()
-                    .map(|x| x.clone_ref(py))
-                    .collect::<Vec<_>>();
-                self.values[prev].append(removed.as_mut());
-                self.remove_pos(&loc);
-                self.maxes[prev] = self.keys()[prev].last().unwrap().clone_ref(py);
+                let prev = self.delete_many(py, &mut loc);
+                self.maxes[prev] = self.values[prev].last().unwrap().clone_ref(py);
                 self.expand(py, prev);
             }
             ops::SubListState::NonEmpty => {
