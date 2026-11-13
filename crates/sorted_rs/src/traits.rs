@@ -13,7 +13,7 @@ use crate::{
 };
 use either::Either;
 use itertools::Itertools;
-use pyo3::{prelude::*, types::PyList};
+use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 use tap::prelude::*;
 
@@ -93,7 +93,7 @@ pub trait ListsMethods:
             Either::Right(slice) => SliceIdxs::new(&slice, self.len())?
                 .extract_from(slice.py(), self)?
                 .iter()
-                .collect_bound::<PyList>(slice.py())
+                .collect_bound(slice.py())
                 .map(Either::Left),
             Either::Left(index) => self
                 .get_item(index.py(), index.extract()?)

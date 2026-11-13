@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, ops::Deref};
+use std::ops::Deref;
 
 use derive_more::Constructor;
 use pyo3::prelude::*;
@@ -59,20 +59,17 @@ where
     }
     pub fn index_by_val(self, bounds: Bounds<usize>) -> PyResult<usize> {
         match self.found_in_values() {
-            Ok(true) => {
-                let index = self.loc.into_index(self.list);
-                if bounds.start <= index {
-                    if index < bounds.stop {
-                        Ok(index)
+            Ok(true) => match ops::Placement::new(bounds, self.loc.into_index(self.list)) {
+                ops::Placement::Within(index) => Ok(index),
+                ops::Placement::After => Err(self.not_in_list()),
+                ops::Placement::Before => {
+                    if bounds.start < self.list.bisect_by_key::<false>(self.value)? {
+                        Ok(bounds.start)
                     } else {
                         Err(self.not_in_list())
                     }
-                } else if bounds.start < self.list.bisect_by_key::<false>(self.value)? {
-                    Ok(bounds.start)
-                } else {
-                    Err(self.not_in_list())
                 }
-            }
+            },
             Ok(false) => Err(self.not_in_list()),
             Err(e) => Err(e),
         }
@@ -83,18 +80,15 @@ where
                 Err(e) => return Err(e),
                 Ok(false) => return Err(self.not_in_list()),
                 Ok(true) => match self.found_in_values() {
-                    Ok(true) => {
-                        let index = self.loc.into_index(self.list);
-                        match index.cmp(&bounds.stop) {
-                            Ordering::Less if bounds.start <= index => return Ok(index),
-                            Ordering::Less => {
-                                if self.increment() {
-                                    return Err(self.not_in_list());
-                                }
+                    Ok(true) => match ops::Placement::new(bounds, self.loc.into_index(self.list)) {
+                        ops::Placement::Within(index) => return Ok(index),
+                        ops::Placement::After => return Err(self.not_in_list()),
+                        ops::Placement::Before => {
+                            if self.increment() {
+                                return Err(self.not_in_list());
                             }
-                            Ordering::Equal | Ordering::Greater => return Err(self.not_in_list()),
                         }
-                    }
+                    },
                     Ok(false) => {
                         if self.increment() {
                             return Err(self.not_in_list());

@@ -199,3 +199,21 @@ impl Locate {
         }
     }
 }
+
+#[derive(Clone, Copy, Debug)]
+pub enum Placement {
+    Before,
+    Within(usize),
+    After,
+}
+impl Placement {
+    pub const fn new(bounds: Bounds<usize>, index: usize) -> Self {
+        if index < bounds.start {
+            Self::Before
+        } else if index < bounds.stop {
+            Self::Within(index)
+        } else {
+            Self::After
+        }
+    }
+}
