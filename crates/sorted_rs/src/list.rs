@@ -131,11 +131,4 @@ impl ListsMethods for List {
             },
         }
     }
-    fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()> {
-        it.for_each(|chunk| {
-            self.maxes.push(chunk.last().unwrap().clone_ref(py));
-            self.values.push(chunk);
-        });
-        Ok(())
-    }
 }

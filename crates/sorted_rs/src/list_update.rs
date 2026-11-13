@@ -95,18 +95,38 @@ impl<'py, T: ListsMethods> Updater<'py, T> {
                 .try_for_each(|val| self.list.append(val)),
         }
     }
-
     #[inline]
     fn update_chunked(&mut self, mut it: impl ExactSizeIterator<Item = Py<PyAny>>) -> PyResult<()> {
         self.list.clear(self.py);
         self.list.len = it.len();
+        let py = self.py;
         let load = *self.list.load;
-        std::iter::from_fn(|| {
+        let mut chunked = std::iter::from_fn(|| {
             it.by_ref()
                 .take(load)
                 .collect::<VecPy>()
                 .pipe(|chunk| (!chunk.is_empty()).then_some(chunk))
-        })
-        .pipe(|chunked| self.list.finalize_update(self.py, chunked))
+        });
+        match self.py_func {
+            None => chunked.for_each(|chunk| push_chunk(py, self.list, chunk)),
+            Some(key_fn) => chunked.try_for_each(|val_chunk| {
+                val_chunk
+                    .iter()
+                    .map(|v| key_fn.call1((v,)))
+                    .map_ok(Bound::unbind)
+                    .collect::<PyResult<VecPy>>()
+                    .map(|key_chunk| (val_chunk, key_chunk))
+                    .map(|(val_chunk, chunk)| {
+                        push_chunk(py, self.list, chunk);
+                        self.list.values.push(val_chunk);
+                    })
+            })?,
+        }
+        Ok(())
     }
+}
+#[inline(always)]
+fn push_chunk<T: ListsMethods>(py: Python<'_>, list: &mut T, chunk: VecPy) {
+    list.maxes.push(chunk.last().unwrap().clone_ref(py));
+    list.keys_mut().push(chunk);
 }

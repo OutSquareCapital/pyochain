@@ -9,7 +9,6 @@ use crate::{
     traits::ListsMethods,
     types::VecPy,
 };
-use itertools::Itertools;
 use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 impl ListsMethods for KeyList {
@@ -129,24 +128,6 @@ impl ListsMethods for KeyList {
             ops::Bisect::Empty | ops::Bisect::LenEQPos => Ok(None),
             ops::Bisect::LenNEPos(loc) => Search::new(self, loc, value, &key).find(),
         }
-    }
-    fn finalize_update(&mut self, py: Python<'_>, it: impl Iterator<Item = VecPy>) -> PyResult<()> {
-        let key_fn = self.func.clone_ref(py).into_bound(py);
-        it.map(|val_chunk| {
-            val_chunk
-                .iter()
-                .map(|v| key_fn.call1((v,)))
-                .map_ok(Bound::unbind)
-                .collect::<PyResult<VecPy>>()
-                .map(|key_chunk| (val_chunk, key_chunk))
-        })
-        .try_for_each(|res| {
-            res.map(|(val_chunk, key_chunk)| {
-                self.maxes.push(key_chunk.last().unwrap().clone_ref(py));
-                self.values.push(val_chunk);
-                self.keys.push(key_chunk);
-            })
-        })
     }
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
         let key_fn = &self.func.clone_ref(py).into_bound(py);
