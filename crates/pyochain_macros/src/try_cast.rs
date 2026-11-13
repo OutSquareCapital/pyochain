@@ -1,4 +1,5 @@
 use crate::types::SynResult;
+use itertools::Itertools;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
@@ -7,7 +8,6 @@ use syn::{
     punctuated::Punctuated,
     visit_mut::{self, VisitMut},
 };
-use tap::prelude::*;
 const INVALID_PATTERN_MSG: &str = "use `Case::Type(binding)` or `CaseExact::Type(binding)`";
 const CASE: &str = "Case";
 const CASE_EXACT: &str = "CaseExact";
@@ -37,11 +37,9 @@ fn run_pipeline(match_expr: &ExprMatch, mode: &Cast) -> SynResult<TokenStream2> 
         .arms
         .iter()
         .map(|arm| generate_match_arm(arm, mode))
-        .collect::<SynResult<Vec<Vec<_>>>>()?
-        .into_iter()
-        .flatten()
-        .pipe(|arms| quote!(match #subject { #(#arms)* }))
-        .pipe(Ok)
+        .flatten_ok()
+        .collect::<SynResult<Vec<_>>>()
+        .map(|arms| quote!(match #subject { #(#arms)* }))
 }
 
 fn generate_match_arm(arm: &Arm, mode: &Cast) -> SynResult<Vec<TokenStream2>> {
@@ -182,13 +180,11 @@ fn rewrite_pattern(pattern: &Pat) -> SynResult<(TokenStream2, Vec<Case>)> {
     }
 }
 fn rewrite_tuple(tuple: &PatTuple) -> SynResult<(TokenStream2, Vec<Case>)> {
-    let (patterns, cases): (Vec<_>, Vec<_>) = tuple
+    let (patterns, cases) = tuple
         .elems
         .iter()
         .map(rewrite_pattern)
-        .collect::<SynResult<Vec<_>>>()?
-        .into_iter()
-        .unzip();
+        .collect::<SynResult<(Vec<_>, Vec<_>)>>()?;
     let cases = cases.into_iter().flatten().collect::<Vec<_>>();
     Ok((quote!((#(#patterns),*)), cases))
 }
@@ -197,13 +193,11 @@ fn rewrite_tuple_struct(tuple_struct: &PatTupleStruct) -> SynResult<(TokenStream
     match rewrite_case(tuple_struct)? {
         (pattern, cases) if !cases.is_empty() => Ok((pattern, cases)),
         _ => {
-            let (patterns, cases): (Vec<_>, Vec<_>) = tuple_struct
+            let (patterns, cases) = tuple_struct
                 .elems
                 .iter()
                 .map(rewrite_pattern)
-                .collect::<SynResult<Vec<_>>>()?
-                .into_iter()
-                .unzip();
+                .collect::<SynResult<(Vec<_>, Vec<_>)>>()?;
             let cases = cases.into_iter().flatten().collect::<Vec<_>>();
             let path = &tuple_struct.path;
             Ok((quote!(#path(#(#patterns),*)), cases))
