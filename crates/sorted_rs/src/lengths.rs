@@ -72,39 +72,40 @@ impl Lengths {
         let row0 = values.iter_chunks().map(Vec::len).collect::<Vec<usize>>();
 
         if row0.len() == 1 {
-            self.inner.extend(&row0);
-            self.offset = 1;
-        }
-
-        let mut row1 = row0
-            .chunks(2)
-            .map(|pair| pair.iter().sum())
-            .collect::<Vec<usize>>();
-
-        if row1.len() == 1 {
-            let combined = row1.into_iter().chain(row0);
             self.inner.clear();
-            self.inner.extend(combined);
-            self.offset = 1;
+            self.inner.extend(&row0);
+            self.offset = 0;
         } else {
-            let size = row1.len().next_power_of_two();
-            debug_assert_ne!(size, 0);
-            row1.resize(size, 0);
+            let mut row1 = row0
+                .chunks(2)
+                .map(|pair| pair.iter().sum())
+                .collect::<Vec<usize>>();
 
-            let mut tree = vec![row0, row1];
-            while tree.last().unwrap().len() > 1 {
-                let row = tree
-                    .last()
-                    .unwrap()
-                    .chunks(2)
-                    .map(|pair| pair.iter().sum())
-                    .collect();
-                tree.push(row);
+            if row1.len() == 1 {
+                let combined = row1.into_iter().chain(row0);
+                self.inner.clear();
+                self.inner.extend(combined);
+                self.offset = 1;
+            } else {
+                let size = row1.len().next_power_of_two();
+                debug_assert_ne!(size, 0);
+                row1.resize(size, 0);
+
+                let mut tree = vec![row0, row1];
+                while tree.last().unwrap().len() > 1 {
+                    let row = tree
+                        .last()
+                        .unwrap()
+                        .chunks(2)
+                        .map(|pair| pair.iter().sum())
+                        .collect();
+                    tree.push(row);
+                }
+
+                let flat = tree.into_iter().rev().flatten();
+                self.inner.extend(flat);
+                self.offset = size * 2 - 1;
             }
-
-            let flat = tree.into_iter().rev().flatten();
-            self.inner.extend(flat);
-            self.offset = size * 2 - 1;
         }
     }
 }
