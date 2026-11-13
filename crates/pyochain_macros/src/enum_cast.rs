@@ -61,7 +61,7 @@ fn get_arm_and_name(variant: &Variant) -> SynResult<(proc_macro2::TokenStream, S
     }?;
 
     let ty = &field.ty;
-    let mode = Mode::new(&field.attrs);
+    let mode = Mode::new(&variant.attrs);
 
     let inner = match mode {
         Mode::Extract => ty,
