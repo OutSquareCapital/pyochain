@@ -110,7 +110,7 @@ where
         Err(e) => Some(Err(e)),
         Ok(ops::Bisect::MaxesLen) if MAX => Some(Ok(last_sublist(list))),
         Ok(ops::Bisect::Empty | ops::Bisect::MaxesLen) => None,
-        Ok(ops::Bisect::LenNEPos(loc)) => Some(Ok(loc)),
+        Ok(ops::Bisect::AtLoc(loc)) => Some(Ok(loc)),
     }
 }
 #[inline]

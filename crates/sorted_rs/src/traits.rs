@@ -155,9 +155,11 @@ pub trait ListsMethods:
         self.keys_mut().push(chunk);
     }
     #[inline(always)]
-    fn push_val(&mut self, py: Python<'_>, pos: usize, value: Py<PyAny>) {
+    fn push_val(&mut self, py: Python<'_>, value: Py<PyAny>) {
+        let pos = self.maxes.len() - 1;
         self.maxes[pos] = value.clone_ref(py);
         self.keys_mut()[pos].push(value);
+        self.expand(py, pos);
     }
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         match self.find(value)? {
@@ -194,7 +196,7 @@ pub trait ListsMethods:
         match self.try_bisect::<LEFT>(value)? {
             ops::Bisect::Empty => Ok(0),
             ops::Bisect::MaxesLen => Ok(self.len()),
-            ops::Bisect::LenNEPos(loc) => Ok(loc.into_index(self)),
+            ops::Bisect::AtLoc(loc) => Ok(loc.into_index(self)),
         }
     }
 }

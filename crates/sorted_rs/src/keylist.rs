@@ -41,10 +41,9 @@ impl ListsMethods for KeyList {
             ops::Bisect::MaxesLen => {
                 let pos = self.maxes.len() - 1;
                 self.values[pos].push(value.unbind());
-                self.push_val(py, pos, key.unbind());
-                self.expand(py, pos);
+                self.push_val(py, key.unbind());
             }
-            ops::Bisect::LenNEPos(loc) => {
+            ops::Bisect::AtLoc(loc) => {
                 self.values.loc_insert(&loc, value.unbind());
                 self.keys_mut().loc_insert(&loc, key.unbind());
                 self.expand(py, loc.pos);
@@ -68,7 +67,7 @@ impl ListsMethods for KeyList {
         let key = self.call_fn(value)?;
         match self.try_bisect_left(&key)? {
             ops::Bisect::Empty | ops::Bisect::MaxesLen => Ok(0),
-            ops::Bisect::LenNEPos(loc) => Search::new(self, loc, value, &key).count(),
+            ops::Bisect::AtLoc(loc) => Search::new(self, loc, value, &key).count(),
         }
     }
 
@@ -107,7 +106,7 @@ impl ListsMethods for KeyList {
         let key = self.call_fn(value)?;
         match self.try_bisect_left(&key)? {
             ops::Bisect::Empty | ops::Bisect::MaxesLen => Ok(None),
-            ops::Bisect::LenNEPos(loc) => Search::new(self, loc, value, &key).find(),
+            ops::Bisect::AtLoc(loc) => Search::new(self, loc, value, &key).find(),
         }
     }
     fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {

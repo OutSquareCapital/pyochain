@@ -54,7 +54,7 @@ where
         match list.try_bisect_left(key)? {
             ops::Bisect::Empty => unreachable!(),
             ops::Bisect::MaxesLen => Err(errors::not_in_list(value)),
-            ops::Bisect::LenNEPos(loc) => Ok(Search::new(list, loc, value, key)),
+            ops::Bisect::AtLoc(loc) => Ok(Search::new(list, loc, value, key)),
         }
     }
     pub fn index_by_val(self, bounds: Bounds<usize>) -> PyResult<usize> {

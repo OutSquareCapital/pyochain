@@ -86,7 +86,7 @@ impl ForwardSlice {
 pub enum Bisect {
     Empty,
     MaxesLen,
-    LenNEPos(Loc),
+    AtLoc(Loc),
 }
 impl Bisect {
     #[inline(always)]
@@ -105,7 +105,7 @@ impl Bisect {
                     .as_slice()
                     .pipe(|v| bisect::<LEFT>(v, value))
                     .map(|idx| Loc::new(pos, idx))
-                    .map(Self::LenNEPos)
+                    .map(Self::AtLoc)
             }
         }
     }
