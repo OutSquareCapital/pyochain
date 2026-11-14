@@ -178,79 +178,161 @@ Runtime checks whose outcome is already fixed by the type or by the call site. E
 
 A chunk in `keys` or `values` that is never empty. Encoding it removes the `last().unwrap()` calls.
 
-- `traits.rs`, `expand`: `half.last().unwrap()` (l.[77](src/traits.rs#L77)), `keys()[pos].last().unwrap()` (l.[79](src/traits.rs#L79)).
-- `traits.rs`, `delete_on_len_sup_to_half_load`: `loc_last` (l.[119](src/traits.rs#L119)), guarded by `LenSupToHalfLoad`.
-- `traits.rs`, `push_chunk`: `chunk.last().unwrap()` (l.[156](src/traits.rs#L156)).
-- `list.rs`, `delete`: `values[prev].last().unwrap()` (l.[89](src/list.rs#L89)), `loc_last` (l.[93](src/list.rs#L93)).
-- `keylist.rs`, `delete`: `left[prev].last().unwrap()` (l.[86](src/keylist.rs#L86)), `loc_last` (l.[91](src/keylist.rs#L91)).
-- `inner.rs`, `Values::loc_last`: `self[pos].last().unwrap()` (l.[80](src/inner.rs#L80)).
-- `inner.rs`, `index_to_loc`, `Last`: `values[pos].len() - 1` (l.[118](src/inner.rs#L118)).
-- `inner.rs`, `index_to_loc`, `InLastList`: `values[pos].len()` (l.[125](src/inner.rs#L125)).
-- `inner.rs`, `set_pos`: `values[pos].len()` (l.[150](src/inner.rs#L150)).
-- `ops.rs`, `Locate::new`: `values.last().unwrap()` (l.[194](src/ops.rs#L194)).
-- `search.rs`, `Search::on_index`: the chunk is non-empty after `try_normalize` (l.[55](src/search.rs#L55)).
-- `lengths.rs`, `build`: `tree.last().unwrap()` (l.[95](src/lengths.rs#L95), [98](src/lengths.rs#L98)) is never `None`, since `tree` starts with two rows.
-- `iter/impls.rs`, `inner_next_back`: `(v.len() - 1)` (l.[80](src/iter/impls.rs#L80)), `v` comes from `last()`.
-- `iter/builder.rs`, `islice_bounds`: `values[pos].len()` (l.[92](src/iter/builder.rs#L92)).
-- `list_update.rs`, `update_chunked`: `push_chunk` (l.[111](src/list_update.rs#L111), [120](src/list_update.rs#L120)) and the `!chunk.is_empty()` filter (l.[108](src/list_update.rs#L108)). Redundant once `load >= 1`.
+| Location                                                                             | Code                                   | Note                            |
+| ------------------------------------------------------------------------------------ | -------------------------------------- | ------------------------------- |
+| `traits.rs`, l.[77](src/traits.rs#L77)                                               | `half.last().unwrap()`                 | in `expand`                     |
+| `traits.rs`, l.[79](src/traits.rs#L79)                                               | `self.keys()[pos].last().unwrap()`     | in `expand`                     |
+| `traits.rs`, l.[119](src/traits.rs#L119)                                             | `self.keys().loc_last(&loc)`           | [^1]                            |
+| `traits.rs`, l.[156](src/traits.rs#L156)                                             | `chunk.last().unwrap()`                | in `push_chunk`                 |
+| `list.rs`, l.[89](src/list.rs#L89)                                                   | `self.values[prev].last().unwrap()`    | in `delete`                     |
+| `list.rs`, l.[93](src/list.rs#L93)                                                   | `self.keys().loc_last(&loc)`           | in `delete`                     |
+| `keylist.rs`, l.[86](src/keylist.rs#L86)                                             | `left[prev].last().unwrap()`           | in `delete`                     |
+| `keylist.rs`, l.[91](src/keylist.rs#L91)                                             | `self.keys().loc_last(&loc)`           | in `delete`                     |
+| `inner.rs`, l.[80](src/inner.rs#L80)                                                 | `self[loc.pos].last().unwrap()`        | in `Values::loc_last`           |
+| `inner.rs`, l.[118](src/inner.rs#L118)                                               | `self.values[pos].len() - 1_usize`     | in `index_to_loc`, `Last`       |
+| `inner.rs`, l.[125](src/inner.rs#L125)                                               | `self.values[pos].len()`               | in `index_to_loc`, `InLastList` |
+| `inner.rs`, l.[150](src/inner.rs#L150)                                               | `self.values[pos].len()`               | in `set_pos`                    |
+| `ops.rs`, l.[194](src/ops.rs#L194)                                                   | `values.last().unwrap()`               | in `Locate::new`                |
+| `search.rs`, l.[55](src/search.rs#L55)                                               | `ops::Bisect::Empty => unreachable!()` | [^2]                            |
+| `lengths.rs`, l.[95](src/lengths.rs#L95), l.[98](src/lengths.rs#L98)                 | `tree.last().unwrap()`                 | [^3]                            |
+| `iter/impls.rs`, l.[80](src/iter/impls.rs#L80)                                       | `(v.len() - 1) as u64`                 | [^4]                            |
+| `iter/builder.rs`, l.[92](src/iter/builder.rs#L92)                                   | `values[pos].len()`                    | in `islice_bounds`              |
+| `list_update.rs`, l.[111](src/list_update.rs#L111), l.[120](src/list_update.rs#L120) | `self.list.push_chunk(py, chunk)`      | in `update_chunked`             |
+| `list_update.rs`, l.[108](src/list_update.rs#L108)                                   | `(!chunk.is_empty()).then_some(chunk)` | [^5]                            |
+
+[^1]: in `delete_on_len_sup_to_half_load`, guarded by `LenSupToHalfLoad`
+
+[^2]: in `Search::on_index`; the chunk is non-empty after `try_normalize`
+
+[^3]: in `build`; never `None`, since `tree` starts with two rows
+
+[^4]: in `inner_next_back`; `v` comes from `last()`
+
+[^5]: in `update_chunked`; redundant once `load >= 1`
 
 ### Witness `NonEmpty` list
 
 A list with at least one chunk (`maxes` and `values` non-empty). Encoding it removes the `unreachable!()` calls and the `len() - 1` on `maxes` and `values`.
 
-- `list.rs`, `count`: `Bisect::Empty => unreachable!()` (l.[65](src/list.rs#L65)). Reached only after a `Bisect::AtLoc` on the left bound.
-- `search.rs`, `Search::on_index`: `Bisect::Empty => unreachable!()` (l.[55](src/search.rs#L55)). Reached only after `try_normalize`.
-- `traits.rs`, `push_val`: `maxes.len() - 1` (l.[161](src/traits.rs#L161)). Reached only from the `MaxesLen` branch.
-- `keylist.rs`, `append`: `maxes.len() - 1` (l.[42](src/keylist.rs#L42)). Reached only from the `MaxesLen` branch.
-- `inner.rs`, `index_to_loc`: `values.len() - 1` (l.[117](src/inner.rs#L117), [124](src/inner.rs#L124)).
-- `inner.rs`, `set_pos`: `values.len() - 1` (l.[149](src/inner.rs#L149)).
-- `inner.rs`, `set_pos_usize`: `values[0]` (l.[165](src/inner.rs#L165)).
-- `ops.rs`, `Locate::new`: `values[0]` (l.[191](src/ops.rs#L191), [193](src/ops.rs#L193)). Guarded by `length >= 2`.
-- `slice.rs`, `fwd_extract`: `values.len() - 1` (l.[116](src/slice.rs#L116)).
-- `iter/builder.rs`, `islice_bounds`: `values.len() - 1` (l.[91](src/iter/builder.rs#L91)).
-- `iter/builder.rs`, `last_sublist`: `maxes.len() - 1` (l.[118](src/iter/builder.rs#L118)). Guarded by `is_empty` in `irange_bounds`.
+| Location                                             | Code                                   | Note                            |
+| ---------------------------------------------------- | -------------------------------------- | ------------------------------- |
+| `list.rs`, l.[65](src/list.rs#L65)                   | `ops::Bisect::Empty => unreachable!()` | [^6]                            |
+| `search.rs`, l.[55](src/search.rs#L55)               | `ops::Bisect::Empty => unreachable!()` | [^7]                            |
+| `traits.rs`, l.[161](src/traits.rs#L161)             | `self.maxes.len() - 1`                 | [^8]                            |
+| `keylist.rs`, l.[42](src/keylist.rs#L42)             | `self.maxes.len() - 1`                 | [^9]                            |
+| `inner.rs`, l.[117](src/inner.rs#L117)               | `self.values.len() - 1`                | in `index_to_loc`, `Last`       |
+| `inner.rs`, l.[124](src/inner.rs#L124)               | `self.values.len() - 1`                | in `index_to_loc`, `InLastList` |
+| `inner.rs`, l.[149](src/inner.rs#L149)               | `self.values.len() - 1`                | in `set_pos`                    |
+| `inner.rs`, l.[165](src/inner.rs#L165)               | `self.values[0].len()`                 | in `set_pos_usize`              |
+| `ops.rs`, l.[191](src/ops.rs#L191)                   | `values[0].len()`                      | [^10]                           |
+| `ops.rs`, l.[193](src/ops.rs#L193)                   | `values[0].len()`                      | [^11]                           |
+| `slice.rs`, l.[116](src/slice.rs#L116)               | `list.values.len() - 1`                | in `fwd_extract`                |
+| `iter/builder.rs`, l.[91](src/iter/builder.rs#L91)   | `list.values.len() - 1`                | in `islice_bounds`              |
+| `iter/builder.rs`, l.[118](src/iter/builder.rs#L118) | `list.maxes.len() - 1`                 | [^12]                           |
+
+[^6]: in `count`; reached only after `Bisect::AtLoc` on the left bound
+
+[^7]: in `Search::on_index`; reached only after `try_normalize`
+
+[^8]: in `push_val`; reached only from the `MaxesLen` branch
+
+[^9]: in `append`; reached only from the `MaxesLen` branch
+
+[^10]: in `Locate::new`; guarded by `length >= 2`
+
+[^11]: in `Locate::new`; guarded by `length >= 2`
+
+[^12]: in `last_sublist`; guarded by `is_empty` in `irange_bounds`
 
 ### Witness `Bounds` (`start < stop <= len`)
 
 Built once by `try_normalize`, then passed to the consumers. Encoding it removes the subtractions and ordering assumptions in them.
 
-- `ops.rs`, `ForwardSlice::new`: `stop - start` (l.[75](src/ops.rs#L75)).
-- `ops.rs`, `Slice::new`: `debug_assert!(stop <= length)` (l.[50](src/ops.rs#L50)).
-- `ops.rs`, `Placement::new`: ordering comparisons (l.[211](src/ops.rs#L211)-[217](src/ops.rs#L217)).
-- `slice.rs`, `extract_from` (`Backward`): `ForwardSlice::new` call (l.[46](src/slice.rs#L46)).
-- `slice.rs`, `fwd_extract`: `set_pos_usize(start)` (l.[106](src/slice.rs#L106)), `set_pos_usize(stop)` (l.[121](src/slice.rs#L121)), `min.idx + (stop - start)` (l.[107](src/slice.rs#L107)).
-- `slice.rs`, `del_all`: `set_pos_usize(idx)` (l.[162](src/slice.rs#L162)).
-- `slice.rs`, `delete_fwd_small`: `reset_slice` bounds (l.[144](src/slice.rs#L144), l.[147](src/slice.rs#L147)), empty cases handled by `NoOp`.
-- `bounds.rs`, `try_normalize`: `Bounds::new(start, stop.cast_unsigned())` (l.[54](src/bounds.rs#L54)). This is where the witness is created.
+| Location                                                       | Code                                                   | Note                          |
+| -------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------- |
+| `ops.rs`, l.[75](src/ops.rs#L75)                               | `indices.stop - indices.start`                         | in `ForwardSlice::new`        |
+| `ops.rs`, l.[50](src/ops.rs#L50)                               | `debug_assert!(indices.stop <= length)`                | in `Slice::new`               |
+| `ops.rs`, l.[211](src/ops.rs#L211) to l.[217](src/ops.rs#L217) | `index < bounds.start`                                 | [^13]                         |
+| `slice.rs`, l.[46](src/slice.rs#L46)                           | `ops::ForwardSlice::new(self.indices, self.ref_len)`   | in `extract_from`, `Backward` |
+| `slice.rs`, l.[106](src/slice.rs#L106)                         | `list.set_pos_usize(slf.start)?`                       | in `fwd_extract`              |
+| `slice.rs`, l.[121](src/slice.rs#L121)                         | `list.set_pos_usize(slf.stop)?`                        | in `fwd_extract`              |
+| `slice.rs`, l.[107](src/slice.rs#L107)                         | `Loc::with_idx(min.idx + (slf.stop - slf.start))`      | in `fwd_extract`              |
+| `slice.rs`, l.[162](src/slice.rs#L162)                         | `list.set_pos_usize(idx)?`                             | in `del_all`                  |
+| `slice.rs`, l.[144](src/slice.rs#L144)                         | `reset_slice((0, self.start), self.ref_len)`           | [^14]                         |
+| `slice.rs`, l.[147](src/slice.rs#L147)                         | `reset_slice((self.stop, self.ref_len), self.ref_len)` | [^15]                         |
+| `bounds.rs`, l.[54](src/bounds.rs#L54)                         | `Bounds::new(start, stop.cast_unsigned())`             | [^16]                         |
+
+[^13]: in `Placement::new`; ordering comparisons
+
+[^14]: in `delete_fwd_small`; empty cases handled by `NoOp`
+
+[^15]: in `delete_fwd_small`; empty cases handled by `NoOp`
+
+[^16]: in `try_normalize`; this is where the witness is created
 
 ### Witness `Load` (`load >= 1`, bounded)
 
 A load factor validated at construction: `>= 1`, with `2 * load` and `load / 2` precomputed without overflow. Encoding it removes the implicit assumptions in the chunk size checks.
 
-- `inner.rs`, `Load::higher_limit` (l.[34](src/inner.rs#L34)), `lower_limit` (l.[38](src/inner.rs#L38)): `2 * load` overflow.
-- `ops.rs`, `Expand::new`: `higher_limit()` (l.[124](src/ops.rs#L124)).
-- `ops.rs`, `SubListState::new`: `lower_limit()` (l.[161](src/ops.rs#L161)).
-- `traits.rs`, `expand`: `half.last()` is non-empty only if `load >= 1` (l.[77](src/traits.rs#L77)).
-- `list_update.rs`, `update_chunked`: `take(load)` yields non-empty chunks only if `load >= 1` (l.[103](src/list_update.rs#L103), [108](src/list_update.rs#L108)).
-- `iter/cursor.rs`, `From<Loc> for u64` (l.[91](src/iter/cursor.rs#L91)): `idx < 2^32` only if chunk length is bounded by `2 * load`.
+| Location                                           | Code                                                | Note                   |
+| -------------------------------------------------- | --------------------------------------------------- | ---------------------- |
+| `inner.rs`, l.[34](src/inner.rs#L34)               | `self.0 * 2`                                        | [^17]                  |
+| `inner.rs`, l.[38](src/inner.rs#L38)               | `self.0 / 2`                                        | in `Load::lower_limit` |
+| `ops.rs`, l.[124](src/ops.rs#L124)                 | `data.load.higher_limit()`                          | in `Expand::new`       |
+| `ops.rs`, l.[161](src/ops.rs#L161)                 | `data.load.lower_limit()`                           | in `SubListState::new` |
+| `traits.rs`, l.[77](src/traits.rs#L77)             | `half.last().unwrap()`                              | [^18]                  |
+| `list_update.rs`, l.[103](src/list_update.rs#L103) | `let load = *self.list.load;`                       | [^19]                  |
+| `list_update.rs`, l.[108](src/list_update.rs#L108) | `(!chunk.is_empty()).then_some(chunk)`              | in `update_chunked`    |
+| `iter/cursor.rs`, l.[91](src/iter/cursor.rs#L91)   | `(loc.pos as Self) << u32::BITS \| loc.idx as Self` | [^20]                  |
+
+[^17]: in `Load::higher_limit`; `2 * load` overflow
+
+[^18]: in `expand`; non-empty only if `load >= 1`
+
+[^19]: in `update_chunked`; `take(load)` yields non-empty chunks only if `load >= 1`
+
+[^20]: in `From<Loc> for u64`; `idx < 2^32` only if chunk length is bounded by `2 * load`
 
 ### Witness `NonZeroIsize` (step)
 
-- `ops.rs`, `Slice::new`: `Nb::Zero => unsafe { unreachable_unchecked() }` (l.[53](src/ops.rs#L53)). Removing the variant removes the `unsafe`.
-- `slice.rs`, `SliceIdxs::new`: `i.step.into()` (l.[25](src/slice.rs#L25)) is the place where the witness would be created.
+| Location                             | Code                                             | Note  |
+| ------------------------------------ | ------------------------------------------------ | ----- |
+| `ops.rs`, l.[53](src/ops.rs#L53)     | `Nb::Zero => unsafe { unreachable_unchecked() }` | [^21] |
+| `slice.rs`, l.[25](src/slice.rs#L25) | `let step = i.step.into();`                      | [^22] |
+
+[^21]: in `Slice::new`; removing the variant removes the `unsafe`
+
+[^22]: in `SliceIdxs::new`; the place where the witness is created
 
 ### Witness `Split` (`MustSplit` guard)
 
-- `traits.rs`, `expand`: `split_off(load)` (l.[76](src/traits.rs#L76)). Guarded by `keys()[pos].len() > higher_limit()`.
-- `keylist.rs`, `split_values`: `values[pos].split_off(load)` (l.[123](src/keylist.rs#L123)). Same guard, shared with `keys`.
+| Location                                   | Code                                   | Note  |
+| ------------------------------------------ | -------------------------------------- | ----- |
+| `traits.rs`, l.[76](src/traits.rs#L76)     | `self.keys_mut()[pos].split_off(load)` | [^23] |
+| `keylist.rs`, l.[123](src/keylist.rs#L123) | `self.values[pos].split_off(load)`     | [^24] |
+
+[^23]: in `expand`; guarded by `keys()[pos].len() > higher_limit()`
+
+[^24]: in `split_values`; same guard, shared with `keys`
 
 ### `Option` of the key function
 
-- `list_update.rs`, `Updater`: `py_func: Option<...>` (l.[42](src/list_update.rs#L42)), matched at l.86-87 and l.110, and passed to `sorted` at l.70. `List` always passes `None`, `KeyList` always passes `Some`. Encoding it through a type parameter removes the `Option`.
+| Location                                                                           | Code                                      | Note                |
+| ---------------------------------------------------------------------------------- | ----------------------------------------- | ------------------- |
+| `list_update.rs`, l.[42](src/list_update.rs#L42)                                   | `py_func: Option<&'py Bound<'py, PyAny>>` | [^25]               |
+| `list_update.rs`, l.[70](src/list_update.rs#L70)                                   | `.sorted(false, self.py_func)?`           | in `merge_with`     |
+| `list_update.rs`, l.[86](src/list_update.rs#L86) to l.[87](src/list_update.rs#L87) | `self.py_func.map_or_else(...)`           | in `strategy`       |
+| `list_update.rs`, l.[110](src/list_update.rs#L110)                                 | `match self.py_func`                      | in `update_chunked` |
+
+[^25]: in `Updater`; `List` always passes `None`, `KeyList` always passes `Some`
 
 ### Delete path witness
 
-- `traits.rs`, `delete_many`: `loc.pos - 1` (l.[128](src/traits.rs#L128)). Guarded by `ManySublists`, which implies at least two chunks.
+| Location                                 | Code                      | Note  |
+| ---------------------------------------- | ------------------------- | ----- |
+| `traits.rs`, l.[128](src/traits.rs#L128) | `let prev = loc.pos - 1;` | [^26] |
+
+[^26]: in `delete_many`; guarded by `ManySublists`, which implies at least two chunks
 
 ## Other classified sites
 
