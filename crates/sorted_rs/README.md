@@ -188,7 +188,7 @@ A chunk in `keys` or `values` that is never empty. Encoding it removes the `last
 - `inner.rs`, `index_to_loc`, `InLastList`: `values[pos].len()` (l.[125](src/inner.rs#L125)).
 - `inner.rs`, `set_pos`: `values[pos].len()` (l.[150](src/inner.rs#L150)).
 - `ops.rs`, `Locate::new`: `values.last().unwrap()` (l.[194](src/ops.rs#L194)).
-- `search.rs`, `Search::on_index`: the chunk is non-empty after `try_normalize`.
+- `search.rs`, `Search::on_index`: the chunk is non-empty after `try_normalize` (l.[55](src/search.rs#L55)).
 - `lengths.rs`, `build`: `tree.last().unwrap()` (l.[95](src/lengths.rs#L95), [98](src/lengths.rs#L98)) is never `None`, since `tree` starts with two rows.
 - `iter/impls.rs`, `inner_next_back`: `(v.len() - 1)` (l.[80](src/iter/impls.rs#L80)), `v` comes from `last()`.
 - `iter/builder.rs`, `islice_bounds`: `values[pos].len()` (l.[92](src/iter/builder.rs#L92)).
@@ -216,28 +216,28 @@ Built once by `try_normalize`, then passed to the consumers. Encoding it removes
 
 - `ops.rs`, `ForwardSlice::new`: `stop - start` (l.[75](src/ops.rs#L75)).
 - `ops.rs`, `Slice::new`: `debug_assert!(stop <= length)` (l.[50](src/ops.rs#L50)).
-- `ops.rs`, `Placement::new`: ordering comparisons (l.210-217).
-- `slice.rs`, `extract_from` (`Backward`): `ForwardSlice::new` call.
-- `slice.rs`, `fwd_extract`: `set_pos_usize(start)`, `set_pos_usize(stop)`, `min.idx + (stop - start)`.
-- `slice.rs`, `del_all`: `set_pos_usize(idx)`.
-- `slice.rs`, `delete_fwd_small`: `reset_slice` bounds, empty cases handled by `NoOp`.
+- `ops.rs`, `Placement::new`: ordering comparisons (l.[211](src/ops.rs#L211)-[217](src/ops.rs#L217)).
+- `slice.rs`, `extract_from` (`Backward`): `ForwardSlice::new` call (l.[46](src/slice.rs#L46)).
+- `slice.rs`, `fwd_extract`: `set_pos_usize(start)` (l.[106](src/slice.rs#L106)), `set_pos_usize(stop)` (l.[121](src/slice.rs#L121)), `min.idx + (stop - start)` (l.[107](src/slice.rs#L107)).
+- `slice.rs`, `del_all`: `set_pos_usize(idx)` (l.[162](src/slice.rs#L162)).
+- `slice.rs`, `delete_fwd_small`: `reset_slice` bounds (l.[144](src/slice.rs#L144), l.[147](src/slice.rs#L147)), empty cases handled by `NoOp`.
 - `bounds.rs`, `try_normalize`: `Bounds::new(start, stop.cast_unsigned())` (l.[54](src/bounds.rs#L54)). This is where the witness is created.
 
 ### Witness `Load` (`load >= 1`, bounded)
 
 A load factor validated at construction: `>= 1`, with `2 * load` and `load / 2` precomputed without overflow. Encoding it removes the implicit assumptions in the chunk size checks.
 
-- `inner.rs`, `Load::higher_limit`, `lower_limit`: `2 * load` overflow.
+- `inner.rs`, `Load::higher_limit` (l.[34](src/inner.rs#L34)), `lower_limit` (l.[38](src/inner.rs#L38)): `2 * load` overflow.
 - `ops.rs`, `Expand::new`: `higher_limit()` (l.[124](src/ops.rs#L124)).
 - `ops.rs`, `SubListState::new`: `lower_limit()` (l.[161](src/ops.rs#L161)).
 - `traits.rs`, `expand`: `half.last()` is non-empty only if `load >= 1` (l.[77](src/traits.rs#L77)).
 - `list_update.rs`, `update_chunked`: `take(load)` yields non-empty chunks only if `load >= 1` (l.[103](src/list_update.rs#L103), [108](src/list_update.rs#L108)).
-- `iter/cursor.rs`, `From<Loc> for u64`: `idx < 2^32` only if chunk length is bounded by `2 * load`.
+- `iter/cursor.rs`, `From<Loc> for u64` (l.[91](src/iter/cursor.rs#L91)): `idx < 2^32` only if chunk length is bounded by `2 * load`.
 
 ### Witness `NonZeroIsize` (step)
 
 - `ops.rs`, `Slice::new`: `Nb::Zero => unsafe { unreachable_unchecked() }` (l.[53](src/ops.rs#L53)). Removing the variant removes the `unsafe`.
-- `slice.rs`, `SliceIdxs::new`: `i.step.into()` is the place where the witness would be created.
+- `slice.rs`, `SliceIdxs::new`: `i.step.into()` (l.[25](src/slice.rs#L25)) is the place where the witness would be created.
 
 ### Witness `Split` (`MustSplit` guard)
 
