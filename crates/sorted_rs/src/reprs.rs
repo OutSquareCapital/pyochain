@@ -5,7 +5,12 @@ use crate::{
     traits::ListsMethods,
     types::{Dict, Set},
 };
-use pyo3::{PyTypeInfo, prelude::*, types::PyString};
+use pyo3::{
+    PyTypeInfo,
+    prelude::*,
+    types::{PyList, PyString},
+};
+use pyo3_ext::prelude::CollectBoundIterator;
 
 pub trait PyRepr {
     fn repr<T: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
@@ -23,7 +28,7 @@ pub trait PyRepr {
 
 impl PyRepr for List {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
-        self.values.as_pylist(py)?.repr()
+        self.values.iter().collect_bound::<PyList>(py)?.repr()
     }
     fn key_repr<'py>(&self, _py: Python<'py>) -> PyResult<Option<Bound<'py, PyString>>> {
         Ok(None)
@@ -31,7 +36,7 @@ impl PyRepr for List {
 }
 impl PyRepr for KeyList {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
-        self.values.as_pylist(py)?.repr()
+        self.values.iter().collect_bound::<PyList>(py)?.repr()
     }
     fn key_repr<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyString>>> {
         self.func.bind(py).repr().map(Some)

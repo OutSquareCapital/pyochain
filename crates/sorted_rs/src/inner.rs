@@ -7,11 +7,7 @@ use crate::{
 };
 use derive_more::{Deref, DerefMut, From, IntoIterator};
 use either::Either;
-use pyo3::{
-    basic::CompareOp,
-    prelude::*,
-    types::{PyList, PyNotImplemented},
-};
+use pyo3::{basic::CompareOp, prelude::*, types::PyNotImplemented};
 use pyo3_ext::{
     prelude::*,
     types::{FromCmp, PyCmpOut},
@@ -63,9 +59,6 @@ impl Values {
     }
     pub(super) fn iter_chunks(&self) -> impl DoubleEndedIterator<Item = &VecPy> {
         self.0.iter()
-    }
-    pub(super) fn as_pylist<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
-        self.iter().collect_bound(py)
     }
     pub(super) fn loc(&self, loc: &Loc) -> &Py<PyAny> {
         &self[loc.pos][loc.idx]

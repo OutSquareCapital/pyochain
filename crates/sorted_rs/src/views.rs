@@ -9,7 +9,7 @@ use derive_more::{Deref, From};
 use either::Either;
 use itertools::Itertools;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use pyo3::{PyTypeInfo, prelude::*, types::PyList};
+use pyo3::{PyTypeInfo, prelude::*};
 use pyo3_ext::{prelude::CollectBoundIterator, tuple, types::PyFrozenClass};
 
 #[derive(From, Deref)]
@@ -72,7 +72,7 @@ where
             Either::Right(slice) => SliceIdxs::new(&slice, mapping.len())?
                 .extract_from(py, &mut mapping)?
                 .iter()
-                .collect_bound::<PyList>(py)
+                .collect_bound(py)
                 .map(Either::Left),
             Either::Left(int) => mapping.list.get_item(py, int).map(Either::Right),
         }
@@ -93,7 +93,7 @@ where
                 .extract_from(py, &mut mapping)?
                 .iter()
                 .map(|key| dict.get_item(key))
-                .try_collect_bound::<PyList>(py)
+                .try_collect_bound(py)
                 .map(Either::Left),
             Either::Left(int) => dict
                 .get_item(mapping.list.get_item(py, int)?)
@@ -117,7 +117,7 @@ where
                 .iter()
                 .map(|key| tuple!(key.bind(py), &dict.get_item(key)?))
                 .map_ok(Bound::into_any)
-                .try_collect_bound::<PyList>(py)
+                .try_collect_bound(py)
                 .map(Either::Left),
             Either::Left(int) => {
                 let key = mapping.list.get_item(py, int)?;
