@@ -535,6 +535,10 @@ class OptionType[T](Pipe, Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Null[R]: ...
+    @overload
+    def map[**P, R](
+        self, f: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
+    ) -> Option[R]: ...
     def map[**P, R](
         self, f: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
     ) -> Option[R]:
@@ -624,6 +628,13 @@ class OptionType[T](Pipe, Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Null[R]: ...
+    @overload
+    def and_then[**P, R](
+        self,
+        f: Callable[Concatenate[T, P], Option[R]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Option[R]: ...
     def and_then[**P, R](
         self,
         f: Callable[Concatenate[T, P], Option[R]],
@@ -845,6 +856,10 @@ class OptionType[T](Pipe, Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Null[T]: ...
+    @overload
+    def inspect[**P](
+        self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
+    ) -> Option[T]: ...
     def inspect[**P](
         self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Option[T]:

@@ -549,6 +549,10 @@ class ResultType[T, E](Pipe, Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> O: ...
+    @overload
+    def unwrap_or_else[**P, O](
+        self, fn: Callable[Concatenate[E, P], O], *args: P.args, **kwargs: P.kwargs
+    ) -> T | O: ...
     def unwrap_or_else[**P, O](
         self, fn: Callable[Concatenate[E, P], O], *args: P.args, **kwargs: P.kwargs
     ) -> T | O:
@@ -609,6 +613,10 @@ class ResultType[T, E](Pipe, Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Err[T, R]: ...
+    @overload
+    def map_err[**P, R](
+        self, fn: Callable[Concatenate[E, P], R], *args: P.args, **kwargs: P.kwargs
+    ) -> Result[T, R]: ...
     def map_err[**P, R](
         self, fn: Callable[Concatenate[E, P], R], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, R]:
@@ -647,6 +655,10 @@ class ResultType[T, E](Pipe, Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Err[T, E]: ...
+    @overload
+    def inspect[**P](
+        self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
+    ) -> Result[T, E]: ...
     def inspect[**P](
         self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, E]:
@@ -686,6 +698,10 @@ class ResultType[T, E](Pipe, Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Err[T, E]: ...
+    @overload
+    def inspect_err[**P](
+        self, fn: Callable[Concatenate[E, P], object], *args: P.args, **kwargs: P.kwargs
+    ) -> Result[T, E]: ...
     def inspect_err[**P](
         self, fn: Callable[Concatenate[E, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, E]:
@@ -759,6 +775,13 @@ class ResultType[T, E](Pipe, Protocol):
     def and_then[**P, T1, E1, R](
         self: Result[T1, E1],
         fn: Callable[Concatenate[T1, P], Result[R, E1]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Result[R, E1]: ...
+    @overload
+    def and_then[**P, T1, E1, R](
+        self: Result[T1, E1],
+        fn: Callable[Concatenate[T1, P], Result[R, E1]] | type[ResultType[Any, Any]],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Result[R, E1]: ...
@@ -852,6 +875,13 @@ class ResultType[T, E](Pipe, Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Result[object, R]: ...
+    @overload
+    def or_else[**P, R](
+        self,
+        fn: Callable[Concatenate[E, P], Result[object, R]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Result[T, R]: ...
     def or_else[**P, R](
         self,
         fn: Callable[Concatenate[E, P], Result[object, R]],
