@@ -12,7 +12,7 @@ use tap::{Conv, Pipe};
 use crate::{
     bisect::bisect,
     bounds::{Bounds, Loc},
-    inner::{InnerList, Values},
+    inner::InnerList,
     traits::ListsMethods,
 };
 
@@ -182,16 +182,16 @@ pub(super) enum Locate {
 }
 impl Locate {
     #[inline]
-    pub fn new(length: usize, values: &Values, index: isize) -> Self {
-        match (length, index.conv::<Nb>()) {
+    pub fn new(list: &InnerList, index: isize) -> Self {
+        match (list.len, index.conv::<Nb>()) {
             (1, Nb::Zero | Nb::MinusOne) => Self::First,
             (0 | 1, _) => Self::Empty,
             (_, Nb::Zero) => Self::First,
             (_, Nb::MinusOne) => Self::Last,
-            (_, Nb::One) if 1 < values[0].len() => Self::InFirstList(1),
+            (_, Nb::One) if 1 < list.values[0].len() => Self::InFirstList(1),
             (_, Nb::One) => Self::InOtherList(1),
-            (_, Nb::GTOne(i)) if i < values[0].len() => Self::InFirstList(i),
-            (_, Nb::LTMinusOne(i)) if -values.last().unwrap().len().cast_signed() < i => {
+            (_, Nb::GTOne(i)) if i < list.values[0].len() => Self::InFirstList(i),
+            (_, Nb::LTMinusOne(i)) if -list.values.last().unwrap().len().cast_signed() < i => {
                 Self::InLastList(i)
             }
             (_, Nb::GTOne(i)) => Self::InOtherList(i),

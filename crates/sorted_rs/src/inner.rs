@@ -104,7 +104,7 @@ impl InnerList {
     }
     #[inline]
     pub(super) fn index_to_loc(&mut self, index: isize) -> PyResult<Loc> {
-        match ops::Locate::new(self.len, &self.values, index) {
+        match ops::Locate::new(self, index) {
             ops::Locate::Empty => Err(errors::out_of_range()),
             ops::Locate::Last => {
                 let pos = self.values.len() - 1;
