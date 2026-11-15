@@ -60,7 +60,7 @@ fn irange_bounds<T>(list: &T, specs: IrangeBounds<'_>) -> IterBounds
 where
     T: ListsMethods,
 {
-    if list.maxes.is_empty() {
+    if list.is_empty() {
         None
     } else {
         let min = match specs.start {

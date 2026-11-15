@@ -94,7 +94,7 @@ impl Bisect {
     where
         T: ListsMethods,
     {
-        if list.maxes.is_empty() {
+        if list.is_empty() {
             Ok(Self::Empty)
         } else {
             let pos = bisect::<LEFT>(&list.maxes, value)?;
@@ -131,14 +131,14 @@ impl Expand {
     }
 }
 pub enum Update {
-    EmptyMaxes,
+    Empty,
     Small,
     Big,
 }
 impl Update {
     pub fn new(list: &InnerList, values: &impl ExactSizeIterator<Item = Py<PyAny>>) -> Self {
-        if list.maxes.is_empty() {
-            Self::EmptyMaxes
+        if list.is_empty() {
+            Self::Empty
         } else if 4 * values.len() >= list.len() {
             Self::Big
         } else {

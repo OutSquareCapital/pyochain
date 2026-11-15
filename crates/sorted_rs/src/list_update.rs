@@ -75,7 +75,7 @@ impl<'py, T: ListsMethods> Updater<'py, &'py mut T> {
     }
     fn strategy(&mut self, it: impl ExactSizeIterator<Item = Py<PyAny>>) -> PyResult<()> {
         match ops::Update::new(self.list, &it) {
-            ops::Update::EmptyMaxes => self.update_chunked(it),
+            ops::Update::Empty => self.update_chunked(it),
             ops::Update::Big => self
                 .list
                 .values
