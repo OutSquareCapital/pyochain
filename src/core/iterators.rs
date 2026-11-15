@@ -15,6 +15,7 @@ use pyo3::{
     types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple},
 };
 use pyo3_ext::prelude::*;
+use pyochain_macros::try_cast;
 use smallvec::SmallVec;
 use std_tools::prelude::*;
 use tap::prelude::*;
@@ -1022,31 +1023,35 @@ impl Peekable {
 
     fn next_if_map(&mut self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = f.py();
-        self.peeked = self
-            .iterator
+        self.iterator
             .clone_ref(py)
             .into_bound(py)
             .next()
-            .map(|item| {
-                let call_result = f.call1((&item?,))?;
-                match call_result.cast_exact::<PyoOk>().ok() {
-                    Some(result) => result
-                        .get()
-                        .value
-                        .clone_ref(py)
-                        .pipe(PySome::new)
-                        .into_py_any(py),
-                    None => call_result
-                        .cast_into_exact::<PyoErr>()?
-                        .get()
-                        .error
-                        .clone_ref(py)
-                        .pipe(Ok),
-                }
-            })
-            .transpose()?;
-
-        PyNull::get_any_ok(py)
+            .transpose()?
+            .map_or_else(
+                || PyNull::get(py).into_py_any(py),
+                |item| {
+                    let call_result = f.call1((&item,))?;
+                    try_cast! {
+                        match call_result {
+                            CaseExact::PyoOk(some) => some
+                                .get()
+                                .value
+                                .clone_ref(py)
+                                .pipe(PySome::new)
+                                .into_py_any(py),
+                            CaseExact::PyoErr(err) => {
+                                self.peeked = err.get().error.clone_ref(py).pipe(Some);
+                                PyNull::get(py).into_py_any(py)
+                            }
+                            other => {
+                                let msg = format!("Expected a `pyochain.PyoResult`, got {other:?}");
+                                Err(PyTypeError::new_err(msg))
+                            }
+                        }
+                    }
+                },
+            )
     }
 }
 #[pyclass(module = "pyochain._iterators", generic)]
