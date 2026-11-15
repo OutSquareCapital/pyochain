@@ -224,8 +224,8 @@ impl PyoOk {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        match self.value.bind(py).cast_exact::<PySome>() {
-            Ok(some_ref) => some_ref
+        match self.value.bind(py).cast_exact::<PySome>().ok() {
+            Some(some_ref) => some_ref
                 .get()
                 .value
                 .clone_ref(py)
@@ -233,7 +233,7 @@ impl PyoOk {
                 .into_py_any(py)?
                 .pipe(PySome::new)
                 .into_py_any(py),
-            Err(_) => PyNull::get(py).into_py_any(py),
+            None => PyNull::get(py).into_py_any(py),
         }
     }
 

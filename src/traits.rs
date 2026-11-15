@@ -21,9 +21,10 @@ pub trait PyWrapper: PyFrozenClass + Deref<Target = Py<Self::Wrapped>> {
         let py = value.py();
         value
             .cast_exact::<Self>()
+            .ok()
             .map(|x| x.get().bind(py))
-            .or_else(|_| value.cast_exact::<Self::Wrapped>())
-            .map_err(|_| {
+            .or_else(|| value.cast_exact::<Self::Wrapped>().ok())
+            .ok_or_else(|| {
                 let py = value.py();
                 let wrapper = Self::type_object(py).name().unwrap();
                 let inner = Self::Wrapped::type_object(py).name().unwrap();

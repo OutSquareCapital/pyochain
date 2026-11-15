@@ -43,9 +43,9 @@ trait SetCmpMethods<
     #[inline(always)]
     fn handle_pyabstract_set(pyset: Bound<'py, PyAny>) -> PyResult<Bound<'py, T>> {
         let py = pyset.py();
-        match pyset.cast_exact::<T>() {
-            Err(_) => pyset.try_iter()?.try_collect_bound::<T>(py),
-            Ok(target) => Ok(target.into()),
+        match pyset.cast_exact::<T>().ok() {
+            None => pyset.try_iter()?.try_collect_bound::<T>(py),
+            Some(target) => Ok(target.into()),
         }
     }
     #[inline]

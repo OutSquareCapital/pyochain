@@ -307,8 +307,8 @@ impl PySome {
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let inner = self.value.bind(py);
-        match inner.cast_exact::<PyoOk>() {
-            Ok(ok_ref) => ok_ref
+        match inner.cast_exact::<PyoOk>().ok() {
+            Some(ok_ref) => ok_ref
                 .get()
                 .value
                 .clone_ref(py)
@@ -316,7 +316,7 @@ impl PySome {
                 .into_py_any(py)
                 .map(PyoOk::new)?
                 .into_py_any(py),
-            Err(_) => inner
+            None => inner
                 .cast_exact::<PyoErr>()?
                 .get()
                 .error
@@ -326,9 +326,9 @@ impl PySome {
         }
     }
     fn eq(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-        match other.cast_exact::<Self>() {
-            Ok(other_some) => self.value.bind(other.py()).eq(&other_some.get().value),
-            Err(_) => Ok(false),
+        match other.cast_exact::<Self>().ok() {
+            Some(other_some) => self.value.bind(other.py()).eq(&other_some.get().value),
+            None => Ok(false),
         }
     }
 
@@ -560,9 +560,9 @@ trait OptionMethods {
 }
 impl OptionMethods for PySome {
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-        match other.cast_exact::<PySome>() {
-            Ok(other_some) => self.value.bind(other.py()).eq(&other_some.get().value),
-            Err(_) => Ok(false),
+        match other.cast_exact::<PySome>().ok() {
+            Some(other_some) => self.value.bind(other.py()).eq(&other_some.get().value),
+            None => Ok(false),
         }
     }
 

@@ -209,12 +209,12 @@ where
             Ordering::Equal => IntoArgs::new(args.pyref, unsafe { args.obj.get_item_unchecked(0) }).into(),
             Ordering::Greater => args.obj
                 .into_iter()
-                .map(|other| match other.cast_exact::<C>().map(Bound::get) {
-                    Ok(other) if std::ptr::eq(other, args.pyref) => {
+                .map(|other| match other.cast_exact::<C>().map(Bound::get).ok() {
+                    Some(other) if std::ptr::eq(other, args.pyref) => {
                         args.pyref.as_ref().read().get_set(py).into_any()
                     }
-                    Ok(other) => other.as_ref().read().get_set(py).into_any(),
-                    Err(_) => other,
+                    Some(other) => other.as_ref().read().get_set(py).into_any(),
+                    None => other,
                 })
                 .collect_bound(py)
                 .expect("The chain tuple.iter().map().collect(tuple) should never fail, since the length isn't affected")

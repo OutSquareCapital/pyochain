@@ -89,9 +89,9 @@ impl SliceView {
         let py = base.py();
         let base_len = base.len()?.cast_signed();
         let indices = match start {
-            Some(s) => match s.cast_exact::<PySlice>() {
-                Ok(slice) => slice.indices(base_len),
-                Err(_) => PySlice::init(py, (Some(s), stop, step))?.indices(base_len),
+            Some(s) => match s.cast_exact::<PySlice>().ok() {
+                Some(slice) => slice.indices(base_len),
+                None => PySlice::init(py, (Some(s), stop, step))?.indices(base_len),
             },
             None => PySlice::init(py, (start, stop, step))?.indices(base_len),
         }?;

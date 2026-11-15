@@ -345,24 +345,20 @@ pub struct Scan {
 impl Scan {
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
-        let func = slf.func.bind(py);
-        let mut iter = slf.iter.clone_ref(py).into_bound(py);
-
-        match iter.next() {
+        match slf.iter.clone_ref(py).into_bound(py).next() {
             None => Ok(None),
-            Some(result) => {
-                let state = slf.initial.clone_ref(py);
-                let res = func.call1((state, result?))?;
-
-                match res.cast_exact::<PySome>() {
-                    Ok(some) => {
-                        let next_state = some.get().value.clone_ref(py);
-                        slf.initial = next_state.clone_ref(py);
-                        Ok(Some(next_state))
-                    }
-                    Err(_) => Ok(None),
-                }
-            }
+            Some(result) => slf
+                .func
+                .bind(py)
+                .call1((slf.initial.clone_ref(py), result?))?
+                .cast_exact::<PySome>()
+                .ok()
+                .map(|some| {
+                    let next_state = some.get().value.clone_ref(py);
+                    slf.initial = next_state.clone_ref(py);
+                    Ok(next_state)
+                })
+                .transpose(),
         }
     }
 }
@@ -608,15 +604,17 @@ pub struct Successors {
 impl Successors {
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
-        let curr = slf.current.clone_ref(py);
-        match curr.bind(py).cast_exact::<PySome>() {
-            Ok(some) => {
+        slf.current
+            .clone_ref(py)
+            .bind(py)
+            .cast_exact::<PySome>()
+            .ok()
+            .map(|some| {
                 let unwrapped = some.get().value.clone_ref(py);
                 slf.current = slf.succ.bind(py).call1((unwrapped.bind(py),))?.unbind();
-                Ok(Some(unwrapped))
-            }
-            Err(_) => Ok(None),
-        }
+                Ok(unwrapped)
+            })
+            .transpose()
     }
 }
 #[derive(Constructor)]
@@ -962,9 +960,11 @@ impl Peekable {
         )
     }
 
-    fn __bool__(&mut self, py: Python<'_>) -> bool {
-        self.peek(py)
-            .is_ok_and(|x| x.bind(py).cast_exact::<PySome>().is_ok())
+    fn __bool__(&mut self, py: Python<'_>) -> PyResult<bool> {
+        self.peek(py)?
+            .bind(py)
+            .is_exact_instance_of::<PySome>()
+            .pipe(Ok)
     }
 
     fn peek(&mut self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -1022,29 +1022,29 @@ impl Peekable {
 
     fn next_if_map(&mut self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = f.py();
-        self.peeked = match self.iterator.clone_ref(py).into_bound(py).next() {
-            Some(item) => {
+        self.peeked = self
+            .iterator
+            .clone_ref(py)
+            .into_bound(py)
+            .next()
+            .map(|item| {
                 let call_result = f.call1((&item?,))?;
-                match call_result.cast_exact::<PyoOk>() {
-                    Ok(result) => {
-                        return result
-                            .get()
-                            .value
-                            .clone_ref(py)
-                            .pipe(PySome::new)
-                            .into_py_any(py);
-                    }
-                    Err(_) => Some(
-                        call_result
-                            .cast_into_exact::<PyoErr>()?
-                            .get()
-                            .error
-                            .clone_ref(py),
-                    ),
+                match call_result.cast_exact::<PyoOk>().ok() {
+                    Some(result) => result
+                        .get()
+                        .value
+                        .clone_ref(py)
+                        .pipe(PySome::new)
+                        .into_py_any(py),
+                    None => call_result
+                        .cast_into_exact::<PyoErr>()?
+                        .get()
+                        .error
+                        .clone_ref(py)
+                        .pipe(Ok),
                 }
-            }
-            None => None,
-        };
+            })
+            .transpose()?;
 
         PyNull::get_any_ok(py)
     }
