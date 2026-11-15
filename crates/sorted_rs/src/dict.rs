@@ -28,10 +28,6 @@ impl Dict<List> {
     }
 }
 impl<T: ListsMethods> Dict<T> {
-    pub fn __len__(&self, py: Python<'_>) -> usize {
-        self.data.bind(py).len()
-    }
-
     pub fn or(&self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
         let py = value.py();
         let dict = self.data.bind(py).as_any();

@@ -1,16 +1,14 @@
 use std::ops::Deref;
 
 use crate::{
+    get_item::Index,
     prelude::*,
-    slice::SliceIdxs,
-    types::{Dict, IntOrSlice, ListOrAny},
+    types::{Dict, IndexOut, IntoIndex},
 };
 use derive_more::{Deref, From};
-use either::Either;
-use itertools::Itertools;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use pyo3::{PyTypeInfo, prelude::*};
-use pyo3_ext::{prelude::CollectBoundIterator, tuple, types::PyFrozenClass};
+use pyo3_ext::types::PyFrozenClass;
 
 #[derive(From, Deref)]
 pub struct OnKeys<M>(Py<M>);
@@ -24,40 +22,23 @@ where
 {
     type List: ListsMethods;
     type Mapping: PyFrozenClass + Deref<Target = RwLock<Dict<Self::List>>>;
-    fn get_item<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>>;
+    fn get_item<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>>;
     fn mapping(&self) -> RwLockReadGuard<'_, Dict<Self::List>> {
         self.get().deref().read()
     }
     fn mapping_mut(&self) -> RwLockWriteGuard<'_, Dict<Self::List>> {
         self.get().deref().write()
     }
-    fn len(&self, py: Python<'_>) -> usize {
-        self.mapping().__len__(py)
+    fn length(&self) -> usize {
+        self.mapping().list.len()
     }
     fn repr_from<Wrapper: PyTypeInfo>(&self, py: Python<'_>) -> PyResult<String> {
         let name = Wrapper::type_object(py).name()?;
         let values = self.mapping().repr::<Self::Mapping>(py)?;
         Ok(format!("{name}({values})"))
     }
-    fn del_item<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> PyResult<()> {
-        let mut mapping = self.mapping_mut();
-        let dict = mapping.data.clone_ref(py).into_bound(py);
-        match index {
-            Either::Right(pyslice) => {
-                let slice = SliceIdxs::new(&pyslice, mapping.len())?;
-                let keys = slice.extract_from(py, &mut mapping)?;
-                slice.delete_from(py, &mut mapping.list)?;
-                for key in keys {
-                    dict.del_item(key)?;
-                }
-                Ok(())
-            }
-            Either::Left(int) => {
-                let key = mapping.list.pop(py, int)?;
-                dict.del_item(key)?;
-                Ok(())
-            }
-        }
+    fn del_item<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> PyResult<()> {
+        Index::new(py, index).del_from_view(self)
     }
 }
 impl<M> ViewMethods for OnKeys<M>
@@ -66,16 +47,8 @@ where
 {
     type List = M::L;
     type Mapping = M;
-    fn get_item<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
-        let mut mapping = self.mapping_mut();
-        match index {
-            Either::Right(slice) => SliceIdxs::new(&slice, mapping.len())?
-                .extract_from(py, &mut mapping)?
-                .iter()
-                .collect_bound(py)
-                .map(Either::Left),
-            Either::Left(int) => mapping.list.get_item(py, int).map(Either::Right),
-        }
+    fn get_item<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>> {
+        self.mapping_mut().list.get_item_or_slice(py, index)
     }
 }
 
@@ -85,20 +58,8 @@ where
 {
     type List = M::L;
     type Mapping = M;
-    fn get_item<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
-        let mut mapping = self.mapping_mut();
-        let dict = mapping.data.clone_ref(py).into_bound(py).into_any();
-        match index {
-            Either::Right(slice) => SliceIdxs::new(&slice, mapping.len())?
-                .extract_from(py, &mut mapping)?
-                .iter()
-                .map(|key| dict.get_item(key))
-                .try_collect_bound(py)
-                .map(Either::Left),
-            Either::Left(int) => dict
-                .get_item(mapping.list.get_item(py, int)?)
-                .map(Either::Right),
-        }
+    fn get_item<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>> {
+        Index::new(py, index).get_from_values_view(self)
     }
 }
 
@@ -108,22 +69,7 @@ where
 {
     type List = M::L;
     type Mapping = M;
-    fn get_item<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> PyResult<ListOrAny<'py>> {
-        let mut mapping = self.mapping_mut();
-        let dict = mapping.data.clone_ref(py).into_bound(py).into_any();
-        match index {
-            Either::Right(slice) => SliceIdxs::new(&slice, mapping.len())?
-                .extract_from(py, &mut mapping)?
-                .iter()
-                .map(|key| tuple!(key.bind(py), &dict.get_item(key)?))
-                .map_ok(Bound::into_any)
-                .try_collect_bound(py)
-                .map(Either::Left),
-            Either::Left(int) => {
-                let key = mapping.list.get_item(py, int)?;
-                let value = dict.get_item(&key)?;
-                tuple!(key, value).map(Bound::into_any).map(Either::Right)
-            }
-        }
+    fn get_item<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>> {
+        Index::new(py, index).get_from_items_view(self)
     }
 }

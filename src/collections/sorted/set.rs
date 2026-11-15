@@ -10,7 +10,9 @@ use parking_lot::RwLock;
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
 use sorted_rs::{
-    KeyList, List, ListGetter, PySetDataRef, SetOp, SetPred, types, types::IntOrSlice,
+    KeyList, List, ListGetter, PySetDataRef, SetOp, SetPred,
+    prelude::ListsMethods,
+    types::{self, IntoIndex},
 };
 use std_tools::prelude::ResultExt;
 use tap::prelude::*;
@@ -64,12 +66,13 @@ pub(super) trait SortedSetMethods:
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.get_set(value.py()).contains(value)
     }
-    fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
+    fn __getitem__<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> ObjOrVec<'py> {
         self.write()
+            .list
             .get_item_or_slice(py, index)
             .and_then_left(Bound::try_into_py)
     }
-    fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+    fn __delitem__(&self, py: Python<'_>, index: IntoIndex<'_>) -> PyResult<()> {
         self.write().del_item_or_slice(py, index)
     }
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
@@ -90,8 +93,8 @@ pub(super) trait SortedSetMethods:
     fn __ge__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         self.comp(other, CompareOp::Ge)
     }
-    fn __len__(&self, py: Python<'_>) -> usize {
-        self.read().__len__(py)
+    fn __len__(&self) -> usize {
+        self.read().len()
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)

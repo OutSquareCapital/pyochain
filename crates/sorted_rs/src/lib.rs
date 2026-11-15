@@ -4,6 +4,7 @@ mod core;
 pub mod debug;
 mod dict;
 mod errors;
+mod get_item;
 mod inner;
 pub mod iter;
 mod keylist;

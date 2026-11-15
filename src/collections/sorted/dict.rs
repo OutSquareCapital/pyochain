@@ -97,8 +97,8 @@ pub(super) trait SortedDictMethods:
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.read().copy(py)?.conv::<Self>().into_bound(py)
     }
-    fn __len__(&self, py: Python<'_>) -> usize {
-        self.read().__len__(py)
+    fn __len__(&self) -> usize {
+        self.read().len()
     }
     fn __getitem__<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         self.read().get_item(key)

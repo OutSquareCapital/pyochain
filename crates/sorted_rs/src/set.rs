@@ -4,9 +4,9 @@ use std::cmp::Ordering;
 
 use crate::{
     KeyList, List,
+    get_item::Index,
     prelude::*,
-    slice::SliceIdxs,
-    types::{IntOrSlice, ListOrAny, Set},
+    types::{IntoIndex, Set},
 };
 use either::Either;
 use pyo3::{
@@ -121,47 +121,11 @@ impl<T: ListsMethods> Set<T> {
         self.list.clear(py);
         self.data.bind(py).clear();
     }
-    pub fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.list.reset(py, load)
-    }
-    pub fn get_item_or_slice<'py>(
-        &mut self,
-        py: Python<'py>,
-        index: IntOrSlice<'py>,
-    ) -> PyResult<ListOrAny<'py>> {
-        match index {
-            Either::Right(pyslice) => SliceIdxs::new(&pyslice, self.len())?
-                .extract_from(py, self)?
-                .iter()
-                .collect_bound(py)
-                .map(Either::Left),
-            Either::Left(index) => self.get_item(py, index).map(Either::Right),
-        }
-    }
-
-    pub fn del_item_or_slice(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
-        match index {
-            Either::Right(pyslice) => {
-                let slice = SliceIdxs::new(&pyslice, self.len())?;
-                let values = slice
-                    .extract_from(py, &mut self.list)?
-                    .iter()
-                    .collect_bound::<PySet>(py)?;
-                self.data.bind(py).difference_update((values,))?;
-                slice.delete_from(py, &mut self.list)
-            }
-            Either::Left(int) => {
-                let value = self.list.get_item(py, int)?;
-                self.data.bind(py).remove(&value)?;
-                self.list.del_item(py, int)
-            }
-        }
-    }
-    pub fn __len__(&self, py: Python<'_>) -> usize {
-        self.data.bind(py).len()
-    }
     pub fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         try_add(&mut self.list, self.data.bind(value.py()), value)
+    }
+    pub fn del_item_or_slice(&mut self, py: Python<'_>, index: IntoIndex<'_>) -> PyResult<()> {
+        Index::new(py, index).del_from_set(self)
     }
     pub fn discard(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let set = self.data.bind(value.py());

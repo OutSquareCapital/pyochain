@@ -6,7 +6,7 @@ use pyochain_macros::py_abc;
 use sorted_rs::{
     KeyList, List, PyListsDataRef,
     prelude::*,
-    types::{IntOrSlice, SeqOrAny},
+    types::{IntoIndex, SeqOrAny},
 };
 use std_tools::prelude::*;
 use tap::prelude::*;
@@ -86,11 +86,11 @@ pub(super) trait SortedListMethods:
         self.read().ge(other)
     }
 
-    fn __delitem__(&self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
+    fn __delitem__(&self, py: Python<'_>, index: IntoIndex<'_>) -> PyResult<()> {
         self.write().del_item_or_slice(py, index)
     }
 
-    fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
+    fn __getitem__<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> ObjOrVec<'py> {
         self.write()
             .get_item_or_slice(py, index)
             .and_then_left(Bound::try_into_py)

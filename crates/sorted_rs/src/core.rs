@@ -30,7 +30,7 @@ impl KeyList {
 pub struct Collection<T: ListsMethods, U> {
     #[deref(forward)]
     #[deref_mut(forward)]
-    pub(super) list: T,
+    pub list: T,
     pub data: Py<U>,
 }
 macro_rules! impl_self_as_ref {

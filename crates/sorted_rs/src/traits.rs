@@ -3,18 +3,16 @@ use std::ops::{Deref, DerefMut};
 use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
     errors,
+    get_item::Index,
     inner::{InnerList, Values},
     iter::{IrangeBounds, builder::RawRangeIdxs},
     list_update::ListAdd,
     ops,
     reprs::PyRepr,
-    slice::SliceIdxs,
-    types::{IntOrSlice, ListOrAny, VecPy},
+    types::{IndexOut, IntoIndex, VecPy},
 };
-use either::Either;
 use itertools::Itertools;
 use pyo3::prelude::*;
-use pyo3_ext::prelude::*;
 use tap::prelude::*;
 
 pub type BisectRes = PyResult<ops::Bisect>;
@@ -88,24 +86,12 @@ pub trait ListsMethods:
     fn get_item_or_slice<'py>(
         &mut self,
         py: Python<'py>,
-        index: IntOrSlice<'py>,
-    ) -> PyResult<ListOrAny<'py>> {
-        match index {
-            Either::Right(slice) => SliceIdxs::new(&slice, self.len())?
-                .extract_from(slice.py(), self)?
-                .iter()
-                .collect_bound(slice.py())
-                .map(Either::Left),
-            Either::Left(index) => self.get_item(py, index).map(Either::Right),
-        }
+        index: IntoIndex<'py>,
+    ) -> PyResult<IndexOut<'py>> {
+        Index::new(py, index).get_from_list(self)
     }
-    fn del_item_or_slice(&mut self, py: Python<'_>, index: IntOrSlice<'_>) -> PyResult<()> {
-        match index {
-            Either::Right(slice) => {
-                SliceIdxs::new(&slice, self.len())?.delete_from(slice.py(), self)
-            }
-            Either::Left(index) => self.del_item(py, index),
-        }
+    fn del_item_or_slice(&mut self, py: Python<'_>, index: IntoIndex<'_>) -> PyResult<()> {
+        Index::new(py, index).del_from_list(self)
     }
     fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
         if self.is_empty() {
