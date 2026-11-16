@@ -6,13 +6,10 @@ use crate::{
     types::{SeqOrAny, VecPy},
 };
 use derive_more::{Deref, DerefMut, From, IntoIterator};
-use either::Either;
-use pyo3::{basic::CompareOp, prelude::*, types::PyNotImplemented};
-use pyo3_ext::{
-    prelude::*,
-    types::{FromCmp, PyCmpOut},
-};
+use pyo3::{BoundObject, basic::CompareOp, prelude::*, types::PyNotImplemented};
+use pyo3_ext::{prelude::*, types::PyCmpOut};
 use std_tools::prelude::*;
+use tap::prelude::*;
 #[derive(Clone, Copy, Debug, From, Deref)]
 pub(super) struct Load(usize);
 impl Default for Load {
@@ -164,7 +161,6 @@ impl InnerList {
             Ok(self.lengths.pos_at(index))
         }
     }
-
     pub fn eq<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
         self.inner_cmp(other, CompareOp::Eq)
     }
@@ -183,43 +179,30 @@ impl InnerList {
     pub fn ge<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
         self.inner_cmp(other, CompareOp::Ge)
     }
-
     #[inline]
     fn inner_cmp<'py>(&self, other: SeqOrAny<'py>, op: CompareOp) -> PyCmpOut<'py, bool> {
         let py = other.py();
-        let it = self.values.iter().map(|a| a.bind(py));
-        match (other, op) {
-            (Either::Left(seq), CompareOp::Eq) => {
-                if self.len == seq.len()? {
-                    it.zip(seq.iter_py())
-                        .try_all(|(a, b)| a.eq(b?))
-                        .map(Either::Left)
-                } else {
-                    Ok(Either::Left(false))
+        other
+            .map_left(|seq| {
+                let mut it = self.values.iter().map(|a| a.bind(py)).zip(seq.iter_py());
+                match (op, self.len == seq.len()?) {
+                    (CompareOp::Eq, true) => it.try_all(|(a, b)| a.eq(b?)),
+                    (CompareOp::Eq, false) => Ok(false),
+                    (CompareOp::Ne, true) => it.try_any(|(a, b)| a.ne(b?)),
+                    (CompareOp::Ne, false) => Ok(true),
+                    (op, _) => it
+                        .try_find_map(|(a, b)| {
+                            let b = b?;
+                            if a.ne(&b)? {
+                                a.rich_compare_bool(&b, op).map(Some)
+                            } else {
+                                Ok(None)
+                            }
+                        })?
+                        .map_or_else(|| Ok(op.as_fn::<usize>()(&self.len, &seq.len()?)), Ok),
                 }
-            }
-            (Either::Left(seq), CompareOp::Ne) => {
-                if self.len == seq.len()? {
-                    it.zip(seq.iter_py())
-                        .try_any(|(a, b)| a.ne(b?))
-                        .map(Either::Left)
-                } else {
-                    Ok(Either::Left(true))
-                }
-            }
-            (Either::Left(seq), op) => it
-                .zip(seq.iter_py())
-                .try_find_map(|(a, b)| {
-                    let b = b?;
-                    if a.ne(&b)? {
-                        a.rich_compare_bool(&b, op).map(Some)
-                    } else {
-                        Ok(None)
-                    }
-                })?
-                .map_or_else(|| Ok(op.as_fn::<usize>()(&self.len, &seq.len()?)), Ok)
-                .map(Either::Left),
-            (Either::Right(any), _) => PyNotImplemented::from_cmp(any.py()),
-        }
+            })
+            .map_right(|_| PyNotImplemented::get(py).into_bound().pipe(Ok))
+            .factor_err()
     }
 }
