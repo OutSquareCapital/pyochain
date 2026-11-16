@@ -11,7 +11,7 @@ use tap::Pipe;
 macro_rules! pyassert {
     ($cond:expr) => {
         if !$cond {
-            let msg = format!("Assertion failed: {}", stringify!($cond));
+            let msg = stringify!($cond);
             Err(pyo3::exceptions::PyAssertionError::new_err(msg))
         } else {
             Ok(())
