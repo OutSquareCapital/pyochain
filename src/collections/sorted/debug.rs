@@ -8,29 +8,15 @@ use sorted_rs::{debug, prelude::*};
 
 #[pyfunction]
 pub fn check_sorted_dict(data: BoundedEither<'_, SortedDict, SortedKeyDict>) -> PyResult<()> {
-    data.map_either(
-        |x| debug::check_dict(x.py(), &x.get().read()),
-        |x| debug::check_dict(x.py(), &x.get().read()),
-    )
-    .into_inner()
+    either::for_both!(data, x => debug::check_dict(x.py(), &x.get().read()))
 }
-
 #[pyfunction]
 pub fn check_sorted_set(data: BoundedEither<'_, SortedSet, SortedKeySet>) -> PyResult<()> {
-    data.map_either(
-        |x| debug::check_set(x.py(), &x.get().read()),
-        |x| debug::check_set(x.py(), &x.get().read()),
-    )
-    .into_inner()
+    either::for_both!(data, x => debug::check_set(x.py(), &x.get().read()))
 }
-
 #[pyfunction]
 pub fn assert_sorted_list_empty(lst: BoundedEither<'_, SortedList, SortedKeyList>) -> PyResult<()> {
-    lst.map_either(
-        |x| debug::check_empty(&x.get().read()),
-        |x| debug::check_empty(&x.get().read()),
-    )
-    .into_inner()
+    either::for_both!(lst, x => debug::check_empty(&x.get().read()))
 }
 #[pyfunction]
 pub fn check_sorted_list(data: &Bound<'_, SortedList>) -> PyResult<()> {

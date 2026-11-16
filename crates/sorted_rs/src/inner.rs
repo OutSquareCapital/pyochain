@@ -181,7 +181,7 @@ impl InnerList {
     }
     #[inline]
     fn inner_cmp<'py>(&self, other: SeqOrAny<'py>, op: CompareOp) -> PyCmpOut<'py, bool> {
-        let py = other.py();
+        let py = either::for_both!(&other, x => x.py());
         other
             .map_left(|seq| {
                 let mut it = self.values.iter().map(|a| a.bind(py)).zip(seq.iter_py());
