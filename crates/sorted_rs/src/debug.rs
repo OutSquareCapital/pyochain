@@ -5,8 +5,9 @@ use crate::{
     prelude::*,
     types::{Dict, Set},
 };
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyString};
 use std_tools::prelude::*;
+use tap::Pipe;
 macro_rules! pyassert {
     ($cond:expr) => {
         if !$cond {
@@ -40,7 +41,7 @@ pub fn check_set<T: ListsMethods>(py: Python<'_>, slf: &Set<T>) -> PyResult<()> 
     pyassert!(slf.values.iter().try_all(|x| set.contains(x))?)
 }
 pub fn check_list<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
-    check_sublists(py, slf).inspect_err(|e| e.add_note(py, list_infos(slf)).unwrap())
+    check_sublists(py, slf).inspect_err(|e| e.add_note(py, list_infos(py, slf).unwrap()).unwrap())
 }
 
 pub fn check_key_list(py: Python<'_>, slf: &KeyList) -> PyResult<()> {
@@ -48,9 +49,12 @@ pub fn check_key_list(py: Python<'_>, slf: &KeyList) -> PyResult<()> {
         .and_then(|()| check_values_match_keys(py, slf))
         .inspect_err(|e| {
             let infos = [
-                list_infos(slf),
+                list_infos(py, slf).unwrap(),
                 format!("len_keys: {}", slf.keys().len()),
-                format!("keys: {:?}", slf.keys()),
+                format!(
+                    "keys: {:?}",
+                    slf.keys().iter().pipe(|v| into_repr(v, py)).unwrap()
+                ),
             ]
             .join("\n");
             e.add_note(py, infos).unwrap();
@@ -139,7 +143,7 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     }
     Ok(())
 }
-fn list_infos(slf: &InnerList) -> String {
+fn list_infos(py: Python<'_>, slf: &InnerList) -> PyResult<String> {
     [
         format!("len: {}", slf.len()),
         format!("load: {:?}", slf.load),
@@ -147,9 +151,16 @@ fn list_infos(slf: &InnerList) -> String {
         format!("len_index: {}", slf.lengths.inner.len()),
         format!("index: {:?}", slf.lengths.inner),
         format!("len_maxes: {}", slf.maxes.len()),
-        format!("maxes: {:?}", slf.maxes),
+        format!("maxes: {:?}", slf.maxes.iter().pipe(|v| into_repr(v, py))?),
         format!("len_lists: {}", slf.values.len()),
-        format!("lists: {:?}", slf.values),
+        format!("lists: {:?}", slf.values.iter().pipe(|v| into_repr(v, py))?),
     ]
     .join("\n")
+    .pipe(Ok)
+}
+fn into_repr<'a>(
+    it: impl Iterator<Item = &'a Py<PyAny>>,
+    py: Python<'_>,
+) -> PyResult<Vec<Bound<'_, PyString>>> {
+    it.map(|v| v.bind(py).repr()).collect::<PyResult<Vec<_>>>()
 }
