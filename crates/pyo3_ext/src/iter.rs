@@ -1,7 +1,7 @@
 use pyo3::{
     IntoPyObjectExt, ffi,
     prelude::*,
-    types::{PyFrozenSet, PyList, PySet, PyTuple, frozenset::PyFrozenSetBuilder},
+    types::{PyDict, PyFrozenSet, PyList, PySet, PyTuple, frozenset::PyFrozenSetBuilder},
 };
 
 /// Trait for Python collection types that can be created from an iterator of `Bound<'_, PYAny>`.
@@ -81,6 +81,43 @@ where
         iter.into_iter()
             .try_for_each(|item| builder.add(item))
             .map(|()| builder.finalize())
+    }
+}
+/// Collects `(key, value)` pairs, where both can be anything convertible with `IntoPyObject`.\
+/// Duplicate keys keep their first position and the last value, like `dict(pairs)` in Python.
+///
+/// Items are inserted one by one with `PyDict_SetItem`.
+impl<'py, K, V, I> FromBoundIterator<'py, I> for PyDict
+where
+    K: IntoPyObject<'py>,
+    V: IntoPyObject<'py>,
+    I: IntoIterator<Item = (K, V)>,
+{
+    #[inline(always)]
+    fn from_iter_bound(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        let dict = PyDict::new(py);
+        iter.into_iter()
+            .try_for_each(|(key, value)| dict.set_item(key, value))
+            .map(|()| dict)
+    }
+}
+impl<'py, K, V, I> TryFromBoundIterator<'py, I> for PyDict
+where
+    K: IntoPyObject<'py>,
+    V: IntoPyObject<'py>,
+    I: IntoIterator<Item = PyResult<(K, V)>>,
+{
+    type Item = (K, V);
+
+    #[inline(always)]
+    fn try_from_iter_bound(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        let dict = PyDict::new(py);
+        iter.into_iter()
+            .try_for_each(|item| {
+                let (key, value) = item?;
+                dict.set_item(key, value)
+            })
+            .map(|()| dict)
     }
 }
 impl<'py, T, I> TryFromBoundIterator<'py, I> for PyFrozenSet
