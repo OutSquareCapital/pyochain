@@ -6,7 +6,7 @@ import sortedcontainers as sc
 from pyochain.collections import SortedKeyList, SortedList
 from pyochain.collections._sorted import check_sorted_key_list, check_sorted_list  # ruff: ignore[import-private-name]
 
-from ._utils import LIST_CLASSES, List
+from ._utils import LIST_CLASSES, List, update_list
 
 
 @LIST_CLASSES
@@ -60,3 +60,14 @@ def _check_lst(
     del slt[pyslice]
     del lst[pyslice]
     assert slt == lst
+
+
+@LIST_CLASSES
+def test_extend_self(cls: type[List]) -> None:
+    x = cls([1, 2, 3, 4, 5])
+    update_list(x, x)
+    match x:
+        case list():
+            return
+        case _:
+            assert x == [1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
