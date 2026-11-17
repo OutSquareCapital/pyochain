@@ -104,7 +104,7 @@ impl PyoCounter {
         let items = self.bind(py).items_view().iter_py();
         let getter = pylibs::operator::itemgetter(py, 1)?;
         match n {
-            None => items.as_native().sorted(true, Some(&getter)),
+            None => items.as_native().sorted_by(true, &getter),
             Some(n) => pylibs::heapq::nlargest(n.extract()?, items.as_any(), Some(getter)),
         }
         .and_then(Bound::try_into_py)

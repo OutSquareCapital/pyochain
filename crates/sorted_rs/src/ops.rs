@@ -13,6 +13,7 @@ use crate::{
     bisect::bisect,
     bounds::{Bounds, Loc},
     inner::InnerList,
+    list_update::ListAdd,
     traits::ListsMethods,
 };
 
@@ -136,7 +137,7 @@ pub enum Update {
     Big,
 }
 impl Update {
-    pub fn new(list: &InnerList, values: &impl ExactSizeIterator<Item = Py<PyAny>>) -> Self {
+    pub fn new(list: &InnerList, values: &ListAdd<'_>) -> Self {
         if list.is_empty() {
             Self::Empty
         } else if 4 * values.len() >= list.len() {

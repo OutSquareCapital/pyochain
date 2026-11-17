@@ -6,6 +6,7 @@ use tap::prelude::*;
 use crate::{
     bounds::{Bounds, Loc},
     inner::InnerList,
+    list_update::ListAdd,
     ops::{self, ForwardSlice},
     traits::ListsMethods,
     types::VecPy,
@@ -148,7 +149,10 @@ impl SliceIdxs {
             values.append(new_slice.as_mut());
         }
         list.clear(py);
-        list.extend(py, values.into())
+        values
+            .into_iter()
+            .pipe(ListAdd::Sorted)
+            .extend_into(py, list)
     }
 }
 #[derive(From)]

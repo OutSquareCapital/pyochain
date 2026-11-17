@@ -110,35 +110,32 @@ where
     }
 
     #[inline(always)]
-    pub fn sorted(
-        self,
-        reverse: bool,
-        key: Option<&Bound<'py, PyAny>>,
-    ) -> PyResult<Bound<'py, PyList>> {
+    pub fn sorted(self, reverse: bool) -> PyResult<Bound<'py, PyList>> {
         let py = self.py();
-        let func = builtins::SORTED.import(py);
-        let it = (self.as_ref(),);
-        // Micro-optimization to minimize PyDict::set_item calls, and use vector call if possible.
-        match (reverse, key) {
-            (false, None) => func.call1(it),
-            (true, None) => {
-                let kwargs = PyDict::new(py);
-                kwargs.set_item(intern!(py, "reverse"), true)?;
-                func.call(it, Some(&kwargs))
-            }
-            (false, Some(key)) => {
-                let kwargs = PyDict::new(py);
-                kwargs.set_item(intern!(py, "key"), key)?;
-                func.call(it, Some(&kwargs))
-            }
-            (true, Some(key)) => {
-                let kwargs = PyDict::new(py);
-                kwargs.set_item(intern!(py, "reverse"), true)?;
-                kwargs.set_item(intern!(py, "key"), key)?;
-                func.call(it, Some(&kwargs))
-            }
+        let kwargs = reverse
+            .then(|| {
+                let kw = PyDict::new(py);
+                kw.set_item(intern!(py, "reverse"), true)?;
+                Ok::<Bound<'_, PyDict>, PyErr>(kw)
+            })
+            .transpose()?;
+        builtins::SORTED
+            .import(py)
+            .call((self.as_ref(),), kwargs.as_ref())
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+    }
+    #[inline(always)]
+    pub fn sorted_by(self, reverse: bool, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyList>> {
+        let py = self.py();
+        let kwargs = PyDict::new(py);
+        if reverse {
+            kwargs.set_item(intern!(py, "reverse"), true)?;
         }
-        .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+        kwargs.set_item(intern!(py, "key"), key)?;
+        builtins::SORTED
+            .import(py)
+            .call((self.as_ref(),), Some(&kwargs))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
     }
     #[inline(always)]
     pub fn zip(self, others: &Bound<'py, PyTuple>, strict: bool) -> ChainedIter<'py> {

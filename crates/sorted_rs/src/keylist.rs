@@ -3,25 +3,33 @@ use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
     inner::Values,
     iter::IrangeBounds,
-    list_update::{ListAdd, Updater},
+    list_update::{KeyFn, WithKey},
     ops,
     search::Search,
     traits::ListsMethods,
-    types::VecPy,
 };
 use pyo3::prelude::*;
-use pyo3_ext::prelude::*;
+use tap::prelude::*;
 impl ListsMethods for KeyList {
+    const IS_KEYED: bool = true;
+    fn key_func<'py>(&self, py: Python<'py>) -> impl KeyFn<'py> + use<'py> {
+        self.func.clone_ref(py).into_bound(py).pipe(WithKey)
+    }
     fn keys(&self) -> &Values {
         &self.keys
     }
     fn keys_mut(&mut self) -> &mut Values {
         &mut self.keys
     }
-    fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
-        let mut new_inst = Self::new(self.func.clone_ref(py));
-        new_inst.extend(py, values.into())?;
-        Ok(new_inst)
+    fn new_empty(&self, py: Python<'_>) -> Self {
+        Self::new(self.func.clone_ref(py))
+    }
+    fn copy(&self, py: Python<'_>) -> Self {
+        Self {
+            inner: self.inner.clone_ref(py),
+            keys: self.keys.clone_ref(py),
+            func: self.func.clone_ref(py),
+        }
     }
     fn irange<'py>(
         &self,
@@ -108,16 +116,6 @@ impl ListsMethods for KeyList {
             ops::Bisect::Empty | ops::Bisect::MaxesLen => Ok(None),
             ops::Bisect::AtLoc(loc) => Search::new(self, loc, value, &key).find(),
         }
-    }
-    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
-        let key_fn = &self.func.clone_ref(py).into_bound(py);
-        Updater::new(py, self, Some(key_fn)).merge_with(values, |a, b| {
-            key_fn
-                .call1((a,))
-                .unwrap()
-                .compare_fast(&key_fn.call1((b,)).unwrap())
-                .unwrap()
-        })
     }
     fn split_values(&mut self, pos: usize, load: usize) {
         let half = self.values[pos].split_off(load);

@@ -1054,7 +1054,7 @@ impl PyoIterator {
     }
     #[pyo3(signature = (*, reverse=false))]
     fn sort<'py>(slf: &Bound<'py, Self>, reverse: bool) -> PyResult<Bound<'py, PyoVec>> {
-        slf.try_iter_native()?.sorted(reverse, None)?.try_into_py()
+        slf.try_iter_native()?.sorted(reverse)?.try_into_py()
     }
     #[pyo3(signature = (key, *,reverse=false))]
     fn sort_by<'py>(
@@ -1063,7 +1063,7 @@ impl PyoIterator {
         reverse: bool,
     ) -> PyResult<Bound<'py, PyoVec>> {
         slf.try_iter_native()?
-            .sorted(reverse, Some(key))?
+            .sorted_by(reverse, key)?
             .try_into_py()
     }
     fn step_by<'py>(

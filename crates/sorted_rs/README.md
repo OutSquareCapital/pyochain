@@ -163,10 +163,10 @@ Notation: `values` holds the elements, `keys` holds the sort keys (for `List`, `
 
 ### Known gaps
 
-- Python exceptions raised by the key function or by `__lt__` inside sort closures are converted to panics by `.unwrap()` (`keylist.rs` `extend`, `list.rs` `extend`).
+- Python exceptions raised by the key function or by `__lt__` inside sort closures are converted to panics by `.unwrap()` (`KeyFn::cmp` in `list_update.rs`, used by `concat_into` and by the `Identity` arm of `extend_into`).
 - `core.rs` uses `try_read().unwrap()` / `try_write().unwrap()`, which panics on lock contention.
 - `iter/core.rs` marks `InnerRef` as `Send` and `Sync`, and releases the read lock before iterating. Mutating the list while an iterator is alive is a data race in Rust terms; only the GIL currently prevents it.
-- `Updater::try_as_updatable` takes a read lock on the other list. Two threads doing `a.extend(b)` and `b.extend(a)` can deadlock.
+- `PyListsDataRef::try_as_updatable` takes a read lock on the other list. Two threads doing `a.extend(b)` and `b.extend(a)` can deadlock.
 
 ## Statically known runtime checks
 
@@ -315,17 +315,6 @@ A load factor validated at construction: `>= 1`, with `2 * load` and `load / 2` 
 
 [^24]: in `split_values`; same guard, shared with `keys`
 
-### `Option` of the key function
-
-| Location                                                                           | Code                                      | Note                |
-| ---------------------------------------------------------------------------------- | ----------------------------------------- | ------------------- |
-| `list_update.rs`, l.[42](src/list_update.rs#L42)                                   | `py_func: Option<&'py Bound<'py, PyAny>>` | [^25]               |
-| `list_update.rs`, l.[70](src/list_update.rs#L70)                                   | `.sorted(false, self.py_func)?`           | in `merge_with`     |
-| `list_update.rs`, l.[86](src/list_update.rs#L86) to l.[87](src/list_update.rs#L87) | `self.py_func.map_or_else(...)`           | in `strategy`       |
-| `list_update.rs`, l.[110](src/list_update.rs#L110)                                 | `match self.py_func`                      | in `update_chunked` |
-
-[^25]: in `Updater`; `List` always passes `None`, `KeyList` always passes `Some`
-
 ### Delete path witness
 
 | Location                                 | Code                      | Note  |
@@ -360,13 +349,12 @@ Depends on the structure (lockstep, Loc validity, sorted order), not on a type t
 ### R: runtime (user data, external calls, cache state)
 
 - `traits.rs`: `expand` (`lengths` clear and `expand_at`), `reset` (`load.into()`).
-- `list.rs`: `extend` (`compare_fast(...).unwrap()`, see Known gaps).
-- `keylist.rs`: `extend` (`call1(...).unwrap()`, see Known gaps).
+- `list_update.rs`: `KeyFn::cmp` (`call1(...).unwrap()` and `compare_fast(...).unwrap()`, see Known gaps).
 - `inner.rs`: `set_pos` (`last_len + index`, `index += len`), `set_pos_usize` (`index >= len`, `lengths.build`, `pos_at`).
 - `ops.rs`: `Bisect::new` (`is_empty`, `pos == len`), `SubListState::new` (`keys().len() > 1`), `Update::new` (`is_empty`), `Locate::new` (`-last < i`).
 - `bounds.rs`: `try_normalize` (user inputs), `Loc::into_index` (cache).
 - `search.rs`: `on_index` (`MaxesLen`), `index_by_val`, `index_by_key` (bisect and `Placement` results).
-- `list_update.rs`: `merge_with` (`sorted(...)?`), `try_as_updatable` (`cast_exact`), `update_chunked` (`collect::<PyResult>`), `ListAdd::Sorted` (read lock).
+- `list_update.rs`: `merge_with` (`sorted(...)?`), `try_as_updatable` (`cast_exact`, blocking `read` on the other list), `update_chunked` (`collect::<PyResult>`).
 - `bisect.rs`: `resolve` (`func(...)?`, `__lt__`).
 - `lengths.rs`: `pos_at` (`index -= index_child`), `build` (row shape checks).
 - `iter/impls.rs`: `inner_next` and `inner_next_back` (`Option` guards).

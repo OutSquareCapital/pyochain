@@ -6,7 +6,7 @@ use crate::{
     get_item::Index,
     inner::{InnerList, Values},
     iter::{IrangeBounds, builder::RawRangeIdxs},
-    list_update::ListAdd,
+    list_update::{KeyFn, ListAdd},
     ops,
     reprs::PyRepr,
     types::{IndexOut, IntoIndex, VecPy},
@@ -22,17 +22,21 @@ pub trait ListsMethods:
     /// Returns a reference to the "keys" of the collection.\
     /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
     /// For collections sorted by *key*, this is equivalent to `KeysListsData::1`.
+    const IS_KEYED: bool;
     fn keys(&self) -> &Values;
     fn keys_mut(&mut self) -> &mut Values;
+    fn key_func<'py>(&self, py: Python<'py>) -> impl KeyFn<'py> + use<'py, Self>;
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
-    fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self>;
+    #[must_use]
+    fn new_empty(&self, py: Python<'_>) -> Self;
+    #[must_use]
+    fn copy(&self, py: Python<'_>) -> Self;
     /// Equivalent to `bisect_ky_key` if the collection is sorted **by value**.\
     /// If the collection is sorted **by key**, *value* is first transformed by the *key* function before the bisect operation.
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn clear(&mut self, py: Python<'_>);
     fn delete(&mut self, py: Python<'_>, loc: Loc) -> PyResult<()>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
-    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()>;
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize>;
     fn split_values(&mut self, pos: usize, load: usize);
     fn irange<'py>(
@@ -45,27 +49,8 @@ pub trait ListsMethods:
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.find(value).map(|x| x.is_some())
     }
-    fn copy(&self, py: Python<'_>) -> PyResult<Self> {
-        self.as_owned_from(py, self.values.iter_owned(py).collect_vec())
-    }
-    fn concat(&self, py: Python<'_>, other: ListAdd<'_, Self>) -> PyResult<Self> {
-        let out = match other {
-            ListAdd::Identity => self.values.repeat(py, 2),
-            ListAdd::Sorted(list) => self
-                .values
-                .iter()
-                .chain(list.values.iter())
-                .map(|x| x.clone_ref(py))
-                .collect(),
-            ListAdd::Vec(values) => values,
-            ListAdd::Iterator(it) => self
-                .values
-                .iter()
-                .map(|x| x.clone_ref(py).pipe(Ok::<Py<PyAny>, PyErr>))
-                .chain(it.map_ok(Bound::unbind))
-                .collect::<PyResult<_>>()?,
-        };
-        self.as_owned_from(py, out)
+    fn concat(&self, py: Python<'_>, other: ListAdd<'_>) -> PyResult<Self> {
+        other.concat_into(py, self)
     }
     fn expand(&mut self, py: Python<'_>, pos: usize) {
         match ops::Expand::new(self, pos) {
@@ -82,6 +67,9 @@ pub trait ListsMethods:
             ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
             ops::Expand::NoOp => (),
         }
+    }
+    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_>) -> PyResult<()> {
+        values.extend_into(py, self)
     }
     fn get_item_or_slice<'py>(
         &mut self,
@@ -121,9 +109,12 @@ pub trait ListsMethods:
             .map_or(Ok(()), |loc| self.delete(value.py(), loc))
     }
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let values = self.values.repeat(py, num);
+        let values = self.values.repeat(py, num)?;
         self.clear(py);
-        self.extend(py, values.into())
+        self.extend(py, values)
+    }
+    fn mul(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
+        self.values.repeat(py, num)?.into_new_list(py, self)
     }
     fn index(&mut self, value: &Bound<'_, PyAny>, (start, stop): RawRangeIdxs) -> PyResult<usize> {
         Bounds::new(start, stop)
@@ -155,14 +146,14 @@ pub trait ListsMethods:
             None => Err(errors::not_in_list(value)),
         }
     }
-    fn as_repeated(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
-        self.as_owned_from(py, self.values.repeat(py, num))
-    }
     fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
         let values = self.values.iter_owned(py).collect_vec();
         self.clear(py);
         self.load = load.into();
-        self.extend(py, values.into())
+        values
+            .into_iter()
+            .pipe(ListAdd::Sorted)
+            .extend_into(py, self)
     }
     fn set_item(&mut self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.del_item(value.py(), index)?;

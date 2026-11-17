@@ -8,7 +8,7 @@ use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::prelude::*;
 
-use crate::{List, prelude::*, types::Dict};
+use crate::{List, list_update::ListAdd, prelude::*, types::Dict};
 
 impl Dict<List> {
     #[must_use]
@@ -55,11 +55,14 @@ impl<T: ListsMethods> Dict<T> {
     }
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         let dict = self.data.bind(py).as_any();
-        self.values
+        let data = self
+            .values
             .iter()
-            .map(|x| x.clone_ref(py).into_bound(py))
-            .map(|key| dict.get_item(&key).map(|value| (key, value)))
-            .pipe(|v| self.copy_from_iter(py, v))
+            .map(|key| key.bind(py))
+            .map(|key| Ok((key, dict.get_item(key)?)))
+            .try_collect_bound::<PyDict>(py)?
+            .unbind();
+        Self::new(self.list.copy(py), data).pipe(Ok)
     }
     pub fn get_item<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         self.data.bind(key.py()).as_any().get_item(key)
@@ -108,17 +111,18 @@ impl<T: ListsMethods> Dict<T> {
         v: I,
     ) -> PyResult<Self> {
         let inner = PyDict::new(py);
-        let unbounded = v
-            .into_iter()
+        v.into_iter()
             .map(|res| {
                 res.and_then(|(key, value)| {
                     inner.set_item(&key, &value)?;
                     Ok(key.unbind())
                 })
             })
-            .collect::<PyResult<Vec<_>>>()?;
-        let list = self.list.as_owned_from(py, unbounded)?;
-        Self::new(list, inner.unbind()).pipe(Ok)
+            .collect::<PyResult<Vec<_>>>()?
+            .into_iter()
+            .pipe(ListAdd::Vec)
+            .into_new_list(py, &self.list)
+            .map(|list| Self::new(list, inner.unbind()))
     }
 
     pub fn del_item(&mut self, key: &Bound<'_, PyAny>) -> PyResult<()> {
@@ -174,7 +178,10 @@ impl<T: ListsMethods> Dict<T> {
             if let Some(kw) = kwargs {
                 inner.update(kw.as_mapping())?;
             }
-            self.list.extend(inner.py(), inner.iter_py().into())
+            inner
+                .keys()
+                .pipe(ListAdd::PyListOwned)
+                .extend_into(py, &mut self.list)
         } else {
             let pairs = try_cast_into! {
                 match (m, kwargs) {
@@ -202,7 +209,10 @@ impl<T: ListsMethods> Dict<T> {
             if (10 * pairs.len()) > inner.len() {
                 inner.update(pairs.as_mapping())?;
                 self.list.clear(py);
-                self.list.extend(inner.py(), inner.iter_py().into())
+                inner
+                    .keys()
+                    .pipe(ListAdd::PyListOwned)
+                    .extend_into(py, &mut self.list)
             } else {
                 pairs.keys_view().iter_py().try_for_each(|key| {
                     let k = key?;

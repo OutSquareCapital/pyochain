@@ -2,6 +2,7 @@ use crate::{
     bounds::Loc,
     errors,
     lengths::Lengths,
+    list_update::ListAdd,
     ops,
     types::{SeqOrAny, VecPy},
 };
@@ -31,20 +32,33 @@ impl Load {
         self.0 / 2
     }
 }
-
 #[derive(Deref, DerefMut, From, Debug, Default, IntoIterator)]
 pub struct Maxes(VecPy);
+impl Maxes {
+    pub(super) fn clone_ref(&self, py: Python<'_>) -> Self {
+        self.iter()
+            .map(|x| x.clone_ref(py))
+            .collect::<VecPy>()
+            .into()
+    }
+}
 #[derive(Deref, DerefMut, From, Debug, Default, IntoIterator)]
 pub struct Values(Vec<VecPy>);
 impl Values {
+    pub(super) fn clone_ref(&self, py: Python<'_>) -> Self {
+        self.iter_chunks()
+            .map(|chunk| chunk.iter().map(|x| x.clone_ref(py)).collect())
+            .collect::<Vec<_>>()
+            .into()
+    }
+    /// Repeat the list for the `mul` and `imul` operations. We know that the extend path will be `ops::Update::Empty`.
     #[inline]
-    #[must_use]
-    pub(super) fn repeat(&self, py: Python<'_>, num: usize) -> VecPy {
-        let values = self.iter_owned(py).collect::<Vec<_>>();
+    pub(super) fn repeat<'py>(&self, py: Python<'py>, num: usize) -> PyResult<ListAdd<'py>> {
         (0..num)
-            .flat_map(|_| values.iter())
+            .flat_map(|_| self.iter())
             .map(|x| x.clone_ref(py))
-            .collect()
+            .collect_bound(py)
+            .map(ListAdd::PyListOwned)
     }
     #[inline(always)]
     pub(super) fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
@@ -83,6 +97,17 @@ pub struct InnerList {
     pub(super) load: Load,
 }
 impl InnerList {
+    /// Duplicates the sublists, the maxes, the length and the load.\
+    /// The lengths index is only a cache, and is rebuilt on demand.
+    pub(super) fn clone_ref(&self, py: Python<'_>) -> Self {
+        Self {
+            values: self.values.clone_ref(py),
+            maxes: self.maxes.clone_ref(py),
+            lengths: Lengths::default(),
+            len: self.len,
+            load: self.load,
+        }
+    }
     #[inline(always)]
     pub fn len(&self) -> usize {
         self.len

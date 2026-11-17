@@ -1,5 +1,4 @@
 use pyo3::prelude::*;
-use pyo3_ext::prelude::*;
 use tap::{Conv, Pipe};
 
 use crate::{
@@ -7,24 +6,28 @@ use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
     inner::Values,
     iter::IrangeBounds,
-    list_update::{ListAdd, Updater},
+    list_update::{Identity, KeyFn},
     ops,
     search::Search,
     traits::ListsMethods,
-    types::VecPy,
 };
 
 impl ListsMethods for List {
+    const IS_KEYED: bool = false;
     fn keys(&self) -> &Values {
         &self.values
+    }
+    fn new_empty(&self, _py: Python<'_>) -> Self {
+        Self::default()
+    }
+    fn copy(&self, py: Python<'_>) -> Self {
+        Self(self.0.clone_ref(py))
     }
     fn keys_mut(&mut self) -> &mut Values {
         &mut self.values
     }
-    fn as_owned_from(&self, py: Python<'_>, values: VecPy) -> PyResult<Self> {
-        let mut new_inst = Self::default();
-        new_inst.extend(py, values.into())?;
-        Ok(new_inst)
+    fn key_func<'py>(&self, py: Python<'py>) -> impl KeyFn<'py> + use<'py> {
+        Identity(py)
     }
     fn irange<'py>(
         &self,
@@ -97,10 +100,6 @@ impl ListsMethods for List {
             }
         }
         Ok(())
-    }
-    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_, Self>) -> PyResult<()> {
-        Updater::new(py, self, None)
-            .merge_with(values, |a, b| a.bind(py).compare_fast(b.bind(py)).unwrap())
     }
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize> {
         Search::on_index(self, value, value)?.index_by_val(indices)

@@ -5,6 +5,7 @@ use std::cmp::Ordering;
 use crate::{
     KeyList, List,
     get_item::Index,
+    list_update::ListAdd,
     prelude::*,
     types::{IntoIndex, Set},
 };
@@ -66,7 +67,10 @@ pub trait PySetDataRef:
         let set = &slf.data.clone_ref(py).into_bound(py);
         op.call_mut(set, args)?;
         slf.list.clear(py);
-        slf.list.extend(py, set.iter_py().into())
+        set.iter()
+            .collect_bound(py)?
+            .pipe(ListAdd::PyListOwned)
+            .extend_into(py, &mut slf.list)
     }
     #[inline]
     fn map_pred<'py>(&self, other: Bound<'py, PyAny>, op: SetPred) -> PyResult<Bound<'py, PyBool>> {
@@ -112,9 +116,13 @@ impl<T: ListsMethods> Set<T> {
     }
     fn wrap(&self, values: Bound<'_, PySet>) -> PyResult<Self> {
         let py = values.py();
-        let list = self
-            .list
-            .as_owned_from(py, values.iter().map(Bound::unbind).collect())?;
+        let list = values
+            .iter()
+            .map(Bound::unbind)
+            .collect::<Vec<_>>()
+            .into_iter()
+            .pipe(ListAdd::Vec)
+            .into_new_list(py, &self.list)?;
         Self::new(list, values.unbind()).pipe(Ok)
     }
     pub fn clear(&mut self, py: Python<'_>) {
@@ -139,7 +147,10 @@ impl<T: ListsMethods> Set<T> {
         }
     }
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
-        self.data.bind(py).copy().and_then(|x| self.wrap(x))
+        self.data
+            .bind(py)
+            .copy()
+            .map(|data| Self::new(self.list.copy(py), data.unbind()))
     }
     pub fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
         match self.data.bind(value.py()).contains(value) {

@@ -113,10 +113,7 @@ pub(super) trait SortedListMethods:
         self.extend(&other)
     }
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        self.read()
-            .as_repeated(py, num)?
-            .conv::<Self>()
-            .into_bound(py)
+        self.read().mul(py, num)?.conv::<Self>().into_bound(py)
     }
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
         self.write().imul(py, num)
@@ -134,7 +131,7 @@ pub(super) trait SortedListMethods:
         self.write().count(&value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.read().copy(py)?.conv::<Self>().into_bound(py)
+        self.read().copy(py).conv::<Self>().into_bound(py)
     }
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.write().discard(value)
