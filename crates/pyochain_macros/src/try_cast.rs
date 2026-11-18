@@ -8,7 +8,8 @@ use syn::{
     punctuated::Punctuated,
     visit_mut::{self, VisitMut},
 };
-const INVALID_PATTERN_MSG: &str = "use `Case::Type(binding)` or `CaseExact::Type(binding)`";
+const INVALID_PATTERN_MSG: &str =
+    "use `Case::Type(binding)`, `Case::Type(_)`, `CaseExact::Type(binding)` or `CaseExact::Type(_)`";
 const CASE: &str = "Case";
 const CASE_EXACT: &str = "CaseExact";
 /// Main enum for the two variants of `try_cast` macro: borrowed and owned.
@@ -49,10 +50,11 @@ fn generate_match_arm(arm: &Arm, mode: &Cast) -> SynResult<Vec<TokenStream2>> {
     };
     match pattern {
         Pat::Or(or_pattern) => {
+            let mut counter = 0;
             let rewritten = or_pattern
                 .cases
                 .iter()
-                .map(rewrite_pattern)
+                .map(|case| rewrite_pattern(case, &mut counter))
                 .collect::<SynResult<Vec<_>>>()?;
             if rewritten.iter().all(|(_, cases)| cases.is_empty()) {
                 generate_match_pattern(pattern, guard, &arm.body, mode).map(|arm| vec![arm])
@@ -75,7 +77,7 @@ fn generate_match_pattern(
     body: &syn::Expr,
     mode: &Cast,
 ) -> SynResult<TokenStream2> {
-    let (pattern, cases) = rewrite_pattern(pattern)?;
+    let (pattern, cases) = rewrite_pattern(pattern, &mut 0)?;
     generate_rewritten_arm(&pattern, &cases, guard, body, mode)
 }
 #[allow(clippy::unnecessary_wraps)]
@@ -172,31 +174,35 @@ fn body_uses(body: &syn::Expr, ident: &Ident) -> bool {
     binding.used
 }
 
-fn rewrite_pattern(pattern: &Pat) -> SynResult<(TokenStream2, Vec<Case>)> {
+/// `counter` gives a unique name to each wildcard (`_`) binding within a single pattern.
+fn rewrite_pattern(pattern: &Pat, counter: &mut usize) -> SynResult<(TokenStream2, Vec<Case>)> {
     match pattern {
-        Pat::Tuple(tuple) => rewrite_tuple(tuple),
-        Pat::TupleStruct(tuple_struct) => rewrite_tuple_struct(tuple_struct),
+        Pat::Tuple(tuple) => rewrite_tuple(tuple, counter),
+        Pat::TupleStruct(tuple_struct) => rewrite_tuple_struct(tuple_struct, counter),
         _ => Ok((quote!(#pattern), Vec::new())),
     }
 }
-fn rewrite_tuple(tuple: &PatTuple) -> SynResult<(TokenStream2, Vec<Case>)> {
+fn rewrite_tuple(tuple: &PatTuple, counter: &mut usize) -> SynResult<(TokenStream2, Vec<Case>)> {
     let (patterns, cases) = tuple
         .elems
         .iter()
-        .map(rewrite_pattern)
+        .map(|elem| rewrite_pattern(elem, counter))
         .collect::<SynResult<(Vec<_>, Vec<_>)>>()?;
     let cases = cases.into_iter().flatten().collect::<Vec<_>>();
     Ok((quote!((#(#patterns),*)), cases))
 }
 
-fn rewrite_tuple_struct(tuple_struct: &PatTupleStruct) -> SynResult<(TokenStream2, Vec<Case>)> {
-    match rewrite_case(tuple_struct)? {
+fn rewrite_tuple_struct(
+    tuple_struct: &PatTupleStruct,
+    counter: &mut usize,
+) -> SynResult<(TokenStream2, Vec<Case>)> {
+    match rewrite_case(tuple_struct, counter)? {
         (pattern, cases) if !cases.is_empty() => Ok((pattern, cases)),
         _ => {
             let (patterns, cases) = tuple_struct
                 .elems
                 .iter()
-                .map(rewrite_pattern)
+                .map(|elem| rewrite_pattern(elem, counter))
                 .collect::<SynResult<(Vec<_>, Vec<_>)>>()?;
             let cases = cases.into_iter().flatten().collect::<Vec<_>>();
             let path = &tuple_struct.path;
@@ -204,7 +210,10 @@ fn rewrite_tuple_struct(tuple_struct: &PatTupleStruct) -> SynResult<(TokenStream
         }
     }
 }
-fn rewrite_case(pattern: &PatTupleStruct) -> SynResult<(TokenStream2, Vec<Case>)> {
+fn rewrite_case(
+    pattern: &PatTupleStruct,
+    counter: &mut usize,
+) -> SynResult<(TokenStream2, Vec<Case>)> {
     let Some(marker) = pattern.path.segments.first() else {
         return Err(syn::Error::new_spanned(pattern, INVALID_PATTERN_MSG));
     };
@@ -220,20 +229,27 @@ fn rewrite_case(pattern: &PatTupleStruct) -> SynResult<(TokenStream2, Vec<Case>)
         leading_colon: None,
         segments: Punctuated::from_iter(pattern.path.segments.iter().skip(1).cloned()),
     };
-    let Pat::Ident(PatIdent {
-        ident,
-        subpat: None,
-        ..
-    }) = &pattern.elems[0]
-    else {
-        return Err(syn::Error::new_spanned(pattern, INVALID_PATTERN_MSG));
+    let (binding, output) = match &pattern.elems[0] {
+        Pat::Ident(PatIdent {
+            ident,
+            subpat: None,
+            ..
+        }) => (format_ident!("__try_cast_{}", ident), ident.clone()),
+        Pat::Wild(_) => {
+            let id = *counter;
+            *counter += 1;
+            (
+                format_ident!("__try_cast_wild_{}", id),
+                format_ident!("__try_cast_unused_{}", id),
+            )
+        }
+        _ => return Err(syn::Error::new_spanned(pattern, INVALID_PATTERN_MSG)),
     };
-    let binding = format_ident!("__try_cast_{}", ident);
     Ok((
         quote!(#binding),
         vec![Case {
             binding,
-            output: ident.clone(),
+            output,
             ty,
             exact,
         }],
