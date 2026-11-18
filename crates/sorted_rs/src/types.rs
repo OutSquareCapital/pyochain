@@ -1,13 +1,12 @@
 use parking_lot::RwLock;
-use std::sync::Arc;
 
 use either::Either;
 use pyo3::{
     prelude::*,
-    types::{PyInt, PyList, PySequence, PySlice},
+    types::{PyDict, PyInt, PyList, PySequence, PySet, PySlice},
 };
 
-use crate::DictData;
+use crate::Collection;
 
 /// A `Vec` which contains python objects.
 pub type VecPy = Vec<Py<PyAny>>;
@@ -17,5 +16,6 @@ pub type VecPy = Vec<Py<PyAny>>;
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
 pub type ListOrAny<'py> = Either<Bound<'py, PyList>, Bound<'py, PyAny>>;
 pub type IntOrSlice<'py> = Either<Bound<'py, PyInt>, Bound<'py, PySlice>>;
-
-pub type DictDataRef<T> = Arc<RwLock<DictData<T>>>;
+pub type Dict<T> = Collection<T, PyDict>;
+pub type Set<T> = Collection<T, PySet>;
+pub type DictRef<T> = Py<RwLock<Dict<T>>>;

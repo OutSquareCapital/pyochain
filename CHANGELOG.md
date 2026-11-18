@@ -2,15 +2,24 @@
 
 ## [Unreleased]
 
+### 🏆 Highlights
+
+- **Performance**: global improvements to `SortedList` and `SortedKeyList`, and by extension sorted sets/dicts/views who use them internally. Detailed benchmarks will be provided in the near future.
+- **Documentation**: Overhaul of the website navigation and structure, to improve readability, reduce redundant informations, and ensure that all classes is present. Concretely, replaced a manual handling of it by mkdocs plugins that handle almost everything automatically.
+
+### 🆕 New features
+
+- `PyoIterator::flat_map_star`, unpacking version of `flat_map`.
+
+- `SortedList` and `SortedKeyList` support `__setitem__` dunder with `int` indexes.
+
 ### 💥 Breaking changes
 
-- `SortedKeySet` and `SortedKeyDict` don't expose anymore their `key` attribute, as this is an implementation detail.
+#### `PyoIterator::{for_each_star, fold_star}` do not accept `*args` and `**kwargs` anymore
 
-#### `SortedKeyList` and `SortedList` `update` methods replaced by `extend`
+Unfortunately, python typing system limitations forced us to have situations with false negatives (i.e typing accepted, runtime error) to prevent many more false positives (i.e typing rejected, runtime error)
 
-This is just a naming change, fixed from the original `sortedcontainers` library who incorrectly raise error at runtime when `extend` is called, suggesting to use `update` instead.
-
-However this violates the `MutableSequence` protocol, is counter-intuitive, AND not justified by any practical reason.
+This is because `typing::Concatenate`, `TypeVarTuple`(i.e `*Ts`), `ParamSpec`(i.e `**P`), and `collections::abc::Callable` can't express together things like `Callable[Concatenate[T, *Ts, P], R]`.
 
 #### No more identity function as default key for "key containers"
 
@@ -18,17 +27,30 @@ However this violates the `MutableSequence` protocol, is counter-intuitive, AND 
 
 Moreover, _key_ is now the **first** argument, followed by the _iterable_ argument, and they are both positional-only.
 
-This allows performance improvements, simplify internal implementations, but most importantly, aligns more with the API choice of pyochain, which, unlike the original `sortedcontainers` library, provides those "key containers" as explicit classes, instead of dynamically creating them depending on the signature.
+This allows performance improvements, simplify internal implementations, but most importantly, aligns more with the API choice of pyochain.
+
+Unlike the original `sortedcontainers`, `pyochain` provides those "key containers" as explicit classes, instead of dynamically creating them depending on the signature.
 
 Because, frankly, why would you create a `SortedKeyList` with an identity function as key, when you can just use a `SortedList` instead?
 
+#### Other breaking changes
+
+- `abc::{constructors, _mixins}` are moved to the top-level of the package, and the latter renamed to `mixins`, and the imports of it's classes removed from `abc` module. Replace `from pyochain.abc import <Foo>` by `from pyochain.{mixins, constructors} import <Foo>` to migrate your code. Align the `abc` module with python stdlib.
+- Same for `abc::`.
+- `SortedCollection::index` argument are now positionnal only. Minor perf improvement, more robust to API changes, and aligned with `collections::abc::Sequence` and `builtins::list` signatures.
+- `SortedKeySet` and `SortedKeyDict` don't expose anymore their `key` attribute, as this is an implementation detail.
+- `{SortedKeyList, SortedList}::{add, update}` methods have been replaced by `append` and `extend`, respectively. Unlike the original `sortedcontainers` library, who raise runtime errors if those two are called. Allow to be more compliant with the `MutableSequence` protocol.
+- `{SortedKeyList, SortedList}::insert` does not raise runtime errors anymore, and simply forward to `append`. Index is ignored. Allow to be more compliant with the `MutableSequence` protocol.
+
 ### 🚀 Performance improvements
+
+- **Massive** global improvements to `SortedList` and `SortedKeyList`, and by extension sorted sets/dicts/views who use them internally. Detailed benchmarks will be provided in the near future.
 
 - `pprint` was used internally in many `__repr__` implementations, which is no longer the case. The "raw" repr of inner objects (e.g `list`, `set`, etc...) is now used, which means we swap a Python call with a CPython one.
 
 #### args concatenation
 
-When you do`my_iter.for_each_star(f, *args)`, each element `T` of `my_iter` need to be passed first to `f` as the first argument, followed by the unpacked `args`.
+When you do`my_iter.for_each(f, *args)`, each element `T` of `my_iter` need to be passed first to `f` as the first argument, followed by the unpacked `args`.
 
 This entails reconstructing a new data structure to hold said arguments.
 
@@ -46,26 +68,38 @@ See below for the benchmark results, with the number of `args` in the left colum
 | **16** | 1.21x | 1.26x | 1.26x | 1.25x  | 1.22x   |
 | **32** | 1.00x | 1.17x | 1.19x | 1.20x  | 1.19x   |
 
-- ``PyoIterator::map_windows_star` is **1.05x** to **1.26x** faster across all sizes tested, (small and big iterators, small and big window sizes). A single regression has been noted at 100k items with a window size of 32, which is planned to be fixed in a future release.
+- `PyoIterator::map_windows_star` is **1.05x** to **1.26x** faster across all sizes tested, (small and big iterators, small and big window sizes). A single regression has been noted at 100k items with a window size of 32, which is planned to be fixed in a future release.
 
 ### ✨ Enhancements
 
 - **typing**: Relaxed the _collector_ input type of `PyoIterator::collect`. The constraint on the return type `R: Collection[Any]` was artificial, and was preventing to use `collect` on functions or types who indeed consume the `Iterator`, but weren't strictly speaking a `Collection` (e.g polars DataFrames). In python, the `FromIterator` equivalent is simply `Callable[[Iterator[T]], Any]`, and this is now reflected in the typing of `collect`.
 - **typing**: `Option::{is_some, is_none, unwrap, unwrap_or, unwrap_or_none}` now have overloads to statically return the narrowed type when the variant is already known.
+- **typing**: `Result::and_then` handles a change of Error type in the closure, and returns the correct `Result` type. i.e `Result[T, E].and_then(f: Callable[[T], Result[U, F]]) -> Result[U, E | F]`.
+- **typing**: Ensured that all sorted containers classes are marked with `typing::{type_check_only, final}` when appropriate.
+- **typing**: `PyoIterator::{map_star, filter_star, filter_map_star}` and `{Result, Option}::{map_star, and_then_star}` use tuple unpacking instead of overloads, meaning that the signature can now be statically checked, regardless of the number of arguments in the function (it was stopping a 10 before, and having for example a function taking 11 pos args wouldn't have been flagged as incorrect on an `Iterator` yielding tuples of 10 elements.) It also allow to avoid using `Any` in the signatures, improving type safety.
 
 ### 🐞 Bug fixes
 
 - **typing**: `PyoIterator::{map_windows, map_windows_star}` now correctly handle functions with varargs.
-- **typing**: `PyoIterator::for_each_star` now correctly handle functions with varargs and ParamSpec.
 - **typing**: `Iter::__new__` missed overloads, which caused false positives with type checkers, for example, when providing a single `Iterable` argument. This is now fixed.
+- **typing**: `PyoIterator::{for_each_star, map_star, fold_star}`had various typing issues due to the handling of `*args` and `**kwargs`. As explained in breaking changes section, this is now fixed.
+- **panic**: `PyoIterator::{map_windows, map_windows_star}` panicked when provided with a window size of 0. This is now fixed, and a `ValueError` is raised instead. The `OverFlowError` on `length < 0` is also correctly documented now.
 
 ### 🔄 Refactors
 
 - Many changes to the internal rust structure to improve readability and reduce code-gen (and by extension, compile time).
 
+### 📦 Build system
+
+- Added `panic="abort"` flag on release builds to reduce binary size and improve performance.
+- Improved caching of CI workflows for performance.
+
 ### 🛠️ Other improvements
 
 - **Website**: The return sections of the functions/methods docstrings is now correctly rendered thanks to @tecnolgd contribution in [#95](https://github.com/OutSquareCapital/pyochain/pull/95)
+
+- **Profiler scripts**: Added a dedicated typer app to handle, analyze and plot benchmark results. Currently focused on `sortedcontainers` comparison, but can be extended to more in the future.
+- **Dev check scripts**: Centralised the linting/formatting/etc... commands in a single entry point.
 
 ## [0.28.0] - 2026-08-31
 

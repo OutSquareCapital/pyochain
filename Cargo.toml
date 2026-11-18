@@ -8,7 +8,6 @@ license = "MIT"
 members = [
   ".",
   "./crates/pyo3_ext",
-  "./crates/pyochain_build",
   "./crates/pyochain_macros",
   "./crates/sorted_rs",
   "./crates/std_tools",
@@ -20,6 +19,7 @@ inline_always = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 pedantic = { level = "warn", priority = -1 }
+redundant_field_names = "allow"  # Temporary clippy issue
 similar_names = "allow"
 wildcard_imports = "allow"
 
@@ -29,19 +29,13 @@ name = "pyochain"
 
 [dependencies]
 color-eyre = "0.6.5"
-derive_more = { version = "2.1.1", features = ["deref", "deref_mut", "from"] }
+derive_more = { version = "2.1.1", features = ["as_ref", "constructor", "deref", "deref_mut", "from", "into_iterator"] }
+derive-new = "0.7.0"
 either = "1.16.0"
+itertools = "0.15.0"
 parking_lot = "0.12.5"
 pyderive = "0.9"
-pyo3 = {
-  version = ">=0.29",
-  features = [
-    "either",
-    "extension-module",
-    "multiple-pymethods",
-    "smallvec",
-  ]
-}
+pyo3 = { version = ">=0.29", features = ["either", "extension-module", "multiple-pymethods", "smallvec"] }
 pyo3_ext = { path = "crates/pyo3_ext" }
 pyochain_macros = { path = "crates/pyochain_macros" }
 smallvec = "1.15.2"
@@ -58,4 +52,10 @@ workspace = true
 [profile.release]
 opt-level = 3
 lto = true
+panic = "abort"
 codegen-units = 1
+
+[profile.profiling]
+inherits = "release"
+debug = "line-tables-only"
+strip = "none"

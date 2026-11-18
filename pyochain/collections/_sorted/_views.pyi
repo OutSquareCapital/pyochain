@@ -2,7 +2,7 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 
 from collections.abc import Iterable
-from typing import Any, Generic, TypeVar, overload, override
+from typing import Any, Generic, TypeVar, final, overload, override, type_check_only
 
 from pyochain import Vec
 from pyochain.abc import PyoItemsView, PyoKeysView, PyoSequence, PyoValuesView
@@ -13,6 +13,7 @@ from ..._types import SupportsHashableAndRichComparison
 _K_co = TypeVar("_K_co", covariant=True, bound=SupportsHashableAndRichComparison)
 _V_co = TypeVar("_V_co", covariant=True)
 
+@type_check_only
 class BaseSortedView(Generic[_K_co, _V_co]):  # ruff: ignore[non-pep695-generic-class]
     def __delitem__[K: SupportsHashableAndRichComparison, V](
         self, index: int | slice
@@ -46,6 +47,7 @@ class BaseSortedView(Generic[_K_co, _V_co]):  # ruff: ignore[non-pep695-generic-
             ```
         """
 
+@final
 class SortedKeysView(
     BaseSortedView[_K_co, Any],
     PyoKeysView[_K_co],
@@ -122,6 +124,7 @@ class SortedKeysView(
     def _from_iterable(cls, it: Iterable[_K_co]) -> SortedSet[_K_co]:  # pyright: ignore[reportIncompatibleMethodOverride] # ty: ignore[invalid-generic-class, invalid-method-override]
         ...
 
+@final
 class SortedItemsView(
     BaseSortedView[_K_co, _V_co],
     PyoItemsView[_K_co, _V_co],
@@ -194,6 +197,7 @@ class SortedItemsView(
         it: Iterable[tuple[_K_co, _V_co]],  # ty: ignore[invalid-generic-class]
     ) -> SortedSet[tuple[_K_co, _V_co]]: ...
 
+@final
 class SortedValuesView(
     BaseSortedView[Any, _V_co],
     PyoValuesView[_V_co],

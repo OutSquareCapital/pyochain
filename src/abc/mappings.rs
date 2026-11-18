@@ -6,7 +6,7 @@ use pyo3::{
     prelude::*,
     types::{PyDict, PyMapping, PyNone, PyNotImplemented, PyTuple},
 };
-use tap::Pipe;
+use tap::prelude::*;
 
 use crate::{
     abc::{PyoCollection, PyoItemsView, PyoKeysView, PyoValuesView},

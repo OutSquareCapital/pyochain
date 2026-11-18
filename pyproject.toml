@@ -9,6 +9,11 @@ dependencies = []
 
 classifiers = ["License :: OSI Approved :: MIT License"]
 
+[project.urls]
+Documentation = "https://outsquarecapital.github.io/pyochain/"
+Issues = "https://github.com/OutSquareCapital/pyochain/issues"
+Repository = "https://github.com/OutSquareCapital/pyochain"
+
 [dependency-groups]
 dev = [
   "basedpyright>=1.39.10",
@@ -17,16 +22,18 @@ dev = [
   "plotly[express]>=7.0.0",
   "polars>=1.44.1",
   "pydoclint>=0.9.1",
-  "pytest>=9.1.1",
   "pytest-benchmark>=5.2.3",
   "pytest-docflex",
+  "pytest == 9.1.1",  # until https://github.com/ionelmc/pytest-benchmark/issues/321 is fixed
   "ruff>=0.16.5",
   "sdsort",
   "sortedcontainers>=2.4.0",
   "sortedcontainers-stubs>=2.4.3",
   "tombi>=1.5.4",
+  "typer>=0.27.2",
 ]
 doc = ["mkdocstrings-python>=2.0.7", "zensical>=0.0.57"]
+typing = ["pyrefly>=1.4.0", "ty>=0.0.88"]
 
 [build-system]
 requires = ["maturin>=1.8,<2.0"]
@@ -45,6 +52,7 @@ manifest-path = "Cargo.toml"
 module-name = "pyochain"
 
 [tool.pydoclint]
+include-stub-files = true
 arg-type-hints-in-docstring = true
 arg-type-hints-in-signature = true
 check-class-attributes = true

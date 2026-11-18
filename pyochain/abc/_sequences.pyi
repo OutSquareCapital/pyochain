@@ -137,6 +137,7 @@ class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyrigh
             ```
         """
 
+# pyrefly: ignore [implicit-abstract-class]
 class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ignore[reportImplicitAbstractClass]
     """Extends `PyoSequence[T]` and `collections.abc.MutableSequence[T]`.
 

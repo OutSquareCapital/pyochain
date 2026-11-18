@@ -1,4 +1,4 @@
-use crate::{abc::Checkable, core::iterators};
+use crate::{core::iterators, mixins::Checkable};
 use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=Checkable)]

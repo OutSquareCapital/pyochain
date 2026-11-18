@@ -11,7 +11,7 @@ use pyo3::{
     types::{PyDict, PyIterator, PyTuple, PyType},
 };
 use pyo3_ext::{prelude::*, pylibs, types::PopResult};
-use tap::Pipe;
+use tap::prelude::*;
 #[derive(From, Deref)]
 #[pyclass(module = "pyochain.core",frozen, generic, extends=abc::PyoMutableMapping)]
 pub struct Dict(Py<PyDict>);

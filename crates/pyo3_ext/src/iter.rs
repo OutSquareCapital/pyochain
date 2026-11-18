@@ -1,7 +1,7 @@
 use pyo3::{
     IntoPyObjectExt, ffi,
     prelude::*,
-    types::{PyFrozenSet, PyFrozenSetBuilder, PyList, PySet, PyTuple},
+    types::{PyFrozenSet, PyList, PySet, PyTuple, frozenset::PyFrozenSetBuilder},
 };
 
 /// Trait for Python collection types that can be created from an iterator of `Bound<'_, PYAny>`.

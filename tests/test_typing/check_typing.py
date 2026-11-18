@@ -9,6 +9,7 @@ from ._utils import Animal, Dog, identity
 
 def check_covariance() -> None:
     res: Result[Animal, Any] = Ok(Dog()).map(lambda x: x)
+    # pyrefly: ignore [assert-type]
     _ = assert_type(res, Result[Dog, Any])  # ty: ignore[type-assertion-failure]
     # ty does things differently and keep the explicit inference
     _ = assert_type(res, Result[Animal, Any])  # pyright: ignore[reportAssertTypeFailure]
@@ -54,9 +55,11 @@ def check_result_transpose() -> None:
     a = assert_type(Ok(Some(10)), Result[Option[int], Any])
     _a = assert_type(a.transpose(), Option[Result[int, Any]])  # ty: ignore[type-assertion-failure]
     # ty infer the Literal
+    # pyrefly: ignore [assert-type]
     _aty = assert_type(a.transpose(), Option[Result[Literal[10], Any]])  # pyright: ignore[reportAssertTypeFailure]
     b = assert_type(Err(Some(10)), Result[Any, Option[int]])
     _b = assert_type(b.transpose(), Option[Result[Any, Option[int]]])  # ty: ignore[type-assertion-failure]
+    # pyrefly: ignore [assert-type]
     _b_ty = assert_type(b.transpose(), Option[Result[Any, Option[Literal[10]]]])  # pyright: ignore[reportAssertTypeFailure]
     c = assert_type(Ok[Option[int], int](NONE), Result[Option[int], int])
     _c = assert_type(c.transpose(), Option[Result[int, int]])
@@ -81,6 +84,7 @@ def check_result_flatten() -> None:
 
     _ = assert_type(Err(Err("error")), Result[Any, Result[Any, str]])  # ty: ignore[type-assertion-failure]
     # ty infer the Literal
+    # pyrefly: ignore [assert-type]
     _ = assert_type(Err(Err("error")), Result[Any, Result[Any, Literal["error"]]])  # pyright: ignore[reportAssertTypeFailure]
 
 
@@ -112,9 +116,19 @@ def check_and_then_result() -> None:
     _ = assert_type(e, Result[Result[int, int], Result[int, int]])
 
 
-def _fn_str(x: Result[str, str]) -> Result[Result[str, str], Any]:
+def check_and_then_changes_error() -> None:
+    r = assert_type(Err(ValueError("")), Result[Any, ValueError])
+    out = r.and_then(_fn_changes_error)
+    _ = assert_type(out, Result[Dog, ValueError | KeyError])
+
+
+def _fn_str(x: Result[str, str]) -> Result[Result[str, str], Result[str, str]]:
     return Ok(x)
 
 
-def _fn_int(x: Result[int, int]) -> Result[Result[int, int], Any]:
+def _fn_int(x: Result[int, int]) -> Result[Result[int, int], Result[int, int]]:
     return Ok(x)
+
+
+def _fn_changes_error(_x: int) -> Result[Dog, KeyError]:
+    return Ok(Dog())

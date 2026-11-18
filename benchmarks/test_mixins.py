@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Concatenate, Self
 
 import pytest
 
-from pyochain.abc import Fluent
+from pyochain.mixins import Fluent
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -1,12 +1,22 @@
-from collections.abc import Callable
+from __future__ import annotations
+
+from collections.abc import Callable, Iterable
 from enum import IntEnum, StrEnum, auto
-from typing import Final, Protocol
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
 from pyochain import Seq
 
+if TYPE_CHECKING:
+    import polars as pl
+    from _pytest.mark import ParameterSet
+
 type BenchFn = Callable[[int], object]
+
+
+SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000, 1_000_000)
+SIZE_PARAMS = pytest.mark.parametrize("size", SIZES)
 
 
 class BenchFixture(Protocol):
@@ -17,17 +27,39 @@ class BenchFixture(Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> T: ...
-    def pedantic(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
+
+    def pedantic[*Ts, T](  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
         self,
-        target: Callable[..., object],
+        target: Callable[[*Ts], T],
         args: tuple[object, ...] = (),
         kwargs: dict[str, object] | None = None,
-        setup: Callable[[], tuple[tuple[object, ...], dict[str, object]]] | None = None,
+        setup: Callable[[], tuple[tuple[*Ts], dict[str, object]]] | None = None,
         teardown: Callable[[], None] | None = None,
         rounds: int = 1,
         warmup_rounds: int = 0,
         iterations: int = 1,
-    ) -> object: ...
+    ) -> T: ...
+
+
+class PlEnum(StrEnum):
+    """Base class for enums that can be used as polars expressions."""
+
+    def pl(self) -> pl.Expr:
+        """Return a polars expression for the enum value."""
+
+        import polars as pl
+
+        return pl.col(self.value)
+
+
+class Lib(PlEnum):
+    """Libraries used in the benchmarks."""
+
+    Pyochain = auto()
+    SortedContainers = auto()
+
+    def to_param(self, cls: type) -> ParameterSet:
+        return pytest.param(cls, id=f"{self}-{cls.__name__}")
 
 
 class Sizes(IntEnum):
@@ -35,9 +67,6 @@ class Sizes(IntEnum):
     SIZE_256 = 256
     SIZE_1024 = 1024
     SIZE_4096 = 4096
-
-
-SIZES: Final[Seq[int]] = Seq(10, 100, 1_000, 10_000, 100_000)
 
 
 class VariantGroups(StrEnum):
@@ -55,11 +84,6 @@ def identity_vargs[T](*args: T) -> tuple[T, ...]:
     return args
 
 
-WINDOW_CASES: Final = pytest.mark.parametrize(
-    ("size", "tup_len"),
-    SIZES
-    .iter()
-    .product((2, 4, 8, 16, 32, 64, 128))
-    .filter_star(lambda size, tup_len: tup_len < size)
-    .collect(tuple),
-)
+def consume(values: Iterable[object]) -> None:
+    for _ in values:
+        pass

@@ -4,9 +4,10 @@ use crate::{
     core::{
         Dict, PyNull, PySome, PyoErr, PyoOk, SliceViewIterator, SliceViewReverseIterator, iterators,
     },
+    mixins,
 };
 use pyo3::{
-    PyClass, PyTypeInfo,
+    PyTypeInfo,
     prelude::*,
     types::{DerefToPyAny, PyDict, PyTuple},
 };
@@ -34,8 +35,8 @@ pub trait ImplPyoReversible {
     iterators::UniqueIdentity,
     iterators::UniqueKey,
     iterators::Intersperse,
-    iterators::MapWindow,
-    iterators::MapWindowStar,
+    iterators::window::MapWindow,
+    iterators::window::MapWindowStar,
     iterators::FilterMap,
     iterators::FilterMapStar,
     iterators::Scan,
@@ -49,30 +50,10 @@ pub trait ImplPyoReversible {
     iterators::ZipLongest,
     iterators::Unzip,
     iterators::GroupBy,
-    sorted::iter::PyBounded,
-    sorted::iter::PyBoundedRev,
-    sorted::iter::PyBoundedKey,
-    sorted::iter::PyBoundedKeyRev,
-    sorted::iter::PyFull,
-    sorted::iter::PyFullRev,
-    sorted::iter::PyFullKey,
-    sorted::iter::PyFullKeyRev,
-    sorted::iter::PySetBounded,
-    sorted::iter::PySetBoundedRev,
-    sorted::iter::PySetBoundedKey,
-    sorted::iter::PySetBoundedKeyRev,
-    sorted::iter::PySetFull,
-    sorted::iter::PySetFullRev,
-    sorted::iter::PySetFullKey,
-    sorted::iter::PySetFullKeyRev,
-    sorted::iter::PyDictBounded,
-    sorted::iter::PyDictBoundedRev,
-    sorted::iter::PyDictFull,
-    sorted::iter::PyDictFullRev,
-    sorted::iter::PyDictFullKey,
-    sorted::iter::PyDictFullKeyRev,
-    sorted::iter::PyDictBoundedKey,
-    sorted::iter::PyDictBoundedKeyRev
+    sorted::iter::SortedIter,
+    sorted::iter::SortedIterRev,
+    sorted::iter::SortedIterBounded,
+    sorted::iter::SortedIterBoundedRev
 )]
 pub trait ImplPyoIterator: Sized {
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
@@ -84,8 +65,8 @@ pub trait ImplPyoIterator: Sized {
     PyNull,
     PyoOk,
     PyoErr,
-    abc::Fluent,
-    abc::PyoPipe,
+    mixins::Fluent,
+    mixins::PyoPipe,
     abc::PyoIterable,
     abc::PyoIterator
 )]
@@ -102,7 +83,7 @@ trait PipeMethod: PyTypeInfo {
             .pipe(Ok)
     }
 }
-#[py_abc(abc::Fluent, abc::PyoTap, abc::PyoIterable)]
+#[py_abc(mixins::Fluent, mixins::PyoTap, abc::PyoIterable)]
 trait TapMethod: PyTypeInfo {
     #[pyo3(signature = (f, *args, **kwargs))]
     fn tap<'py>(
@@ -122,14 +103,7 @@ trait TapMethod: PyTypeInfo {
     abc::PyoValuesView,
     abc::PyoItemsView
 )]
-pub trait MappingView:
-    Sized
-    + PyTypeInfo
-    + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
-    + Send
-    + Sync
-    + DerefToPyAny
-{
+pub trait MappingView: PyFrozenClass + DerefToPyAny {
     type M: Sized;
     #[skip]
     fn mapping(&self) -> &Py<Self::M>;

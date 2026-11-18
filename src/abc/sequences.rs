@@ -6,7 +6,7 @@ use pyo3::{
     types::PySequence,
 };
 use std_tools::prelude::TryIterator;
-use tap::Pipe;
+use tap::prelude::*;
 
 use crate::{
     abc::{PyoCollection, PyoIterable},
@@ -30,7 +30,7 @@ pub struct PyoSequence;
 impl PyoSequence {
     fn __iter__(slf: Bound<'_, Self>) -> iterators::SequenceIterator {
         slf.pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
-            .pipe(iterators::SequenceIterator::new)
+            .conv::<iterators::SequenceIterator>()
     }
     fn __contains__(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.try_iter()?

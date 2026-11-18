@@ -47,8 +47,8 @@ def test_keyword_args() -> None:
 
 
 def test_truth() -> None:
-    assert not Seq()
-    assert Seq((42,))
+    assert not Seq[int]()
+    assert Seq(42)
 
 
 def test_len() -> None:

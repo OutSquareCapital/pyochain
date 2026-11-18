@@ -4,7 +4,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from collections.abc import Set as AbstractSet
-from typing import Any, Final, Self, final, overload, override
+from typing import Any, Final, Self, final, overload, override, type_check_only
 
 from pyochain import SetMut, Vec
 from pyochain._types import SupportsHashableAndRichComparison
@@ -12,6 +12,7 @@ from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
 from ._core import BaseSortedListSet
 
+@type_check_only
 class BaseSortedSet[T: SupportsHashableAndRichComparison](
     PyoMutableSet[T], PyoSequence[T], BaseSortedListSet[T], ABC
 ):
@@ -202,7 +203,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
     def bisect_right(self, value: T) -> int: ...
     @override
     def index(
-        self, value: T, start: int | None = None, stop: int | None = None
+        self, value: T, start: int | None = None, stop: int | None = None, /
     ) -> int: ...
     @override
     def islice(

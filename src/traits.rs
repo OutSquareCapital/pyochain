@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
-use crate::{abc, collections, core};
+use crate::{abc, collections, core, mixins};
 use pyo3::{
-    PyClass, PyTypeInfo,
+    PyTypeInfo,
     exceptions::PyTypeError,
     prelude::*,
     types::{self, DerefToPyAny},
@@ -10,9 +10,7 @@ use pyo3::{
 use pyo3_ext::{prelude::*, types::PyDeque};
 use pyochain_macros::py_abc;
 use tap::prelude::*;
-pub trait PyWrapper:
-    PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync + Deref<Target = Py<Self::Wrapped>>
-{
+pub trait PyWrapper: PyFrozenClass + Deref<Target = Py<Self::Wrapped>> {
     type Wrapped: PyTypeInfo + DerefToPyAny;
     /// Extracts the inner type of `Self` from an arbitrary python object.\
     /// For example, if `Self` is `seq::Seq`, this will extract the inner `PyTuple` from a `seq::Seq` or a `PyTuple`.
@@ -113,12 +111,7 @@ impl_try_from_py!(
     abc::PyoMutableMapping,
     abc::PyoReversible
 )]
-trait PyoABC:
-    PyTypeInfo + PyClass + pyo3::impl_::pyclass::PyClassBaseType<Initializer = PyClassInitializer<Self>>
-{
-    #[skip]
-    fn build_init() -> PyClassInitializer<Self>;
-
+trait PyoABC: Abc + Init {
     #[pyo3(signature = (*args, **kwargs))]
     #[new]
     #[allow(unused_variables)]
@@ -132,9 +125,9 @@ trait PyoABC:
 macro_rules! impl_pyoabc {
     ($($base:ty => $sub:ty),* $(,)?) => {
         $(
-            impl PyoABC for $sub {
+            impl Abc for $sub {
                 fn build_init() -> PyClassInitializer<Self> {
-                    <$base as PyoABC>::build_init().add_subclass(Self)
+                    <$base as Abc>::build_init().add_subclass(Self)
                 }
             }
         )*
@@ -142,8 +135,8 @@ macro_rules! impl_pyoabc {
 }
 
 impl_pyoabc! {
-    abc::Checkable => abc::PyoSized,
-    abc::Checkable => abc::PyoIterable,
+    mixins::Checkable => abc::PyoSized,
+    mixins::Checkable => abc::PyoIterable,
     abc::PyoIterable => abc::PyoReversible,
     abc::PyoIterable => abc::PyoIterator,
     abc::PyoIterable => abc::PyoCollection,
@@ -155,29 +148,11 @@ impl_pyoabc! {
     abc::PyoMapping => abc::PyoMutableMapping,
     abc::PyoMutableSequence => collections::Heap,
 }
-impl PyoABC for abc::Checkable {
+impl Abc for mixins::Checkable {
     fn build_init() -> PyClassInitializer<Self> {
-        PyClassInitializer::from(abc::Checkable)
+        PyClassInitializer::from(mixins::Checkable)
     }
 }
-pub trait IntoInit: PyTypeInfo + PyClass {
-    fn init(self) -> PyClassInitializer<Self>;
-
-    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-        Bound::new(py, self.init())
-    }
-}
-
-impl<
-    T: PyClass<BaseType = I>,
-    I: PyoABC + pyo3::impl_::pyclass::PyClassBaseType<Initializer = PyClassInitializer<I>>,
-> IntoInit for T
-{
-    fn init(self) -> PyClassInitializer<Self> {
-        I::build_init().add_subclass(self)
-    }
-}
-
 #[py_abc(
     core::Seq,
     core::PyoVec,

@@ -1,6 +1,10 @@
 use std::fmt::Display;
 
-use crate::{DictData, KeysListsData, ListsData, SetData, traits::ListsDataMethods};
+use crate::{
+    KeyList, List,
+    traits::ListsMethods,
+    types::{Dict, Set},
+};
 use pyo3::{PyTypeInfo, prelude::*, types::PyString};
 
 pub trait PyRepr {
@@ -17,7 +21,7 @@ pub trait PyRepr {
     fn key_repr<'py>(&self, _py: Python<'py>) -> PyResult<Option<Bound<'py, PyString>>>;
 }
 
-impl PyRepr for ListsData {
+impl PyRepr for List {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
         self.as_pylist(py)?.repr()
     }
@@ -25,7 +29,7 @@ impl PyRepr for ListsData {
         Ok(None)
     }
 }
-impl PyRepr for KeysListsData {
+impl PyRepr for KeyList {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
         self.as_pylist(py)?.repr()
     }
@@ -33,7 +37,7 @@ impl PyRepr for KeysListsData {
         self.2.bind(py).repr().map(Some)
     }
 }
-impl<T: ListsDataMethods> PyRepr for SetData<T> {
+impl<T: ListsMethods> PyRepr for Set<T> {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
         self.0.items_repr(py)
     }
@@ -41,7 +45,7 @@ impl<T: ListsDataMethods> PyRepr for SetData<T> {
         self.0.key_repr(py)
     }
 }
-impl<T: ListsDataMethods> PyRepr for DictData<T> {
+impl<T: ListsMethods> PyRepr for Dict<T> {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
         let dict = self.1.bind(py).as_any();
         self.iter()

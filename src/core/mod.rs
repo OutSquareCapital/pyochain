@@ -9,7 +9,7 @@ mod sliceview;
 mod vec;
 pub use dict::Dict;
 pub use option::{
-    OptionUnwrapError, PyNull, PySome, PyochainOption, PyochainOptionType, new_option,
+    NONE, OptionUnwrapError, PyNull, PySome, PyochainOption, PyochainOptionType, new_option,
     then_if_some, then_if_true,
 };
 pub use range::Range;

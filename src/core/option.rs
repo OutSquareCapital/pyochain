@@ -13,7 +13,7 @@ use pyochain_macros::py_abc;
 use tap::prelude::*;
 
 /// Singleton for NONE - initialized once per Python interpreter
-static NONE: PyOnceLock<Py<PyNull>> = PyOnceLock::new();
+pub static NONE: PyOnceLock<Py<PyNull>> = PyOnceLock::new();
 /// Trait to check if a `PyAny` is the NONE singleton
 pub trait IsNull<'py> {
     fn is_null(&self) -> bool;
@@ -21,11 +21,7 @@ pub trait IsNull<'py> {
 impl IsNull<'_> for Bound<'_, PyAny> {
     #[inline]
     fn is_null(&self) -> bool {
-        self.as_ptr()
-            == NONE
-                .get(self.py())
-                .expect("NONE singleton not initialized")
-                .as_ptr()
+        self.as_ptr() == PyNull::get_ref(self.py()).as_ptr()
     }
 }
 /// Option[T] - Generic Option type with Some and None variants for Python typing
@@ -353,22 +349,13 @@ impl PySome {
 pub struct PyNull;
 
 impl PyNull {
-    /// Called once on import to initialize the NONE singleton for the interpreter
-    pub fn init(py: Python<'_>) -> PyResult<()> {
-        if NONE.get(py).is_some() {
-            Ok(())
-        } else {
-            NONE.set(py, Py::new(py, Self)?)
-                .expect("NONE singleton should only be initialized once per interpreter");
-            Ok(())
-        }
-    }
-
     #[inline]
     pub fn get(py: Python<'_>) -> Py<Self> {
-        NONE.get(py)
-            .expect("NONE singleton not initialized")
-            .clone_ref(py)
+        Self::get_ref(py).clone_ref(py)
+    }
+    #[inline]
+    pub fn get_ref<'a>(py: Python<'_>) -> &'a Py<Self> {
+        NONE.get(py).expect("NONE singleton not initialized")
     }
     #[inline]
     pub fn get_any_ok(py: Python<'_>) -> PyResult<Py<PyAny>> {

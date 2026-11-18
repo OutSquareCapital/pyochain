@@ -24,3 +24,7 @@ target/
 t.py
 # Ignore pytest-benchmark's generated files
 .benchmarks/
+# flamegraph generated files
+profile.json.gz
+# local cargo config
+.cargo/config.toml

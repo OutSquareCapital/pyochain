@@ -1,66 +1,45 @@
-use parking_lot::RwLock;
-
-use crate::abc;
+use crate::{abc, collections::sorted::core::IterRes};
+use derive_more::{Deref, From};
 use pyo3::prelude::*;
 use sorted_rs::{
-    DictData, KeysListsData, ListsData, SetData,
-    iter::{Bounded, Full},
+    Bounds, ListGetter,
+    iter::{self, PySortedIter},
 };
+
 macro_rules! impl_sorted_iter {
-    ($($t:ty => { $($iter:ident => $method:expr => $name:ident),+ $(,)? }),+ $(,)?) => {
-        $($(
-            #[pyclass(module = "pyochain._iterators", frozen, generic, extends=abc::PyoIterator)]
-            pub struct $name(RwLock<$iter<$t>>);
-            impl From<$iter<$t>> for $name {
-                fn from(inner: $iter<$t>) -> Self {
-                    Self(RwLock::new(inner))
-                }
+    ($($iter:ty => $pyiter:ident),+ $(,)?) => {
+        $(
+            #[derive(From, Deref)]
+            #[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
+            pub struct $pyiter($iter);
+            impl iter::PySortedIter for $pyiter {
+                type Iter = $iter;
             }
             #[pymethods]
-            impl $name {
-                fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
-                    $method(&mut self.0.write(), py)
+            impl $pyiter {
+                fn __next__<'py>(slf: &Bound<'py, Self>) -> Option<Bound<'py, PyAny>> {
+                    iter::PySortedIter::py_next(slf)
+                }
+                fn __length_hint__(&self) -> usize {
+                      self.0.len()
                 }
             }
-        )+)+
+        )+
     };
 }
 
-impl_sorted_iter! {
-    ListsData => {
-        Bounded => Bounded::next => PyBounded,
-        Bounded => Bounded::next_back => PyBoundedRev,
-        Full => Full::next => PyFull,
-        Full => Full::next_back =>  PyFullRev,
-    },
-    KeysListsData => {
-        Bounded  => Bounded::next => PyBoundedKey,
-        Bounded  => Bounded::next_back => PyBoundedKeyRev,
-        Full  =>Full::next=> PyFullKey,
-        Full  => Full::next_back=> PyFullKeyRev,
-    },
-    SetData<ListsData> => {
-        Bounded  => Bounded::next => PySetBounded,
-        Bounded  => Bounded::next_back => PySetBoundedRev,
-        Full => Full::next => PySetFull,
-        Full => Full::next_back => PySetFullRev,
-    },
-    SetData<KeysListsData> => {
-        Bounded  => Bounded::next => PySetBoundedKey,
-        Bounded  => Bounded::next_back => PySetBoundedKeyRev,
-        Full  => Full::next=> PySetFullKey,
-        Full => Full::next_back => PySetFullKeyRev,
-    },
-    DictData<ListsData> => {
-        Bounded  => Bounded::next => PyDictBounded,
-        Bounded => Bounded::next_back => PyDictBoundedRev,
-        Full => Full::next => PyDictFull,
-        Full => Full::next_back => PyDictFullRev,
-    },
-    DictData<KeysListsData> => {
-        Bounded  => Bounded::next=> PyDictBoundedKey,
-        Bounded => Bounded::next_back => PyDictBoundedKeyRev,
-        Full => Full::next => PyDictFullKey,
-        Full  => Full::next_back=> PyDictFullKeyRev,
-    },
+impl_sorted_iter!(
+    iter::Iter<true> => SortedIter,
+    iter::Iter<false> => SortedIterRev,
+    iter::IterBounded<true> => SortedIterBounded,
+    iter::IterBounded<false> => SortedIterBoundedRev,
+);
+
+#[inline(always)]
+pub fn bounded<'py>(slf: &Bound<'py, impl ListGetter>, bounds: Bounds, rev: bool) -> IterRes<'py> {
+    if rev {
+        SortedIterBoundedRev::build(slf.py(), (slf, bounds)).map(Bound::into_super)
+    } else {
+        SortedIterBounded::build(slf.py(), (slf, bounds)).map(Bound::into_super)
+    }
 }

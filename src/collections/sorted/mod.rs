@@ -1,7 +1,5 @@
-mod conversions;
 mod core;
 mod dict;
-mod getters;
 pub mod iter;
 mod list;
 mod set;

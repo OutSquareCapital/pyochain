@@ -60,17 +60,17 @@ def test_add() -> None:
     random.seed(0)
     slt = SortedKeyList[float, float](operator.neg)
     for val in range(100):
-        slt.add(val)
+        slt.append(val)
         check_sorted_key_list(slt)
 
     slt = SortedKeyList[float, float](operator.neg)
     for val in range(100, 0, -1):
-        slt.add(val)
+        slt.append(val)
         check_sorted_key_list(slt)
 
     slt = SortedKeyList[float, float](operator.neg)
     for _ in range(100):
-        slt.add(random.random())
+        slt.append(random.random())
         check_sorted_key_list(slt)
 
 
@@ -182,7 +182,7 @@ def test_getitem() -> None:
     slt = _neg_list()
     slt.reset(17)
 
-    slt.add(5)
+    slt.append(5)
     assert slt[0] == 5
     slt.clear()
 
@@ -190,7 +190,7 @@ def test_getitem() -> None:
 
     for _rpt in range(100):
         val = random.random()
-        slt.add(val)
+        slt.append(val)
         lst.append(val)
 
     lst.sort(reverse=True)
@@ -208,7 +208,7 @@ def test_getitem_slice() -> None:
 
     for _rpt in range(100):
         val = random.random()
-        slt.add(val)
+        slt.append(val)
         lst.append(val)
 
     lst.sort(reverse=True)
@@ -409,7 +409,7 @@ def test_len() -> None:
     slt = _neg_list()
 
     for val in range(100):
-        slt.add(val)
+        slt.append(val)
         assert len(slt) == (val + 1)
 
 
@@ -440,7 +440,7 @@ def test_copy() -> None:
     slt = _neg_list(range(100))
     slt.reset(7)
     two = slt.copy()
-    slt.add(100)
+    slt.append(100)
     assert len(slt) == 101
     assert len(two) == 100
 
@@ -451,7 +451,7 @@ def test_copy_copy() -> None:
     slt = _neg_list(range(100))
     slt.reset(7)
     two = copy.copy(slt)
-    slt.add(100)
+    slt.append(100)
     assert len(slt) == 101
     assert len(two) == 100
 
@@ -464,7 +464,7 @@ def test_count() -> None:
     nb = 10
     for iii in range(nb):
         for _jjj in range(iii):
-            slt.add(iii)
+            slt.append(iii)
         check_sorted_key_list(slt)
 
     for iii in range(nb):

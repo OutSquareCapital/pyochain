@@ -5,30 +5,22 @@ use pyo3::{
 };
 use smallvec::{Array, SmallVec};
 use std::mem::MaybeUninit;
-type VecOfPtr = SmallVec<[*mut ffi::PyObject; 16]>;
+use std::ptr;
+type Kwargs<'a, 'py> = Option<&'a Bound<'py, PyDict>>;
+type CallResult<'py> = PyResult<Bound<'py, PyAny>>;
 pub trait CallConcat<'py> {
-    fn call_concat<A: ArgsConcat<'py>>(
-        self,
-        args: A,
-        kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<Bound<'py, PyAny>>;
-    fn call_concat1<A: ArgsConcat<'py>>(self, args: A) -> PyResult<Bound<'py, PyAny>>;
+    fn call_concat<A: IntoArgs<'py>>(self, args: A, kwargs: Kwargs<'_, 'py>) -> CallResult<'py>;
+    fn call_concat1<A: IntoArgs<'py>>(self, args: A) -> CallResult<'py>;
 }
 
 macro_rules! dispatch {
     ($func:expr, $args:expr, $kwargs:expr) => {
         seq_macro::seq!(i in 1..=8 {
             match $args.len_unpacked() {
-                #(i => {
-                    let mut buf = FixedBuf::<i>::new();
-                    $args.extend_buf(&mut buf);
-                    vectorcall($func, buf.as_ptr(), i, $kwargs)
-                })*
-                n => {
-                    let mut buf = VecOfPtr::with_capacity(n);
-                    $args.extend_buf(&mut buf);
-                    vectorcall($func, buf.as_ptr(), n, $kwargs)
-                }
+                #(
+                i => FixedBuf::<i>::from_args(&$args).call($func,$kwargs),
+                )*
+                _ => VecOfPtr::from_args(&$args).call($func, $kwargs),
             }
         })
     };
@@ -38,44 +30,33 @@ macro_rules! dispatch1 {
     ( $func:expr, $args:expr) => {
         seq_macro::seq!(i in 1..=8 {
             match $args.len_unpacked() {
-                #(i => {
-                    let mut buf = FixedBuf::<i>::new();
-                    $args.extend_buf(&mut buf);
-                    vectorcall1($func, buf.as_ptr(), i)
-                })*
-                n => {
-                    let mut buf = VecOfPtr::with_capacity(n);
-                    $args.extend_buf(&mut buf);
-                    vectorcall1($func, buf.as_ptr(), n)
-                }
+                #(
+                i => FixedBuf::<i>::from_args(&$args).call1($func),
+                )*
+                _ => VecOfPtr::from_args(&$args).call1($func),
             }
         })
     };
 }
 impl<'py> CallConcat<'py> for &Bound<'py, PyAny> {
     #[inline(always)]
-    fn call_concat1<A: ArgsConcat<'py>>(self, args: A) -> PyResult<Bound<'py, PyAny>> {
+    fn call_concat1<A: IntoArgs<'py>>(self, args: A) -> CallResult<'py> {
         dispatch1!(self, args)
     }
-
     #[inline(always)]
-    fn call_concat<A: ArgsConcat<'py>>(
-        self,
-        args: A,
-        kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    fn call_concat<A: IntoArgs<'py>>(self, args: A, kwargs: Kwargs<'_, 'py>) -> CallResult<'py> {
         dispatch!(self, args, kwargs)
     }
 }
 
 /// # Safety
 /// Implementors must call `buf.push_ptr` from `extend_buf` exactly `len_unpacked()` times.
-pub unsafe trait ArgsConcat<'py> {
+pub unsafe trait IntoArgs<'py> {
     fn len_unpacked(&self) -> usize;
     fn extend_buf<B: ArgBuffer>(&self, buf: &mut B);
 }
 
-unsafe impl<'py> ArgsConcat<'py> for Bound<'py, PyAny> {
+unsafe impl<'py> IntoArgs<'py> for Bound<'py, PyAny> {
     #[inline(always)]
     fn len_unpacked(&self) -> usize {
         1
@@ -86,7 +67,7 @@ unsafe impl<'py> ArgsConcat<'py> for Bound<'py, PyAny> {
     }
 }
 
-unsafe impl<'py> ArgsConcat<'py> for Bound<'py, PyTuple> {
+unsafe impl<'py> IntoArgs<'py> for Bound<'py, PyTuple> {
     #[inline(always)]
     fn len_unpacked(&self) -> usize {
         self.len()
@@ -100,7 +81,7 @@ unsafe impl<'py> ArgsConcat<'py> for Bound<'py, PyTuple> {
         }
     }
 }
-unsafe impl<A> ArgsConcat<'_> for SmallVec<A>
+unsafe impl<A> IntoArgs<'_> for SmallVec<A>
 where
     A: Array<Item = Py<PyAny>>,
 {
@@ -113,7 +94,7 @@ where
         self.iter().for_each(|item| buf.push_ptr(item.as_ptr()));
     }
 }
-unsafe impl<'py, T: ArgsConcat<'py> + ?Sized> ArgsConcat<'py> for &T {
+unsafe impl<'py, T: IntoArgs<'py> + ?Sized> IntoArgs<'py> for &T {
     #[inline(always)]
     fn len_unpacked(&self) -> usize {
         (**self).len_unpacked()
@@ -126,7 +107,7 @@ unsafe impl<'py, T: ArgsConcat<'py> + ?Sized> ArgsConcat<'py> for &T {
 
 macro_rules! impl_arg_concat_tuple {
     ($($T:ident : $idx:tt),+) => {
-        unsafe impl<'py, $($T: ArgsConcat<'py>),+> ArgsConcat<'py> for ($($T,)+) {
+        unsafe impl<'py, $($T: IntoArgs<'py>),+> IntoArgs<'py> for ($($T,)+) {
             #[inline(always)]
             fn len_unpacked(&self) -> usize {
                 0 $(+ self.$idx.len_unpacked())+
@@ -141,67 +122,81 @@ macro_rules! impl_arg_concat_tuple {
 impl_arg_concat_tuple!(A:0, B:1);
 impl_arg_concat_tuple!(A:0, B:1, C:2);
 impl_arg_concat_tuple!(A:0, B:1, C:2, D:3);
-
-pub trait ArgBuffer {
-    fn push_ptr(&mut self, ptr: *mut ffi::PyObject);
+mod sealed {
+    pub trait Sealed {}
 }
-
+pub trait ArgBuffer: Sized + sealed::Sealed {
+    fn from_args<'py, A: IntoArgs<'py>>(args: &A) -> Self;
+    fn push_ptr(&mut self, ptr: *mut ffi::PyObject);
+    fn as_ptr(&self) -> *const *mut ffi::PyObject;
+    fn len(&self) -> usize;
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+    #[inline(always)]
+    fn call1<'py>(self, func: &Bound<'py, PyAny>) -> CallResult<'py> {
+        unsafe {
+            let res =
+                ffi::PyObject_Vectorcall(func.as_ptr(), self.as_ptr(), self.len(), ptr::null_mut());
+            Bound::from_owned_ptr_or_err(func.py(), res)
+        }
+    }
+    #[inline(always)]
+    fn call<'py>(self, func: &Bound<'py, PyAny>, kwargs: Kwargs<'_, 'py>) -> CallResult<'py> {
+        let kw = kwargs.map_or(ptr::null_mut(), Bound::as_ptr);
+        unsafe {
+            let res = ffi::PyObject_VectorcallDict(func.as_ptr(), self.as_ptr(), self.len(), kw);
+            Bound::from_owned_ptr_or_err(func.py(), res)
+        }
+    }
+}
+struct VecOfPtr(SmallVec<[*mut ffi::PyObject; 16]>);
 impl ArgBuffer for VecOfPtr {
+    fn from_args<'py, A: IntoArgs<'py>>(args: &A) -> Self {
+        let mut buf = Self(SmallVec::with_capacity(args.len_unpacked()));
+        args.extend_buf(&mut buf);
+        buf
+    }
     #[inline(always)]
     fn push_ptr(&mut self, ptr: *mut ffi::PyObject) {
-        self.push(ptr);
+        self.0.push(ptr);
+    }
+    fn as_ptr(&self) -> *const *mut ffi::PyObject {
+        self.0.as_ptr()
+    }
+    fn len(&self) -> usize {
+        self.0.len()
     }
 }
 struct FixedBuf<const N: usize> {
-    buf: [MaybeUninit<*mut ffi::PyObject>; N],
+    slice: [MaybeUninit<*mut ffi::PyObject>; N],
     len: usize,
-}
-
-impl<const N: usize> FixedBuf<N> {
-    #[inline(always)]
-    fn new() -> Self {
-        Self {
-            buf: [const { MaybeUninit::uninit() }; N],
-            len: 0,
-        }
-    }
-
-    #[inline(always)]
-    fn as_ptr(&self) -> *const *mut ffi::PyObject {
-        self.buf.as_ptr().cast()
-    }
 }
 
 impl<const N: usize> ArgBuffer for FixedBuf<N> {
     #[inline(always)]
+    fn from_args<'py, A: IntoArgs<'py>>(args: &A) -> Self {
+        let mut buf = Self {
+            slice: [const { MaybeUninit::uninit() }; N],
+            len: 0,
+        };
+        args.extend_buf(&mut buf);
+        buf
+    }
+    #[inline(always)]
     fn push_ptr(&mut self, ptr: *mut ffi::PyObject) {
         debug_assert!(self.len < N);
-        unsafe { self.buf.get_unchecked_mut(self.len).write(ptr) };
+        unsafe { self.slice.get_unchecked_mut(self.len).write(ptr) };
         self.len += 1;
+    }
+    #[inline(always)]
+    fn as_ptr(&self) -> *const *mut ffi::PyObject {
+        self.slice.as_ptr().cast()
+    }
+    fn len(&self) -> usize {
+        N
     }
 }
 
-#[inline(always)]
-fn vectorcall1<'py>(
-    func: &Bound<'py, PyAny>,
-    ptr: *const *mut ffi::PyObject,
-    n: usize,
-) -> PyResult<Bound<'py, PyAny>> {
-    unsafe {
-        let result = ffi::PyObject_Vectorcall(func.as_ptr(), ptr, n, std::ptr::null_mut());
-        Bound::from_owned_ptr_or_err(func.py(), result)
-    }
-}
-#[inline(always)]
-fn vectorcall<'py>(
-    func: &Bound<'py, PyAny>,
-    ptr: *const *mut ffi::PyObject,
-    n: usize,
-    kwargs: Option<&Bound<'py, PyDict>>,
-) -> PyResult<Bound<'py, PyAny>> {
-    let kw = kwargs.map_or(std::ptr::null_mut(), pyo3::Bound::as_ptr);
-    unsafe {
-        let result = ffi::PyObject_VectorcallDict(func.as_ptr(), ptr, n, kw);
-        Bound::from_owned_ptr_or_err(func.py(), result)
-    }
-}
+impl sealed::Sealed for VecOfPtr {}
+impl<const N: usize> sealed::Sealed for FixedBuf<N> {}

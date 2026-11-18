@@ -4,16 +4,15 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from benchmarks._utils import SIZE_PARAMS
 from pyochain import Ok, Range
-
-from ._utils import SIZES
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture
 
 
 @pytest.mark.benchmark(group="try_find")
-@pytest.mark.parametrize("size", SIZES)
+@SIZE_PARAMS
 def test_try_find(benchmark: BenchFixture, size: int) -> None:
     unreachable = size + 1
 
@@ -25,7 +24,7 @@ def test_try_find(benchmark: BenchFixture, size: int) -> None:
 
 
 @pytest.mark.benchmark(group="try_fold")
-@pytest.mark.parametrize("size", SIZES)
+@SIZE_PARAMS
 def test_try_fold(benchmark: BenchFixture, size: int) -> None:
     def fn(data: Range) -> None:
         _ = data.iter().try_fold(0, lambda accumulator, value: Ok(accumulator + value))
@@ -35,7 +34,7 @@ def test_try_fold(benchmark: BenchFixture, size: int) -> None:
 
 
 @pytest.mark.benchmark(group="try_reduce")
-@pytest.mark.parametrize("size", SIZES)
+@SIZE_PARAMS
 def test_try_reduce(benchmark: BenchFixture, size: int) -> None:
     def fn(data: Range) -> None:
         _ = data.iter().try_reduce(lambda left, right: Ok(left + right))
