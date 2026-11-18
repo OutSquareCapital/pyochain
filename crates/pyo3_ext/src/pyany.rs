@@ -7,7 +7,7 @@ use pyo3::{
     prelude::*,
     types::PyIterator,
 };
-use std::cmp::Ordering;
+use std::{cmp::Ordering, hint::unreachable_unchecked};
 
 use crate::{ext_methods::PyIteratorExtMethods, pylibs::iter::NativeIter};
 /// Copy of internal pyo3 macro that works with generic types.
@@ -37,6 +37,7 @@ pub trait PyAnyExtMethods<'py> {
     fn rich_compare_bool<O: IntoPyObject<'py>>(&self, other: O, op: CompareOp) -> PyResult<bool>;
     fn try_iter_native(&self) -> PyResult<NativeIter<Bound<'py, PyIterator>>>;
     fn compare_fast(&self, other: &Bound<'_, PyAny>) -> PyResult<Ordering>;
+    fn lt_fast(&self, other: &Bound<'_, PyAny>) -> PyResult<Ordering>;
 }
 
 macro_rules! implement_inplace_binop {
@@ -67,37 +68,60 @@ impl<'py> PyAnyExtMethods<'py> for Bound<'py, PyAny> {
     fn rich_compare_bool<O: IntoPyObject<'py>>(&self, other: O, op: CompareOp) -> PyResult<bool> {
         let py = self.py();
         let o = other.into_pyobject_or_pyerr(py)?.into_any();
-        let out = unsafe { ffi::PyObject_RichCompareBool(self.as_ptr(), o.as_ptr(), op as c_int) };
-        match out {
-            1 => Ok(true),
-            0 => Ok(false),
-            -1 => Err(PyErr::fetch(py)),
-            _ => unreachable!(),
+        RichCompareBool::new(self, &o, op).into_pyresult(py)
+    }
+    #[inline(always)]
+    fn lt_fast(&self, other: &Bound<'_, PyAny>) -> PyResult<Ordering> {
+        let py = self.py();
+        match RichCompareBool::new(self, other, CompareOp::Lt) {
+            RichCompareBool::True => Ok(Ordering::Less),
+            RichCompareBool::False => Ok(Ordering::Equal),
+            RichCompareBool::Error => Err(PyErr::fetch(py)),
         }
     }
     /// Faster alternative to pyo3 native `compare` method.
     #[inline(always)]
     fn compare_fast(&self, other: &Bound<'_, PyAny>) -> PyResult<Ordering> {
         let py = self.py();
-        unsafe {
-            match rich_compare(self, other, ffi::Py_LT) {
-                1 => Ok(Ordering::Less),
-                0 => match rich_compare(self, other, ffi::Py_GT) {
-                    1 => Ok(Ordering::Greater),
-                    0 => Ok(Ordering::Equal),
-                    -1 => Err(PyErr::fetch(py)),
-                    _ => unreachable!(),
-                },
-                -1 => Err(PyErr::fetch(py)),
-                _ => unreachable!(),
-            }
+        match RichCompareBool::new(self, other, CompareOp::Lt) {
+            RichCompareBool::True => Ok(Ordering::Less),
+            RichCompareBool::False => match RichCompareBool::new(self, other, CompareOp::Gt) {
+                RichCompareBool::True => Ok(Ordering::Greater),
+                RichCompareBool::False => Ok(Ordering::Equal),
+                RichCompareBool::Error => Err(PyErr::fetch(py)),
+            },
+            RichCompareBool::Error => Err(PyErr::fetch(py)),
         }
     }
     fn try_iter_native(&self) -> PyResult<NativeIter<Bound<'py, PyIterator>>> {
         self.try_iter().map(Bound::into_native)
     }
 }
-#[inline(always)]
-unsafe fn rich_compare(a: &Bound<'_, PyAny>, b: &Bound<'_, PyAny>, op: c_int) -> c_int {
-    unsafe { ffi::PyObject_RichCompareBool(a.as_ptr(), b.as_ptr(), op) }
+/// Raw output of a rich comparison operation.\
+/// <https://docs.python.org/3/c-api/object.html#c.PyObject_RichCompareBool>
+enum RichCompareBool {
+    True = 1,
+    False = 0,
+    Error = -1,
+}
+impl RichCompareBool {
+    #[inline(always)]
+    fn new<'py, T, B: BoundObject<'py, T>>(a: &Bound<'_, PyAny>, b: &B, op: CompareOp) -> Self {
+        match unsafe {
+            ffi::PyObject_RichCompareBool(a.as_ptr(), b.as_borrowed().as_ptr(), op as c_int)
+        } {
+            1 => Self::True,
+            0 => Self::False,
+            -1 => Self::Error,
+            _ => unsafe { unreachable_unchecked() },
+        }
+    }
+    #[inline(always)]
+    fn into_pyresult(self, py: Python<'_>) -> PyResult<bool> {
+        match self {
+            Self::True => Ok(true),
+            Self::False => Ok(false),
+            Self::Error => Err(PyErr::fetch(py)),
+        }
+    }
 }
