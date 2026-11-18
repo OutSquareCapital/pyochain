@@ -12,7 +12,7 @@ from typing import (
     type_check_only,
 )
 
-from pyochain import Result
+from pyochain import Err, Ok, Result
 from pyochain.abc import PyoIterator
 from pyochain.mixins import Pipe
 
@@ -120,6 +120,10 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def flatten[T1](self: Some[Option[T1]]) -> Option[T1]: ...
+    @overload
+    def flatten[T1](self: Null[Option[T1]]) -> Null[T1]: ...
     def flatten[T1](self: Option[Option[T1]]) -> Option[T1]:
         """Flattens a nested `Option`.
 
@@ -391,6 +395,10 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def unwrap_or_else[S](self: Some[T], f: Callable[[], object]) -> T: ...
+    @overload
+    def unwrap_or_else[S](self: Null[T], f: Callable[[], S]) -> S: ...
     def unwrap_or_else[S](self, f: Callable[[], S]) -> T | S:
         """Returns the contained `Some` value or computes it from a function.
 
@@ -411,6 +419,24 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def map[**P, R](
+        self: Some[T],
+        f: Callable[Concatenate[T, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Some[R]: ...
+    @overload
+    def map[**P, R](
+        self: Null[T],
+        f: Callable[Concatenate[T, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Null[R]: ...
+    @overload
+    def map[**P, R](
+        self, f: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
+    ) -> Option[R]: ...
     def map[**P, R](
         self, f: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
     ) -> Option[R]:
@@ -436,6 +462,10 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def and_[U](self: Some[T], optb: Option[U]) -> Option[U]: ...
+    @overload
+    def and_[U](self: Null[T], optb: Option[U]) -> Null[U]: ...
     def and_[U](self, optb: Option[U]) -> Option[U]:
         """Returns `NONE` if the option is `NONE`, otherwise returns optb.
 
@@ -458,6 +488,10 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def or_[S](self: Some[T], optb: Option[object]) -> Some[T]: ...
+    @overload
+    def or_[S](self: Null[T], optb: Option[S]) -> Option[S]: ...
     def or_[S](self, optb: Option[S]) -> Option[T | S]:
         """Returns the option if it contains a value, otherwise returns optb.
 
@@ -478,6 +512,27 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def and_then[**P, R](
+        self: Some[T],
+        f: Callable[Concatenate[T, P], Option[R]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Option[R]: ...
+    @overload
+    def and_then[**P, R](
+        self: Null[T],
+        f: Callable[Concatenate[T, P], Option[R]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Null[R]: ...
+    @overload
+    def and_then[**P, R](
+        self,
+        f: Callable[Concatenate[T, P], Option[R]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Option[R]: ...
     def and_then[**P, R](
         self,
         f: Callable[Concatenate[T, P], Option[R]],
@@ -511,6 +566,10 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def or_else[S](self: Some[T], f: Callable[[], Option[object]]) -> Some[T]: ...
+    @overload
+    def or_else[S](self: Null[T], f: Callable[[], Option[S]]) -> Option[S]: ...
     def or_else[S](self, f: Callable[[], Option[S]]) -> Option[T | S]:
         """Returns the `Option[T]` if it contains a value, otherwise calls a function and returns the result.
 
@@ -536,6 +595,10 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def ok_or[E](self: Some[T], err: object) -> Ok[T, E]: ...
+    @overload
+    def ok_or[E](self: Null[T], err: E) -> Err[T, E]: ...
     def ok_or[E](self, err: E) -> Result[T, E]:
         """Converts the option to a `Result`.
 
@@ -554,6 +617,10 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def ok_or_else[E](self: Some[T], err: Callable[[], object]) -> Ok[T, E]: ...
+    @overload
+    def ok_or_else[E](self: Null[T], err: Callable[[], E]) -> Err[T, E]: ...
     def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:
         """Converts the option to a Result.
 
@@ -673,6 +740,24 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def inspect[**P](
+        self: Some[T],
+        f: Callable[Concatenate[T, P], object],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Some[T]: ...
+    @overload
+    def inspect[**P](
+        self: Null[T],
+        f: Callable[Concatenate[T, P], object],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Null[T]: ...
+    @overload
+    def inspect[**P](
+        self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
+    ) -> Option[T]: ...
     def inspect[**P](
         self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Option[T]:
@@ -702,6 +787,10 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def unzip[S, U](self: Some[tuple[S, U]]) -> tuple[Some[S], Some[U]]: ...
+    @overload
+    def unzip[S, U](self: Null[tuple[S, U]]) -> tuple[Null[S], Null[U]]: ...
     def unzip[S, U](self: Option[tuple[S, U]]) -> tuple[Option[S], Option[U]]:
         """Unzips an `Option` of a tuple into a tuple of `Option`s.
 
@@ -720,6 +809,10 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def zip[U](self: Some[T], other: Some[U]) -> Some[tuple[T, U]]: ...
+    @overload
+    def zip[U](self: Option[T], other: Option[U]) -> Option[tuple[T, U]]: ...
     def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:
         """Returns an `Option[tuple[T, U]]` containing a tuple of the values if both options are `Some`, otherwise returns `NONE`.
 
@@ -739,6 +832,14 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def zip_with[U, R](
+        self: Some[T], other: Some[U], f: Callable[[T, U], R]
+    ) -> Some[R]: ...
+    @overload
+    def zip_with[U, R](
+        self: Option[T], other: Option[U], f: Callable[[T, U], R]
+    ) -> Option[R]: ...
     def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]:
         """Zips `self` and another `Option` with function `f`.
 
@@ -772,6 +873,26 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def reduce[O, R](
+        self: Some[T], other: Some[O], func: Callable[[T, O], R]
+    ) -> Some[R]: ...
+    @overload
+    def reduce[O, R](
+        self: Some[T], other: Null[O], func: Callable[[T, O], R]
+    ) -> Some[T]: ...
+    @overload
+    def reduce[O, R](
+        self: Null[T], other: Some[O], func: Callable[[T, O], R]
+    ) -> Some[O]: ...
+    @overload
+    def reduce[O, R](
+        self: Null[T], other: Null[O], func: Callable[[T, O], R]
+    ) -> Null[R]: ...
+    @overload
+    def reduce[O, R](
+        self: Option[T], other: Option[O], func: Callable[[T, O], R]
+    ) -> Option[T | O | R]: ...
     def reduce[O, R](self, other: Option[O], func: Callable[[T, O], R]) -> Option[R]:
         """Reduces two options into one, using the provided function if both are Some.
 
@@ -835,6 +956,16 @@ class OptionType[T](Pipe, Protocol):
             ```
         """
 
+    @overload
+    def xor(self: Some[T], optb: Null[object]) -> Some[T]: ...
+    @overload
+    def xor(self: Null[T], optb: Some[object]) -> Some[T]: ...
+    @overload
+    def xor(self: Some[T], optb: Some[object]) -> Null[T]: ...
+    @overload
+    def xor(self: Null[T], optb: Null[object]) -> Null[T]: ...
+    @overload
+    def xor[O](self, optb: Option[object]) -> Option[T]: ...
     def xor[O](self, optb: Option[object]) -> Option[T]:
         """Returns `Some` if exactly one of **self**, optb is `Some`, otherwise returns `NONE`.
 
