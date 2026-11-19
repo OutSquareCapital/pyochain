@@ -1,4 +1,5 @@
 //! Traits extending the functionality of various pre-existing Pyo3 types
+
 use pyo3::{
     BoundObject, IntoPyObjectExt, PyTypeCheck, PyTypeInfo,
     basic::CompareOp,
@@ -99,36 +100,6 @@ macro_rules! impl_sequence_ext_methods {
     };
 }
 impl_sequence_ext_methods!(PyList, PyTuple, types::PyDeque, PyString);
-pub trait PyIntExtMethods {
-    /// <https://docs.python.org/3/c-api/long.html#c.PyUnstable_Long_IsCompact>
-    fn is_compact(&self) -> bool;
-    /// <https://docs.python.org/3/c-api/long.html#c.PyUnstable_Long_CompactValue>
-    ///
-    /// # Safety
-    /// [`is_compact`](Self::is_compact) must be `true`, otherwise the returned value is meaningless.
-    unsafe fn compact_value(&self) -> isize;
-}
-impl PyIntExtMethods for Bound<'_, PyInt> {
-    fn is_compact(&self) -> bool {
-        unsafe { crate::ffi::PyUnstable_Long_IsCompact(self.as_ptr().cast()) != 0 }
-    }
-    unsafe fn compact_value(&self) -> isize {
-        debug_assert!(self.is_compact());
-        unsafe { crate::ffi::PyUnstable_Long_CompactValue(self.as_ptr().cast()) }
-    }
-}
-pub trait PyStringExtMethods {
-    /// Number of code points. <https://docs.python.org/3/c-api/unicode.html#c.PyUnicode_GET_LENGTH>
-    fn len(&self) -> usize;
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-}
-impl PyStringExtMethods for Bound<'_, PyString> {
-    fn len(&self) -> usize {
-        unsafe { ffi::PyUnicode_GET_LENGTH(self.as_ptr()) }.cast_unsigned()
-    }
-}
 /// The `index` method is different on `range`, so we need to implement it separately.
 pub trait PyRangeExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
