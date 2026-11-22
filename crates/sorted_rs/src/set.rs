@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use crate::{
     KeyList, List,
     get_item::Index,
-    list_update::ListAdd,
+    list_update::IntoList,
     prelude::*,
     types::{IntoIndex, Set},
 };
@@ -67,9 +67,9 @@ pub trait PySetDataRef:
         let set = &slf.data.clone_ref(py).into_bound(py);
         op.call_mut(set, args)?;
         slf.list.clear(py);
-        set.iter()
-            .collect_bound(py)?
-            .pipe(ListAdd::PyListOwned)
+        set.iter_py()
+            .unbind()
+            .pipe(IntoList::PyIter)
             .extend_into(py, &mut slf.list)
     }
     #[inline]
@@ -120,8 +120,7 @@ impl<T: ListsMethods> Set<T> {
             .iter()
             .map(Bound::unbind)
             .collect::<Vec<_>>()
-            .into_iter()
-            .pipe(ListAdd::Vec)
+            .pipe(IntoList::Vec)
             .into_new_list(py, &self.list)?;
         Self::new(list, values.unbind()).pipe(Ok)
     }

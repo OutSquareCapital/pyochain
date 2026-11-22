@@ -6,14 +6,17 @@ use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
     inner::Values,
     iter::IrangeBounds,
-    list_update::{Identity, KeyFn},
     ops,
     search::Search,
+    sort::{Chunk, Identity},
     traits::ListsMethods,
+    types::VecPy,
 };
 
 impl ListsMethods for List {
-    const IS_KEYED: bool = false;
+    type Chunk = VecPy;
+    type Item = Py<PyAny>;
+    type Key<'py> = Identity<'py>;
     fn keys(&self) -> &Values {
         &self.values
     }
@@ -26,7 +29,7 @@ impl ListsMethods for List {
     fn keys_mut(&mut self) -> &mut Values {
         &mut self.values
     }
-    fn key_func<'py>(&self, py: Python<'py>) -> impl KeyFn<'py> + use<'py> {
+    fn key_func<'py>(&self, py: Python<'py>) -> Self::Key<'py> {
         Identity(py)
     }
     fn irange<'py>(
@@ -40,13 +43,13 @@ impl ListsMethods for List {
         let py = value.py();
         match self.try_bisect_right(&value)? {
             ops::Bisect::Empty => {
-                self.push_chunk(py, vec![value.unbind()]);
+                vec![value.unbind()].push_into(py, self);
             }
             ops::Bisect::MaxesLen => {
                 self.push_val(py, value.unbind());
             }
             ops::Bisect::AtLoc(loc) => {
-                self.keys_mut()[loc.pos].insert(loc.idx, value.unbind());
+                self.keys_mut().loc_insert(&loc, value.unbind());
                 self.expand(py, loc.pos);
             }
         }

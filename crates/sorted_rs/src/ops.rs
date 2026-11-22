@@ -13,7 +13,6 @@ use crate::{
     bisect::bisect,
     bounds::{Bounds, Loc},
     inner::InnerList,
-    list_update::ListAdd,
     traits::ListsMethods,
 };
 
@@ -128,22 +127,6 @@ impl Expand {
             Self::IdxBuilt
         } else {
             Self::NoOp
-        }
-    }
-}
-pub enum Update {
-    Empty,
-    Small,
-    Big,
-}
-impl Update {
-    pub fn new(list: &InnerList, values: &ListAdd<'_>) -> Self {
-        if list.is_empty() {
-            Self::Empty
-        } else if 4 * values.len() >= list.len() {
-            Self::Big
-        } else {
-            Self::Small
         }
     }
 }

@@ -4,9 +4,9 @@ use pyo3::{prelude::*, types::PySlice};
 use tap::prelude::*;
 
 use crate::{
+    IntoList,
     bounds::{Bounds, Loc},
     inner::InnerList,
-    list_update::ListAdd,
     ops::{self, ForwardSlice},
     traits::ListsMethods,
     types::VecPy,
@@ -149,10 +149,7 @@ impl SliceIdxs {
             values.append(new_slice.as_mut());
         }
         list.clear(py);
-        values
-            .into_iter()
-            .pipe(ListAdd::Sorted)
-            .extend_into(py, list)
+        values.pipe(IntoList::Vec).extend_into(py, list)
     }
 }
 #[derive(From)]

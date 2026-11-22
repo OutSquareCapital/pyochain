@@ -8,7 +8,7 @@ use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::prelude::*;
 
-use crate::{List, list_update::ListAdd, prelude::*, types::Dict};
+use crate::{List, list_update::IntoList, prelude::*, types::Dict};
 
 impl Dict<List> {
     #[must_use]
@@ -119,8 +119,7 @@ impl<T: ListsMethods> Dict<T> {
                 })
             })
             .collect::<PyResult<Vec<_>>>()?
-            .into_iter()
-            .pipe(ListAdd::Vec)
+            .pipe(IntoList::Vec)
             .into_new_list(py, &self.list)
             .map(|list| Self::new(list, inner.unbind()))
     }
@@ -180,7 +179,9 @@ impl<T: ListsMethods> Dict<T> {
             }
             inner
                 .keys()
-                .pipe(ListAdd::PyListOwned)
+                .iter_py()
+                .unbind()
+                .pipe(IntoList::PyIter)
                 .extend_into(py, &mut self.list)
         } else {
             let pairs = try_cast_into! {
@@ -211,7 +212,9 @@ impl<T: ListsMethods> Dict<T> {
                 self.list.clear(py);
                 inner
                     .keys()
-                    .pipe(ListAdd::PyListOwned)
+                    .iter_py()
+                    .unbind()
+                    .pipe(IntoList::PyIter)
                     .extend_into(py, &mut self.list)
             } else {
                 pairs.keys_view().iter_py().try_for_each(|key| {

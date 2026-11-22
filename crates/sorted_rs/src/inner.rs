@@ -2,11 +2,12 @@ use crate::{
     bounds::Loc,
     errors,
     lengths::Lengths,
-    list_update::ListAdd,
+    list_update::IntoList,
     ops,
     types::{SeqOrAny, VecPy},
 };
 use derive_more::{Deref, DerefMut, From, IntoIterator};
+use itertools::Itertools;
 use pyo3::{BoundObject, basic::CompareOp, prelude::*, types::PyNotImplemented};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use std_tools::prelude::*;
@@ -53,19 +54,19 @@ impl Values {
     }
     /// Repeat the list for the `mul` and `imul` operations. We know that the extend path will be `ops::Update::Empty`.
     #[inline]
-    pub(super) fn repeat<'py>(&self, py: Python<'py>, num: usize) -> PyResult<ListAdd<'py>> {
+    pub(super) fn repeat(&self, py: Python<'_>, num: usize) -> IntoList {
         (0..num)
             .flat_map(|_| self.iter())
             .map(|x| x.clone_ref(py))
-            .collect_bound(py)
-            .map(ListAdd::PyListOwned)
+            .collect_vec()
+            .pipe(IntoList::Vec)
     }
     #[inline(always)]
     pub(super) fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
         self.iter().map(move |x| x.clone_ref(py))
     }
     #[inline(always)]
-    pub(super) fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> {
+    pub(super) fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> + Clone {
         self.0.iter().flatten()
     }
     pub(super) fn iter_chunks(&self) -> impl DoubleEndedIterator<Item = &VecPy> {

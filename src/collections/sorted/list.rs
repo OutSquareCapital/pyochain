@@ -4,7 +4,7 @@ use pyo3::{exceptions::PyNotImplementedError, prelude::*};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use pyochain_macros::py_abc;
 use sorted_rs::{
-    KeyList, List, PyListsDataRef,
+    IntoList, KeyList, List, PyListsDataRef,
     prelude::*,
     types::{IntoIndex, SeqOrAny},
 };
@@ -45,18 +45,18 @@ impl SortedKeyList {
     }
 }
 impl PyListsDataRef for SortedList {
-    type L = List;
+    type List = List;
 }
 impl PyListsDataRef for SortedKeyList {
-    type L = KeyList;
+    type List = KeyList;
 }
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedListMethods:
-    ListGetter<T = <Self as ListGetter>::L> + PyListsDataRef<L = <Self as ListGetter>::L>
+    ListGetter<T = <Self as ListGetter>::L> + PyListsDataRef<List = <Self as ListGetter>::L>
 {
     fn __add__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let out = self.try_as_updatable(other)?;
+        let out = IntoList::try_new::<Self>(other)?;
         self.read().concat(py, out)?.conv::<Self>().into_bound(py)
     }
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -138,7 +138,8 @@ pub(super) trait SortedListMethods:
     }
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        self.write().extend(py, self.try_as_updatable(iterable)?)
+        let out = IntoList::try_new::<Self>(iterable)?;
+        self.write().extend(py, out)
     }
     #[allow(unused_variables)]
     fn insert(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {

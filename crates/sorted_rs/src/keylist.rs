@@ -3,16 +3,19 @@ use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
     inner::Values,
     iter::IrangeBounds,
-    list_update::{KeyFn, WithKey},
     ops,
     search::Search,
+    sort::{Chunk, WithKey},
     traits::ListsMethods,
+    types::VecPy,
 };
 use pyo3::prelude::*;
 use tap::prelude::*;
 impl ListsMethods for KeyList {
-    const IS_KEYED: bool = true;
-    fn key_func<'py>(&self, py: Python<'py>) -> impl KeyFn<'py> + use<'py> {
+    type Chunk = (VecPy, VecPy);
+    type Item = (Py<PyAny>, Py<PyAny>);
+    type Key<'py> = WithKey<'py>;
+    fn key_func<'py>(&self, py: Python<'py>) -> Self::Key<'py> {
         self.func.clone_ref(py).into_bound(py).pipe(WithKey)
     }
     fn keys(&self) -> &Values {
@@ -44,7 +47,7 @@ impl ListsMethods for KeyList {
         match self.try_bisect_right(&key)? {
             ops::Bisect::Empty => {
                 self.values.push(vec![value.unbind()]);
-                self.push_chunk(py, vec![key.unbind()]);
+                vec![key.unbind()].push_into(py, self);
             }
             ops::Bisect::MaxesLen => {
                 let pos = self.maxes.len() - 1;

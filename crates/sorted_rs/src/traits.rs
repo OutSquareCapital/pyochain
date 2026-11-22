@@ -6,10 +6,11 @@ use crate::{
     get_item::Index,
     inner::{InnerList, Values},
     iter::{IrangeBounds, builder::RawRangeIdxs},
-    list_update::{KeyFn, ListAdd},
+    list_update::IntoList,
     ops,
     reprs::PyRepr,
-    types::{IndexOut, IntoIndex, VecPy},
+    sort::{Chunk, KeyFn, SortKey},
+    types::{IndexOut, IntoIndex},
 };
 use itertools::Itertools;
 use pyo3::prelude::*;
@@ -19,13 +20,15 @@ pub type BisectRes = PyResult<ops::Bisect>;
 pub trait ListsMethods:
     Deref<Target = InnerList> + DerefMut + PyRepr + Sized + Send + Sync
 {
+    type Chunk: Chunk<Self::Item>;
+    type Item: SortKey;
+    type Key<'py>: KeyFn<'py, Item = Self::Item>;
     /// Returns a reference to the "keys" of the collection.\
     /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
     /// For collections sorted by *key*, this is equivalent to `KeysListsData::1`.
-    const IS_KEYED: bool;
     fn keys(&self) -> &Values;
     fn keys_mut(&mut self) -> &mut Values;
-    fn key_func<'py>(&self, py: Python<'py>) -> impl KeyFn<'py> + use<'py, Self>;
+    fn key_func<'py>(&self, py: Python<'py>) -> Self::Key<'py>;
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     #[must_use]
     fn new_empty(&self, py: Python<'_>) -> Self;
@@ -49,7 +52,7 @@ pub trait ListsMethods:
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.find(value).map(|x| x.is_some())
     }
-    fn concat(&self, py: Python<'_>, other: ListAdd<'_>) -> PyResult<Self> {
+    fn concat(&self, py: Python<'_>, other: IntoList) -> PyResult<Self> {
         other.concat_into(py, self)
     }
     fn expand(&mut self, py: Python<'_>, pos: usize) {
@@ -68,7 +71,7 @@ pub trait ListsMethods:
             ops::Expand::NoOp => (),
         }
     }
-    fn extend(&mut self, py: Python<'_>, values: ListAdd<'_>) -> PyResult<()> {
+    fn extend(&mut self, py: Python<'_>, values: IntoList) -> PyResult<()> {
         values.extend_into(py, self)
     }
     fn get_item_or_slice<'py>(
@@ -109,12 +112,12 @@ pub trait ListsMethods:
             .map_or(Ok(()), |loc| self.delete(value.py(), loc))
     }
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let values = self.values.repeat(py, num)?;
+        let values = self.values.repeat(py, num);
         self.clear(py);
         self.extend(py, values)
     }
     fn mul(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
-        self.values.repeat(py, num)?.into_new_list(py, self)
+        self.values.repeat(py, num).into_new_list(py, self)
     }
     fn index(&mut self, value: &Bound<'_, PyAny>, (start, stop): RawRangeIdxs) -> PyResult<usize> {
         Bounds::new(start, stop)
@@ -127,11 +130,6 @@ pub trait ListsMethods:
         let val = self.values.loc(&loc).clone_ref(py);
         self.delete(py, loc)?;
         Ok(val.into_bound(py))
-    }
-    #[inline(always)]
-    fn push_chunk(&mut self, py: Python<'_>, chunk: VecPy) {
-        self.maxes.push(chunk.last().unwrap().clone_ref(py));
-        self.keys_mut().push(chunk);
     }
     #[inline(always)]
     fn push_val(&mut self, py: Python<'_>, value: Py<PyAny>) {
@@ -150,10 +148,7 @@ pub trait ListsMethods:
         let values = self.values.iter_owned(py).collect_vec();
         self.clear(py);
         self.load = load.into();
-        values
-            .into_iter()
-            .pipe(ListAdd::Sorted)
-            .extend_into(py, self)
+        values.pipe(IntoList::Vec).extend_into(py, self)
     }
     fn set_item(&mut self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.del_item(value.py(), index)?;
