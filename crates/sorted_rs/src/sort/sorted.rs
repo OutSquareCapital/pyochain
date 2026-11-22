@@ -2,7 +2,7 @@ use crate::{
     sort::{
         Chunk,
         keys::{KeyFn, SortKey},
-        pycmp::{Element, SortBy},
+        strategy::{Element, SortBy},
     },
     traits::ListsMethods,
 };
