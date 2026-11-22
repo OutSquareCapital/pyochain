@@ -28,6 +28,7 @@ impl SortBy {
             None => Self::Element(first.into()),
         }
     }
+    #[inline]
     pub fn check_next(self, item: &Bound<'_, PyAny>) -> Option<Self> {
         match self {
             // Nothing left to check: stop.
@@ -112,12 +113,14 @@ impl Default for Element {
 }
 impl Element {
     pub const SAFE: Self = Self::Object(Object::Safe);
+    #[inline]
     fn from_object<T>(obj: &Bound<'_, T>) -> Self {
         obj.as_any().get_type_ptr().conv::<Object>().into()
     }
     /// Keeps `self` if `key` has the same type and still fits the fast path.\
     /// A non-compact int or a non-latin string falls back to the homogeneous compare of its type,
     /// any other type mismatch to the safe compare.
+    #[inline]
     pub fn check_next(self, key: &Bound<'_, PyAny>) -> Option<Self> {
         match self {
             Self::Builtin(Builtin::Int) => key.cast_exact::<PyInt>().ok().map(Element::from),
