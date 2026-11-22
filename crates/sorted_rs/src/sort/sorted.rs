@@ -2,13 +2,13 @@ use crate::{
     sort::{
         Chunk,
         keys::{KeyFn, SortKey},
-        strategy::{Element, SortBy},
+        strategy::KeysCheck,
     },
     traits::ListsMethods,
 };
 use derive_more::{Deref, IntoIterator};
 use pyo3::prelude::*;
-use tap::Pipe;
+use tap::prelude::*;
 
 /// Pre-compute the keys for all items, then sort by those keys.\
 /// Implemented once per kind of item, since each needs its own conversion before the key function is called.
@@ -51,18 +51,16 @@ impl<T: SortKey> SortedVec<T> {
             Some(Err(e)) => Err(e),
             Some(Ok(first)) => {
                 let mut vec = Vec::with_capacity(capacity);
-                let mut strat = Some(SortBy::check_first(&first));
+                let mut keys = KeysCheck::new(first.key());
+                keys.check(first.key());
                 vec.push(first);
                 items.try_for_each(|item| {
                     let item = item?;
-                    strat = strat.and_then(|state| state.check_next(item.key()));
+                    keys.check(item.key());
                     vec.push(item);
                     PyResult::Ok(())
                 })?;
-                strat
-                    .unwrap_or(SortBy::Element(Element::SAFE))
-                    .sort(vec)
-                    .map(Self)
+                keys.into_strategy().sort(vec).map(Self)
             }
             None => Ok(Self(Vec::new())),
         }

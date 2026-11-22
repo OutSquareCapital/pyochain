@@ -19,29 +19,93 @@ pub(super) enum SortBy {
     Tuple(Element),
     Element(Element),
 }
+/// `CPython`'s pre-sort check: the properties of the keys, proven on every item.\
+/// The compare strategy is only chosen once they are all known, by converting into [`SortBy`].
+#[derive(Debug, Clone, Copy)]
+pub(super) struct KeysCheck {
+    /// Type of the first key, assumed to be representative of the whole list.
+    key_type: *mut ffi::PyTypeObject,
+    /// Compare to use if every key is proven to fit it.
+    kind: Element,
+    in_tuples: bool,
+    same_type: bool,
+    /// The builtin fast path of `kind` still holds: bounded ints, or latin strings.
+    builtin_fits: bool,
+}
+impl KeysCheck {
+    /// Assumes the first item is representative of the whole list.\
+    /// It still has to go through [`check`](Self::check) like every other item.
+    pub fn new(first: &Bound<'_, PyAny>) -> Self {
+        let first_key = try_get_first(first);
+        let key = first_key.unwrap_or(first);
+        Self {
+            key_type: key.get_type_ptr(),
+            // Tuples of tuples: the first items are compared with the safe compare.
+            kind: if first_key.is_some() && key.is_exact_instance_of::<PyTuple>() {
+                Element::SAFE
+            } else {
+                Element::from_key(key)
+            },
+            in_tuples: first_key.is_some(),
+            same_type: true,
+            builtin_fits: true,
+        }
+    }
+    /// Proves the assumption on `item`.\
+    /// For non-tuples, nothing is left to check after a type mismatch.
+    /// For tuples, every item must still be checked to be a non-empty tuple.
+    #[inline(always)]
+    pub fn check(&mut self, item: &Bound<'_, PyAny>) {
+        if self.in_tuples {
+            if let Some(key) = try_get_first(item) {
+                self.check_key(key);
+            } else {
+                self.in_tuples = false;
+                self.same_type = false;
+            }
+        } else if self.same_type {
+            self.check_key(item);
+        }
+    }
+    #[inline(always)]
+    fn check_key(&mut self, key: &Bound<'_, PyAny>) {
+        if !std::ptr::eq(key.get_type_ptr(), self.key_type) {
+            self.same_type = false;
+        } else if self.same_type {
+            // SAFETY: `key` is exactly of type `key_type`, which `kind` was chosen from.
+            match self.kind {
+                Element::Builtin(Builtin::Int) => {
+                    self.builtin_fits &= unsafe { key.cast_unchecked::<PyInt>() }.is_compact();
+                }
+                Element::Builtin(Builtin::String) => {
+                    self.builtin_fits &= matches!(
+                        unsafe { key.cast_unchecked::<PyString>() }.kind(),
+                        UnicodeByteKind::One
+                    );
+                }
+                _ => {}
+            }
+        }
+    }
+
+    /// Citation from `CPython`'s listobject.c:\
+    /// > Choose the best compare, given what we now know about the keys.
+    pub fn into_strategy(self) -> SortBy {
+        let element = match self.kind {
+            _ if !self.same_type => Element::SAFE,
+            Element::Builtin(Builtin::Int | Builtin::String) if !self.builtin_fits => {
+                self.key_type.conv::<Object>().into()
+            }
+            kind => kind,
+        };
+        if self.in_tuples {
+            SortBy::Tuple(element)
+        } else {
+            SortBy::Element(element)
+        }
+    }
+}
 impl SortBy {
-    pub fn check_first(first: &impl SortKey) -> Self {
-        let first = first.key();
-        match try_get_first(first) {
-            Some(key) if key.is_exact_instance_of::<PyTuple>() => Self::Tuple(Object::Safe.into()),
-            Some(key) => Self::Tuple(key.into()),
-            None => Self::Element(first.into()),
-        }
-    }
-    #[inline]
-    pub fn check_next(self, item: &Bound<'_, PyAny>) -> Option<Self> {
-        match self {
-            // Nothing left to check: stop.
-            Self::Element(Element::Object(Object::Safe)) => None,
-            // See `Element::check`.
-            Self::Element(s) => s.check_next(item).map(SortBy::Element),
-            // Stops if the item isn't a non-empty tuple, otherwise `Element::check` on its first item.
-            // Like CPython, a mismatch on the first items keeps the tuple compare, with the safe compare on them.
-            Self::Tuple(s) => try_get_first(item)
-                .map(|key| s.check_next(key).unwrap_or(Element::SAFE))
-                .map(SortBy::Tuple),
-        }
-    }
     pub(super) fn sort<T: SortKey>(self, mut items: Vec<T>) -> PyResult<Vec<T>> {
         use Builtin as Bl;
         use Element as El;
@@ -55,7 +119,7 @@ impl SortBy {
             Sb::Element(El::Builtin(Bl::Int)) => items.sort_by(SortKey::long),
             Sb::Element(El::Builtin(Bl::Float)) => items.sort_by(SortKey::float),
             Sb::Element(El::Builtin(Bl::String)) => items.sort_by(SortKey::latin),
-            Sb::Element(El::Object(Ob::Unsafe { func, .. })) => {
+            Sb::Element(El::Object(Ob::Unsafe(func))) => {
                 items.sort_by(|a, b| try_cmp.catch(|| a.unsafe_object(b, func)));
             }
             Sb::Tuple(El::Builtin(Bl::Int)) => {
@@ -70,7 +134,7 @@ impl SortBy {
             Sb::Tuple(El::Object(Ob::Safe)) => {
                 items.sort_by(|a, b| try_cmp.catch(|| a.try_tuple(b, SortKey::object)));
             }
-            Sb::Tuple(El::Object(Ob::Unsafe { func, .. })) => {
+            Sb::Tuple(El::Object(Ob::Unsafe(func))) => {
                 items.sort_by(|a, b| {
                     try_cmp.catch(|| a.try_tuple(b, |a, b| SortKey::unsafe_object(a, b, func)))
                 });
@@ -80,6 +144,7 @@ impl SortBy {
     }
 }
 /// First item of a non-empty exact tuple.
+#[inline(always)]
 fn try_get_first<'a, 'py>(item: &'a Bound<'py, PyAny>) -> Option<&'a Bound<'py, PyAny>> {
     item.cast_exact::<PyTuple>().ok()?.as_slice().first()
 }
@@ -113,52 +178,14 @@ impl Default for Element {
 }
 impl Element {
     pub const SAFE: Self = Self::Object(Object::Safe);
-    #[inline]
-    fn from_object<T>(obj: &Bound<'_, T>) -> Self {
-        obj.as_any().get_type_ptr().conv::<Object>().into()
-    }
-    /// Keeps `self` if `key` has the same type and still fits the fast path.\
-    /// A non-compact int or a non-latin string falls back to the homogeneous compare of its type,
-    /// any other type mismatch to the safe compare.
-    #[inline]
-    pub fn check_next(self, key: &Bound<'_, PyAny>) -> Option<Self> {
-        match self {
-            Self::Builtin(Builtin::Int) => key.cast_exact::<PyInt>().ok().map(Element::from),
-            Self::Builtin(Builtin::String) => key.cast_exact::<PyString>().ok().map(Element::from),
-            Self::Builtin(Builtin::Float) if key.is_exact_instance_of::<PyFloat>() => Some(self),
-            Self::Object(Object::Unsafe { ty, .. }) if std::ptr::eq(key.get_type_ptr(), ty) => {
-                Some(self)
-            }
-            _ => None,
-        }
-    }
-}
-impl From<&Bound<'_, PyInt>> for Element {
-    fn from(int: &Bound<'_, PyInt>) -> Self {
-        if int.is_compact() {
-            Self::Builtin(Builtin::Int)
-        } else {
-            Self::from_object(int)
-        }
-    }
-}
-impl From<&Bound<'_, PyString>> for Element {
-    fn from(string: &Bound<'_, PyString>) -> Self {
-        if matches!(string.kind(), UnicodeByteKind::One) {
-            Self::Builtin(Builtin::String)
-        } else {
-            Self::from_object(string)
-        }
-    }
-}
-impl From<&Bound<'_, PyAny>> for Element {
-    fn from(item: &Bound<'_, PyAny>) -> Self {
+    /// Compare for keys of exactly this type, before proving it on all of them.
+    fn from_key(key: &Bound<'_, PyAny>) -> Self {
         try_cast! {
-            match item {
-                CaseExact::PyInt(int) => int.into(),
-                CaseExact::PyString(s) => s.into(),
+            match key {
+                CaseExact::PyInt(_) => Builtin::Int.into(),
+                CaseExact::PyString(_) => Builtin::String.into(),
                 CaseExact::PyFloat(_) => Builtin::Float.into(),
-                _ => Self::from_object(item),
+                _ => key.get_type_ptr().conv::<Object>().into(),
             }
         }
     }
@@ -177,18 +204,14 @@ pub(super) enum Builtin {
 #[derive(Debug, Clone, Copy, From)]
 pub(super) enum Object {
     /// Homogeneous compare: safe for any two comparable objects of the same type
-    Unsafe {
-        /// Plain type pointer: the objects in the sort buffer keep their types alive.
-        ty: *mut ffi::PyTypeObject,
-        func: ffi::richcmpfunc,
-    },
+    Unsafe(ffi::richcmpfunc),
     /// Heterogeneous compare: default, always safe to fall back on.
     Safe,
 }
 impl From<*mut ffi::PyTypeObject> for Object {
     fn from(ty: *mut ffi::PyTypeObject) -> Self {
         match unsafe { (*ty).tp_richcompare } {
-            Some(func) => Self::Unsafe { ty, func },
+            Some(func) => Self::Unsafe(func),
             None => Self::Safe,
         }
     }
