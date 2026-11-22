@@ -35,8 +35,9 @@ impl SortBy {
             // See `Element::check`.
             Self::Element(s) => s.check_next(item).map(SortBy::Element),
             // Stops if the item isn't a non-empty tuple, otherwise `Element::check` on its first item.
+            // Like CPython, a mismatch on the first items keeps the tuple compare, with the safe compare on them.
             Self::Tuple(s) => try_get_first(item)
-                .and_then(|key| s.check_next(key))
+                .map(|key| s.check_next(key).unwrap_or(Element::SAFE))
                 .map(SortBy::Tuple),
         }
     }
