@@ -56,8 +56,6 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
         .with_columns(
             Lib.SortedContainers
             .pl()
-            .median()
-            .over(GROUP)
             .truediv(Lib.Pyochain)
             .round(3)
             .alias(Cols.Relative),
