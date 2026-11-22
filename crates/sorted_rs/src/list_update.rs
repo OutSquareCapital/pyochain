@@ -96,11 +96,10 @@ impl IntoList {
         match self {
             _ if list.is_empty() => Strategy::Empty(self),
             Self::Vec(vec) if is_big(vec.len()) => Strategy::Big(Self::Vec(vec)),
-            Self::PyIter(it) if it.bind(py).size_hint().1.is_some_and(is_big) => {
+            Self::PyIter(it) if it.bind(py).size_hint().0.pipe(is_big) => {
                 Strategy::Big(Self::PyIter(it))
             }
-            Self::PyIter(it) => Strategy::Small(Self::PyIter(it)),
-            Self::Vec(vec) => Strategy::Small(Self::Vec(vec)),
+            Self::PyIter(_) | Self::Vec(_) => Strategy::Small(self),
         }
     }
 }
