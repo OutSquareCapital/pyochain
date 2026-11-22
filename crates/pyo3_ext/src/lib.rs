@@ -1,7 +1,6 @@
 pub mod args;
 mod conversions;
 mod ext_methods;
-mod ffi;
 mod iter;
 mod numbers;
 pub mod prelude;

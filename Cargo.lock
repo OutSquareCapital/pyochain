@@ -352,7 +352,6 @@ dependencies = [
  "derive_more",
  "either",
  "pyo3",
- "pyo3-build-config",
  "seq-macro",
  "smallvec",
  "tap",
