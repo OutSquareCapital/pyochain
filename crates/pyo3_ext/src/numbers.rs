@@ -36,9 +36,11 @@ impl LongObject {
     const COMPACT_TAG_LIMIT: usize = 16;
     /// Sign is stored in the low 2 bits of `lv_tag`: 0 = positive, 1 = zero, 2 = negative.
     const SIGN_MASK: usize = 3;
+    #[inline]
     pub fn is_valid(&self) -> bool {
         self.lv_tag < Self::COMPACT_TAG_LIMIT
     }
+    #[inline]
     pub fn compact_value(&self) -> isize {
         let sign = 1 - (self.lv_tag & Self::SIGN_MASK).cast_signed();
         sign * (self.ob_digit[0] as usize).cast_signed()
