@@ -96,6 +96,15 @@ def into_sorted[C: SortedCollection](values: PyoIterable[int], cls: type[C]) -> 
         return cls(values)  # pyright: ignore[reportReturnType]
 
 
+def update(
+    benchmark: BenchFixture, cls: type[List], size: int, values: Vec[int]
+) -> None:
+    if cls is SortedList:
+        run_pedantic(benchmark, SortedList, size, lambda lst: lst.extend(values))
+    else:
+        run_pedantic(benchmark, cls, size, lambda lst: lst.update(values))
+
+
 def is_dict(cls: type[SortedCollection]) -> TypeIs[type[Dict]]:
     return cls is SortedDict or cls is sc.SortedDict
 

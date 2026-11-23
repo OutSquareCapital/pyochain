@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 
 from pyochain import Seq
-from pyochain.collections import SortedList
 
 from .._utils import SIZE_PARAMS, BenchFixture
 from ._utils import (
@@ -15,6 +14,7 @@ from ._utils import (
     add_fn,
     run_pedantic,
     shuffled,
+    update,
 )
 from ._workloads import WORKLOADS, WorkLoad
 
@@ -25,11 +25,7 @@ from ._workloads import WORKLOADS, WorkLoad
 @LST_PARAMS
 @SIZE_PARAMS
 def test_update(benchmark: BenchFixture, cls: type[List], size: int, step: int) -> None:
-    values = shuffled(size, step)
-    if cls is SortedList:
-        run_pedantic(benchmark, SortedList, size, lambda lst: lst.extend(values))
-    else:
-        run_pedantic(benchmark, cls, size, lambda lst: lst.update(values))
+    update(benchmark, cls, size, shuffled(size, step))
 
 
 @pytest.mark.parametrize("op", WORKLOADS)
