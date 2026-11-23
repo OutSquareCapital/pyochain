@@ -44,6 +44,7 @@ def absolute(df: pl.DataFrame, method: str, x_axis: Cols) -> None:
         x=x_axis,
         y=Lib.Pyochain,
         color=Cols.Size,
+        facet_col=Cols.Param,
         log_y=True,
         template="plotly_dark",
     ).show()
@@ -58,6 +59,7 @@ def relative(df: pl.DataFrame, method: str, x_axis: Cols) -> None:
             x=x_axis,
             y=Cols.Relative,
             color=Cols.Size,
+            facet_col=Cols.Param,
             template="plotly_dark",
         )
         .add_hline(y=1)

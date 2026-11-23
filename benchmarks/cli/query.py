@@ -44,7 +44,7 @@ def run(method: str, agg_by_commit: bool) -> pl.DataFrame:
             param.first().cast(pl.String).alias(Cols.Size),
             param.get(1).cast(Lib).alias(Cols.Lib),
             # Additional params besides size and library
-            param.slice(2, param.len() - 2).alias(Cols.Param),
+            param.slice(2, param.len() - 2).list.join("-").alias(Cols.Param),
             pl.col("stats").struct.field(Cols.Min),
             Cols.Commit,
         )
