@@ -66,7 +66,7 @@ impl<'py> PyAnyExtMethods<'py> for Bound<'py, PyAny> {
     #[inline(always)]
     fn rich_compare_bool<O: IntoPyObject<'py>>(&self, other: O, op: CompareOp) -> PyResult<bool> {
         let py = self.py();
-        let o = other.into_pyobject_or_pyerr(py)?.into_any();
+        let o = other.into_pyobject_or_pyerr(py)?;
         RichCompareBool::new(self, &o, op).into_pyresult(py)
     }
     #[inline(always)]
