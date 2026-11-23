@@ -25,12 +25,16 @@ impl Lengths {
         self.inner[0] -= 1;
     }
     pub fn expand_at(&mut self, pos: usize) {
+        self.add_at(pos, 1);
+    }
+    /// Accounts for `count` items added to the sublist at `pos`.
+    pub fn add_at(&mut self, pos: usize, count: usize) {
         let mut child = self.offset + pos;
         while child != 0 {
-            self.inner[child] += 1;
+            self.inner[child] += count;
             child = (child - 1) / 2;
         }
-        self.inner[0] += 1;
+        self.inner[0] += count;
     }
     pub fn loc_at(&self, loc: &Loc) -> usize {
         // Increment pos to point in the index to len(self.lists[pos]).

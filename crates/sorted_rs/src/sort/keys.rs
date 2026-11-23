@@ -11,6 +11,11 @@ use pyo3_ext::{prelude::*, pystring::PyStringExtMethods};
 use pyochain_macros::try_cast;
 use tap::Pipe;
 
+use crate::{
+    sort::sorted::{SortedByKeys, SortedVec},
+    types::VecPy,
+};
+
 type Pair<T> = (T, T);
 /// Strategy for ordering and storing the elements added to a sorted list.\
 /// [`Identity`] sorts by value, [`WithKey`] sorts by the result of a Python callable.
@@ -21,6 +26,8 @@ pub trait KeyFn<'py> {
     fn py(&self) -> Python<'py>;
     /// Calls the key function on `value`. The only place where it's called.
     fn call(&self, value: Bound<'py, PyAny>) -> Result<Self::Item, Self::Error>;
+    /// Sorts `values` by their key.
+    fn sort_vec(&self, values: VecPy) -> PyResult<SortedVec<Self::Item>>;
 }
 pub struct Identity<'py>(pub Python<'py>);
 pub struct WithKey<'py>(pub Bound<'py, PyAny>);
@@ -33,6 +40,10 @@ impl<'py> KeyFn<'py> for Identity<'py> {
     fn call(&self, value: Bound<'py, PyAny>) -> Result<Self::Item, Self::Error> {
         Ok(value.unbind())
     }
+    /// The values are their own keys: sorts them in place.
+    fn sort_vec(&self, values: VecPy) -> PyResult<SortedVec<Self::Item>> {
+        SortedVec::from_vec(values)
+    }
 }
 impl<'py> KeyFn<'py> for WithKey<'py> {
     type Item = (Py<PyAny>, Py<PyAny>);
@@ -44,6 +55,9 @@ impl<'py> KeyFn<'py> for WithKey<'py> {
         self.0
             .call1((&value,))
             .map(|key| (key.unbind(), value.unbind()))
+    }
+    fn sort_vec(&self, values: VecPy) -> PyResult<SortedVec<Self::Item>> {
+        values.into_iter().sorted_by_pykey(self)
     }
 }
 /// What the sort compares: the item itself, or the key it was paired with.

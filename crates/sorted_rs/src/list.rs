@@ -39,6 +39,9 @@ impl ListsMethods for List {
     ) -> PyResult<IrangeBounds<'py>> {
         specs.conv::<IrangeBounds>().pipe(Ok)
     }
+    fn insert_at(&mut self, loc: &Loc, item: Self::Item) {
+        self.keys_mut().loc_insert(loc, item);
+    }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         match self.try_bisect_right(&value)? {

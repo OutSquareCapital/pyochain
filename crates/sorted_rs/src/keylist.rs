@@ -5,14 +5,13 @@ use crate::{
     iter::IrangeBounds,
     ops,
     search::Search,
-    sort::{Chunk, WithKey},
+    sort::{Chunk, ChunkKey, WithKey},
     traits::ListsMethods,
-    types::VecPy,
 };
 use pyo3::prelude::*;
 use tap::prelude::*;
 impl ListsMethods for KeyList {
-    type Chunk = (VecPy, VecPy);
+    type Chunk = ChunkKey;
     type Item = (Py<PyAny>, Py<PyAny>);
     type Key<'py> = WithKey<'py>;
     fn key_func<'py>(&self, py: Python<'py>) -> Self::Key<'py> {
@@ -40,6 +39,10 @@ impl ListsMethods for KeyList {
         specs: RawIrangeSpecs<'py>,
     ) -> PyResult<IrangeBounds<'py>> {
         IrangeBounds::with_keys(specs, self.func.bind(py))
+    }
+    fn insert_at(&mut self, loc: &Loc, (key, value): Self::Item) {
+        self.keys_mut().loc_insert(loc, key);
+        self.values.loc_insert(loc, value);
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let key = self.call_fn(&value)?;

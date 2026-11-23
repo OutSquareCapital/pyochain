@@ -8,7 +8,7 @@ use tap::prelude::*;
 
 use crate::{
     inner::InnerList,
-    sort::{ExtendList, SortedByKeys},
+    sort::{ExtendKind, SortedByKeys, SortedVec},
     traits::ListsMethods,
     types::VecPy,
 };
@@ -50,60 +50,67 @@ impl IntoList {
             Self::PyIter(it) => slf
                 .map(|x| Ok(x.into_bound(py)))
                 .chain(it.into_bound(py))
-                .sorted_by_pykey(&key)?,
-            Self::Vec(vec) => slf.chain(vec).sorted_by_pykey(&key)?,
+                .sorted_by_pykey(&key),
+            Self::Vec(vec) => slf.chain(vec).sorted_by_pykey(&key),
         }
-        .extend_into(py, &mut new_inst);
+        .map(ExtendKind::Big)?
+        .extend_into(py, &mut new_inst)?;
         Ok(new_inst)
     }
     #[inline]
     pub fn extend_into(self, py: Python<'_>, list: &mut impl ListsMethods) -> PyResult<()> {
         //TODO: Check `itertools::merge` to see if it can be beneficial here.
-        use Strategy as Is;
-        let key = list.key_func(py);
-        match self.strategy(py, list)? {
-            Is::Empty(Self::Vec(vec)) => {
-                vec.into_iter().sorted_by_pykey(&key)?.extend_into(py, list);
-            }
-            Is::Empty(Self::PyIter(it)) => it
-                .into_bound(py)
-                .sorted_by_pykey(&key)?
-                .extend_into(py, list),
-            Is::Big(vec) => list
-                .values
-                .iter_owned(py)
-                .chain(vec)
-                .sorted_by_pykey(&key)?
-                .extend_into(py, list),
-            Is::Small(vec) => vec
-                .into_iter()
-                .map(|x| x.into_bound(py))
-                .try_for_each(|val| list.append(val))?,
-        }
-        Ok(())
-    }
-    fn strategy(self, py: Python<'_>, list: &InnerList) -> PyResult<Strategy> {
-        let is_big = |length| 4 * length >= list.len();
         match self {
-            _ if list.is_empty() => Strategy::Empty(self).pipe(Ok),
-            Self::Vec(vec) if is_big(vec.len()) => Strategy::Big(vec).pipe(Ok),
+            _ if list.is_empty() => Strategy::Empty(self),
+            Self::Vec(vec) => Strategy::from_vec(vec, list),
             Self::PyIter(it) => it
                 .into_bound(py)
                 .map_ok(Bound::unbind)
                 .try_collect_vec_with_capacity()
-                .map(|vec| {
-                    if is_big(vec.len()) {
-                        Strategy::Big(vec)
-                    } else {
-                        Strategy::Small(vec)
-                    }
-                }),
-            Self::Vec(vec) => Strategy::Small(vec).pipe(Ok),
+                .map(|vec| Strategy::from_vec(vec, list))?,
         }
+        .sorted(py, list)?
+        .extend_into(py, list)
     }
 }
 enum Strategy {
     Empty(IntoList),
-    Small(VecPy),
-    Big(VecPy),
+    Size(ExtendKind<VecPy>),
+}
+impl Strategy {
+    /// Treshold on the number of values to add **as a whole**.
+    const MIN_ITEMS: usize = 4;
+    fn from_vec(vec: VecPy, list: &InnerList) -> Self {
+        let length = vec.len();
+        if 4 * length >= list.len() {
+            Self::Size(ExtendKind::Big(vec))
+        } else if length >= Self::MIN_ITEMS {
+            Self::Size(ExtendKind::Medium(vec))
+        } else {
+            Self::Size(ExtendKind::Small(vec))
+        }
+    }
+    fn sorted<L: ListsMethods>(
+        self,
+        py: Python<'_>,
+        list: &L,
+    ) -> PyResult<ExtendKind<SortedVec<L::Item>>> {
+        let key = list.key_func(py);
+        match self {
+            Self::Empty(IntoList::Vec(vec)) => vec.sorted_by_pykey(&key).map(ExtendKind::Big),
+            Self::Empty(IntoList::PyIter(it)) => {
+                it.into_bound(py).sorted_by_pykey(&key).map(ExtendKind::Big)
+            }
+            Self::Size(ExtendKind::Big(vec)) => list
+                .values
+                .iter_owned(py)
+                .chain(vec)
+                .sorted_by_pykey(&key)
+                .map(ExtendKind::Big),
+            Self::Size(ExtendKind::Medium(vec)) => {
+                vec.sorted_by_pykey(&key).map(ExtendKind::Medium)
+            }
+            Self::Size(ExtendKind::Small(vec)) => vec.sorted_by_pykey(&key).map(ExtendKind::Small),
+        }
+    }
 }

@@ -42,6 +42,8 @@ pub trait ListsMethods:
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize>;
     fn split_values(&mut self, pos: usize, load: usize);
+    /// Inserts `item` into the list at `loc`.
+    fn insert_at(&mut self, loc: &Loc, item: Self::Item);
     fn irange<'py>(
         &self,
         py: Python<'py>,
