@@ -3,6 +3,7 @@ use itertools::Itertools;
 use parking_lot::RwLock;
 use pyo3::{prelude::*, types::PyIterator};
 use pyo3_ext::types::PyFrozenClass;
+use std_tools::prelude::TryIterator;
 use tap::prelude::*;
 
 use crate::{
@@ -60,7 +61,7 @@ impl IntoList {
         //TODO: Check `itertools::merge` to see if it can be beneficial here.
         use Strategy as Is;
         let key = list.key_func(py);
-        match self.strategy(py, list) {
+        match self.strategy(py, list)? {
             Is::Empty(Self::Vec(vec)) => {
                 vec.into_iter().sorted_by_pykey(&key)?.extend_into(py, list);
             }
@@ -68,43 +69,41 @@ impl IntoList {
                 .into_bound(py)
                 .sorted_by_pykey(&key)?
                 .extend_into(py, list),
-            Is::Big(Self::Vec(vec)) => list
+            Is::Big(vec) => list
                 .values
                 .iter_owned(py)
                 .chain(vec)
                 .sorted_by_pykey(&key)?
                 .extend_into(py, list),
-            Is::Big(Self::PyIter(it)) => list
-                .values
-                .iter_owned(py)
-                .map(|x| Ok(x.into_bound(py)))
-                .chain(it.into_bound(py))
-                .sorted_by_pykey(&key)?
-                .extend_into(py, list),
-            Is::Small(Self::Vec(vec)) => vec
+            Is::Small(vec) => vec
                 .into_iter()
                 .map(|x| x.into_bound(py))
                 .try_for_each(|val| list.append(val))?,
-            Is::Small(Self::PyIter(it)) => {
-                it.into_bound(py).try_for_each(|val| list.append(val?))?;
-            }
         }
         Ok(())
     }
-    fn strategy(self, py: Python<'_>, list: &InnerList) -> Strategy {
+    fn strategy(self, py: Python<'_>, list: &InnerList) -> PyResult<Strategy> {
         let is_big = |length| 4 * length >= list.len();
         match self {
-            _ if list.is_empty() => Strategy::Empty(self),
-            Self::Vec(vec) if is_big(vec.len()) => Strategy::Big(Self::Vec(vec)),
-            Self::PyIter(it) if it.bind(py).size_hint().0.pipe(is_big) => {
-                Strategy::Big(Self::PyIter(it))
-            }
-            Self::PyIter(_) | Self::Vec(_) => Strategy::Small(self),
+            _ if list.is_empty() => Strategy::Empty(self).pipe(Ok),
+            Self::Vec(vec) if is_big(vec.len()) => Strategy::Big(vec).pipe(Ok),
+            Self::PyIter(it) => it
+                .into_bound(py)
+                .map_ok(Bound::unbind)
+                .try_collect_vec_with_capacity()
+                .map(|vec| {
+                    if is_big(vec.len()) {
+                        Strategy::Big(vec)
+                    } else {
+                        Strategy::Small(vec)
+                    }
+                }),
+            Self::Vec(vec) => Strategy::Small(vec).pipe(Ok),
         }
     }
 }
 enum Strategy {
     Empty(IntoList),
-    Small(IntoList),
-    Big(IntoList),
+    Small(VecPy),
+    Big(VecPy),
 }
