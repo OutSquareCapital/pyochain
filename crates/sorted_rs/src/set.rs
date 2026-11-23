@@ -214,9 +214,10 @@ where
     #[inline(always)]
     fn from(args: IntoArgs<'_, 'py, C, PyTuple>) -> Self {
         let py = args.obj.py();
-        match args.obj.len().cmp(&1) {
+        let slice = args.obj.as_slice();
+        match slice.len().cmp(&1) {
             Ordering::Less => Self::None,
-            Ordering::Equal => IntoArgs::new(args.pyref, unsafe { args.obj.get_item_unchecked(0) }).into(),
+            Ordering::Equal => IntoArgs::new(args.pyref, slice[0].clone()).into(),
             Ordering::Greater => args.obj
                 .into_iter()
                 .map(|other| match other.cast_exact::<C>().map(Bound::get).ok() {

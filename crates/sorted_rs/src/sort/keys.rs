@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, convert::Infallible};
+use std::{cmp::Ordering, convert::Infallible, ops::Not};
 
 use either::Either;
 use pyo3::{
@@ -9,6 +9,7 @@ use pyo3::{
 };
 use pyo3_ext::{prelude::*, pystring::PyStringExtMethods};
 use pyochain_macros::try_cast;
+use std_tools::prelude::*;
 use tap::Pipe;
 
 use crate::{
@@ -167,29 +168,28 @@ pub trait SortKey: Sized {
     }
 }
 
-type TupleComp<'a, 'py> = Either<Pair<Borrowed<'a, 'py, PyAny>>, Ordering>;
+type TupleComp<'a, 'py> = Either<Pair<&'a Bound<'py, PyAny>>, Ordering>;
 
 #[inline(always)]
 fn tup_cmp<'r, 'py, T: SortKey>(a: &'r T, b: &'r T) -> PyResult<TupleComp<'r, 'py>> {
     let (a, b) = unsafe { a.key_cast::<PyTuple>(b) };
-    let mut i = 0;
-    while i < a.len() && i < b.len() {
-        let (item_a, item_b) = get_item(a, b, i);
-        if !item_a.rich_compare_bool(item_b, CompareOp::Eq)? {
-            break;
-        }
-        i += 1;
-    }
-    if i >= a.len() || i >= b.len() {
-        Ok(Either::Right(a.len().cmp(&b.len())))
-    } else {
-        let (item_a, item_b) = get_item(a, b, i);
-        if i == 0 {
-            Ok(TupleComp::Left((item_a, item_b)))
-        } else {
-            item_a.lt_fast(&item_b).map(TupleComp::Right)
-        }
-    }
+    a.as_slice()
+        .iter()
+        .zip(b.as_slice())
+        .enumerate()
+        .try_find_map(|(i, items)| {
+            items
+                .0
+                .rich_compare_bool(items.1, CompareOp::Eq)
+                .map(bool::not)?
+                .then_some((i, items))
+                .pipe(Ok)
+        })
+        .and_then(|res| match res {
+            None => Ok(TupleComp::Right(a.len().cmp(&b.len()))),
+            Some((0, items)) => Ok(TupleComp::Left((items.0, items.1))),
+            Some((_, items)) => items.0.lt_fast(items.1).map(TupleComp::Right),
+        })
 }
 
 impl SortKey for Py<PyAny> {
@@ -204,19 +204,5 @@ impl SortKey for (Py<PyAny>, Py<PyAny>) {
     fn key<'py>(&self) -> &Bound<'py, PyAny> {
         let py = unsafe { Python::assume_attached() };
         self.0.bind(py)
-    }
-}
-
-#[inline(always)]
-fn get_item<'a, 'py>(
-    a: &'a Bound<'py, PyTuple>,
-    b: &'a Bound<'py, PyTuple>,
-    i: usize,
-) -> Pair<Borrowed<'a, 'py, PyAny>> {
-    unsafe {
-        (
-            a.get_borrowed_item_unchecked(i),
-            b.get_borrowed_item_unchecked(i),
-        )
     }
 }
