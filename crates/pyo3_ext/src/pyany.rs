@@ -36,7 +36,6 @@ pub trait PyAnyExtMethods<'py> {
     fn ixor<O: IntoPyObject<'py>>(&self, other: O) -> PyResult<Bound<'py, PyAny>>;
     fn rich_compare_bool<O: IntoPyObject<'py>>(&self, other: O, op: CompareOp) -> PyResult<bool>;
     fn try_iter_native(&self) -> PyResult<NativeIter<Bound<'py, PyIterator>>>;
-    fn compare_fast(&self, other: &Bound<'_, PyAny>) -> PyResult<Ordering>;
     fn lt_fast(&self, other: &Bound<'_, PyAny>) -> PyResult<Ordering>;
 }
 
@@ -76,20 +75,6 @@ impl<'py> PyAnyExtMethods<'py> for Bound<'py, PyAny> {
         match RichCompareBool::new(self, other, CompareOp::Lt) {
             RichCompareBool::True => Ok(Ordering::Less),
             RichCompareBool::False => Ok(Ordering::Equal),
-            RichCompareBool::Error => Err(PyErr::fetch(py)),
-        }
-    }
-    /// Faster alternative to pyo3 native `compare` method.
-    #[inline(always)]
-    fn compare_fast(&self, other: &Bound<'_, PyAny>) -> PyResult<Ordering> {
-        let py = self.py();
-        match RichCompareBool::new(self, other, CompareOp::Lt) {
-            RichCompareBool::True => Ok(Ordering::Less),
-            RichCompareBool::False => match RichCompareBool::new(self, other, CompareOp::Gt) {
-                RichCompareBool::True => Ok(Ordering::Greater),
-                RichCompareBool::False => Ok(Ordering::Equal),
-                RichCompareBool::Error => Err(PyErr::fetch(py)),
-            },
             RichCompareBool::Error => Err(PyErr::fetch(py)),
         }
     }
