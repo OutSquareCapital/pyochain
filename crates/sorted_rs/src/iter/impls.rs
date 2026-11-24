@@ -76,8 +76,7 @@ impl<const FWD: bool, T: CursorMethods> Iter<FWD, T> {
             .or_else(|| {
                 let p = pos.checked_sub(1)?;
                 let v = values.get(p)?;
-                v.last()
-                    .map(|obj| (Cursor::new_pos(p) | (v.len() - 1) as u64, obj))
+                Some((Cursor::new_pos(p) | (v.len() - 1) as u64, v.last()))
             })
     }
     fn yield_ptr(&self, item: &Py<PyAny>, at: u64) -> *mut ffi::PyObject {

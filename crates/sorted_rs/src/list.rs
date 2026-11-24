@@ -86,24 +86,23 @@ impl ListsMethods for List {
         }
     }
 
-    fn delete(&mut self, py: Python<'_>, mut loc: Loc) -> PyResult<()> {
-        self.values.loc_remove(&loc);
+    fn delete(&mut self, py: Python<'_>, loc: Loc) {
         self.len -= 1;
         match ops::SubListState::new(self, loc.pos) {
             ops::SubListState::LenSupToMin => self.delete_on_len_sup_to_min(py, loc),
-            ops::SubListState::ManySublists => {
-                let prev = self.delete_many(&mut loc);
-                self.maxes[prev] = self.values[prev].last().unwrap().clone_ref(py);
+            ops::SubListState::ManySublists(merge) => {
+                let prev = self.delete_many(&loc, merge);
+                self.maxes[prev] = self.values[prev].last().clone_ref(py);
                 self.expand(py, prev);
             }
             ops::SubListState::NonEmpty => {
+                self.loc_remove(loc);
                 self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
             }
             ops::SubListState::Empty => {
                 self.remove_at(&loc);
             }
         }
-        Ok(())
     }
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize> {
         Search::on_index(self, value, value)?.index_by_val(indices)
@@ -118,6 +117,9 @@ impl ListsMethods for List {
                 Err(err) => Err(err),
             },
         }
+    }
+    fn loc_remove(&mut self, loc: Loc) {
+        self.values.loc_remove(&loc);
     }
     fn split_values(&mut self, _pos: usize, _load: usize) {}
 }

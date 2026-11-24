@@ -102,8 +102,7 @@ impl Bisect {
                 Ok(Self::MaxesLen)
             } else {
                 list.keys()[pos]
-                    .as_slice()
-                    .pipe(|v| bisect::<LEFT>(v, value))
+                    .pipe_deref(|v| bisect::<LEFT>(v, value))
                     .map(|idx| Loc::new(pos, idx))
                     .map(Self::AtLoc)
             }
@@ -133,7 +132,7 @@ impl Expand {
 /// Used in `delete`
 pub enum SubListState {
     LenSupToMin,
-    ManySublists,
+    ManySublists(Merge),
     NonEmpty,
     Empty,
 }
@@ -141,17 +140,32 @@ impl SubListState {
     #[inline(always)]
     #[must_use]
     pub fn new(data: &impl ListsMethods, pos: usize) -> Self {
-        let sublist = &data.keys()[pos];
-        if sublist.len() > data.load.min_size() {
+        let remaining = data.keys()[pos].len() - 1;
+        if remaining > data.load.min_size() {
             Self::LenSupToMin
         } else if data.keys().len() > 1 {
-            Self::ManySublists
-        } else if sublist.is_empty() {
+            match (pos, remaining) {
+                (0, 0) => Merge::NextReplacesFirst,
+                (0, _) => Merge::NextIntoFirst,
+                _ => Merge::IntoPrev,
+            }
+            .pipe(Self::ManySublists)
+        } else if remaining == 0 {
             Self::Empty
         } else {
             Self::NonEmpty
         }
     }
+}
+/// How the sublist of the deleted item is merged with a neighbor.
+#[derive(Clone, Copy)]
+pub enum Merge {
+    /// The item's sublist (`pos > 0`) goes into the previous one.
+    IntoPrev,
+    /// The item is in the first sublist, which keeps other items: the second one goes into it.
+    NextIntoFirst,
+    /// The item is the only one of the first sublist: the second one replaces it.
+    NextReplacesFirst,
 }
 
 // Used in `pop` and `get_item`

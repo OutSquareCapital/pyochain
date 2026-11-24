@@ -6,6 +6,7 @@ use crate::{
     ops,
     search::Search,
     sort::{Chunk, ChunkKey, WithKey},
+    sublist::SubList,
     traits::ListsMethods,
 };
 use pyo3::prelude::*;
@@ -49,7 +50,7 @@ impl ListsMethods for KeyList {
         let py = value.py();
         match self.try_bisect_right(&key)? {
             ops::Bisect::Empty => {
-                self.values.push(vec![value.unbind()]);
+                self.values.push(value.unbind().pipe(SubList::new));
                 vec![key.unbind()].push_into(py, self);
             }
             ops::Bisect::MaxesLen => {
@@ -85,21 +86,18 @@ impl ListsMethods for KeyList {
         }
     }
 
-    fn delete(&mut self, py: Python<'_>, mut loc: Loc) -> PyResult<()> {
-        self.keys.loc_remove(&loc);
-        self.values.loc_remove(&loc);
+    fn delete(&mut self, py: Python<'_>, loc: Loc) {
         self.len -= 1;
         match ops::SubListState::new(self, loc.pos) {
             ops::SubListState::LenSupToMin => self.delete_on_len_sup_to_min(py, loc),
-            ops::SubListState::ManySublists => {
-                let prev = self.delete_many(&mut loc);
-                let (left, right) = self.keys.split_at_mut(loc.pos);
-                left[prev].append(&mut right[0]);
-                self.maxes[prev] = left[prev].last().unwrap().clone_ref(py);
-                self.keys.remove(loc.pos);
+            ops::SubListState::ManySublists(merge) => {
+                let prev = self.delete_many(&loc, merge);
+                self.keys.remove_merge(&loc, merge);
+                self.maxes[prev] = self.keys[prev].last().clone_ref(py);
                 self.expand(py, prev);
             }
             ops::SubListState::NonEmpty => {
+                self.loc_remove(loc);
                 self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
             }
             ops::SubListState::Empty => {
@@ -107,7 +105,6 @@ impl ListsMethods for KeyList {
                 self.keys.remove(loc.pos);
             }
         }
-        Ok(())
     }
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize> {
         let key = self.call_fn(value)?;
@@ -120,6 +117,10 @@ impl ListsMethods for KeyList {
             ops::Bisect::Empty | ops::Bisect::MaxesLen => Ok(None),
             ops::Bisect::AtLoc(loc) => Search::new(self, loc, value, &key).find(),
         }
+    }
+    fn loc_remove(&mut self, loc: Loc) {
+        self.keys.loc_remove(&loc);
+        self.values.loc_remove(&loc);
     }
     fn split_values(&mut self, pos: usize, load: usize) {
         let half = self.values[pos].split_off(load);

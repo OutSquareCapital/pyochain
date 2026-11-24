@@ -3,6 +3,7 @@ use crate::{
     KeyList,
     inner::InnerList,
     prelude::*,
+    sublist::SubList,
     types::{Dict, Set},
 };
 use pyo3::{prelude::*, types::PyString};
@@ -78,7 +79,7 @@ fn check_values_match_keys(py: Python<'_>, data: &KeyList) -> PyResult<()> {
 
 fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     pyassert!(slf.maxes.len() == slf.values.len() && slf.values.len() == slf.keys().len())?;
-    pyassert!(slf.len() == slf.values.iter_chunks().map(Vec::len).sum::<usize>())?;
+    pyassert!(slf.len() == slf.values.iter_chunks().map(SubList::len).sum::<usize>())?;
     // Check all sublists are sorted.
     slf.keys().iter_chunks().try_for_each(|sublist| {
         (1..sublist.len())
@@ -89,7 +90,6 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
         pyassert!(
             slf.keys()[pos - 1]
                 .last()
-                .unwrap()
                 .bind(py)
                 .le(slf.keys()[pos][0].bind(py))?
         )
@@ -99,7 +99,7 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
         slf.maxes
             .iter()
             .zip(slf.keys().iter_chunks())
-            .try_all(|(max, sublist)| max.bind(py).eq(sublist.last().unwrap().bind(py)))?
+            .try_all(|(max, sublist)| max.bind(py).eq(sublist.last().bind(py)))?
     )?;
     // Check sublist lengths are less than double load-factor.
     pyassert!(

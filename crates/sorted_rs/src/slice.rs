@@ -8,6 +8,7 @@ use crate::{
     bounds::{Bounds, Loc},
     inner::InnerList,
     ops::{self, ForwardSlice},
+    sublist::SubList,
     traits::ListsMethods,
     types::VecPy,
 };
@@ -159,10 +160,8 @@ where
     T: DoubleEndedIterator<Item = usize>,
 {
     fn del_all<L: ListsMethods>(mut self, list: &mut L, py: Python<'_>) -> PyResult<()> {
-        self.0.try_for_each(|idx| {
-            let loc = list.set_pos_usize(idx)?;
-            list.delete(py, loc)
-        })
+        self.0
+            .try_for_each(|idx| list.set_pos_usize(idx).map(|loc| list.delete(py, loc)))
     }
     fn get_all(self, list: &mut InnerList, py: Python<'_>) -> PyResult<VecPy> {
         self.0
@@ -172,7 +171,7 @@ where
             .collect()
     }
 }
-fn get_slice(py: Python<'_>, lists: &[VecPy], min: Loc, max: Loc) -> VecPy {
+fn get_slice(py: Python<'_>, lists: &[SubList], min: Loc, max: Loc) -> VecPy {
     lists[min.pos][min.idx..]
         .iter()
         .chain(lists[min.pos + 1..max.pos].iter().flatten())

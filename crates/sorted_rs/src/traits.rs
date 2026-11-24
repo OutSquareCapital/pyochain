@@ -38,9 +38,10 @@ pub trait ListsMethods:
     /// If the collection is sorted **by key**, *value* is first transformed by the *key* function before the bisect operation.
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn clear(&mut self, py: Python<'_>);
-    fn delete(&mut self, py: Python<'_>, loc: Loc) -> PyResult<()>;
+    fn delete(&mut self, py: Python<'_>, loc: Loc);
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize>;
+    fn loc_remove(&mut self, loc: Loc);
     fn split_values(&mut self, pos: usize, load: usize);
     /// Inserts `item` into the list at `loc`.
     fn insert_at(&mut self, loc: &Loc, item: Self::Item);
@@ -62,9 +63,9 @@ pub trait ListsMethods:
             ops::Expand::MustSplit => {
                 let load = *self.load;
                 let half = self.keys_mut()[pos].split_off(load);
-                let last_max = half.last().unwrap().clone_ref(py);
+                let last_max = half.last().clone_ref(py);
                 self.maxes.insert(pos + 1, last_max);
-                self.maxes[pos] = self.keys()[pos].last().unwrap().clone_ref(py);
+                self.maxes[pos] = self.keys()[pos].last().clone_ref(py);
                 self.keys_mut().insert(pos + 1, half);
                 self.split_values(pos, load);
                 self.lengths.inner.clear();
@@ -90,28 +91,33 @@ pub trait ListsMethods:
         if self.is_empty() {
             Err(errors::out_of_range())
         } else {
-            let loc = self.set_pos(index)?;
-            self.delete(py, loc)
+            self.set_pos(index).map(|loc| self.delete(py, loc))
         }
     }
     fn delete_on_len_sup_to_min(&mut self, py: Python<'_>, loc: Loc) {
+        self.loc_remove(loc);
         self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
         if self.lengths.is_built() {
             self.lengths.delete_at(loc.pos);
         }
     }
-    fn delete_many(&mut self, loc: &mut Loc) -> usize {
-        if loc.pos == 0 {
-            loc.pos += 1;
-        }
-        let prev = loc.pos - 1;
-        let mut removed = self.remove_at(loc);
-        self.values[prev].append(removed.as_mut());
+    /// Removes the item at `loc`, and merges its sublist with a neighbor as `merge` says.\
+    /// Returns the position of the merged sublist.
+    fn delete_many(&mut self, loc: &Loc, merge: ops::Merge) -> usize {
+        let prev = self.values.remove_merge(loc, merge);
+        self.maxes.remove(prev + 1);
+        self.lengths.inner.clear();
         prev
     }
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.find(&value)?
-            .map_or(Ok(()), |loc| self.delete(value.py(), loc))
+        match self.find(&value) {
+            Ok(Some(loc)) => {
+                self.delete(value.py(), loc);
+                Ok(())
+            }
+            Ok(None) => Ok(()),
+            Err(e) => Err(e),
+        }
     }
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
         let values = self.values.repeat(py, num);
@@ -130,7 +136,7 @@ pub trait ListsMethods:
     fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let loc = self.index_to_loc(index)?;
         let val = self.values.loc(&loc).clone_ref(py);
-        self.delete(py, loc)?;
+        self.delete(py, loc);
         Ok(val.into_bound(py))
     }
     #[inline(always)]
@@ -141,10 +147,9 @@ pub trait ListsMethods:
         self.expand(py, pos);
     }
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        match self.find(value)? {
-            Some(loc) => self.delete(value.py(), loc),
-            None => Err(errors::not_in_list(value)),
-        }
+        self.find(value)?
+            .map(|loc| self.delete(value.py(), loc))
+            .ok_or_else(|| errors::not_in_list(value))
     }
     fn reset(&mut self, load: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = load.py();

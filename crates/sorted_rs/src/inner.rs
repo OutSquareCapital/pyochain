@@ -5,6 +5,7 @@ use crate::{
     list_update::IntoList,
     load::Load,
     ops,
+    sublist::SubList,
     types::{SeqOrAny, VecPy},
 };
 use derive_more::{Deref, DerefMut, From, IntoIterator};
@@ -24,11 +25,11 @@ impl Maxes {
     }
 }
 #[derive(Deref, DerefMut, From, Debug, Default, IntoIterator)]
-pub struct Values(Vec<VecPy>);
+pub struct Values(Vec<SubList>);
 impl Values {
     pub(super) fn clone_ref(&self, py: Python<'_>) -> Self {
         self.iter_chunks()
-            .map(|chunk| chunk.iter().map(|x| x.clone_ref(py)).collect())
+            .map(|chunk| chunk.clone_ref(py))
             .collect::<Vec<_>>()
             .into()
     }
@@ -49,7 +50,7 @@ impl Values {
     pub(super) fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> + Clone {
         self.0.iter().flatten()
     }
-    pub(super) fn iter_chunks(&self) -> impl DoubleEndedIterator<Item = &VecPy> {
+    pub(super) fn iter_chunks(&self) -> impl DoubleEndedIterator<Item = &SubList> {
         self.0.iter()
     }
     pub(super) fn loc(&self, loc: &Loc) -> &Py<PyAny> {
@@ -62,10 +63,33 @@ impl Values {
         self[loc.pos].remove(loc.idx);
     }
     pub(super) fn loc_last(&self, loc: &Loc) -> &Py<PyAny> {
-        self[loc.pos].last().unwrap()
+        self[loc.pos].last()
     }
     pub(super) fn loc_len(&self, loc: &Loc) -> usize {
         self[loc.pos].len()
+    }
+    /// Removes the item at `loc`, and merges its sublist with a neighbor as `merge` says.\
+    /// Returns the position of the merged sublist. The other one is removed, and was right after it.
+    pub(super) fn remove_merge(&mut self, loc: &Loc, merge: ops::Merge) -> usize {
+        match merge {
+            ops::Merge::IntoPrev => {
+                let mut rest = self.remove(loc.pos).into_vec();
+                rest.remove(loc.idx);
+                self[loc.pos - 1].append(&mut rest);
+                loc.pos - 1
+            }
+            ops::Merge::NextIntoFirst => {
+                let mut next = self.remove(1).into_vec();
+                let first = &mut self[0];
+                first.remove(loc.idx);
+                first.append(&mut next);
+                0
+            }
+            ops::Merge::NextReplacesFirst => {
+                self[0] = self.remove(1);
+                0
+            }
+        }
     }
 }
 #[derive(Default)]
@@ -134,7 +158,7 @@ impl InnerList {
             .map(|loc| self.values.loc(&loc).clone_ref(py).into_bound(py))
     }
 
-    pub(super) fn remove_at(&mut self, loc: &Loc) -> VecPy {
+    pub(super) fn remove_at(&mut self, loc: &Loc) -> SubList {
         self.maxes.remove(loc.pos);
         self.lengths.inner.clear();
         self.values.remove(loc.pos)

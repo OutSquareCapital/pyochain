@@ -19,6 +19,7 @@ mod search;
 mod set;
 mod slice;
 mod sort;
+mod sublist;
 mod traits;
 pub mod types;
 pub mod views;
