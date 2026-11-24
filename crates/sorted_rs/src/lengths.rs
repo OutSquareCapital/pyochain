@@ -1,3 +1,5 @@
+use tap::prelude::*;
+
 use crate::{bounds::Loc, inner::Values};
 /// Quoting Grant Jenks:
 /// > "a tree of pair-wise sums of the lengths of the lists. The tree is maintained as a dense binary tree."
@@ -17,99 +19,58 @@ impl Lengths {
         self.inner.is_empty()
     }
     pub fn delete_at(&mut self, pos: usize) {
-        let mut child = self.offset + pos;
-        while child > 0 {
-            self.inner[child] -= 1;
-            child = (child - 1) / 2;
-        }
-        self.inner[0] -= 1;
+        Self::path_to_root(self.offset + pos).for_each(|c| self.inner[c] -= 1);
     }
     pub fn expand_at(&mut self, pos: usize) {
         self.add_at(pos, 1);
     }
     /// Accounts for `count` items added to the sublist at `pos`.
     pub fn add_at(&mut self, pos: usize, count: usize) {
-        let mut child = self.offset + pos;
-        while child != 0 {
-            self.inner[child] += count;
-            child = (child - 1) / 2;
-        }
-        self.inner[0] += count;
+        Self::path_to_root(self.offset + pos).for_each(|c| self.inner[c] += count);
     }
     pub fn loc_at(&self, loc: &Loc) -> usize {
-        // Increment pos to point in the index to len(self.lists[pos]).
-        let mut child = loc.pos + self.offset;
-        // Iterate until reaching the root of the index tree at pos = 0.
-        let mut total = 0;
-        while child != 0 {
-            // Right-child nodes are at even indices. At such indices
-            // account the total below the left child node.
-            if child.is_multiple_of(2) {
-                total += self.inner[child - 1];
-            }
-            // Advance pos to the parent node.
-            child = (child - 1) / 2;
-        }
-        total + loc.idx
+        Self::path_to_root(self.offset + loc.pos)
+            .take_while(|&c| c != 0)
+            .filter(|c| c.is_multiple_of(2))
+            .map(|c| self.inner[c - 1])
+            .sum::<usize>()
+            + loc.idx
     }
-    pub fn pos_at(&self, mut index: usize) -> Loc {
-        let mut pos = 0;
-        let mut child = 1;
-        let len_index = self.inner.len();
-
-        while child < len_index {
-            let index_child = self.inner[child];
-
-            if index < index_child {
-                pos = child;
-            } else {
-                index -= index_child;
-                pos = child + 1;
-            }
-
-            child = (pos * 2) + 1;
-        }
-        Loc::new(pos - self.offset, index)
-    }
-    //TODO: I'm almost sure this is one of the only places were we concretely diverge from the original implementation. Must check what changes exactly, and how we could further improve this.
-    pub fn build(&mut self, values: &Values) {
-        let row0 = values.iter_chunks().map(Vec::len).collect::<Vec<usize>>();
-
-        if row0.len() == 1 {
-            self.inner.clear();
-            self.inner.extend(&row0);
-            self.offset = 0;
-        } else {
-            let mut row1 = row0
-                .chunks(2)
-                .map(|pair| pair.iter().sum())
-                .collect::<Vec<usize>>();
-
-            if row1.len() == 1 {
-                let combined = row1.into_iter().chain(row0);
-                self.inner.clear();
-                self.inner.extend(combined);
-                self.offset = 1;
-            } else {
-                let size = row1.len().next_power_of_two();
-                debug_assert_ne!(size, 0);
-                row1.resize(size, 0);
-
-                let mut tree = vec![row0, row1];
-                while tree.last().unwrap().len() > 1 {
-                    let row = tree
-                        .last()
-                        .unwrap()
-                        .chunks(2)
-                        .map(|pair| pair.iter().sum())
-                        .collect();
-                    tree.push(row);
+    pub fn pos_at(&self, index: usize) -> Loc {
+        std::iter::successors(Some((0, index)), |&(pos, index)| {
+            let child = pos * 2 + 1;
+            self.inner.get(child).map(|&len| {
+                if index < len {
+                    (child, index)
+                } else {
+                    (child + 1, index - len)
                 }
-
-                let flat = tree.into_iter().rev().flatten();
-                self.inner.extend(flat);
-                self.offset = size * 2 - 1;
-            }
-        }
+            })
+        })
+        .last()
+        .unwrap()
+        .pipe(|(pos, index)| Loc::new(pos - self.offset, index))
+    }
+    pub fn build(&mut self, values: &Values) {
+        debug_assert!(self.is_not_built());
+        let levels = values.len().next_power_of_two().ilog2();
+        self.offset = 2_usize.pow(levels) - 1;
+        self.inner.resize(self.offset, 0);
+        self.inner.extend(values.iter_chunks().map(Vec::len));
+        (0..levels)
+            .rev()
+            .map(|level| 2_usize.pow(level))
+            .for_each(|size| {
+                let (parents, children) = self.inner[size - 1..].split_at_mut(size);
+                parents
+                    .iter_mut()
+                    .zip(children.chunks(2))
+                    .for_each(|(parent, pair)| *parent = pair.iter().sum());
+            });
+    }
+    /// Indices from `child` up to the root of the tree, both included.
+    #[inline]
+    fn path_to_root(child: usize) -> impl std::iter::FusedIterator<Item = usize> {
+        std::iter::successors(Some(child), |&c| c.checked_sub(1).map(|c| c / 2))
     }
 }
