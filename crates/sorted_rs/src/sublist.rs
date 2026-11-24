@@ -57,8 +57,8 @@ impl SubList {
         let old_len = self.len();
         // `Drain` is a std `ExactSizeIterator`: the unsafe code below can trust its length.
         let new_len = old_len + items.len();
-        assert_eq!(idxs.len(), items.len(), "one location is expected per item");
-        assert!(
+        debug_assert_eq!(idxs.len(), items.len(), "one location is expected per item");
+        debug_assert!(
             idxs.is_sorted_by_key(|loc| loc.idx)
                 && idxs.last().is_none_or(|last| last.idx <= old_len),
             "indices must be sorted and at most the length"
