@@ -143,7 +143,7 @@ impl<L: ListsMethods> Batch<L> {
                     list.lengths.add_at(run[0].pos, run.len());
                 }
                 let mut last = run[0].pos;
-                while list.keys()[last].len() > list.load.higher_limit() {
+                while list.keys()[last].len() > list.load.max_size() {
                     list.expand(py, last);
                     last += 1;
                 }

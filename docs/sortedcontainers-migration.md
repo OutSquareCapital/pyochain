@@ -19,7 +19,7 @@ The main takeaways are:
 - No class herit from python built-in types: `SortedDict` is not a subclass of `dict`, and `SortedSet` is not a subclass of `set`.
 - Base classes/protocols who are type-checking only construct, such a `BaseSortedCollection`, are provided for duck-typing, if needed, and also allow to avoid duplicating the documentation.
 - All private methods and attributes (those starting with `_`) are not accessible from Python, and are implementation details living in rust.
-- `load` is fully private and can not be accessed from Python.
+- `load` is fully private and can not be accessed from Python. You can however change the load factor by calling `reset` with a new value. If the provided `int` is less than 1, a value error will be raised at runtime. Note that passing a load of `0` will also crash the original `sortedcontainers`, but with more obscure errors due to downstream incorrect internal state.
 - All classes are explicit: There's no implicit dynamic dispatch from a `SortedList` to a `SortedKeyList` if a `key` is provided. `SortedKeySet` and `SortedKeyDict` are also not "hidden".
 - Method aliases, such as `bisect` for `bisect_left`, are not provided.
 - Mutability and iteration edge cases are a bit different. Expect `pyochain::SortedList` to be closer to python `list` than `sortedcontainers::SortedList` in some cases. Tests at [tests\test_sorted] demonstrate the differences.

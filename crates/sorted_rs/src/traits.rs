@@ -94,7 +94,7 @@ pub trait ListsMethods:
             self.delete(py, loc)
         }
     }
-    fn delete_on_len_sup_to_half_load(&mut self, py: Python<'_>, loc: Loc) {
+    fn delete_on_len_sup_to_min(&mut self, py: Python<'_>, loc: Loc) {
         self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
         if self.lengths.is_built() {
             self.lengths.delete_at(loc.pos);
@@ -146,10 +146,11 @@ pub trait ListsMethods:
             None => Err(errors::not_in_list(value)),
         }
     }
-    fn reset(&mut self, py: Python<'_>, load: usize) -> PyResult<()> {
+    fn reset(&mut self, load: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = load.py();
         let values = self.values.iter_owned(py).collect_vec();
+        self.load = load.try_into()?;
         self.clear(py);
-        self.load = load.into();
         values.pipe(IntoList::Vec).extend_into(py, self)
     }
     fn set_item(&mut self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {

@@ -90,9 +90,7 @@ impl ListsMethods for List {
         self.values.loc_remove(&loc);
         self.len -= 1;
         match ops::SubListState::new(self, loc.pos) {
-            ops::SubListState::LenSupToHalfLoad => {
-                self.delete_on_len_sup_to_half_load(py, loc);
-            }
+            ops::SubListState::LenSupToMin => self.delete_on_len_sup_to_min(py, loc),
             ops::SubListState::ManySublists => {
                 let prev = self.delete_many(&mut loc);
                 self.maxes[prev] = self.values[prev].last().unwrap().clone_ref(py);

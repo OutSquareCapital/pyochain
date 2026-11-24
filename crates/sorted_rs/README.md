@@ -77,7 +77,12 @@ Note: Wrote by Claude clanker, not rechecked toroughly.
 
 The sorted containers rely on the invariants below. Most are **not** encoded in the types: they are maintained by hand across `traits.rs`, `list.rs`, `keylist.rs` and `inner.rs`.
 
-Notation: `values` holds the elements, `keys` holds the sort keys (for `List`, `keys` and `values` are the same storage), `maxes` holds the last key of each chunk, `load` is the load factor.
+Notation:
+
+- `values` holds the elements
+- `keys` holds the sort keys (for `List`, `keys` and `values` are the same storage)
+- `maxes` holds the last key of each chunk
+- `load` is the load factor
 
 ### Structural
 
@@ -90,13 +95,14 @@ Notation: `values` holds the elements, `keys` holds the sort keys (for `List`, `
 #### 2. Non-empty chunks
 
 - Invariant: every chunk in `keys` and `values` has at least one element.
-- Used by: `.last().unwrap()` in `traits.rs` (`expand`, `delete_on_len_sup_to_half_load`), `sort/chunk.rs` (`Chunk::push_into`, `Batch::extend_into`), `list.rs` (`delete`), `keylist.rs` (`delete`), `inner.rs` (`loc_last`, `index_to_loc`), `ops.rs` (`Locate`).
-- Checked in `debug.rs`: no. The checker only asserts `len >= lower_limit` for every chunk except the last. An empty last chunk is only caught indirectly, by a panic of the `.last().unwrap()` in the checker itself.
+- Used by: `.last().unwrap()` in `traits.rs` (`expand`, `delete_on_len_sup_to_min`), `sort/chunk.rs` (`Chunk::push_into`, `Batch::extend_into`), `list.rs` (`delete`), `keylist.rs` (`delete`), `inner.rs` (`loc_last`, `index_to_loc`), `ops.rs` (`Locate`).
+- Creation sites: a split (`expand`) and the chunking of `Big` only produce non-empty chunks, since `Load` guarantees `load >= 1` (see invariant 6). Only the delete path can empty a chunk, and `SubListState` then removes it.
+- Checked in `debug.rs`: no. The checker only asserts `len >= min_size` for every chunk except the last. An empty last chunk is only caught indirectly, by a panic of the `.last().unwrap()` in the checker itself.
 
 #### 3. Max mirror
 
 - Invariant: `maxes[i] == keys[i].last()` for every `i`.
-- Maintained by hand in: `expand`, `delete`, `push_val`, `delete_on_len_sup_to_half_load`, `Chunk::push_into`, `Batch::extend_into` and the `Small` arm of `ExtendKind::extend_into`.
+- Maintained by hand in: `expand`, `delete`, `push_val`, `delete_on_len_sup_to_min`, `Chunk::push_into`, `Batch::extend_into` and the `Small` arm of `ExtendKind::extend_into`.
 - Checked in `debug.rs`: yes.
 
 #### 4. Key/value lockstep (KeyList only)
@@ -113,14 +119,21 @@ Notation: `values` holds the elements, `keys` holds the sort keys (for `List`, `
 
 #### 6. Chunk size bounds
 
-- Invariant: `len <= 2 * load` for every chunk, and `len >= load / 2` for every chunk except the last.
+- Invariant: `len <= max_size` (`2 * load`) for every chunk, and `len >= min_size` (`load / 2`) for every chunk except the last.
 - Enforced by: the upper bound at insert time (`Expand::new`, and the `while` loop of `Batch::extend_into`, which splits as many times as needed), the lower bound at delete time (`SubListState::new`). `Big` builds chunks of exactly `load` items, except the last.
+- `Load` ([`load.rs`](src/load.rs)) is only built by `Default` (1000) or `TryFrom<&Bound<PyAny>>`, which raises `ValueError` outside `1..=u32::MAX / 2`. Its field is private, so `max_size` and `min_size` can't drift from it. This guarantees:
+  - `max_size` doesn't overflow;
+  - both halves of a split (`load` and `len - load > load` items) and every chunk of `Big` are non-empty;
+  - `Big` never calls `div_ceil(0)`;
+  - at rest, every `idx` fits in the 32 low bits of the iterator cursor, end sentinel included (`max_size <= u32::MAX - 1`). A `Batch` can exceed `max_size` before splitting, but only under the write lock.
+- `reset` validates the new `load` before clearing the list, so an invalid value leaves the list untouched.
 - Checked in `debug.rs`: yes.
 
 #### 7. Length tree (`lengths`)
 
-- Invariant: either empty (not built), or consistent with `values`: `inner[0] == len`, `inner.len() == offset + values.len()`, and each internal node equals the sum of its children.
-- Built lazily on the first index access past the first chunk (`set_pos_usize`, `into_index`). For a single chunk, `[len]` with `offset = 0`, as in the original.
+- Invariant: either empty (not built), or consistent with `values`: `offset == values.len().next_power_of_two() - 1`, `inner[0] == len`, `inner.len() == offset + values.len()`, each internal node equals the sum of its children, and the nodes without children are 0.
+- Built lazily on the first index access past the first chunk (`set_pos_usize`, `into_index`).
+- `build` requires the tree to be empty (`debug_assert!`); both callers check `is_not_built()` first.
 - Relied on by: `add_at` (`expand_at` is `add_at(pos, 1)`), `delete_at`, `loc_at`, `pos_at`.
 - `Batch::extend_into` only calls `add_at` while the index is built. A split clears it, so the remaining runs skip it, and it is rebuilt on demand.
 - Checked in `debug.rs`: yes, only when built.
@@ -160,21 +173,15 @@ Notation: `values` holds the elements, `keys` holds the sort keys (for `List`, `
 - Invariant: `ops::Slice::new` is never called with `Nb::Zero`. It is UB otherwise (`unreachable_unchecked`).
 - Relies on `slice.indices` rejecting a zero step.
 
-#### 14. Load factor
-
-- `load >= 4` (`Load::test_limit`) comes from the original `sortedcontainers` test suite. `debug.rs` asserts it, but it has not been established that the implementation requires it.
-- `reset` does not validate it. `load == 0` panics on the first split, and `ExtendKind::Big` panics on `length.div_ceil(load)` after having set `len`, leaving `len` and `values` desynchronized.
-- `2 * load` and the cursor packing (`u32` for `pos` and `idx`) must not overflow.
-
 ### Sorted batches
 
-#### 15. Sorted input
+#### 14. Sorted input
 
 - Invariant: the items of a `SortedVec` are in non-decreasing order of their key, and `Loc::next_sorted` is only called on a non-empty list.
 - Established by: `SortedVec::from_iter` and `SortedVec::from_vec` (sort), and `IntoList::extend_into`, which only picks `Medium` and `Small` when the list isn't empty.
 - Relied on by: `Loc::next_sorted` (compares from the previous location, never goes back), `Batch::locate`, the `Small` arm of `ExtendKind::extend_into`.
 
-#### 16. Batch application
+#### 15. Batch application
 
 - Invariant: every location of a `Batch` is computed against the list before any insertion, then applied from the last sublist to the first, so a split never shifts a location that wasn't applied yet.
 - `Vec::insert_many` (`unsafe`: `ptr::copy`, `ptr::write`, `set_len`) requires one location per item, with sorted indices, each `<= len`. Asserted, and covered by unit tests in `sort/chunk.rs`.
@@ -188,6 +195,9 @@ Notation: `values` holds the elements, `keys` holds the sort keys (for `List`, `
   - `imul`, `reset`, `delete_fwd_small`, `Dict::update` and `PySetDataRef::op_mut` call `clear` and then re-sort, so an exception in the second step leaves the list empty (for `op_mut`, with the Python set already updated).
   - `Medium` locates every item before mutating anything, and `Big` sorts before `clear`: both are atomic.
 - `iter/core.rs` marks `InnerRef` as `Send` and `Sync`, and releases the read lock before iterating. Mutating the list while an iterator is alive is a data race in Rust terms; only the GIL currently prevents it.
+- The iterator cursor (`iter/cursor.rs`) packs `pos` in the 32 high bits of a `u64`. `idx` is bounded by `Load` (invariant 6), `pos` is not: the number of chunks depends on the total length. It overflows past `2^32` chunks, i.e. about 4 billion elements with `load = 1`, or about 2 trillion with the default load. Two fixes are possible, none applied yet:
+  - a split of the bits that depends on `load`, at the cost of a variable shift on every `next`;
+  - cursors specialized on a constant split, with one pyclass per split (generated with the existing macros). Same cost as today (constant shift), so no perf gain or loss. A strict guarantee for small loads needs about 61 bits for `pos`, so several splits.
 
 ## Statically known runtime checks
 
@@ -199,32 +209,29 @@ Runtime checks whose outcome is already fixed by the type or by the call site. E
 
 A chunk in `keys` or `values` that is never empty. Encoding it removes the `last().unwrap()` calls.
 
-| Location                                                               | Code                                   | Note                            |
-| ---------------------------------------------------------------------- | -------------------------------------- | ------------------------------- |
-| `traits.rs`, l.[63](src/traits.rs#L63)                                 | `half.last().unwrap()`                 | in `expand`                     |
-| `traits.rs`, l.[65](src/traits.rs#L65)                                 | `self.keys()[pos].last().unwrap()`     | in `expand`                     |
-| `traits.rs`, l.[96](src/traits.rs#L96)                                 | `self.keys().loc_last(&loc)`           | [^1]                            |
-| `sort/chunk.rs`, l.[36](src/sort/chunk.rs#L36)                         | `self.last().unwrap()`                 | in `Chunk::push_into`           |
-| `sort/chunk.rs`, l.[154](src/sort/chunk.rs#L154)                       | `list.keys()[last].last().unwrap()`    | in `Batch::extend_into`         |
-| `list.rs`, l.[95](src/list.rs#L95)                                     | `self.values[prev].last().unwrap()`    | in `delete`                     |
-| `list.rs`, l.[99](src/list.rs#L99)                                     | `self.keys().loc_last(&loc)`           | in `delete`                     |
-| `keylist.rs`, l.[97](src/keylist.rs#L97)                               | `left[prev].last().unwrap()`           | in `delete`                     |
-| `keylist.rs`, l.[102](src/keylist.rs#L102)                             | `self.keys().loc_last(&loc)`           | in `delete`                     |
-| `inner.rs`, l.[85](src/inner.rs#L85)                                   | `self[loc.pos].last().unwrap()`        | in `Values::loc_last`           |
-| `inner.rs`, l.[134](src/inner.rs#L134)                                 | `self.values[pos].len() - 1_usize`     | in `index_to_loc`, `Last`       |
-| `inner.rs`, l.[141](src/inner.rs#L141)                                 | `self.values[pos].len()`               | in `index_to_loc`, `InLastList` |
-| `inner.rs`, l.[166](src/inner.rs#L166)                                 | `self.values[pos].len()`               | in `set_pos`                    |
-| `ops.rs`, l.[178](src/ops.rs#L178)                                     | `list.values.last().unwrap()`          | in `Locate::new`                |
-| `search.rs`, l.[55](src/search.rs#L55)                                 | `ops::Bisect::Empty => unreachable!()` | [^2]                            |
-| `lengths.rs`, l.[99](src/lengths.rs#L99), l.[101](src/lengths.rs#L101) | `tree.last().unwrap()`                 | [^3]                            |
-| `iter/impls.rs`, l.[80](src/iter/impls.rs#L80)                         | `(v.len() - 1) as u64`                 | [^4]                            |
-| `iter/builder.rs`, l.[92](src/iter/builder.rs#L92)                     | `values[pos].len()`                    | in `islice_bounds`              |
+| Location                                           | Code                                   | Note                            |
+| -------------------------------------------------- | -------------------------------------- | ------------------------------- |
+| `traits.rs`, l.[65](src/traits.rs#L65)             | `half.last().unwrap()`                 | in `expand`                     |
+| `traits.rs`, l.[67](src/traits.rs#L67)             | `self.keys()[pos].last().unwrap()`     | in `expand`                     |
+| `traits.rs`, l.[98](src/traits.rs#L98)             | `self.keys().loc_last(&loc)`           | [^1]                            |
+| `sort/chunk.rs`, l.[35](src/sort/chunk.rs#L35)     | `self.last().unwrap()`                 | in `Chunk::push_into`           |
+| `sort/chunk.rs`, l.[150](src/sort/chunk.rs#L150)   | `list.keys()[last].last().unwrap()`    | in `Batch::extend_into`         |
+| `list.rs`, l.[96](src/list.rs#L96)                 | `self.values[prev].last().unwrap()`    | in `delete`                     |
+| `list.rs`, l.[100](src/list.rs#L100)               | `self.keys().loc_last(&loc)`           | in `delete`                     |
+| `keylist.rs`, l.[98](src/keylist.rs#L98)           | `left[prev].last().unwrap()`           | in `delete`                     |
+| `keylist.rs`, l.[103](src/keylist.rs#L103)         | `self.keys().loc_last(&loc)`           | in `delete`                     |
+| `inner.rs`, l.[65](src/inner.rs#L65)               | `self[loc.pos].last().unwrap()`        | in `Values::loc_last`           |
+| `inner.rs`, l.[114](src/inner.rs#L114)             | `self.values[pos].len() - 1_usize`     | in `index_to_loc`, `Last`       |
+| `inner.rs`, l.[121](src/inner.rs#L121)             | `self.values[pos].len()`               | in `index_to_loc`, `InLastList` |
+| `inner.rs`, l.[146](src/inner.rs#L146)             | `self.values[pos].len()`               | in `set_pos`                    |
+| `ops.rs`, l.[178](src/ops.rs#L178)                 | `list.values.last().unwrap()`          | in `Locate::new`                |
+| `search.rs`, l.[55](src/search.rs#L55)             | `ops::Bisect::Empty => unreachable!()` | [^2]                            |
+| `iter/impls.rs`, l.[80](src/iter/impls.rs#L80)     | `(v.len() - 1) as u64`                 | [^4]                            |
+| `iter/builder.rs`, l.[92](src/iter/builder.rs#L92) | `values[pos].len()`                    | in `islice_bounds`              |
 
-[^1]: in `delete_on_len_sup_to_half_load`, guarded by `LenSupToHalfLoad`
+[^1]: in `delete_on_len_sup_to_min`, guarded by `LenSupToMin`
 
 [^2]: in `Search::on_index`; the chunk is non-empty after `try_normalize`
-
-[^3]: in `build`; never `None`, since `tree` starts with two rows
 
 [^4]: in `inner_next_back`; `v` comes from `last()`
 
@@ -234,15 +241,15 @@ A list with at least one chunk (`maxes` and `values` non-empty). Encoding it rem
 
 | Location                                             | Code                                   | Note                            |
 | ---------------------------------------------------- | -------------------------------------- | ------------------------------- |
-| `list.rs`, l.[71](src/list.rs#L71)                   | `ops::Bisect::Empty => unreachable!()` | [^6]                            |
+| `list.rs`, l.[74](src/list.rs#L74)                   | `ops::Bisect::Empty => unreachable!()` | [^6]                            |
 | `search.rs`, l.[55](src/search.rs#L55)               | `ops::Bisect::Empty => unreachable!()` | [^7]                            |
-| `traits.rs`, l.[136](src/traits.rs#L136)             | `self.maxes.len() - 1`                 | [^8]                            |
-| `keylist.rs`, l.[53](src/keylist.rs#L53)             | `self.maxes.len() - 1`                 | [^9]                            |
-| `sort/chunk.rs`, l.[185](src/sort/chunk.rs#L185)     | `list.maxes.len() - 1`                 | [^25]                           |
-| `inner.rs`, l.[133](src/inner.rs#L133)               | `self.values.len() - 1`                | in `index_to_loc`, `Last`       |
-| `inner.rs`, l.[140](src/inner.rs#L140)               | `self.values.len() - 1`                | in `index_to_loc`, `InLastList` |
-| `inner.rs`, l.[165](src/inner.rs#L165)               | `self.values.len() - 1`                | in `set_pos`                    |
-| `inner.rs`, l.[181](src/inner.rs#L181)               | `self.values[0].len()`                 | in `set_pos_usize`              |
+| `traits.rs`, l.[138](src/traits.rs#L138)             | `self.maxes.len() - 1`                 | [^8]                            |
+| `keylist.rs`, l.[56](src/keylist.rs#L56)             | `self.maxes.len() - 1`                 | [^9]                            |
+| `sort/chunk.rs`, l.[181](src/sort/chunk.rs#L181)     | `list.maxes.len() - 1`                 | [^25]                           |
+| `inner.rs`, l.[113](src/inner.rs#L113)               | `self.values.len() - 1`                | in `index_to_loc`, `Last`       |
+| `inner.rs`, l.[120](src/inner.rs#L120)               | `self.values.len() - 1`                | in `index_to_loc`, `InLastList` |
+| `inner.rs`, l.[145](src/inner.rs#L145)               | `self.values.len() - 1`                | in `set_pos`                    |
+| `inner.rs`, l.[161](src/inner.rs#L161)               | `self.values[0].len()`                 | in `set_pos_usize`              |
 | `ops.rs`, l.[175](src/ops.rs#L175)                   | `list.values[0].len()`                 | [^10]                           |
 | `ops.rs`, l.[177](src/ops.rs#L177)                   | `list.values[0].len()`                 | [^11]                           |
 | `slice.rs`, l.[117](src/slice.rs#L117)               | `list.values.len() - 1`                | in `fwd_extract`                |
@@ -294,31 +301,6 @@ Built once by `try_normalize` (or, for slices, by `From<PySliceIndices> for Boun
 
 [^27]: in `From<PySliceIndices> for Bounds`; this is where the witness is created for slices, with the `start >= stop => NoOp` guard of `Slice::new` covering the empty case
 
-### Witness `Load` (`load >= 1`, bounded)
-
-A load factor validated at construction: `>= 1`, with `2 * load` and `load / 2` precomputed without overflow. Encoding it removes the implicit assumptions in the chunk size checks.
-
-| Location                                         | Code                                                | Note                   |
-| ------------------------------------------------ | --------------------------------------------------- | ---------------------- |
-| `inner.rs`, l.[29](src/inner.rs#L29)             | `self.0 * 2`                                        | [^17]                  |
-| `inner.rs`, l.[33](src/inner.rs#L33)             | `self.0 / 2`                                        | in `Load::lower_limit` |
-| `ops.rs`, l.[124](src/ops.rs#L124)               | `data.load.higher_limit()`                          | in `Expand::new`       |
-| `ops.rs`, l.[145](src/ops.rs#L145)               | `data.load.lower_limit()`                           | in `SubListState::new` |
-| `traits.rs`, l.[63](src/traits.rs#L63)           | `half.last().unwrap()`                              | [^18]                  |
-| `sort/sorted.rs`, l.[61](src/sort/sorted.rs#L61) | `let load = *list.load;`                            | [^19]                  |
-| `sort/sorted.rs`, l.[70](src/sort/sorted.rs#L70) | `.take(length.div_ceil(load))`                      | [^28]                  |
-| `iter/cursor.rs`, l.[91](src/iter/cursor.rs#L91) | `(loc.pos as Self) << u32::BITS \| loc.idx as Self` | [^20]                  |
-
-[^17]: in `Load::higher_limit`; `2 * load` overflow
-
-[^18]: in `expand`; non-empty only if `load >= 1`
-
-[^19]: in `ExtendKind::extend_into`, `Big`; `take(load)` yields non-empty chunks only if `load >= 1`
-
-[^28]: in `ExtendKind::extend_into`, `Big`; `div_ceil` panics if `load == 0`, after `len` was already set
-
-[^20]: in `From<Loc> for u64`; `idx < 2^32` only if chunk length is bounded by `2 * load`
-
 ### Witness `NonZeroIsize` (step)
 
 | Location                             | Code                                             | Note  |
@@ -334,10 +316,10 @@ A load factor validated at construction: `>= 1`, with `2 * load` and `load / 2` 
 
 | Location                                   | Code                                   | Note  |
 | ------------------------------------------ | -------------------------------------- | ----- |
-| `traits.rs`, l.[62](src/traits.rs#L62)     | `self.keys_mut()[pos].split_off(load)` | [^23] |
-| `keylist.rs`, l.[124](src/keylist.rs#L124) | `self.values[pos].split_off(load)`     | [^24] |
+| `traits.rs`, l.[64](src/traits.rs#L64)     | `self.keys_mut()[pos].split_off(load)` | [^23] |
+| `keylist.rs`, l.[125](src/keylist.rs#L125) | `self.values[pos].split_off(load)`     | [^24] |
 
-[^23]: in `expand`; guarded by `keys()[pos].len() > higher_limit()`
+[^23]: in `expand`; guarded by `keys()[pos].len() > max_size()`
 
 [^24]: in `split_values`; same guard, shared with `keys`
 
@@ -345,7 +327,7 @@ A load factor validated at construction: `>= 1`, with `2 * load` and `load / 2` 
 
 | Location                                 | Code                      | Note  |
 | ---------------------------------------- | ------------------------- | ----- |
-| `traits.rs`, l.[105](src/traits.rs#L105) | `let prev = loc.pos - 1;` | [^26] |
+| `traits.rs`, l.[107](src/traits.rs#L107) | `let prev = loc.pos - 1;` | [^26] |
 
 [^26]: in `delete_many`; guarded by `ManySublists`, which implies at least two chunks
 
@@ -366,9 +348,9 @@ Depends on the structure (lockstep, Loc validity, sorted order), not on a type t
 - `search.rs`: `found_in_keys`, `found_in_values`, `increment`.
 - `list_update.rs`: `Strategy::from_vec` (`4 * length`).
 - `sort/sorted.rs`: `ExtendKind::extend_into` (`Big`: `list.len = length`; `Small`: `keys()[loc.pos]`, `maxes[loc.pos]`, `len += 1`).
-- `sort/chunk.rs`: `Batch::extend_into` (`len += idxs.len()`, `chunk_by` runs are never empty, `keys()[last]`, `maxes[last]`), `Chunk::drain_into` (`run[0]`, `len() - run.len()`), `Loc::next_sorted` (`maxes[self.pos + 1..last]`, `keys()[pos][low..]`), `Vec::insert_many` (see invariant 16).
+- `sort/chunk.rs`: `Batch::extend_into` (`len += idxs.len()`, `chunk_by` runs are never empty, `keys()[last]`, `maxes[last]`), `Chunk::drain_into` (`run[0]`, `len() - run.len()`), `Loc::next_sorted` (`maxes[self.pos + 1..last]`, `keys()[pos][low..]`), `Vec::insert_many` (see invariant 15).
 - `bisect.rs`: `resolve` (`vec[mid]`).
-- `lengths.rs`: `delete_at`, `expand_at`, `loc_at` (tree indices), `pos_at` (`pos - offset`).
+- `lengths.rs`: `delete_at`, `add_at`, `loc_at` (tree indices on the path to the root), `pos_at` (`pos - offset`), `build` (`inner[size - 1..]` and `split_at_mut(size)` per level).
 - `slice.rs`: `fwd_extract` (`start_list[min.idx..max.idx]`), `get_slice` (range bounds), `get_all` (`cast_signed`).
 - `iter/builder.rs`: `last_sublist` (`keys()[pos].len()`).
 - `iter/impls.rs`: `inner_next` (`+ 1`), `inner_next_back` (`at - 1`).
@@ -376,7 +358,7 @@ Depends on the structure (lockstep, Loc validity, sorted order), not on a type t
 
 ### R: runtime (user data, external calls, cache state)
 
-- `traits.rs`: `expand` (`lengths` clear and `expand_at`), `reset` (`load.into()`).
+- `traits.rs`: `expand` (`lengths` clear and `expand_at`), `reset` (`Load::try_from`, validated before `clear`).
 - `inner.rs`: `set_pos` (`last_len + index`, `index += len`), `set_pos_usize` (`index >= len`, `lengths.build`, `pos_at`).
 - `ops.rs`: `Bisect::new` (`is_empty`, `pos == len`), `SubListState::new` (`keys().len() > 1`), `Locate::new` (`-last < i`).
 - `bounds.rs`: `try_normalize` (user inputs), `Loc::into_index` (cache).
@@ -388,7 +370,7 @@ Depends on the structure (lockstep, Loc validity, sorted order), not on a type t
 - `sort/chunk.rs`: `LocIdxs::locate` and `Loc::next_sorted` (`rich_compare_bool` and `bisect` call `__lt__`, which can raise).
 - `set.rs`: `PySetDataRef::op_mut` (the Python set is mutated before the list is cleared and rebuilt).
 - `bisect.rs`: `resolve` (`func(...)?`, `__lt__`).
-- `lengths.rs`: `pos_at` (`index -= index_child`), `build` (row shape checks).
+- `lengths.rs`: `pos_at` (`index - len`, `inner.get(child)` ends the descent).
 - `iter/impls.rs`: `inner_next` and `inner_next_back` (`Option` guards).
 - `iter/core.rs`: `from_owner` (read lock).
 - `core.rs`: `try_read().unwrap()`, `try_write().unwrap()` (lock contention).
@@ -403,6 +385,5 @@ Depends on the structure (lockstep, Loc validity, sorted order), not on a type t
   - `SortKey::key` (`Python::assume_attached`: the GIL must be held);
   - `key_cast`, `long`, `float`, `latin` (`cast_unchecked` and unchecked reads, only valid once `KeysCheck` proved the types of every key);
   - `unsafe_object` (calls `tp_richcompare` directly);
-  - `tup_cmp` (`get_borrowed_item_unchecked`, bounded by the `len` checks of the loop).
 - `sort/strategy.rs`: `KeysCheck::check_key` (`cast_unchecked`), `Object::from` (`(*ty).tp_richcompare`).
 - `sort/chunk.rs`: `Vec::insert_many` (`ptr::copy`, `ptr::write`, `set_len`).

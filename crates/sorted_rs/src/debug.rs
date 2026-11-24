@@ -77,7 +77,6 @@ fn check_values_match_keys(py: Python<'_>, data: &KeyList) -> PyResult<()> {
 }
 
 fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
-    pyassert!(slf.load.test_limit())?;
     pyassert!(slf.maxes.len() == slf.values.len() && slf.values.len() == slf.keys().len())?;
     pyassert!(slf.len() == slf.values.iter_chunks().map(Vec::len).sum::<usize>())?;
     // Check all sublists are sorted.
@@ -106,7 +105,7 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     pyassert!(
         slf.values
             .iter_chunks()
-            .all(|sublist| sublist.len() <= slf.load.higher_limit())
+            .all(|sublist| sublist.len() <= slf.load.max_size())
     )?;
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
@@ -115,7 +114,7 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
             .iter_chunks()
             .rev()
             .skip(1)
-            .all(|sublist| sublist.len() >= slf.load.lower_limit())
+            .all(|sublist| sublist.len() >= slf.load.min_size())
     )?;
     if slf.lengths.is_built() {
         pyassert!(slf.len() == slf.lengths.inner[0])?;

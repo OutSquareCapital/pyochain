@@ -121,7 +121,7 @@ impl Expand {
     #[inline(always)]
     #[must_use]
     pub fn new(data: &impl ListsMethods, pos: usize) -> Self {
-        if data.keys()[pos].len() > data.load.higher_limit() {
+        if data.keys()[pos].len() > data.load.max_size() {
             Self::MustSplit
         } else if data.lengths.is_built() {
             Self::IdxBuilt
@@ -132,7 +132,7 @@ impl Expand {
 }
 /// Used in `delete`
 pub enum SubListState {
-    LenSupToHalfLoad,
+    LenSupToMin,
     ManySublists,
     NonEmpty,
     Empty,
@@ -142,8 +142,8 @@ impl SubListState {
     #[must_use]
     pub fn new(data: &impl ListsMethods, pos: usize) -> Self {
         let sublist = &data.keys()[pos];
-        if sublist.len() > data.load.lower_limit() {
-            Self::LenSupToHalfLoad
+        if sublist.len() > data.load.min_size() {
+            Self::LenSupToMin
         } else if data.keys().len() > 1 {
             Self::ManySublists
         } else if sublist.is_empty() {

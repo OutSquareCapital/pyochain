@@ -102,8 +102,8 @@ pub(super) trait SortedCollectionsMethods: ListGetter {
     ) -> IterRes<'py> {
         iter::Builder::new(slf).islice((start, stop)).build()
     }
-    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.write().as_mut().reset(py, load)
+    fn reset(&self, load: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.write().as_mut().reset(load)
     }
 }
 

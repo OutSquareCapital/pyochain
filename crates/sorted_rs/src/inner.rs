@@ -3,6 +3,7 @@ use crate::{
     errors,
     lengths::Lengths,
     list_update::IntoList,
+    load::Load,
     ops,
     types::{SeqOrAny, VecPy},
 };
@@ -12,27 +13,6 @@ use pyo3::{BoundObject, basic::CompareOp, prelude::*, types::PyNotImplemented};
 use pyo3_ext::{prelude::*, types::PyCmpOut};
 use std_tools::prelude::*;
 use tap::prelude::*;
-#[derive(Clone, Copy, Debug, From, Deref)]
-pub(super) struct Load(usize);
-impl Default for Load {
-    fn default() -> Self {
-        Self(1000)
-    }
-}
-impl Load {
-    /// This was present in the original `sortedcontainers` tests. Must check if really needed.
-    pub const fn test_limit(self) -> bool {
-        self.0 >= 4
-    }
-    #[inline(always)]
-    pub const fn higher_limit(self) -> usize {
-        self.0 * 2
-    }
-    #[inline(always)]
-    pub const fn lower_limit(self) -> usize {
-        self.0 / 2
-    }
-}
 #[derive(Deref, DerefMut, From, Debug, Default, IntoIterator)]
 pub struct Maxes(VecPy);
 impl Maxes {
