@@ -1,5 +1,7 @@
 use std::ops::ControlFlow;
 
+use crate::collections::WithCapacity;
+
 pub trait TryIterator: Iterator {
     /// Returns the first non-`None` value produced by `f`, or `None` if `f` returns `None` for every item.
     ///
@@ -58,24 +60,39 @@ pub trait TryIterator: Iterator {
             })
             .unwrap_or(Ok(false))
     }
-    /// Equivalent of `collect::<Result<Vec<T>, E>>()`, preallocated from the lower bound of `size_hint`.
+    /// Equivalent of `collect::<R>()`, preallocated from the lower bound of `size_hint`.
+    ///
+    /// `R` is the full output type, as for `collect`, e.g. `PyResult<Vec<T>>`.\
+    /// The target collection must implement [`WithCapacity`], which is stricter than `FromIterator`.
     ///
     /// `std` collects a `Result` through an adapter whose lower bound is always 0, since it can stop at the first error.\
-    /// The `Vec` then starts at a tiny capacity and grows by doubling, asking `size_hint` again on every growth.\
+    /// The collection then starts at a tiny capacity and grows by doubling, asking `size_hint` again on every growth.\
     /// This asks it once, which matters when it's costly to compute, e.g. `__length_hint__` on a Python iterator.
-    ///
-    /// # Errors
-    ///
-    /// Returns the first error produced by the `Iterator`.
     #[inline]
-    fn try_collect_vec_with_capacity<T, E>(mut self) -> Result<Vec<T>, E>
+    fn collect_with_capacity<R: FromIterWithCapacity<Self>>(self) -> R
     where
-        Self: Sized + Iterator<Item = Result<T, E>>,
+        Self: Sized,
     {
-        let mut vec = Vec::with_capacity(self.size_hint().0);
-        self.try_for_each(|item| item.map(|value| vec.push(value)))
-            .map(|()| vec)
+        R::from_iter_with_capacity(self)
     }
 }
 
 impl<I: Iterator> TryIterator for I {}
+
+/// Counterpart of `FromIterator` for [`TryIterator::collect_with_capacity`].
+pub trait FromIterWithCapacity<I> {
+    fn from_iter_with_capacity(iter: I) -> Self;
+}
+
+impl<I, C, T, E> FromIterWithCapacity<I> for Result<C, E>
+where
+    I: Iterator<Item = Result<T, E>>,
+    C: WithCapacity<T>,
+{
+    #[inline(always)]
+    fn from_iter_with_capacity(mut iter: I) -> Self {
+        let mut vec = C::with_capacity(iter.size_hint().0);
+        iter.try_for_each(|item| item.map(|value| vec.push(value)))
+            .map(|()| vec)
+    }
+}

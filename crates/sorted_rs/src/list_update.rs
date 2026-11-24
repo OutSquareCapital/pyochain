@@ -66,7 +66,7 @@ impl IntoList {
             Self::PyIter(it) => it
                 .into_bound(py)
                 .map_ok(Bound::unbind)
-                .try_collect_vec_with_capacity()
+                .collect_with_capacity::<PyResult<VecPy>>()
                 .map(|vec| Strategy::from_vec(vec, list))?,
         }
         .sorted(py, list)?

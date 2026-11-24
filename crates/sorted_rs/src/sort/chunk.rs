@@ -10,10 +10,9 @@ use crate::{
 use derive_more::{Constructor, Deref, From};
 use pyo3::{basic::CompareOp, prelude::*};
 use pyo3_ext::prelude::*;
+use std_tools::{collections::WithCapacity, prelude::TryIterator};
 
-pub trait Chunk<T>: FromIterator<T> {
-    fn with_capacity(capacity: usize) -> Self;
-    fn append(&mut self, item: T);
+pub trait Chunk<T>: WithCapacity<T> {
     fn push_into(self, py: Python<'_>, list: &mut impl ListsMethods);
     /// Moves the last `run.len()` items of the chunk into the sublist of the run,
     /// each item at the matching location of `run`.
@@ -25,12 +24,6 @@ pub struct ChunkKey {
     values: VecPy,
 }
 impl Chunk<Py<PyAny>> for VecPy {
-    fn with_capacity(capacity: usize) -> Self {
-        Vec::with_capacity(capacity)
-    }
-    fn append(&mut self, item: Py<PyAny>) {
-        self.push(item);
-    }
     fn push_into(self, py: Python<'_>, list: &mut impl ListsMethods) {
         let sublist = SubList::from(self);
         list.maxes.push(sublist.last().clone_ref(py));
@@ -46,14 +39,19 @@ impl FromIterator<(Py<PyAny>, Py<PyAny>)> for ChunkKey {
         <(Vec<_>, Vec<_>)>::from_iter(iter).into()
     }
 }
-impl Chunk<(Py<PyAny>, Py<PyAny>)> for ChunkKey {
+impl WithCapacity<(Py<PyAny>, Py<PyAny>)> for ChunkKey {
     fn with_capacity(capacity: usize) -> Self {
-        Self::new(Vec::with_capacity(capacity), Vec::with_capacity(capacity))
+        Self {
+            keys: Vec::with_capacity(capacity),
+            values: Vec::with_capacity(capacity),
+        }
     }
-    fn append(&mut self, (key, value): (Py<PyAny>, Py<PyAny>)) {
+    fn push(&mut self, (key, value): (Py<PyAny>, Py<PyAny>)) {
         self.keys.push(key);
         self.values.push(value);
     }
+}
+impl Chunk<(Py<PyAny>, Py<PyAny>)> for ChunkKey {
     fn push_into(self, py: Python<'_>, list: &mut impl ListsMethods) {
         self.keys.push_into(py, list);
         list.values.push(self.values.into());
@@ -78,12 +76,14 @@ impl<L: ListsMethods> Batch<L> {
         Self { items, idxs }
     }
     pub fn extend_into(mut self, py: Python<'_>, list: &mut L) -> PyResult<()> {
-        let mut chunk = L::Chunk::with_capacity(self.items.len());
-        self.items.into_iter().try_for_each(|item| {
-            self.idxs.locate(list, item.key())?;
-            chunk.append(item);
-            PyResult::Ok(())
-        })?;
+        let mut chunk = self
+            .items
+            .into_iter()
+            .map(|item| {
+                self.idxs.locate(list, item.key())?;
+                PyResult::Ok(item)
+            })
+            .collect_with_capacity::<PyResult<L::Chunk>>()?;
         list.len += self.idxs.len();
         self.idxs
             .chunk_by(|a, b| a.pos == b.pos)
