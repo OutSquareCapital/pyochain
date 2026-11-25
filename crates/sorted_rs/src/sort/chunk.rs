@@ -1,17 +1,13 @@
 use crate::{
-    bisect::bisect,
-    bounds::Loc,
-    sort::{SortKey, sorted::SortedVec},
-    sublist::SubList,
-    traits::ListsMethods,
-    types::VecPy,
+    bisect::bisect, bounds::Loc, item::Item, sort::sorted::SortedVec, sublist::SubList,
+    traits::ListsMethods, types::VecPy,
 };
 
 use derive_more::{Constructor, Deref, From};
 use pyo3::{basic::CompareOp, prelude::*};
 use pyo3_ext::prelude::*;
+use std::iter::RepeatN;
 use std_tools::{collections::WithCapacity, prelude::TryIterator};
-use tap::Pipe;
 
 pub trait Chunk<T>: WithCapacity<T> {
     fn push_into(self, py: Python<'_>, list: &mut impl ListsMethods);
@@ -75,21 +71,36 @@ impl<T, I: ExactSizeIterator<Item = T>> IntoChunked<T> for I {}
 
 pub(crate) struct Chunked<I>(I);
 impl<I: ExactSizeIterator> Chunked<I> {
-    pub fn extend_into<L: ListsMethods<Item = I::Item>>(self, py: Python<'_>, list: &mut L) {
+    pub fn extend_into<L: ListsMethods<Item = I::Item>>(mut self, py: Python<'_>, list: &mut L) {
+        self.chunk_lens(list)
+            .map(|len| self.0.by_ref().take(len).collect::<L::Chunk>())
+            .for_each(|chunk| chunk.push_into(py, list));
+    }
+    fn chunk_lens(&self, list: &mut impl ListsMethods) -> RepeatN<usize> {
         debug_assert!(list.is_empty());
         let length = self.0.len();
         let load = *list.load;
         list.len = length;
-        if length == 0 {
-        } else if length <= load {
-            self.0.collect::<L::Chunk>().push_into(py, list);
-        } else {
-            self.0.pipe(|mut items| {
-                std::iter::repeat_with(|| items.by_ref().take(load).collect::<L::Chunk>())
-                    .take(length.div_ceil(load))
-                    .for_each(|chunk| chunk.push_into(py, list));
-            });
-        }
+        std::iter::repeat_n(load, length.div_ceil(load))
+    }
+}
+impl<T, I: ExactSizeIterator<Item = PyResult<T>>> Chunked<I> {
+    pub fn try_extend_into<L: ListsMethods<Item = T>>(
+        mut self,
+        py: Python<'_>,
+        list: &mut L,
+    ) -> PyResult<()> {
+        self.chunk_lens(list)
+            .map(|len| {
+                self.0
+                    .by_ref()
+                    .take(len)
+                    .try_collect_with_size_hint_capacity::<PyResult<L::Chunk>>()
+            })
+            .try_for_each(|chunk| {
+                chunk?.push_into(py, list);
+                Ok(())
+            })
     }
 }
 

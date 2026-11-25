@@ -13,6 +13,7 @@ use std_tools::prelude::*;
 use tap::Pipe;
 
 use crate::{
+    item::Item,
     sort::sorted::{SortedByKeys, SortedVec},
     types::VecPy,
 };
@@ -62,8 +63,7 @@ impl<'py> KeyFn<'py> for WithKey<'py> {
     }
 }
 /// What the sort compares: the item itself, or the key it was paired with.
-pub trait SortKey: Sized {
-    fn key<'py>(&self) -> &Bound<'py, PyAny>;
+pub trait SortKey: Item {
     #[inline(always)]
     unsafe fn key_cast<'a, 'py, T>(&'a self, b: &'a Self) -> Pair<&'a Bound<'py, T>> {
         unsafe {
@@ -94,10 +94,6 @@ pub trait SortKey: Sized {
             let (a, b) = self.key_cast::<PyString>(b);
             a.as_bytes_8().cmp(b.as_bytes_8())
         }
-    }
-    #[inline(always)]
-    fn object(&self, b: &Self) -> PyResult<Ordering> {
-        self.key().lt_fast(b.key())
     }
     /// Homogeneous compare: safe for any two comparable objects of the same type.
     /// (ms->key_richcompare is set to ob_type->tp_richcompare in the pre-sort check.)
@@ -167,11 +163,13 @@ pub trait SortKey: Sized {
             .into_inner()
     }
 }
-
-type TupleComp<'a, 'py> = Either<Pair<&'a Bound<'py, PyAny>>, Ordering>;
+impl<T> SortKey for T where T: Item {}
 
 #[inline(always)]
-fn tup_cmp<'r, 'py, T: SortKey>(a: &'r T, b: &'r T) -> PyResult<TupleComp<'r, 'py>> {
+fn tup_cmp<'r, 'py, T: SortKey>(
+    a: &'r T,
+    b: &'r T,
+) -> PyResult<Either<Pair<&'r Bound<'py, PyAny>>, Ordering>> {
     let (a, b) = unsafe { a.key_cast::<PyTuple>(b) };
     a.as_slice()
         .iter()
@@ -186,23 +184,8 @@ fn tup_cmp<'r, 'py, T: SortKey>(a: &'r T, b: &'r T) -> PyResult<TupleComp<'r, 'p
                 .pipe(Ok)
         })
         .and_then(|res| match res {
-            None => Ok(TupleComp::Right(a.len().cmp(&b.len()))),
-            Some((0, items)) => Ok(TupleComp::Left((items.0, items.1))),
-            Some((_, items)) => items.0.lt_fast(items.1).map(TupleComp::Right),
+            None => Ok(Either::Right(a.len().cmp(&b.len()))),
+            Some((0, items)) => Ok(Either::Left((items.0, items.1))),
+            Some((_, items)) => items.0.lt_fast(items.1).map(Either::Right),
         })
-}
-
-impl SortKey for Py<PyAny> {
-    #[inline(always)]
-    fn key<'py>(&self) -> &Bound<'py, PyAny> {
-        let py = unsafe { Python::assume_attached() };
-        self.bind(py)
-    }
-}
-impl SortKey for (Py<PyAny>, Py<PyAny>) {
-    #[inline(always)]
-    fn key<'py>(&self) -> &Bound<'py, PyAny> {
-        let py = unsafe { Python::assume_attached() };
-        self.0.bind(py)
-    }
 }

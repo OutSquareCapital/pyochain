@@ -5,11 +5,13 @@ use crate::{
     errors,
     get_item::Index,
     inner::{InnerList, Values},
+    item::{Item, ItemRef},
     iter::{IrangeBounds, builder::RawRangeIdxs},
     list_update::IntoList,
     ops,
+    repeat::Repeated,
     reprs::PyRepr,
-    sort::{Chunk, KeyFn, SortKey},
+    sort::{Chunk, KeyFn},
     types::{IndexOut, IntoIndex},
 };
 use itertools::Itertools;
@@ -21,7 +23,7 @@ pub trait ListsMethods:
     Deref<Target = InnerList> + DerefMut + PyRepr + Sized + Send + Sync
 {
     type Chunk: Chunk<Self::Item>;
-    type Item: SortKey;
+    type Item: Item;
     type Key<'py>: KeyFn<'py, Item = Self::Item>;
     /// Returns a reference to the "keys" of the collection.\
     /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
@@ -45,6 +47,7 @@ pub trait ListsMethods:
     fn split_values(&mut self, pos: usize, load: usize);
     /// Inserts `item` into the list at `loc`.
     fn insert_at(&mut self, loc: &Loc, item: Self::Item);
+    fn iter_keys(&self) -> impl Iterator<Item = impl ItemRef<Owned = Self::Item>> + Clone;
     fn irange<'py>(
         &self,
         py: Python<'py>,
@@ -120,12 +123,11 @@ pub trait ListsMethods:
         }
     }
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let values = self.repeat(py, num);
-        self.clear(py);
-        self.extend(py, values)
+        *self = Repeated::new(num).extend_into(py, self)?;
+        Ok(())
     }
     fn mul(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
-        self.repeat(py, num).into_new_list(py, self)
+        Repeated::new(num).extend_into(py, self)
     }
     fn index(&mut self, value: &Bound<'_, PyAny>, (start, stop): RawRangeIdxs) -> PyResult<usize> {
         Bounds::new(start, stop)

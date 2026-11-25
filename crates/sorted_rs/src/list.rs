@@ -5,6 +5,7 @@ use crate::{
     List,
     bounds::{Bounds, Loc, RawIrangeSpecs},
     inner::Values,
+    item::ItemRef,
     iter::IrangeBounds,
     ops,
     search::Search,
@@ -41,6 +42,9 @@ impl ListsMethods for List {
     }
     fn insert_at(&mut self, loc: &Loc, item: Self::Item) {
         self.keys_mut().loc_insert(loc, item);
+    }
+    fn iter_keys(&self) -> impl Iterator<Item = impl ItemRef<Owned = Self::Item>> + Clone {
+        self.keys().iter()
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();

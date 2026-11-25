@@ -10,7 +10,9 @@ use pyo3_ext::{prelude::*, pystring::UnicodeByteKind};
 use pyochain_macros::try_cast;
 use tap::prelude::*;
 
-use crate::sort::SortKey;
+use crate::item::Item;
+
+use super::keys::SortKey;
 
 /// The actual, high level dispatch type for the sort strategy.\
 /// The two variants simply answer: "Is the comparison done on a tuple or a single element?"
@@ -114,7 +116,7 @@ impl SortBy {
         let mut try_cmp = TryCmp::default();
         match self {
             Sb::Element(El::Object(Ob::Safe)) => {
-                items.sort_by(|a, b| try_cmp.catch(|| a.object(b)));
+                items.sort_by(|a, b| try_cmp.catch(|| a.cmp(b)));
             }
             Sb::Element(El::Builtin(Bl::Int)) => items.sort_by(SortKey::long),
             Sb::Element(El::Builtin(Bl::Float)) => items.sort_by(SortKey::float),
@@ -132,7 +134,7 @@ impl SortBy {
                 items.sort_by(|a, b| try_cmp.catch(|| a.tuple(b, SortKey::latin)));
             }
             Sb::Tuple(El::Object(Ob::Safe)) => {
-                items.sort_by(|a, b| try_cmp.catch(|| a.try_tuple(b, SortKey::object)));
+                items.sort_by(|a, b| try_cmp.catch(|| a.try_tuple(b, Item::cmp)));
             }
             Sb::Tuple(El::Object(Ob::Unsafe(func))) => {
                 items.sort_by(|a, b| {

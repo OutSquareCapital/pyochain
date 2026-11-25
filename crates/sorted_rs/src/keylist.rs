@@ -2,6 +2,7 @@ use crate::{
     KeyList,
     bounds::{Bounds, Loc, RawIrangeSpecs},
     inner::Values,
+    item::ItemRef,
     iter::IrangeBounds,
     ops,
     search::Search,
@@ -44,6 +45,9 @@ impl ListsMethods for KeyList {
     fn insert_at(&mut self, loc: &Loc, (key, value): Self::Item) {
         self.keys_mut().loc_insert(loc, key);
         self.values.loc_insert(loc, value);
+    }
+    fn iter_keys(&self) -> impl Iterator<Item = impl ItemRef<Owned = Self::Item>> + Clone {
+        self.keys().iter().zip(self.values.iter())
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let key = self.call_fn(&value)?;

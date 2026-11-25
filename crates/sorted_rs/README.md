@@ -44,7 +44,6 @@ With a step, reading and deleting:
 
 - `reset` clones every item, clears the list and sorts again, although the items are already sorted. Since `load` is not mutable from Python, the construction API should be rethought together with it.
 - `x.extend(x)` sorts the whole list twice its size.
-- `imul` and `mul` could be built from the repeated items without a sort, but this changes the order of equal items, so it is rejected. `Values::repeat` could at least reserve `len * num` upfront.
 
 ### Minor
 
@@ -231,7 +230,7 @@ Notation:
 - `IntoList::PyIter` is consumed lazily, inside `ListsMethods::extend`. The Python code of the iterable, of the key function and of `__lt__` therefore runs while the write lock is held.
 - Some updates aren't atomic:
   - the `Small` arm of `ExtendKind::extend_into` compares and inserts item by item, so an exception leaves a partial update;
-  - `imul`, `reset`, `delete_fwd_small`, `Dict::update` and `PySetDataRef::op_mut` call `clear` and then re-sort, so an exception in the second step leaves the list empty (for `op_mut`, with the Python set already updated).
+  - `reset`, `delete_fwd_small`, `Dict::update` and `PySetDataRef::op_mut` call `clear` and then re-sort, so an exception in the second step leaves the list empty (for `op_mut`, with the Python set already updated).
   - `Medium` locates every item before mutating anything, and `Big` sorts before `clear`: both are atomic.
 - `iter/core.rs` marks `InnerRef` as `Send` and `Sync`, and releases the read lock before iterating. Mutating the list while an iterator is alive is a data race in Rust terms; only the GIL currently prevents it.
 - The iterator cursor (`iter/cursor.rs`) packs `pos` in the 32 high bits of a `u64`. `idx` is bounded by `Load` (invariant 6), `pos` is not: the number of chunks depends on the total length. It overflows past `2^32` chunks, i.e. about 4 billion elements with `load = 1`, or about 2 trillion with the default load. Two fixes are possible, none applied yet:

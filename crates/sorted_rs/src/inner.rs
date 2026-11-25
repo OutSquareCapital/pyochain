@@ -2,7 +2,6 @@ use crate::{
     bounds::Loc,
     errors,
     lengths::Lengths,
-    list_update::IntoList,
     load::Load,
     ops,
     sublist::SubList,
@@ -33,10 +32,7 @@ impl Values {
             .into()
     }
     #[inline(always)]
-    pub(super) fn iter_owned(
-        &self,
-        py: Python<'_>,
-    ) -> impl DoubleEndedIterator<Item = Py<PyAny>> + Clone {
+    pub(super) fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
         self.iter().map(move |x| x.clone_ref(py))
     }
     #[inline(always)]
@@ -201,14 +197,6 @@ impl InnerList {
     }
     pub fn ge<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<'py, bool> {
         self.inner_cmp(other, CompareOp::Ge)
-    }
-    /// Repeat the list for the `mul` and `imul` operations. We know that the extend path will be `ops::Update::Empty`.
-    #[inline]
-    pub(super) fn repeat(&self, py: Python<'_>, num: usize) -> IntoList {
-        (0..num)
-            .flat_map(|_| self.values.iter().map(|x| x.clone_ref(py)))
-            .collect_with_capacity::<Vec<_>>(self.len * num)
-            .into()
     }
     #[inline]
     fn inner_cmp<'py>(&self, other: SeqOrAny<'py>, op: CompareOp) -> PyCmpOut<'py, bool> {
