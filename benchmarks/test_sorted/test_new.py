@@ -20,8 +20,6 @@ from ._utils import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from _pytest.mark import MarkDecorator
-
     from .._utils import BenchFixture
 
 type SliceFn = Callable[[int], slice]
@@ -41,7 +39,8 @@ SLICES: Final[Seq[object]] = (
     .collect(Seq)
 )
 """One slice per path of `ops::Slice` and `ForwardSlice`, built from the size of the collection."""
-NUMS: Final[MarkDecorator] = pytest.mark.parametrize("num", (2, 5))
+NUM: Final[int] = 3
+"""Number of times to multiply the list in `test_mul` and `test_imul`."""
 
 
 @pytest.mark.parametrize("slc", SLICES)
@@ -69,19 +68,17 @@ def test_delitem_slice(
     run_pedantic(benchmark, cls, size, f)
 
 
-@NUMS
 @LST_PARAMS
 @SC_SIZES
-def test_mul(benchmark: BenchFixture, cls: type[List], size: int, num: int) -> None:
+def test_mul(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     lst = cls(Range(size))
-    _ = benchmark(lambda: lst * num)
+    _ = benchmark(lambda: lst * NUM)
 
 
-@NUMS
 @LST_PARAMS
 @SC_SIZES
-def test_imul(benchmark: BenchFixture, cls: type[List], size: int, num: int) -> None:
+def test_imul(benchmark: BenchFixture, cls: type[List], size: int) -> None:
     def f(lst: List) -> None:
-        lst *= num
+        lst *= NUM
 
     run_pedantic(benchmark, cls, size, f)
