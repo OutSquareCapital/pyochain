@@ -1,7 +1,9 @@
+use std::cmp::Ordering;
+
 use pyo3::{
-    PyClass,
+    PyClass, PyTypeInfo,
     prelude::*,
-    types::{PyDict, PyFrozenSet, PyIterator, PyList, PyNone, PySet, PyTuple},
+    types::{PyDict, PyFrozenSet, PyList, PyNone, PySet, PyTuple},
 };
 use pyo3_ext::{prelude::*, types::PyIterable};
 use pyochain_macros::{py_abc, try_cast_into};
@@ -103,9 +105,7 @@ impl FromPyKwargs for Dict {
                 dict
             }
         }
-        .unbind()
-        .conv::<Self>()
-        .init()
+        .pipe(into_target)
         .pipe(Ok)
     }
 
@@ -115,17 +115,14 @@ impl FromPyKwargs for Dict {
 }
 impl FromPyArgs for iterators::Iter {
     fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
-        match elements.len() {
-            1 => try_cast_into! {match { unsafe { elements.get_item_unchecked(0) } } {
-                Case::PyIterator(iterator) => iterator,
-                Case::PyIterable(iterable) => iterable.try_iter()?,
-                any => tuple!(any)?.iter_py(),
-            }},
-            _ => elements.iter_py(),
+        let py = elements.py();
+        match Args::<Self>::new(elements) {
+            Args::Value(elem) => tuple!(elem)?.iter_py(),
+            Args::Same(slf) => slf.get().clone_ref(py).into_bound(py),
+            Args::Iterable(it) => it.try_iter()?,
+            Args::Empty(tuple) | Args::Multiple(tuple) => tuple.iter_py(),
         }
-        .unbind()
-        .conv::<Self>()
-        .init()
+        .pipe(into_target)
         .pipe(Ok)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
@@ -135,18 +132,13 @@ impl FromPyArgs for iterators::Iter {
 impl FromPyArgs for Seq {
     fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
         let py = elements.py();
-        match elements.len() {
-            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                CaseExact::Self(inner) => inner.get().clone_ref(py).into_bound(py),
-                Case::PyIterable(iterable) => iterable.try_into_py::<PyTuple>()?,
-                any => tuple!(any)?,
-            }},
-            _ => elements,
+        match Args::<Self>::new(elements) {
+            Args::Value(elem) => tuple!(elem),
+            Args::Same(slf) => slf.get().clone_ref(py).into_bound(py).pipe(Ok),
+            Args::Iterable(it) => it.try_into_py(),
+            Args::Empty(tuple) | Args::Multiple(tuple) => Ok(tuple),
         }
-        .unbind()
-        .conv::<Self>()
-        .init()
-        .pipe(Ok)
+        .map(into_target)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
         elements.try_into_py()
@@ -155,18 +147,14 @@ impl FromPyArgs for Seq {
 impl FromPyArgs for PyoVec {
     fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
         let py = elements.py();
-        match elements.len() {
-            0 => PyList::empty(py),
-            1 => try_cast_into! {match unsafe {elements.get_item_unchecked(0)} {
-                Case::PyIterable(iterable) => iterable.try_into_py::<PyList>()?,
-                any => list![any]?,
-            }},
-            _ => elements.to_list(),
+        match Args::<Self>::new(elements) {
+            Args::Empty(_) => Ok(PyList::empty(py)),
+            Args::Same(slf) => slf.get().bind(py).copy(),
+            Args::Iterable(it) => it.try_into_py(),
+            Args::Value(elem) => list![elem],
+            Args::Multiple(tuple) => tuple.to_list().pipe(Ok),
         }
-        .unbind()
-        .conv::<Self>()
-        .init()
-        .pipe(Ok)
+        .map(into_target)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
         elements.to_list().try_into_py()
@@ -175,49 +163,38 @@ impl FromPyArgs for PyoVec {
 impl FromPyArgs for collections::StableSet {
     fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
         let py = elements.py();
-        match elements.len() {
-            0 => PyDict::new(py),
-            1 => {
-                try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                Case::PyIterable(iterable) => PyDict::from_keys(&iterable)?,
-                any => {
-                    let dict = PyDict::new(py);
-                    dict.set_item(any, PyNone::get(py))?;
-                    dict
-                }}}
+        match Args::<Self>::new(elements) {
+            Args::Empty(_) => Ok(PyDict::new(py)),
+            Args::Same(slf) => slf.get().bind(py).copy(),
+            Args::Iterable(iterable) => PyDict::from_keys(&iterable),
+            Args::Value(elem) => {
+                let dict = PyDict::new(py);
+                dict.set_item(elem, PyNone::get(py))?;
+                Ok(dict)
             }
-            _ => PyDict::from_keys(elements.as_any())?,
+            Args::Multiple(tuple) => PyDict::from_keys(&tuple),
         }
-        .unbind()
-        .conv::<Self>()
-        .init()
-        .pipe(Ok)
+        .map(into_target)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
         elements
-            .as_any()
-            .pipe(PyDict::from_keys)
-            .map(Bound::unbind)
-            .map(Conv::conv::<Self>)
-            .and_then(|slf| slf.into_bound(elements.py()))
+            .pipe_ref(PyDict::from_keys)?
+            .unbind()
+            .conv::<Self>()
+            .into_bound(elements.py())
     }
 }
 impl FromPyArgs for Set {
     fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
         let py = elements.py();
-        match elements.len() {
-            0 => PyFrozenSet::empty(py)?,
-            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                CaseExact::Self(inner) => inner.get().clone_ref(py).into_bound(py),
-                Case::PyIterable(iterable) => iterable.try_into_py::<PyFrozenSet>()?,
-                any => [any].into_iter().collect_bound(py)?,
-            }},
-            _ => elements.into_iter().collect_bound::<PyFrozenSet>(py)?,
+        match Args::<Self>::new(elements) {
+            Args::Empty(_) => PyFrozenSet::empty(py),
+            Args::Same(inner) => inner.get().clone_ref(py).into_bound(py).pipe(Ok),
+            Args::Iterable(iterable) => iterable.try_into_py(),
+            Args::Value(elem) => [elem].into_iter().collect_bound(py),
+            Args::Multiple(tuple) => tuple.into_iter().collect_bound(py),
         }
-        .unbind()
-        .conv::<Self>()
-        .init()
-        .pipe(Ok)
+        .map(into_target)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
         let py = elements.py();
@@ -230,18 +207,14 @@ impl FromPyArgs for Set {
 impl FromPyArgs for SetMut {
     fn new(elements: Bound<'_, PyTuple>) -> PyResult<PyClassInitializer<Self>> {
         let py = elements.py();
-        match elements.len() {
-            0 => PySet::empty(py)?,
-            1 => try_cast_into! {match unsafe { elements.get_item_unchecked(0) } {
-                Case::PyIterable(iterable) => iterable.try_into_py::<PySet>()?,
-                any => PySet::new(py, [any])?,
-            }},
-            _ => elements.into_iter().collect_bound::<PySet>(py)?,
+        match Args::<Self>::new(elements) {
+            Args::Empty(_) => PySet::empty(py),
+            Args::Same(inner) => inner.get().bind(py).copy(),
+            Args::Iterable(it) => it.try_into_py(),
+            Args::Value(elem) => PySet::new(py, [elem]),
+            Args::Multiple(tuple) => tuple.into_iter().collect_bound(py),
         }
-        .unbind()
-        .conv::<Self>()
-        .init()
-        .pipe(Ok)
+        .map(into_target)
     }
     fn of(elements: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
         let py = elements.py();
@@ -249,5 +222,31 @@ impl FromPyArgs for SetMut {
             .into_iter()
             .collect_bound::<PySet>(py)?
             .try_into_py()
+    }
+}
+#[inline(always)]
+fn into_target<T: Init + From<Py<O>>, O>(obj: Bound<'_, O>) -> PyClassInitializer<T> {
+    obj.unbind().conv::<T>().init()
+}
+#[derive(Debug)]
+enum Args<'py, T> {
+    Empty(Bound<'py, PyTuple>),
+    Same(Bound<'py, T>),
+    Iterable(Bound<'py, PyIterable>),
+    Value(Bound<'py, PyAny>),
+    Multiple(Bound<'py, PyTuple>),
+}
+impl<'py, T: PyTypeInfo> Args<'py, T> {
+    #[inline]
+    fn new(tuple: Bound<'py, PyTuple>) -> Self {
+        match tuple.len().cmp(&1) {
+            Ordering::Less => Self::Empty(tuple),
+            Ordering::Equal => try_cast_into! {match unsafe { tuple.get_item_unchecked(0) } {
+                CaseExact::T(inner) => Self::Same(inner),
+                Case::PyIterable(iterable) => Self::Iterable(iterable),
+                any => Self::Value(any),
+            }},
+            Ordering::Greater => Self::Multiple(tuple),
+        }
     }
 }
