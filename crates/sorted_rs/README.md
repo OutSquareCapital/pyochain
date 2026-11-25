@@ -4,6 +4,54 @@ This crate aims to centralize as much as possible the logic related to sorted co
 
 The main crate then handle the bridge between the "pure rust" logic and the Python interface.
 
+## Current perf improvements ideas
+
+Non-exhaustive list of ideas to improve the performance of the current implementation. None is measured yet. Ordered by expected impact.
+
+### Lookups: `add`, `contains`, `remove`, `discard`, `index`, `count`, `irange`
+
+- Every comparison of `bisect` calls `__lt__` through Python, about 20 times per operation (one bisect over `maxes`, one over the sublist). The sort already has fast paths for ints, floats and latin strings (`KeysCheck`), the bisect has none.
+  - Idea: store the type of the keys in `InnerList`. It is set by the first insertion, and dropped for good as soon as one item doesn't match. `bisect` then matches on it, like `SortBy::sort`.
+  - It has to be kept up to date by `append`, the three `ExtendKind` and `insert_at`.
+- `List::count` restarts its right bisect from the start of `maxes`, instead of from the left result.
+
+### `SortedKeyList`: key function called again on known keys
+
+`keys` already holds the key of every item, but the key function is called again for:
+
+- `extend` (`Big`) and `concat`: `n + m` calls instead of `m`.
+- `extend` from another `SortedKeyList`: its keys are not reused.
+- `reset` and the deletion of a small slice, which rebuild the list from the values.
+
+No benchmark uses a real key function yet.
+
+### Slicing
+
+Reading:
+
+- `sl[a:b]` builds a `Vec` of clones, then a `PyList` that increments each reference a second time. The views and `del_from_set` do the same. A lazy iterator with an exact length would avoid the intermediate `Vec`.
+
+Deleting:
+
+- `delete_fwd_small` clones everything around the slice, clears the list and sorts it again.
+- `del sl[a:b]` deletes item by item, and each merge of sublists resets `lengths`, which is rebuilt for the next one. A contiguous range could be cut at both ends, with the sublists in between dropped at once.
+
+With a step, reading and deleting:
+
+- Each item looks up its sublist again from the root of the `lengths` tree. A cursor moving by `step` would avoid it.
+
+### Rebuilding the list
+
+- `reset` clones every item, clears the list and sorts again, although the items are already sorted. Since `load` is not mutable from Python, the construction API should be rethought together with it.
+- `x.extend(x)` sorts the whole list twice its size.
+- `imul` and `mul` could be built from the repeated items without a sort, but this changes the order of equal items, so it is rejected. `Values::repeat` could at least reserve `len * num` upfront.
+
+### Minor
+
+- `Dict::copy` rebuilds the `PyDict` key by key. `PyDict.copy()` may do, if the internal order of `data` is never observable.
+- `Big` clones the existing values, then `clear` releases them.
+- `Small` expands and updates `len` for each item. The thresholds `MIN_ITEMS = 4` and `4 * m >= n` of `Strategy` are not proven to be the best ones.
+
 ## Informations about sorted set operations
 
 Reimplementing the sorted set operations from `sortedcontainers` has proven to be a bit tricky, due to many confusing and poorly abstracted conditional paths in the original implementation, as well as the added fact that we had to:
