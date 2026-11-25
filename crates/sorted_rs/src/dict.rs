@@ -119,7 +119,7 @@ impl<T: ListsMethods> Dict<T> {
                 })
             })
             .collect::<PyResult<Vec<_>>>()?
-            .pipe(IntoList::Vec)
+            .conv::<IntoList>()
             .into_new_list(py, &self.list)
             .map(|list| Self::new(list, inner.unbind()))
     }
@@ -181,7 +181,7 @@ impl<T: ListsMethods> Dict<T> {
                 .keys()
                 .iter_py()
                 .unbind()
-                .pipe(IntoList::PyIter)
+                .conv::<IntoList>()
                 .extend_into(py, &mut self.list)
         } else {
             let pairs = try_cast_into! {
@@ -214,7 +214,7 @@ impl<T: ListsMethods> Dict<T> {
                     .keys()
                     .iter_py()
                     .unbind()
-                    .pipe(IntoList::PyIter)
+                    .conv::<IntoList>()
                     .extend_into(py, &mut self.list)
             } else {
                 pairs.keys_view().iter_py().try_for_each(|key| {

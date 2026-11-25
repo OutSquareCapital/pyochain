@@ -69,7 +69,7 @@ pub trait PySetDataRef:
         slf.list.clear(py);
         set.iter_py()
             .unbind()
-            .pipe(IntoList::PyIter)
+            .conv::<IntoList>()
             .extend_into(py, &mut slf.list)
     }
     #[inline]
@@ -120,7 +120,7 @@ impl<T: ListsMethods> Set<T> {
             .iter()
             .map(Bound::unbind)
             .collect::<Vec<_>>()
-            .pipe(IntoList::Vec)
+            .conv::<IntoList>()
             .into_new_list(py, &self.list)?;
         Self::new(list, values.unbind()).pipe(Ok)
     }

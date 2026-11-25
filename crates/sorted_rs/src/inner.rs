@@ -40,7 +40,7 @@ impl Values {
             .flat_map(|_| self.iter())
             .map(|x| x.clone_ref(py))
             .collect_vec()
-            .pipe(IntoList::Vec)
+            .into()
     }
     #[inline(always)]
     pub(super) fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {

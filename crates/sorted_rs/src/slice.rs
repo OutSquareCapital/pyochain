@@ -150,7 +150,7 @@ impl SliceIdxs {
             values.append(new_slice.as_mut());
         }
         list.clear(py);
-        values.pipe(IntoList::Vec).extend_into(py, list)
+        values.conv::<IntoList>().extend_into(py, list)
     }
 }
 #[derive(From)]

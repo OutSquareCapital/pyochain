@@ -32,9 +32,9 @@ impl IntoList {
                 .values
                 .iter_owned(py)
                 .collect_vec()
-                .pipe(Self::Vec)
+                .conv::<Self>()
                 .pipe(Ok),
-            None => right.try_iter().map(Bound::unbind).map(Self::PyIter),
+            None => right.try_iter().map(Bound::unbind).map(Into::into),
         }
     }
     pub fn into_new_list<T: ListsMethods>(self, py: Python<'_>, list: &T) -> PyResult<T> {

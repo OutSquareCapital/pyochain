@@ -156,7 +156,7 @@ pub trait ListsMethods:
         let values = self.values.iter_owned(py).collect_vec();
         self.load = load.try_into()?;
         self.clear(py);
-        values.pipe(IntoList::Vec).extend_into(py, self)
+        values.conv::<IntoList>().extend_into(py, self)
     }
     fn set_item(&mut self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.del_item(value.py(), index)?;
