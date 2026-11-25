@@ -1,8 +1,7 @@
 use crate::{
     bounds::Loc,
     sort::{
-        Chunk,
-        chunk::Batch,
+        chunk::{Batch, IntoChunked},
         keys::{KeyFn, SortKey},
         strategy::KeysCheck,
     },
@@ -57,20 +56,8 @@ impl<T: SortKey> ExtendKind<SortedVec<T>> {
     {
         match self {
             Self::Big(vec) => {
-                let length = vec.len();
-                let load = *list.load;
                 list.clear(py);
-                list.len = length;
-                if length == 0 {
-                } else if length <= load {
-                    vec.into_iter().collect::<L::Chunk>().push_into(py, list);
-                } else {
-                    vec.into_iter().pipe(|mut items| {
-                        std::iter::repeat_with(|| items.by_ref().take(load).collect::<L::Chunk>())
-                            .take(length.div_ceil(load))
-                            .for_each(|chunk| chunk.push_into(py, list));
-                    });
-                }
+                vec.into_iter().into_chunked().extend_into(py, list);
                 Ok(())
             }
             Self::Medium(vec) => Batch::new(vec).extend_into(py, list),

@@ -11,6 +11,7 @@ use derive_more::{Constructor, Deref, From};
 use pyo3::{basic::CompareOp, prelude::*};
 use pyo3_ext::prelude::*;
 use std_tools::{collections::WithCapacity, prelude::TryIterator};
+use tap::Pipe;
 
 pub trait Chunk<T>: WithCapacity<T> {
     fn push_into(self, py: Python<'_>, list: &mut impl ListsMethods);
@@ -60,6 +61,35 @@ impl Chunk<(Py<PyAny>, Py<PyAny>)> for ChunkKey {
         self.keys.drain_into(list, idxs);
         let start = self.values.len() - idxs.len();
         list.values[idxs[0].pos].insert_many(idxs, self.values.drain(start..));
+    }
+}
+pub(crate) trait IntoChunked<T> {
+    fn into_chunked(self) -> Chunked<Self>
+    where
+        Self: Sized + ExactSizeIterator<Item = T>,
+    {
+        Chunked(self)
+    }
+}
+impl<T, I: ExactSizeIterator<Item = T>> IntoChunked<T> for I {}
+
+pub(crate) struct Chunked<I>(I);
+impl<I: ExactSizeIterator> Chunked<I> {
+    pub fn extend_into<L: ListsMethods<Item = I::Item>>(self, py: Python<'_>, list: &mut L) {
+        debug_assert!(list.is_empty());
+        let length = self.0.len();
+        let load = *list.load;
+        list.len = length;
+        if length == 0 {
+        } else if length <= load {
+            self.0.collect::<L::Chunk>().push_into(py, list);
+        } else {
+            self.0.pipe(|mut items| {
+                std::iter::repeat_with(|| items.by_ref().take(load).collect::<L::Chunk>())
+                    .take(length.div_ceil(load))
+                    .for_each(|chunk| chunk.push_into(py, list));
+            });
+        }
     }
 }
 

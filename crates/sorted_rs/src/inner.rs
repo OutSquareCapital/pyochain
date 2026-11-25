@@ -33,7 +33,10 @@ impl Values {
             .into()
     }
     #[inline(always)]
-    pub(super) fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
+    pub(super) fn iter_owned(
+        &self,
+        py: Python<'_>,
+    ) -> impl DoubleEndedIterator<Item = Py<PyAny>> + Clone {
         self.iter().map(move |x| x.clone_ref(py))
     }
     #[inline(always)]
