@@ -120,12 +120,12 @@ pub trait ListsMethods:
         }
     }
     fn imul(&mut self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let values = self.values.repeat(py, num);
+        let values = self.repeat(py, num);
         self.clear(py);
         self.extend(py, values)
     }
     fn mul(&self, py: Python<'_>, num: usize) -> PyResult<Self> {
-        self.values.repeat(py, num).into_new_list(py, self)
+        self.repeat(py, num).into_new_list(py, self)
     }
     fn index(&mut self, value: &Bound<'_, PyAny>, (start, stop): RawRangeIdxs) -> PyResult<usize> {
         Bounds::new(start, stop)
