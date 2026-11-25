@@ -193,9 +193,6 @@ unsafe impl PyTypeInfo for PyIterable {
     fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
         unsafe { (*(*object.as_ptr()).ob_type).tp_iter }.is_some()
             || unsafe { ffi::PySequence_Check(object.as_ptr()) != 0 }
-            || object
-                .is_instance(&Self::type_object(object.py()).into_any())
-                .unwrap_or_else(|err| false_and_write(err, object))
     }
 }
 #[repr(transparent)]
