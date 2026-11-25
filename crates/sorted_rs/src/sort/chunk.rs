@@ -76,6 +76,7 @@ impl<L: ListsMethods> Batch<L> {
         Self { items, idxs }
     }
     pub fn extend_into(mut self, py: Python<'_>, list: &mut L) -> PyResult<()> {
+        let capacity = self.items.len();
         let mut chunk = self
             .items
             .into_iter()
@@ -83,7 +84,7 @@ impl<L: ListsMethods> Batch<L> {
                 self.idxs.locate(list, item.key())?;
                 PyResult::Ok(item)
             })
-            .collect_with_capacity::<PyResult<L::Chunk>>()?;
+            .collect_with_capacity::<PyResult<L::Chunk>>(capacity)?;
         list.len += self.idxs.len();
         self.idxs
             .chunk_by(|a, b| a.pos == b.pos)

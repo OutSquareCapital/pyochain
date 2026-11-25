@@ -69,11 +69,19 @@ pub trait TryIterator: Iterator {
     /// The collection then starts at a tiny capacity and grows by doubling, asking `size_hint` again on every growth.\
     /// This asks it once, which matters when it's costly to compute, e.g. `__length_hint__` on a Python iterator.
     #[inline]
-    fn collect_with_capacity<R: FromIterWithCapacity<Self>>(self) -> R
+    fn collect_with_size_hint_capacity<R: FromIterWithCapacity<Self>>(self) -> R
     where
         Self: Sized,
     {
-        R::from_iter_with_capacity(self)
+        let capacity = self.size_hint().0;
+        R::from_iter_with_capacity(self, capacity)
+    }
+    #[inline]
+    fn collect_with_capacity<R: FromIterWithCapacity<Self>>(self, capacity: usize) -> R
+    where
+        Self: Sized,
+    {
+        R::from_iter_with_capacity(self, capacity)
     }
 }
 
@@ -81,7 +89,7 @@ impl<I: Iterator> TryIterator for I {}
 
 /// Counterpart of `FromIterator` for [`TryIterator::collect_with_capacity`].
 pub trait FromIterWithCapacity<I> {
-    fn from_iter_with_capacity(iter: I) -> Self;
+    fn from_iter_with_capacity(iter: I, capacity: usize) -> Self;
 }
 
 impl<I, C, T, E> FromIterWithCapacity<I> for Result<C, E>
@@ -90,8 +98,8 @@ where
     C: WithCapacity<T>,
 {
     #[inline(always)]
-    fn from_iter_with_capacity(mut iter: I) -> Self {
-        let mut vec = C::with_capacity(iter.size_hint().0);
+    fn from_iter_with_capacity(mut iter: I, capacity: usize) -> Self {
+        let mut vec = C::with_capacity(capacity);
         iter.try_for_each(|item| item.map(|value| vec.push(value)))
             .map(|()| vec)
     }
