@@ -1,5 +1,7 @@
 use std::ops::ControlFlow;
 
+use tap::Pipe;
+
 use crate::collections::WithCapacity;
 
 pub trait TryIterator: Iterator {
@@ -60,34 +62,50 @@ pub trait TryIterator: Iterator {
             })
             .unwrap_or(Ok(false))
     }
+    /// Equivalent of `collect::<C>()`, preallocated with `capacity`.
+    ///
+    /// Useful when the exact length is known but not exposed by `size_hint`, e.g. after a `flat_map`.\
+    /// The target collection must implement [`WithCapacity`], which is stricter than `FromIterator`.
+    #[inline]
+    fn collect_with_capacity<C: WithCapacity<Self::Item>>(self, capacity: usize) -> C
+    where
+        Self: Sized,
+    {
+        let mut out = C::with_capacity(capacity);
+        self.for_each(|item| out.push(item));
+        out
+    }
+    /// Fallible version of [`TryIterator::collect_with_capacity`].
+    ///
+    /// `R` is the full output type, as for `collect`, e.g. `PyResult<Vec<T>>`.
+    #[inline]
+    fn try_collect_with_capacity<R: FromIterWithCapacity<Self>>(self, capacity: usize) -> R
+    where
+        Self: Sized,
+    {
+        R::from_iter_with_capacity(self, capacity)
+    }
     /// Equivalent of `collect::<R>()`, preallocated from the lower bound of `size_hint`.
     ///
-    /// `R` is the full output type, as for `collect`, e.g. `PyResult<Vec<T>>`.\
-    /// The target collection must implement [`WithCapacity`], which is stricter than `FromIterator`.
+    /// `R` is the full output type, as for `collect`, e.g. `PyResult<Vec<T>>`.
     ///
     /// `std` collects a `Result` through an adapter whose lower bound is always 0, since it can stop at the first error.\
     /// The collection then starts at a tiny capacity and grows by doubling, asking `size_hint` again on every growth.\
     /// This asks it once, which matters when it's costly to compute, e.g. `__length_hint__` on a Python iterator.
     #[inline]
-    fn collect_with_size_hint_capacity<R: FromIterWithCapacity<Self>>(self) -> R
+    fn try_collect_with_size_hint_capacity<R: FromIterWithCapacity<Self>>(self) -> R
     where
         Self: Sized,
     {
-        let capacity = self.size_hint().0;
-        R::from_iter_with_capacity(self, capacity)
-    }
-    #[inline]
-    fn collect_with_capacity<R: FromIterWithCapacity<Self>>(self, capacity: usize) -> R
-    where
-        Self: Sized,
-    {
-        R::from_iter_with_capacity(self, capacity)
+        self.size_hint()
+            .0
+            .pipe(|capacity| R::from_iter_with_capacity(self, capacity))
     }
 }
 
 impl<I: Iterator> TryIterator for I {}
 
-/// Counterpart of `FromIterator` for [`TryIterator::collect_with_capacity`].
+/// Counterpart of `FromIterator` for [`TryIterator::try_collect_with_capacity`].
 pub trait FromIterWithCapacity<I> {
     fn from_iter_with_capacity(iter: I, capacity: usize) -> Self;
 }
