@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
+from benchmarks._utils import SIZE_PARAMS
 from pyochain import Iter, Range, Seq
 
 from ._utils import (
@@ -13,6 +14,7 @@ from ._utils import (
     SC_SIZES,
     SEQ_PARAMS,
     List,
+    SortedCollection,
     SortedSequence,
     run_pedantic,
 )
@@ -20,9 +22,12 @@ from ._utils import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from pyochain.abc import PyoIterable
+
     from .._utils import BenchFixture
 
 type SliceFn = Callable[[int], slice]
+type InputFn = Callable[[int], PyoIterable[int]]
 
 SLICES: Final[Seq[object]] = (
     Iter[tuple[SliceFn, str]](
@@ -41,6 +46,25 @@ SLICES: Final[Seq[object]] = (
 """One slice per path of `ops::Slice` and `ForwardSlice`, built from the size of the collection."""
 NUM: Final[int] = 3
 """Number of times to multiply the list in `test_mul` and `test_imul`."""
+
+
+def partition(size: int) -> Seq[int]:
+    return (
+        Range(NUM)
+        .rev()
+        .flat_map(lambda p: Range(p * size // NUM, (p + 1) * size // NUM))
+        .collect(Seq)
+    )
+
+
+SORTED_INPUTS: Final[Seq[object]] = (
+    Iter[tuple[InputFn, str]](
+        (lambda size: Seq(Range(size)), "sorted"), (partition, "partitioned")
+    )
+    .map_star(lambda f, name: pytest.param(f, id=name))
+    .collect(Seq)
+)
+"""Inputs already sorted as a whole, or by `NUM` disjoint sorted partitions, concatenated from the last one to the first one."""
 
 
 @pytest.mark.parametrize("slc", SLICES)
@@ -82,3 +106,14 @@ def test_imul(benchmark: BenchFixture, cls: type[List], size: int) -> None:
         lst *= NUM
 
     run_pedantic(benchmark, cls, size, f)
+
+
+@pytest.mark.parametrize("inputs", SORTED_INPUTS)
+@SEQ_PARAMS
+@SIZE_PARAMS
+def test_init_sorted(
+    benchmark: BenchFixture, cls: type[SortedCollection], size: int, inputs: InputFn
+) -> None:
+    values = inputs(size)
+    # pyrefly: ignore [bad-argument-type, incompatible-overload-residual]
+    assert len(benchmark(cls, values)) == size  # pyright: ignore[reportCallIssue]
