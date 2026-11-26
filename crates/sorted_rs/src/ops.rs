@@ -16,8 +16,8 @@ use tap::{Conv, Pipe};
 use crate::{
     bisect::bisect,
     bounds::{Bounds, Loc},
+    chunks::ChunksMethods,
     inner::InnerList,
-    sublist::ChunksMethods,
 };
 
 #[derive(Debug, Clone, Copy)]

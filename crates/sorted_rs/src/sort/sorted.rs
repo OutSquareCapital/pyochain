@@ -1,10 +1,10 @@
 use crate::{
+    chunks::ChunksMethods,
     sort::{
-        chunk::{Batch, IntoChunked, Stream},
+        collectors::{Batch, IntoChunked, Stream},
         keys::{KeyFn, SortKey},
         strategy::KeysCheck,
     },
-    sublist::ChunksMethods,
     traits::ListsMethods,
     types::VecPy,
 };

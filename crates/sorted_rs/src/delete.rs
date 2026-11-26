@@ -3,8 +3,8 @@ use tap::prelude::*;
 
 use crate::{
     bounds::Loc,
+    chunks::{Chunks, ChunksMethods},
     inner::InnerList,
-    sublist::{Chunks, ChunksMethods},
 };
 
 pub enum Strategy {

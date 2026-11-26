@@ -1,7 +1,7 @@
 use crate::{
+    chunks::{Chunks, ChunksWithKeys},
     inner::InnerList,
     prelude::*,
-    sublist::{Chunks, ChunksWithKeys},
 };
 use derive_more::{AsMut, AsRef, Constructor, Deref, DerefMut};
 use derive_new::new;

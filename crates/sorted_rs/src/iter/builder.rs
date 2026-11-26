@@ -1,9 +1,9 @@
 use crate::{
     ListGetter,
     bounds::{Bounds, Loc, RawIrangeSpecs},
+    chunks::ChunksMethods,
     iter::{BoundedFwd, IterMethods, PySortedIter, core::InnerRef, cursor::Cursor},
     ops,
-    sublist::ChunksMethods,
     traits::ListsMethods,
 };
 use pyo3::prelude::*;

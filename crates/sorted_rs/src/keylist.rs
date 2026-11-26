@@ -1,11 +1,11 @@
 use crate::{
     KeyList,
     bounds::{Bounds, Loc, RawIrangeSpecs},
+    chunks::ChunksWithKeys,
     iter::IrangeBounds,
     ops,
     search::Search,
     sort::WithKey,
-    sublist::ChunksWithKeys,
     traits::ListsMethods,
 };
 use pyo3::prelude::*;

@@ -2,7 +2,7 @@ use tap::prelude::*;
 
 use crate::{
     bounds::Loc,
-    sublist::{Chunk, Chunks},
+    chunks::{Chunk, Chunks},
 };
 /// Quoting Grant Jenks:
 /// > "a tree of pair-wise sums of the lengths of the lists. The tree is maintained as a dense binary tree."

@@ -6,8 +6,8 @@ use tap::prelude::*;
 use crate::{
     IntoList,
     bounds::{Bounds, Loc},
+    chunks::{Chunk, ChunksMethods},
     ops::{self, ForwardSlice},
-    sublist::{Chunk, ChunksMethods},
     traits::ListsMethods,
     types::VecPy,
 };

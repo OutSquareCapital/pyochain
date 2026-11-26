@@ -1,7 +1,7 @@
 use derive_more::{Constructor, From};
 use pyo3::{prelude::*, types::slice::PySliceIndices};
 
-use crate::{inner::InnerList, sublist::ChunksMethods, traits::ListsMethods};
+use crate::{chunks::ChunksMethods, inner::InnerList, traits::ListsMethods};
 
 pub type RawIrangeSpecs<'py> = (
     Option<Bound<'py, PyAny>>,

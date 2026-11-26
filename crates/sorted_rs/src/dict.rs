@@ -8,7 +8,7 @@ use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::prelude::*;
 
-use crate::{List, list_update::IntoList, prelude::*, sublist::ChunksMethods, types::Dict};
+use crate::{List, chunks::ChunksMethods, list_update::IntoList, prelude::*, types::Dict};
 
 impl Dict<List> {
     #[must_use]

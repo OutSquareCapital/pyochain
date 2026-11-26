@@ -3,7 +3,7 @@ use std::ptr;
 use crate::{
     ListGetter,
     iter::{Iter, cursor::CursorMethods},
-    sublist::{Chunks, ChunksMethods},
+    chunks::{Chunks, ChunksMethods},
 };
 use derive_more::Constructor;
 use pyo3::prelude::*;

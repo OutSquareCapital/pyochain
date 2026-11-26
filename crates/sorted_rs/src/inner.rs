@@ -1,6 +1,6 @@
 use crate::{
-    bisect::bisect, bounds::Loc, delete, errors, item::Item, lengths::Lengths, load::Load,
-    maxes::Maxes, ops, sublist::ChunksMethods, traits::BisectRes, types::SeqOrAny,
+    bisect::bisect, bounds::Loc, chunks::ChunksMethods, delete, errors, item::Item,
+    lengths::Lengths, load::Load, maxes::Maxes, ops, traits::BisectRes, types::SeqOrAny,
 };
 use derive_new::new;
 use pyo3::{BoundObject, basic::CompareOp, prelude::*, types::PyNotImplemented};

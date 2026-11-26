@@ -1,5 +1,6 @@
 mod bisect;
 mod bounds;
+mod chunks;
 mod core;
 pub mod debug;
 mod delete;
@@ -23,7 +24,6 @@ mod search;
 mod set;
 mod slice;
 mod sort;
-mod sublist;
 mod traits;
 pub mod types;
 pub mod views;

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::{
     KeyList, List,
-    sublist::ChunksMethods,
+    chunks::ChunksMethods,
     traits::ListsMethods,
     types::{Dict, Set},
 };

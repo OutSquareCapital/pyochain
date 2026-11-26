@@ -6,8 +6,8 @@ use pyo3::prelude::*;
 use crate::{
     KeyList,
     bounds::{Bounds, Loc},
+    chunks::ChunksMethods,
     errors, ops,
-    sublist::ChunksMethods,
     traits::ListsMethods,
 };
 type PyVal<'py> = Bound<'py, PyAny>;

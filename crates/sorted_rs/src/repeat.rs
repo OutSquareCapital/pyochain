@@ -1,8 +1,8 @@
 use crate::{
     bounds::Loc,
+    chunks::{Chunks, ChunksMethods},
     item::{Item, ItemRef},
     sort::IntoChunked,
-    sublist::{Chunks, ChunksMethods},
     traits::{ItemOf, ListsMethods},
 };
 use derive_more::Constructor;

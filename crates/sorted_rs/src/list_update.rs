@@ -8,7 +8,7 @@ use tap::prelude::*;
 
 use crate::{
     sort::{ExtendKind, SortedByKeys, SortedVec},
-    sublist::ChunksMethods,
+    chunks::ChunksMethods,
     traits::{ItemOf, ListsMethods},
     types::VecPy,
 };

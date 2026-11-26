@@ -1,5 +1,5 @@
 use crate::{
-    bounds::Loc, inner::InnerList, item::Item, sort::sorted::SortedVec, sublist::ChunksMethods,
+    bounds::Loc, chunks::ChunksMethods, inner::InnerList, item::Item, sort::sorted::SortedVec,
 };
 
 use derive_more::{Deref, From};

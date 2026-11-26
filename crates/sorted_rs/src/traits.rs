@@ -2,6 +2,7 @@ use std::ops::{Deref, DerefMut};
 
 use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
+    chunks::ChunksMethods,
     errors,
     get_item::Index,
     inner::InnerList,
@@ -11,7 +12,6 @@ use crate::{
     repeat::Repeated,
     reprs::PyRepr,
     sort::KeyFn,
-    sublist::ChunksMethods,
     types::{IndexOut, IntoIndex},
 };
 use itertools::Itertools;

@@ -4,11 +4,11 @@ use tap::{Conv, Pipe};
 use crate::{
     List,
     bounds::{Bounds, Loc, RawIrangeSpecs},
+    chunks::Chunks,
     iter::IrangeBounds,
     ops,
     search::Search,
     sort::Identity,
-    sublist::Chunks,
     traits::ListsMethods,
 };
 

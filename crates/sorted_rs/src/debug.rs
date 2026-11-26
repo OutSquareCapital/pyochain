@@ -1,9 +1,9 @@
 //! Invariants checks ported from the original `sortedcontainers` test suite.
 use crate::{
     KeyList,
+    chunks::{Chunk, ChunksMethods},
     inner::InnerList,
     prelude::*,
-    sublist::{Chunk, ChunksMethods},
     types::{Dict, Set},
 };
 use pyo3::{prelude::*, types::PyString};
