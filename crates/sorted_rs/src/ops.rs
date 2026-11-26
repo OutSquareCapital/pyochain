@@ -17,7 +17,7 @@ use crate::{
     bisect::bisect,
     bounds::{Bounds, Loc},
     inner::InnerList,
-    traits::ListsMethods,
+    sublist::ChunksMethods,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -89,23 +89,24 @@ impl ForwardSlice {
 /// Used in `add`, `discard`, `__contains__`, `count`, and `remove`
 pub enum Bisect {
     Empty,
-    MaxesLen,
+    /// hold the last position of the maxes list.
+    MaxesLen(usize),
     AtLoc(Loc),
 }
 impl Bisect {
     #[inline(always)]
-    pub fn new<const LEFT: bool, T>(list: &T, value: &Bound<'_, PyAny>) -> PyResult<Self>
+    pub fn new<const LEFT: bool, C>(list: &InnerList<C>, value: &Bound<'_, PyAny>) -> PyResult<Self>
     where
-        T: ListsMethods,
+        C: ChunksMethods,
     {
         if list.is_empty() {
             Ok(Self::Empty)
         } else {
             let pos = bisect::<LEFT>(&list.maxes, value)?;
             if pos == list.maxes.len() {
-                Ok(Self::MaxesLen)
+                Ok(Self::MaxesLen(pos - 1))
             } else {
-                list.keys()[pos]
+                list.chunks.keys()[pos]
                     .pipe_deref(|v| bisect::<LEFT>(v, value))
                     .map(|idx| Loc::new(pos, idx))
                     .map(Self::AtLoc)
@@ -123,8 +124,8 @@ pub enum Expand {
 impl Expand {
     #[inline(always)]
     #[must_use]
-    pub fn new(data: &impl ListsMethods, pos: usize) -> Self {
-        if data.keys()[pos].len() > data.load.max_size() {
+    pub fn new<C: ChunksMethods>(data: &InnerList<C>, pos: usize) -> Self {
+        if data.chunks.keys()[pos].len() > data.load.max_size() {
             Self::MustSplit
         } else if data.lengths.is_built() {
             Self::IdxBuilt
@@ -146,16 +147,18 @@ pub(super) enum Locate {
 }
 impl Locate {
     #[inline]
-    pub fn new(list: &InnerList, index: isize) -> Self {
+    pub fn new<C: ChunksMethods>(list: &InnerList<C>, index: isize) -> Self {
         match (list.len, index.conv::<Nb>()) {
             (1, Nb::Zero | Nb::MinusOne) => Self::First,
             (0 | 1, _) => Self::Empty,
             (_, Nb::Zero) => Self::First,
             (_, Nb::MinusOne) => Self::Last,
-            (_, Nb::One) if 1 < list.values[0].len() => Self::InFirstList(1),
+            (_, Nb::One) if 1 < list.chunks.values()[0].len() => Self::InFirstList(1),
             (_, Nb::One) => Self::InOtherList(1),
-            (_, Nb::GTOne(i)) if i < list.values[0].len() => Self::InFirstList(i),
-            (_, Nb::LTMinusOne(i)) if -list.values.last().unwrap().len().cast_signed() < i => {
+            (_, Nb::GTOne(i)) if i < list.chunks.values()[0].len() => Self::InFirstList(i),
+            (_, Nb::LTMinusOne(i))
+                if -list.chunks.values().last().unwrap().len().cast_signed() < i =>
+            {
                 Self::InLastList(i)
             }
             (_, Nb::GTOne(i)) => Self::InOtherList(i),

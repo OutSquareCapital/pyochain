@@ -124,8 +124,8 @@ pub(super) trait SortedListMethods:
     fn append(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.write().append(value)
     }
-    fn clear(&self, py: Python<'_>) {
-        self.write().clear(py);
+    fn clear(&self) {
+        self.write().clear();
     }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         self.write().count(&value)

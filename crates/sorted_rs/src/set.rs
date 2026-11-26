@@ -66,7 +66,7 @@ pub trait PySetDataRef:
         let mut slf = self.as_ref().write();
         let set = &slf.data.clone_ref(py).into_bound(py);
         op.call_mut(set, args)?;
-        slf.list.clear(py);
+        slf.list.clear();
         set.iter_py()
             .unbind()
             .conv::<IntoList>()
@@ -125,7 +125,7 @@ impl<T: ListsMethods> Set<T> {
         Self::new(list, values.unbind()).pipe(Ok)
     }
     pub fn clear(&mut self, py: Python<'_>) {
-        self.list.clear(py);
+        self.list.clear();
         self.data.bind(py).clear();
     }
     pub fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {

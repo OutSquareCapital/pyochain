@@ -1,9 +1,9 @@
 use crate::{
     ListGetter,
     bounds::{Bounds, Loc, RawIrangeSpecs},
-    inner::InnerList,
     iter::{BoundedFwd, IterMethods, PySortedIter, core::InnerRef, cursor::Cursor},
     ops,
+    sublist::ChunksMethods,
     traits::ListsMethods,
 };
 use pyo3::prelude::*;
@@ -84,12 +84,12 @@ where
         }
     }
 }
-fn islice_bounds(list: &mut InnerList, specs: Bounds<Option<isize>>) -> IterBounds {
+fn islice_bounds<L: ListsMethods>(list: &mut L, specs: Bounds<Option<isize>>) -> IterBounds {
     let bounds = specs.try_normalize(list)?;
     let min = list.set_pos_usize(bounds.start);
     let max = if bounds.stop == list.len() {
-        let pos = list.values.len() - 1;
-        let idx = list.values[pos].len();
+        let pos = list.chunks.values().len() - 1;
+        let idx = list.chunks.values()[pos].len();
         Ok(Loc::new(pos, idx))
     } else {
         list.set_pos_usize(bounds.stop)
@@ -108,15 +108,15 @@ where
 {
     match list.try_bisect::<LEFT>(value) {
         Err(e) => Some(Err(e)),
-        Ok(ops::Bisect::MaxesLen) if MAX => Some(Ok(last_sublist(list))),
-        Ok(ops::Bisect::Empty | ops::Bisect::MaxesLen) => None,
+        Ok(ops::Bisect::MaxesLen(_)) if MAX => Some(Ok(last_sublist(list))),
+        Ok(ops::Bisect::Empty | ops::Bisect::MaxesLen(_)) => None,
         Ok(ops::Bisect::AtLoc(loc)) => Some(Ok(loc)),
     }
 }
 #[inline]
 fn last_sublist<T: ListsMethods>(list: &T) -> Loc {
     let pos = list.maxes.len() - 1;
-    let idx = list.keys()[pos].len();
+    let idx = list.chunks.keys()[pos].len();
     Loc::new(pos, idx)
 }
 pub type IrangeBounds<'py> = Bounds<Option<BoundKind<'py>>>;

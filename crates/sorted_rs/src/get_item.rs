@@ -34,7 +34,7 @@ impl<'py> Index<'py> {
         let dict = mapping.data.clone_ref(py).into_bound(py).into_any();
         match self.index {
             Either::Left(slice) => SliceIdxs::new(&slice, mapping.len())?
-                .extract_from(py, &mut mapping)?
+                .extract_from(py, &mut mapping.list)?
                 .iter()
                 .map(|key| dict.get_item(key))
                 .try_collect_bound(py)
@@ -51,7 +51,7 @@ impl<'py> Index<'py> {
         let dict = mapping.data.clone_ref(py).into_bound(py).into_any();
         match self.index {
             Either::Left(slice) => SliceIdxs::new(&slice, mapping.len())?
-                .extract_from(py, &mut mapping)?
+                .extract_from(py, &mut mapping.list)?
                 .iter()
                 .map(|key| tuple!(key.bind(py), &dict.get_item(key)?))
                 .try_collect_bound(py)
@@ -99,7 +99,7 @@ impl<'py> Index<'py> {
         match self.index {
             Either::Left(pyslice) => {
                 let slice = SliceIdxs::new(&pyslice, mapping.len())?;
-                let keys = slice.extract_from(py, &mut mapping)?;
+                let keys = slice.extract_from(py, &mut mapping.list)?;
                 slice.delete_from(py, &mut mapping.list)?;
                 keys.iter().try_for_each(|key| dict.del_item(key))
             }

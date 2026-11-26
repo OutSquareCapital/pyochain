@@ -7,9 +7,9 @@ use std_tools::prelude::TryIterator;
 use tap::prelude::*;
 
 use crate::{
-    inner::InnerList,
     sort::{ExtendKind, SortedByKeys, SortedVec},
-    traits::ListsMethods,
+    sublist::ChunksMethods,
+    traits::{ItemOf, ListsMethods},
     types::VecPy,
 };
 
@@ -29,7 +29,8 @@ impl IntoList {
             Some(list) => list
                 .as_ref()
                 .read()
-                .values
+                .chunks
+                .values()
                 .iter_owned(py)
                 .collect_vec()
                 .conv::<Self>()
@@ -45,7 +46,7 @@ impl IntoList {
     pub fn concat_into<T: ListsMethods>(self, py: Python<'_>, list: &T) -> PyResult<T> {
         let mut new_inst = list.new_empty(py);
         let key = list.key_func(py);
-        let slf = list.values.iter_owned(py);
+        let slf = list.chunks.values().iter_owned(py);
         match self {
             Self::PyIter(it) => slf
                 .map(|x| Ok(x.into_bound(py)))
@@ -80,7 +81,7 @@ enum Strategy {
 impl Strategy {
     /// Treshold on the number of values to add **as a whole**.
     const MIN_ITEMS: usize = 4;
-    fn from_vec(vec: VecPy, list: &InnerList) -> Self {
+    fn from_vec(vec: VecPy, list: &impl ListsMethods) -> Self {
         let length = vec.len();
         if 4 * length >= list.len() {
             Self::Size(ExtendKind::Big(vec))
@@ -94,7 +95,7 @@ impl Strategy {
         self,
         py: Python<'_>,
         list: &L,
-    ) -> PyResult<ExtendKind<SortedVec<L::Item>>> {
+    ) -> PyResult<ExtendKind<SortedVec<ItemOf<L>>>> {
         let key = list.key_func(py);
         match self {
             Self::Empty(IntoList::Vec(vec)) => vec.sorted_by_pykey(&key).map(ExtendKind::Big),
@@ -102,7 +103,8 @@ impl Strategy {
                 it.into_bound(py).sorted_by_pykey(&key).map(ExtendKind::Big)
             }
             Self::Size(ExtendKind::Big(vec)) => list
-                .values
+                .chunks
+                .values()
                 .iter_owned(py)
                 .chain(vec)
                 .sorted_by_pykey(&key)

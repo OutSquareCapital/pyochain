@@ -4,32 +4,22 @@ use tap::{Conv, Pipe};
 use crate::{
     List,
     bounds::{Bounds, Loc, RawIrangeSpecs},
-    delete,
-    item::ItemRef,
     iter::IrangeBounds,
     ops,
     search::Search,
-    sort::{Chunk, Identity},
+    sort::Identity,
     sublist::Chunks,
     traits::ListsMethods,
-    types::VecPy,
 };
 
 impl ListsMethods for List {
-    type Chunk = VecPy;
-    type Item = Py<PyAny>;
+    type Chunks = Chunks;
     type Key<'py> = Identity<'py>;
-    fn keys(&self) -> &Chunks {
-        &self.values
-    }
     fn new_empty(&self, _py: Python<'_>) -> Self {
         Self::default()
     }
     fn copy(&self, py: Python<'_>) -> Self {
         Self(self.0.clone_ref(py))
-    }
-    fn keys_mut(&mut self) -> &mut Chunks {
-        &mut self.values
     }
     fn key_func<'py>(&self, py: Python<'py>) -> Self::Key<'py> {
         Identity(py)
@@ -41,43 +31,19 @@ impl ListsMethods for List {
     ) -> PyResult<IrangeBounds<'py>> {
         specs.conv::<IrangeBounds>().pipe(Ok)
     }
-    fn insert_at(&mut self, loc: &Loc, item: Self::Item) {
-        self.keys_mut().loc_insert(loc, item);
-    }
-    fn loc_item(&self, loc: &Loc) -> impl ItemRef<Owned = Self::Item> {
-        self.values.loc(loc)
-    }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let py = value.py();
-        match self.try_bisect_right(&value)? {
-            ops::Bisect::Empty => {
-                vec![value.unbind()].push_into(py, self);
-            }
-            ops::Bisect::MaxesLen => {
-                self.push_val(py, value.unbind());
-            }
-            ops::Bisect::AtLoc(loc) => {
-                self.keys_mut().loc_insert(&loc, value.unbind());
-                self.expand(py, loc.pos);
-            }
-        }
-        self.len += 1;
-        Ok(())
+        self.append_item(value.py(), value.unbind())
     }
     #[inline]
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         self.bisect_by_key::<LEFT>(value)
     }
-    #[inline]
-    fn clear(&mut self, _py: Python<'_>) {
-        self.0.clear();
-    }
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         match self.try_bisect_left(value)? {
-            ops::Bisect::Empty | ops::Bisect::MaxesLen => Ok(0),
+            ops::Bisect::Empty | ops::Bisect::MaxesLen(_) => Ok(0),
             ops::Bisect::AtLoc(left) => match self.try_bisect_right(value)? {
                 ops::Bisect::Empty => unreachable!(),
-                ops::Bisect::MaxesLen => Ok(self.len() - left.into_index(self)),
+                ops::Bisect::MaxesLen(_) => Ok(self.len() - left.into_index(self)),
                 ops::Bisect::AtLoc(right) => {
                     if left.pos == right.pos {
                         Ok(right.idx - left.idx)
@@ -90,24 +56,18 @@ impl ListsMethods for List {
             },
         }
     }
-    fn delete_merge_keys(&mut self, _: Loc, _: delete::Merge) {}
-    fn delete_values(&mut self, _: Loc) {}
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize> {
         Search::on_index(self, value, value)?.index_by_val(indices)
     }
     #[inline]
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {
         match self.try_bisect_left(value)? {
-            ops::Bisect::Empty | ops::Bisect::MaxesLen => Ok(None),
-            ops::Bisect::AtLoc(loc) => match self.values.loc(&loc).bind(value.py()).eq(value) {
+            ops::Bisect::Empty | ops::Bisect::MaxesLen(_) => Ok(None),
+            ops::Bisect::AtLoc(loc) => match self.chunks.get_at(loc).bind(value.py()).eq(value) {
                 Ok(true) => Ok(Some(loc)),
                 Ok(false) => Ok(None),
                 Err(err) => Err(err),
             },
         }
     }
-    fn loc_remove(&mut self, loc: Loc) {
-        self.values.loc_remove(&loc);
-    }
-    fn split_values(&mut self, _pos: usize, _load: usize) {}
 }

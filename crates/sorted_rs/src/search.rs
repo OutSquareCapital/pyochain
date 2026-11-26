@@ -7,6 +7,7 @@ use crate::{
     KeyList,
     bounds::{Bounds, Loc},
     errors, ops,
+    sublist::ChunksMethods,
     traits::ListsMethods,
 };
 type PyVal<'py> = Bound<'py, PyAny>;
@@ -24,18 +25,28 @@ where
 {
     fn found_in_keys(&self) -> PyResult<bool> {
         let py = self.value.py();
-        self.list.keys().loc(&self.loc).bind(py).eq(self.key)
+        self.list
+            .chunks
+            .keys()
+            .get_at(self.loc)
+            .bind(py)
+            .eq(self.key)
     }
     fn found_in_values(&self) -> PyResult<bool> {
         let py = self.value.py();
-        self.list.values.loc(&self.loc).bind(py).eq(self.value)
+        self.list
+            .chunks
+            .values()
+            .get_at(self.loc)
+            .bind(py)
+            .eq(self.value)
     }
     #[inline]
     fn increment(&mut self) -> bool {
         self.loc.idx += 1;
-        if self.loc.idx == self.list.keys()[self.loc.pos].len() {
+        if self.loc.idx == self.list.chunks.keys()[self.loc.pos].len() {
             self.loc.pos += 1;
-            if self.loc.pos == self.list.keys().len() {
+            if self.loc.pos == self.list.chunks.keys().len() {
                 return true;
             }
             self.loc.idx = 0;
@@ -53,7 +64,7 @@ where
     pub fn on_index(list: &'a mut T, value: &'a PyVal<'py>, key: &'a PyVal<'py>) -> PyResult<Self> {
         match list.try_bisect_left(key)? {
             ops::Bisect::Empty => unreachable!(),
-            ops::Bisect::MaxesLen => Err(errors::not_in_list(value)),
+            ops::Bisect::MaxesLen(_) => Err(errors::not_in_list(value)),
             ops::Bisect::AtLoc(loc) => Ok(Search::new(list, loc, value, key)),
         }
     }

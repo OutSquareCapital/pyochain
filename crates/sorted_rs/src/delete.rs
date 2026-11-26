@@ -1,7 +1,11 @@
 use pyo3::prelude::*;
 use tap::prelude::*;
 
-use crate::{bounds::Loc, sublist::Chunks, traits::ListsMethods};
+use crate::{
+    bounds::Loc,
+    inner::InnerList,
+    sublist::{Chunks, ChunksMethods},
+};
 
 pub enum Strategy {
     LenSupToMin,
@@ -12,11 +16,11 @@ pub enum Strategy {
 impl Strategy {
     #[inline(always)]
     #[must_use]
-    pub fn new(list: &impl ListsMethods, pos: usize) -> Self {
-        let remaining = list.keys()[pos].len() - 1;
+    pub fn new<C: ChunksMethods>(list: &InnerList<C>, pos: usize) -> Self {
+        let remaining = list.chunks.keys()[pos].len() - 1;
         if remaining > list.load.min_size() {
             Self::LenSupToMin
-        } else if list.keys().len() > 1 {
+        } else if list.chunks.keys().len() > 1 {
             match (pos, remaining) {
                 (0, 0) => Merge::NextReplacesFirst,
                 (0, _) => Merge::NextIntoFirst,
@@ -30,32 +34,30 @@ impl Strategy {
         }
     }
     #[inline]
-    pub fn dispatch<L: ListsMethods>(self, py: Python<'_>, list: &mut L, loc: Loc) {
+    pub fn dispatch<C: ChunksMethods>(self, py: Python<'_>, list: &mut InnerList<C>, loc: Loc) {
         match self {
             Self::LenSupToMin => {
-                list.loc_remove(loc);
-                list.maxes[loc.pos] = list.keys().loc_last(&loc).clone_ref(py);
+                list.chunks.remove_in_chunk(loc);
+                list.maxes[loc.pos] = list.chunks.keys().last_in_chunk(&loc).clone_ref(py);
                 if list.lengths.is_built() {
                     list.lengths.delete_at(loc.pos);
                 }
             }
             Self::ManySublists(merge) => {
-                let prev = merge.remove(&mut list.values, loc);
+                let prev = list.chunks.merge(loc, merge);
                 list.maxes.remove(prev + 1);
                 list.lengths.inner.clear();
-                list.delete_merge_keys(loc, merge);
-                list.maxes[prev] = list.keys_mut()[prev].last().clone_ref(py);
+                list.maxes[prev] = list.chunks.keys()[prev].last().clone_ref(py);
                 list.expand(py, prev);
             }
             Self::NonEmpty => {
-                list.loc_remove(loc);
-                list.maxes[loc.pos] = list.keys().loc_last(&loc).clone_ref(py);
+                list.chunks.remove_in_chunk(loc);
+                list.maxes[loc.pos] = list.chunks.keys().last_in_chunk(&loc).clone_ref(py);
             }
             Self::Empty => {
                 list.maxes.remove(loc.pos);
                 list.lengths.inner.clear();
-                list.keys_mut().remove(loc.pos);
-                list.delete_values(loc);
+                list.chunks.remove_chunk(loc.pos);
             }
         }
     }

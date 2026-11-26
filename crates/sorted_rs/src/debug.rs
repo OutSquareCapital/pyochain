@@ -3,7 +3,7 @@ use crate::{
     KeyList,
     inner::InnerList,
     prelude::*,
-    sublist::SubList,
+    sublist::{Chunk, ChunksMethods},
     types::{Dict, Set},
 };
 use pyo3::{prelude::*, types::PyString};
@@ -19,17 +19,18 @@ macro_rules! pyassert {
         }
     };
 }
-pub fn check_empty(slf: &InnerList) -> PyResult<()> {
+pub fn check_empty<C: ChunksMethods>(slf: &InnerList<C>) -> PyResult<()> {
     pyassert!(slf.is_empty())?;
     pyassert!(slf.maxes.is_empty())?;
-    pyassert!(slf.values.is_empty())
+    pyassert!(slf.chunks.is_empty())
 }
 pub fn check_dict<T: ListsMethods>(py: Python<'_>, slf: &Dict<T>) -> PyResult<()> {
     check_list(py, &slf.list)?;
     let dict = slf.data.bind(py);
     pyassert!(dict.len() == slf.len())?;
     pyassert!(
-        slf.values
+        slf.chunks
+            .values()
             .iter()
             .try_all(|item| { dict.contains(item.bind(py)) })?
     )
@@ -39,7 +40,7 @@ pub fn check_set<T: ListsMethods>(py: Python<'_>, slf: &Set<T>) -> PyResult<()> 
     let set = slf.get_set(py);
     pyassert!(set.len() == slf.len())?;
     check_list(py, &slf.list)?;
-    pyassert!(slf.values.iter().try_all(|x| set.contains(x))?)
+    pyassert!(slf.chunks.values().iter().try_all(|x| set.contains(x))?)
 }
 pub fn check_list<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     check_sublists(py, slf).inspect_err(|e| e.add_note(py, list_infos(py, slf).unwrap()).unwrap())
@@ -51,10 +52,10 @@ pub fn check_key_list(py: Python<'_>, slf: &KeyList) -> PyResult<()> {
         .inspect_err(|e| {
             let infos = [
                 list_infos(py, slf).unwrap(),
-                format!("len_keys: {}", slf.keys().len()),
+                format!("len_keys: {}", slf.chunks.keys().len()),
                 format!(
                     "keys: {:?}",
-                    slf.keys().iter().pipe(|v| into_repr(v, py)).unwrap()
+                    slf.chunks.keys().iter().pipe(|v| into_repr(v, py)).unwrap()
                 ),
             ]
             .join("\n");
@@ -65,9 +66,10 @@ pub fn check_key_list(py: Python<'_>, slf: &KeyList) -> PyResult<()> {
 /// Check keys matches key mapped to lists.
 fn check_values_match_keys(py: Python<'_>, data: &KeyList) -> PyResult<()> {
     let key_fn = data.func.bind(py);
-    data.values
+    data.chunks
+        .values()
         .iter_chunks()
-        .zip(data.keys().iter_chunks())
+        .zip(data.chunks.keys().iter_chunks())
         .try_for_each(|(val_sublist, key_sublist)| {
             pyassert!(val_sublist.len() == key_sublist.len())?;
             val_sublist
@@ -78,39 +80,50 @@ fn check_values_match_keys(py: Python<'_>, data: &KeyList) -> PyResult<()> {
 }
 
 fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
-    pyassert!(slf.maxes.len() == slf.values.len() && slf.values.len() == slf.keys().len())?;
-    pyassert!(slf.len() == slf.values.iter_chunks().map(SubList::len).sum::<usize>())?;
+    let values_len = slf.chunks.values().len();
+    pyassert!(slf.maxes.len() == values_len && values_len == slf.chunks.keys().len())?;
+    pyassert!(
+        slf.len()
+            == slf
+                .chunks
+                .values()
+                .iter_chunks()
+                .map(Chunk::len)
+                .sum::<usize>()
+    )?;
     // Check all sublists are sorted.
-    slf.keys().iter_chunks().try_for_each(|sublist| {
+    slf.chunks.keys().iter_chunks().try_for_each(|sublist| {
         (1..sublist.len())
             .try_for_each(|pos| pyassert!(sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?))
     })?;
     // Check beginning/end of sublists are sorted.
-    (1..slf.keys().len()).try_for_each(|pos| {
+    (1..slf.chunks.keys().len()).try_for_each(|pos| {
         pyassert!(
-            slf.keys()[pos - 1]
+            slf.chunks.keys()[pos - 1]
                 .last()
                 .bind(py)
-                .le(slf.keys()[pos][0].bind(py))?
+                .le(slf.chunks.keys()[pos][0].bind(py))?
         )
     })?;
     // Check _maxes index is the last value of each sublist.
     pyassert!(
         slf.maxes
             .iter()
-            .zip(slf.keys().iter_chunks())
+            .zip(slf.chunks.keys().iter_chunks())
             .try_all(|(max, sublist)| max.bind(py).eq(sublist.last().bind(py)))?
     )?;
     // Check sublist lengths are less than double load-factor.
     pyassert!(
-        slf.values
+        slf.chunks
+            .values()
             .iter_chunks()
             .all(|sublist| sublist.len() <= slf.load.max_size())
     )?;
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
     pyassert!(
-        slf.values
+        slf.chunks
+            .values()
             .iter_chunks()
             .rev()
             .skip(1)
@@ -118,9 +131,10 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     )?;
     if slf.lengths.is_built() {
         pyassert!(slf.len() == slf.lengths.inner[0])?;
-        pyassert!(slf.lengths.inner.len() == slf.lengths.offset + slf.values.len())?;
+        pyassert!(slf.lengths.inner.len() == slf.lengths.offset + slf.chunks.len())?;
         // Check index leaf nodes equal length of sublists.
-        slf.values
+        slf.chunks
+            .values()
             .iter_chunks()
             .enumerate()
             .try_for_each(|(val_idx, val)| {
@@ -142,7 +156,7 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
     }
     Ok(())
 }
-fn list_infos(py: Python<'_>, slf: &InnerList) -> PyResult<String> {
+fn list_infos(py: Python<'_>, slf: &impl ListsMethods) -> PyResult<String> {
     [
         format!("len: {}", slf.len()),
         format!("load: {:?}", slf.load),
@@ -151,8 +165,11 @@ fn list_infos(py: Python<'_>, slf: &InnerList) -> PyResult<String> {
         format!("index: {:?}", slf.lengths.inner),
         format!("len_maxes: {}", slf.maxes.len()),
         format!("maxes: {:?}", slf.maxes.iter().pipe(|v| into_repr(v, py))?),
-        format!("len_lists: {}", slf.values.len()),
-        format!("lists: {:?}", slf.values.iter().pipe(|v| into_repr(v, py))?),
+        format!("len_lists: {}", slf.chunks.len()),
+        format!(
+            "lists: {:?}",
+            slf.chunks.values().iter().pipe(|v| into_repr(v, py))?
+        ),
     ]
     .join("\n")
     .pipe(Ok)

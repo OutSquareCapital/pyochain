@@ -1,4 +1,8 @@
-use crate::{inner::InnerList, prelude::*, sublist::Chunks};
+use crate::{
+    inner::InnerList,
+    prelude::*,
+    sublist::{Chunks, ChunksWithKeys},
+};
 use derive_more::{AsMut, AsRef, Constructor, Deref, DerefMut};
 use derive_new::new;
 use pyo3::prelude::*;
@@ -7,15 +11,13 @@ use std::ops::{Deref, DerefMut};
 
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 #[derive(Default, Deref, DerefMut)]
-pub struct List(pub(super) InnerList);
+pub struct List(pub(super) InnerList<Chunks>);
 #[derive(Deref, DerefMut, new)]
 pub struct KeyList {
     #[deref]
     #[deref_mut]
     #[new(default)]
-    pub(super) inner: InnerList,
-    #[new(default)]
-    pub keys: Chunks,
+    pub(super) inner: InnerList<ChunksWithKeys>,
     pub(super) func: Py<PyAny>,
 }
 impl KeyList {
@@ -52,7 +54,7 @@ impl_self_as_ref!(List, KeyList);
 
 pub trait ListGetter: PyFrozenClass + AsRef<RwLock<Self::T>> + Init {
     type L: ListsMethods;
-    type T: Deref<Target = InnerList>
+    type T: Deref<Target = InnerList<<Self::L as ListsMethods>::Chunks>>
         + DerefMut
         + AsRef<Self::L>
         + AsMut<Self::L>

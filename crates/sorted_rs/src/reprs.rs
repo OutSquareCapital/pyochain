@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use crate::{
     KeyList, List,
+    sublist::ChunksMethods,
     traits::ListsMethods,
     types::{Dict, Set},
 };
@@ -28,7 +29,7 @@ pub trait PyRepr {
 
 impl PyRepr for List {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
-        self.values.iter().collect_bound::<PyList>(py)?.repr()
+        self.chunks.iter().collect_bound::<PyList>(py)?.repr()
     }
     fn key_repr<'py>(&self, _py: Python<'py>) -> PyResult<Option<Bound<'py, PyString>>> {
         Ok(None)
@@ -36,7 +37,11 @@ impl PyRepr for List {
 }
 impl PyRepr for KeyList {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
-        self.values.iter().collect_bound::<PyList>(py)?.repr()
+        self.chunks
+            .values()
+            .iter()
+            .collect_bound::<PyList>(py)?
+            .repr()
     }
     fn key_repr<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyString>>> {
         self.func.bind(py).repr().map(Some)
@@ -53,7 +58,8 @@ impl<T: ListsMethods> PyRepr for Set<T> {
 impl<T: ListsMethods> PyRepr for Dict<T> {
     fn items_repr(&self, py: Python<'_>) -> PyResult<impl Display> {
         let dict = self.data.bind(py).as_any();
-        self.values
+        self.chunks
+            .values()
             .iter()
             .map(|x| x.bind(py))
             .map(|key| {

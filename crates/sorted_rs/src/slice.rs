@@ -6,9 +6,8 @@ use tap::prelude::*;
 use crate::{
     IntoList,
     bounds::{Bounds, Loc},
-    inner::InnerList,
     ops::{self, ForwardSlice},
-    sublist::SubList,
+    sublist::{Chunk, ChunksMethods},
     traits::ListsMethods,
     types::VecPy,
 };
@@ -35,7 +34,7 @@ impl SliceIdxs {
     fn kind(&self) -> ops::Slice {
         ops::Slice::new(self.indices, self.step, self.ref_len)
     }
-    pub fn extract_from(&self, py: Python<'_>, list: &mut InnerList) -> PyResult<VecPy> {
+    pub fn extract_from(&self, py: Python<'_>, list: &mut impl ListsMethods) -> PyResult<VecPy> {
         match self.kind() {
             ops::Slice::NoOp => Ok(Vec::new()),
             ops::Slice::Forward(fwd) => self.extract_fwd(py, fwd, list),
@@ -64,7 +63,7 @@ impl SliceIdxs {
             ops::Slice::NoOp => Ok(()),
             ops::Slice::Forward(fwd) => match fwd {
                 ForwardSlice::Full => {
-                    list.clear(py);
+                    list.clear();
                     Ok(())
                 }
                 ForwardSlice::SmallToAdjust => self.delete_fwd_small::<_, true>(py, list),
@@ -98,16 +97,16 @@ impl SliceIdxs {
         &self,
         py: Python<'_>,
         fwd: ForwardSlice,
-        list: &mut InnerList,
+        list: &mut impl ListsMethods,
     ) -> PyResult<VecPy> {
         fn fwd_extract<const TO_END: bool>(
             slf: &SliceIdxs,
             py: Python<'_>,
-            list: &mut InnerList,
+            list: &mut impl ListsMethods,
         ) -> PyResult<VecPy> {
             let min = list.set_pos_usize(slf.start)?;
             let mut max = Loc::with_idx(min.idx + (slf.stop - slf.start));
-            let start_list = &list.values[min.pos];
+            let start_list = &list.chunks.values()[min.pos];
             match (start_list.len() >= max.idx, TO_END) {
                 // Small slice optimization: start index and stop index are within the start list.
                 (true, _) => start_list[min.idx..max.idx]
@@ -115,19 +114,24 @@ impl SliceIdxs {
                     .map(|x| x.clone_ref(py))
                     .collect(),
                 (false, true) => {
-                    max.pos = list.values.len() - 1;
-                    max.idx = list.values.loc_len(&max);
-                    get_slice(py, &list.values, min, max)
+                    max.pos = list.chunks.len() - 1;
+                    max.idx = list.chunks.values().len_of_chunk(&max);
+                    get_slice(py, list.chunks.values(), min, max)
                 }
                 (false, false) => {
                     max = list.set_pos_usize(slf.stop)?;
-                    get_slice(py, &list.values, min, max)
+                    get_slice(py, list.chunks.values(), min, max)
                 }
             }
             .pipe(Ok)
         }
         match fwd {
-            ForwardSlice::Full => list.values.iter_owned(py).collect::<Vec<_>>().pipe(Ok),
+            ForwardSlice::Full => list
+                .chunks
+                .values()
+                .iter_owned(py)
+                .collect::<Vec<_>>()
+                .pipe(Ok),
             ForwardSlice::Partial | ForwardSlice::SmallToAdjust => {
                 fwd_extract::<false>(self, py, list)
             }
@@ -149,7 +153,7 @@ impl SliceIdxs {
                 reset_slice((self.stop, self.ref_len), self.ref_len).extract_from(py, list)?;
             values.append(new_slice.as_mut());
         }
-        list.clear(py);
+        list.clear();
         values.conv::<IntoList>().extend_into(py, list)
     }
 }
@@ -163,7 +167,7 @@ where
         self.0
             .try_for_each(|idx| list.set_pos_usize(idx).map(|loc| list.delete(py, loc)))
     }
-    fn get_all(self, list: &mut InnerList, py: Python<'_>) -> PyResult<VecPy> {
+    fn get_all<L: ListsMethods>(self, list: &mut L, py: Python<'_>) -> PyResult<VecPy> {
         self.0
             .map(usize::cast_signed)
             .map(|i| list.get_item(py, i))
@@ -171,7 +175,7 @@ where
             .collect()
     }
 }
-fn get_slice(py: Python<'_>, lists: &[SubList], min: Loc, max: Loc) -> VecPy {
+fn get_slice(py: Python<'_>, lists: &[Chunk], min: Loc, max: Loc) -> VecPy {
     lists[min.pos][min.idx..]
         .iter()
         .chain(lists[min.pos + 1..max.pos].iter().flatten())

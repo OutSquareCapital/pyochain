@@ -8,7 +8,7 @@ use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::prelude::*;
 
-use crate::{List, list_update::IntoList, prelude::*, types::Dict};
+use crate::{List, list_update::IntoList, prelude::*, sublist::ChunksMethods, types::Dict};
 
 impl Dict<List> {
     #[must_use]
@@ -31,7 +31,8 @@ impl<T: ListsMethods> Dict<T> {
     pub fn or(&self, value: &Bound<'_, PyMapping>) -> PyResult<Self> {
         let py = value.py();
         let dict = self.data.bind(py).as_any();
-        self.values
+        self.chunks
+            .values()
             .iter()
             .map(|x| x.clone_ref(py).into_bound(py))
             .map(|key| dict.get_item(&key).map(|value| (key, value)))
@@ -46,7 +47,8 @@ impl<T: ListsMethods> Dict<T> {
             .items_view()?
             .iter()
             .chain(
-                self.values
+                self.chunks
+                    .values()
                     .iter()
                     .map(|x| x.clone_ref(py).into_bound(py))
                     .map(|key| dict.get_item(&key).map(|value| (key, value))),
@@ -56,7 +58,8 @@ impl<T: ListsMethods> Dict<T> {
     pub fn copy(&self, py: Python<'_>) -> PyResult<Self> {
         let dict = self.data.bind(py).as_any();
         let data = self
-            .values
+            .chunks
+            .values()
             .iter()
             .map(|key| key.bind(py))
             .map(|key| Ok((key, dict.get_item(key)?)))
@@ -103,7 +106,7 @@ impl<T: ListsMethods> Dict<T> {
     }
     pub fn clear(&mut self, py: Python<'_>) {
         self.data.bind(py).clear();
-        self.list.clear(py);
+        self.list.clear();
     }
     pub fn copy_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
         &self,
@@ -209,7 +212,7 @@ impl<T: ListsMethods> Dict<T> {
             };
             if (10 * pairs.len()) > inner.len() {
                 inner.update(pairs.as_mapping())?;
-                self.list.clear(py);
+                self.list.clear();
                 inner
                     .keys()
                     .iter_py()

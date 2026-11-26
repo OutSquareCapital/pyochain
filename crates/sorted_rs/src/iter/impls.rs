@@ -36,7 +36,7 @@ impl<T: ListGetter> From<&Bound<'_, T>> for Rev {
 impl From<InnerRef> for Rev {
     #[inline]
     fn from(pyref: InnerRef) -> Self {
-        let cursor = pyref.values.len().pipe(Loc::with_pos).into();
+        let cursor = pyref.values().len().pipe(Loc::with_pos).into();
         pyref.into_iterator(cursor)
     }
 }
@@ -51,7 +51,7 @@ impl<const FWD: bool, T: CursorMethods> Iter<FWD, T> {
     }
     #[inline(always)]
     fn inner_next(&self) -> Option<(u64, &Py<PyAny>)> {
-        let values = &self.pyref.values;
+        let values = self.pyref.values();
         let (at, pos, idx) = self.cursor.load();
         values
             .get(pos)?
@@ -67,7 +67,7 @@ impl<const FWD: bool, T: CursorMethods> Iter<FWD, T> {
     }
     #[inline(always)]
     fn inner_next_back(&self) -> Option<(u64, &Py<PyAny>)> {
-        let values = &self.pyref.values;
+        let values = self.pyref.values();
         let (at, pos, idx) = self.cursor.load();
         values
             .get(pos)

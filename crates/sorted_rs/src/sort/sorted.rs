@@ -1,10 +1,10 @@
 use crate::{
-    bounds::Loc,
     sort::{
-        chunk::{Batch, IntoChunked},
+        chunk::{Batch, IntoChunked, Stream},
         keys::{KeyFn, SortKey},
         strategy::KeysCheck,
     },
+    sublist::ChunksMethods,
     traits::ListsMethods,
     types::VecPy,
 };
@@ -52,30 +52,18 @@ impl<T: SortKey> ExtendKind<SortedVec<T>> {
     #[inline]
     pub fn extend_into<L>(self, py: Python<'_>, list: &mut L) -> PyResult<()>
     where
-        L: ListsMethods<Item = T>,
+        L: ListsMethods<Chunks: ChunksMethods<Item = T>>,
     {
         match self {
             Self::Big(vec) => {
-                list.clear(py);
-                vec.into_iter().into_chunked().extend_into(py, list);
+                list.clear();
+                vec.into_iter()
+                    .into_chunked()
+                    .extend_into::<L::Chunks>(py, list);
                 Ok(())
             }
-            Self::Medium(vec) => Batch::new(vec).extend_into(py, list),
-            // Inserts the items into a non-empty list one by one, like `append`,
-            // but each item is only compared from the location of the previous one, and its key isn't computed again.
-            Self::Small(vec) => {
-                vec.into_iter().try_fold(Loc::default(), |prev, item| {
-                    let loc = prev.next_sorted(list, item.key())?;
-                    if loc.idx == list.keys()[loc.pos].len() {
-                        list.maxes[loc.pos] = item.key().clone().unbind();
-                    }
-                    list.insert_at(&loc, item);
-                    list.expand(py, loc.pos);
-                    list.len += 1;
-                    PyResult::Ok(loc)
-                })?;
-                Ok(())
-            }
+            Self::Medium(vec) => vec.pipe(Batch::<L::Chunks>::new).extend_into(py, list),
+            Self::Small(vec) => vec.pipe(Stream::<L::Chunks>::new).extend_into(py, list),
         }
     }
 }

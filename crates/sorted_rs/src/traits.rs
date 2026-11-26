@@ -2,17 +2,16 @@ use std::ops::{Deref, DerefMut};
 
 use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
-    delete, errors,
+    errors,
     get_item::Index,
     inner::InnerList,
-    item::{Item, ItemRef},
     iter::{IrangeBounds, builder::RawRangeIdxs},
     list_update::IntoList,
     ops,
     repeat::Repeated,
     reprs::PyRepr,
-    sort::{Chunk, KeyFn},
-    sublist::Chunks,
+    sort::KeyFn,
+    sublist::ChunksMethods,
     types::{IndexOut, IntoIndex},
 };
 use itertools::Itertools;
@@ -20,17 +19,12 @@ use pyo3::prelude::*;
 use tap::prelude::*;
 
 pub type BisectRes = PyResult<ops::Bisect>;
+pub type ItemOf<L> = <<L as ListsMethods>::Chunks as ChunksMethods>::Item;
 pub trait ListsMethods:
-    Deref<Target = InnerList> + DerefMut + PyRepr + Sized + Send + Sync
+    Deref<Target = InnerList<Self::Chunks>> + DerefMut + PyRepr + Sized + Send + Sync
 {
-    type Chunk: Chunk<Self::Item>;
-    type Item: Item;
-    type Key<'py>: KeyFn<'py, Item = Self::Item>;
-    /// Returns a reference to the "keys" of the collection.\
-    /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
-    /// For collections sorted by *key*, this is equivalent to `KeysListsData::1`.
-    fn keys(&self) -> &Chunks;
-    fn keys_mut(&mut self) -> &mut Chunks;
+    type Chunks: ChunksMethods;
+    type Key<'py>: KeyFn<'py, Item = ItemOf<Self>>;
     fn key_func<'py>(&self, py: Python<'py>) -> Self::Key<'py>;
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     #[must_use]
@@ -40,16 +34,8 @@ pub trait ListsMethods:
     /// Equivalent to `bisect_ky_key` if the collection is sorted **by value**.\
     /// If the collection is sorted **by key**, *value* is first transformed by the *key* function before the bisect operation.
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
-    fn clear(&mut self, py: Python<'_>);
-    fn delete_merge_keys(&mut self, loc: Loc, merge: delete::Merge);
-    fn delete_values(&mut self, loc: Loc);
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize>;
-    fn loc_remove(&mut self, loc: Loc);
-    fn split_values(&mut self, pos: usize, load: usize);
-    /// Inserts `item` into the list at `loc`.
-    fn insert_at(&mut self, loc: &Loc, item: Self::Item);
-    fn loc_item(&self, loc: &Loc) -> impl ItemRef<Owned = Self::Item>;
     fn irange<'py>(
         &self,
         py: Python<'py>,
@@ -63,26 +49,6 @@ pub trait ListsMethods:
     fn concat(&self, py: Python<'_>, other: IntoList) -> PyResult<Self> {
         other.concat_into(py, self)
     }
-    fn delete(&mut self, py: Python<'_>, loc: Loc) {
-        self.len -= 1;
-        delete::Strategy::new(self, loc.pos).dispatch(py, self, loc);
-    }
-    fn expand(&mut self, py: Python<'_>, pos: usize) {
-        match ops::Expand::new(self, pos) {
-            ops::Expand::MustSplit => {
-                let load = *self.load;
-                let half = self.keys_mut()[pos].split_off(load);
-                let last_max = half.last().clone_ref(py);
-                self.maxes.insert(pos + 1, last_max);
-                self.maxes[pos] = self.keys()[pos].last().clone_ref(py);
-                self.keys_mut().insert(pos + 1, half);
-                self.split_values(pos, load);
-                self.lengths.inner.clear();
-            }
-            ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
-            ops::Expand::NoOp => (),
-        }
-    }
     fn extend(&mut self, py: Python<'_>, values: IntoList) -> PyResult<()> {
         values.extend_into(py, self)
     }
@@ -95,13 +61,6 @@ pub trait ListsMethods:
     }
     fn del_item_or_slice(&mut self, py: Python<'_>, index: IntoIndex<'_>) -> PyResult<()> {
         Index::new(py, index).del_from_list(self)
-    }
-    fn del_item(&mut self, py: Python<'_>, index: isize) -> PyResult<()> {
-        if self.is_empty() {
-            Err(errors::out_of_range())
-        } else {
-            self.set_pos(index).map(|loc| self.delete(py, loc))
-        }
     }
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         match self.find(&value) {
@@ -126,19 +85,6 @@ pub trait ListsMethods:
             .ok_or_else(|| errors::not_in_list(value))
             .and_then(|indices| self.index_inner(value, indices))
     }
-    fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let loc = self.index_to_loc(index)?;
-        let val = self.values.loc(&loc).clone_ref(py);
-        self.delete(py, loc);
-        Ok(val.into_bound(py))
-    }
-    #[inline(always)]
-    fn push_val(&mut self, py: Python<'_>, value: Py<PyAny>) {
-        let pos = self.maxes.len() - 1;
-        self.maxes[pos] = value.clone_ref(py);
-        self.keys_mut()[pos].push(value);
-        self.expand(py, pos);
-    }
     fn remove(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         self.find(value)?
             .map(|loc| self.delete(value.py(), loc))
@@ -146,32 +92,13 @@ pub trait ListsMethods:
     }
     fn reset(&mut self, load: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = load.py();
-        let values = self.values.iter_owned(py).collect_vec();
+        let values = self.chunks.values().iter_owned(py).collect_vec();
         self.load = load.try_into()?;
-        self.clear(py);
+        self.clear();
         values.conv::<IntoList>().extend_into(py, self)
     }
     fn set_item(&mut self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.del_item(value.py(), index)?;
         self.append(value)
-    }
-    #[inline(always)]
-    fn try_bisect<const LEFT: bool>(&self, value: &Bound<'_, PyAny>) -> BisectRes {
-        ops::Bisect::new::<LEFT, Self>(self, value)
-    }
-    #[inline(always)]
-    fn try_bisect_left(&self, value: &Bound<'_, PyAny>) -> BisectRes {
-        self.try_bisect::<true>(value)
-    }
-    #[inline(always)]
-    fn try_bisect_right(&self, value: &Bound<'_, PyAny>) -> BisectRes {
-        self.try_bisect::<false>(value)
-    }
-    fn bisect_by_key<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        match self.try_bisect::<LEFT>(value)? {
-            ops::Bisect::Empty => Ok(0),
-            ops::Bisect::MaxesLen => Ok(self.len()),
-            ops::Bisect::AtLoc(loc) => Ok(loc.into_index(self)),
-        }
     }
 }
