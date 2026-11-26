@@ -4,6 +4,7 @@ use tap::{Conv, Pipe};
 use crate::{
     List,
     bounds::{Bounds, Loc, RawIrangeSpecs},
+    delete,
     inner::Values,
     item::ItemRef,
     iter::IrangeBounds,
@@ -89,25 +90,8 @@ impl ListsMethods for List {
             },
         }
     }
-
-    fn delete(&mut self, py: Python<'_>, loc: Loc) {
-        self.len -= 1;
-        match ops::SubListState::new(self, loc.pos) {
-            ops::SubListState::LenSupToMin => self.delete_on_len_sup_to_min(py, loc),
-            ops::SubListState::ManySublists(merge) => {
-                let prev = self.delete_many(&loc, merge);
-                self.maxes[prev] = self.values[prev].last().clone_ref(py);
-                self.expand(py, prev);
-            }
-            ops::SubListState::NonEmpty => {
-                self.loc_remove(loc);
-                self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
-            }
-            ops::SubListState::Empty => {
-                self.remove_at(&loc);
-            }
-        }
-    }
+    fn delete_merge_keys(&mut self, _: Loc, _: delete::Merge) {}
+    fn delete_values(&mut self, _: Loc) {}
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize> {
         Search::on_index(self, value, value)?.index_by_val(indices)
     }

@@ -2,7 +2,7 @@ use std::ops::{Deref, DerefMut};
 
 use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
-    errors,
+    delete, errors,
     get_item::Index,
     inner::{InnerList, Values},
     item::{Item, ItemRef},
@@ -40,7 +40,8 @@ pub trait ListsMethods:
     /// If the collection is sorted **by key**, *value* is first transformed by the *key* function before the bisect operation.
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn clear(&mut self, py: Python<'_>);
-    fn delete(&mut self, py: Python<'_>, loc: Loc);
+    fn delete_merge_keys(&mut self, loc: Loc, merge: delete::Merge);
+    fn delete_values(&mut self, loc: Loc);
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize>;
     fn loc_remove(&mut self, loc: Loc);
@@ -60,6 +61,10 @@ pub trait ListsMethods:
     }
     fn concat(&self, py: Python<'_>, other: IntoList) -> PyResult<Self> {
         other.concat_into(py, self)
+    }
+    fn delete(&mut self, py: Python<'_>, loc: Loc) {
+        self.len -= 1;
+        delete::Strategy::new(self, loc.pos).dispatch(py, self, loc);
     }
     fn expand(&mut self, py: Python<'_>, pos: usize) {
         match ops::Expand::new(self, pos) {
@@ -96,21 +101,6 @@ pub trait ListsMethods:
         } else {
             self.set_pos(index).map(|loc| self.delete(py, loc))
         }
-    }
-    fn delete_on_len_sup_to_min(&mut self, py: Python<'_>, loc: Loc) {
-        self.loc_remove(loc);
-        self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
-        if self.lengths.is_built() {
-            self.lengths.delete_at(loc.pos);
-        }
-    }
-    /// Removes the item at `loc`, and merges its sublist with a neighbor as `merge` says.\
-    /// Returns the position of the merged sublist.
-    fn delete_many(&mut self, loc: &Loc, merge: ops::Merge) -> usize {
-        let prev = self.values.remove_merge(loc, merge);
-        self.maxes.remove(prev + 1);
-        self.lengths.inner.clear();
-        prev
     }
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         match self.find(&value) {

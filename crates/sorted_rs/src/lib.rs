@@ -2,6 +2,7 @@ mod bisect;
 mod bounds;
 mod core;
 pub mod debug;
+mod delete;
 mod dict;
 mod errors;
 mod get_item;

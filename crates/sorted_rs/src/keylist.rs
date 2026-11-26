@@ -1,6 +1,7 @@
 use crate::{
     KeyList,
     bounds::{Bounds, Loc, RawIrangeSpecs},
+    delete,
     inner::Values,
     item::ItemRef,
     iter::IrangeBounds,
@@ -89,32 +90,16 @@ impl ListsMethods for KeyList {
             ops::Bisect::AtLoc(loc) => Search::new(self, loc, value, &key).count(),
         }
     }
-
-    fn delete(&mut self, py: Python<'_>, loc: Loc) {
-        self.len -= 1;
-        match ops::SubListState::new(self, loc.pos) {
-            ops::SubListState::LenSupToMin => self.delete_on_len_sup_to_min(py, loc),
-            ops::SubListState::ManySublists(merge) => {
-                let prev = self.delete_many(&loc, merge);
-                self.keys.remove_merge(&loc, merge);
-                self.maxes[prev] = self.keys[prev].last().clone_ref(py);
-                self.expand(py, prev);
-            }
-            ops::SubListState::NonEmpty => {
-                self.loc_remove(loc);
-                self.maxes[loc.pos] = self.keys().loc_last(&loc).clone_ref(py);
-            }
-            ops::SubListState::Empty => {
-                self.remove_at(&loc);
-                self.keys.remove(loc.pos);
-            }
-        }
+    fn delete_values(&mut self, loc: Loc) {
+        self.values.remove(loc.pos);
+    }
+    fn delete_merge_keys(&mut self, loc: Loc, merge: delete::Merge) {
+        merge.remove(&mut self.keys, loc);
     }
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize> {
         let key = self.call_fn(value)?;
         Search::on_index(self, value, &key)?.index_by_key(indices)
     }
-
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>> {
         let key = self.call_fn(value)?;
         match self.try_bisect_left(&key)? {

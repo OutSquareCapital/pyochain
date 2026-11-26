@@ -57,29 +57,6 @@ impl Values {
     pub(super) fn loc_len(&self, loc: &Loc) -> usize {
         self[loc.pos].len()
     }
-    /// Removes the item at `loc`, and merges its sublist with a neighbor as `merge` says.\
-    /// Returns the position of the merged sublist. The other one is removed, and was right after it.
-    pub(super) fn remove_merge(&mut self, loc: &Loc, merge: ops::Merge) -> usize {
-        match merge {
-            ops::Merge::IntoPrev => {
-                let mut rest = self.remove(loc.pos).into_vec();
-                rest.remove(loc.idx);
-                self[loc.pos - 1].append(&mut rest);
-                loc.pos - 1
-            }
-            ops::Merge::NextIntoFirst => {
-                let mut next = self.remove(1).into_vec();
-                let first = &mut self[0];
-                first.remove(loc.idx);
-                first.append(&mut next);
-                0
-            }
-            ops::Merge::NextReplacesFirst => {
-                self[0] = self.remove(1);
-                0
-            }
-        }
-    }
 }
 #[derive(Default)]
 pub struct InnerList {
@@ -145,12 +122,6 @@ impl InnerList {
     ) -> PyResult<Bound<'py, PyAny>> {
         self.index_to_loc(index)
             .map(|loc| self.values.loc(&loc).clone_ref(py).into_bound(py))
-    }
-
-    pub(super) fn remove_at(&mut self, loc: &Loc) -> SubList {
-        self.maxes.remove(loc.pos);
-        self.lengths.inner.clear();
-        self.values.remove(loc.pos)
     }
 
     pub(super) fn set_pos(&mut self, mut index: isize) -> PyResult<Loc> {

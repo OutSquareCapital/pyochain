@@ -2,6 +2,10 @@
 //! Those enums allow to first make cheap conditional checks, and then match them on clearly named branches in a flat match statement, instead of having nested if statements with complex conditions.\
 //! More importantly, they factorize the common logic between the `SortedList` and `SortedKeyList` implementations.\
 //! They have very similar conditional checks, but different actions to take on each branch.
+//! ## Note to contributors
+//! As the codebase evolves, the actual internal implementation are drifting away from the original `sortedcontainers` implementation,\
+//! not only in purely architectural abstractions, just like this module (factorizing boolean control flow into named enums), but also in actual runtime computations.\
+//! As such, distrubuting logic by **module**, like [`delete`][] and [`list_update`][] is preferred over this way.W
 
 use std::hint::unreachable_unchecked;
 
@@ -128,44 +132,6 @@ impl Expand {
             Self::NoOp
         }
     }
-}
-/// Used in `delete`
-pub enum SubListState {
-    LenSupToMin,
-    ManySublists(Merge),
-    NonEmpty,
-    Empty,
-}
-impl SubListState {
-    #[inline(always)]
-    #[must_use]
-    pub fn new(data: &impl ListsMethods, pos: usize) -> Self {
-        let remaining = data.keys()[pos].len() - 1;
-        if remaining > data.load.min_size() {
-            Self::LenSupToMin
-        } else if data.keys().len() > 1 {
-            match (pos, remaining) {
-                (0, 0) => Merge::NextReplacesFirst,
-                (0, _) => Merge::NextIntoFirst,
-                _ => Merge::IntoPrev,
-            }
-            .pipe(Self::ManySublists)
-        } else if remaining == 0 {
-            Self::Empty
-        } else {
-            Self::NonEmpty
-        }
-    }
-}
-/// How the sublist of the deleted item is merged with a neighbor.
-#[derive(Clone, Copy)]
-pub enum Merge {
-    /// The item's sublist (`pos > 0`) goes into the previous one.
-    IntoPrev,
-    /// The item is in the first sublist, which keeps other items: the second one goes into it.
-    NextIntoFirst,
-    /// The item is the only one of the first sublist: the second one replaces it.
-    NextReplacesFirst,
 }
 
 // Used in `pop` and `get_item`
