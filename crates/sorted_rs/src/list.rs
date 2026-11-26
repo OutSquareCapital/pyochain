@@ -5,12 +5,12 @@ use crate::{
     List,
     bounds::{Bounds, Loc, RawIrangeSpecs},
     delete,
-    inner::Values,
     item::ItemRef,
     iter::IrangeBounds,
     ops,
     search::Search,
     sort::{Chunk, Identity},
+    sublist::Chunks,
     traits::ListsMethods,
     types::VecPy,
 };
@@ -19,7 +19,7 @@ impl ListsMethods for List {
     type Chunk = VecPy;
     type Item = Py<PyAny>;
     type Key<'py> = Identity<'py>;
-    fn keys(&self) -> &Values {
+    fn keys(&self) -> &Chunks {
         &self.values
     }
     fn new_empty(&self, _py: Python<'_>) -> Self {
@@ -28,7 +28,7 @@ impl ListsMethods for List {
     fn copy(&self, py: Python<'_>) -> Self {
         Self(self.0.clone_ref(py))
     }
-    fn keys_mut(&mut self) -> &mut Values {
+    fn keys_mut(&mut self) -> &mut Chunks {
         &mut self.values
     }
     fn key_func<'py>(&self, py: Python<'py>) -> Self::Key<'py> {

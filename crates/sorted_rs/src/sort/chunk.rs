@@ -1,11 +1,10 @@
 use crate::{
-    bisect::bisect, bounds::Loc, item::Item, sort::sorted::SortedVec, sublist::SubList,
-    traits::ListsMethods, types::VecPy,
+    bounds::Loc, item::Item, sort::sorted::SortedVec, sublist::SubList, traits::ListsMethods,
+    types::VecPy,
 };
 
 use derive_more::{Constructor, Deref, From};
-use pyo3::{basic::CompareOp, prelude::*};
-use pyo3_ext::prelude::*;
+use pyo3::prelude::*;
 use std::iter::RepeatN;
 use std_tools::{collections::WithCapacity, prelude::TryIterator};
 
@@ -159,29 +158,5 @@ impl LocIdxs {
             .next_sorted(list, key)?;
         self.0.push(loc);
         Ok(())
-    }
-}
-impl Loc {
-    /// Location of `key`, the item following the one at `self` in a sorted batch.\
-    /// Only compares from `self`, since `key` can't go before it.
-    /// Stays valid if the previous item was already inserted at `self`, and its sublist split.\
-    /// Uses `bisect_right` semantics like `append`: a key equal to a max goes into the next sublist,
-    /// and a key greater than every max goes into the last one.
-    pub(super) fn next_sorted(
-        self,
-        list: &impl ListsMethods,
-        key: &Bound<'_, PyAny>,
-    ) -> PyResult<Self> {
-        let last = list.maxes.len() - 1;
-        let pos = if self.pos == last
-            || key.rich_compare_bool(list.maxes[self.pos].bind(key.py()), CompareOp::Lt)?
-        {
-            self.pos
-        } else {
-            bisect::<false>(&list.maxes[self.pos + 1..last], key)? + self.pos + 1
-        };
-        let low = if pos == self.pos { self.idx } else { 0 };
-        let idx = bisect::<false>(&list.keys()[pos][low..], key)?;
-        Ok(Self::new(pos, low + idx))
     }
 }

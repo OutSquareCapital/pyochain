@@ -4,7 +4,7 @@ use crate::{
     lengths::Lengths,
     load::Load,
     ops,
-    sublist::SubList,
+    sublist::Chunks,
     types::{SeqOrAny, VecPy},
 };
 use derive_more::{Deref, DerefMut, From, IntoIterator};
@@ -22,45 +22,9 @@ impl Maxes {
             .into()
     }
 }
-#[derive(Deref, DerefMut, From, Debug, Default, IntoIterator)]
-pub struct Values(Vec<SubList>);
-impl Values {
-    pub(super) fn clone_ref(&self, py: Python<'_>) -> Self {
-        self.iter_chunks()
-            .map(|chunk| chunk.clone_ref(py))
-            .collect::<Vec<_>>()
-            .into()
-    }
-    #[inline(always)]
-    pub(super) fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
-        self.iter().map(move |x| x.clone_ref(py))
-    }
-    #[inline(always)]
-    pub(super) fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> + Clone {
-        self.0.iter().flatten()
-    }
-    pub(super) fn iter_chunks(&self) -> impl DoubleEndedIterator<Item = &SubList> {
-        self.0.iter()
-    }
-    pub(super) fn loc(&self, loc: &Loc) -> &Py<PyAny> {
-        &self[loc.pos][loc.idx]
-    }
-    pub(super) fn loc_insert(&mut self, loc: &Loc, value: Py<PyAny>) {
-        self[loc.pos].insert(loc.idx, value);
-    }
-    pub(super) fn loc_remove(&mut self, loc: &Loc) {
-        self[loc.pos].remove(loc.idx);
-    }
-    pub(super) fn loc_last(&self, loc: &Loc) -> &Py<PyAny> {
-        self[loc.pos].last()
-    }
-    pub(super) fn loc_len(&self, loc: &Loc) -> usize {
-        self[loc.pos].len()
-    }
-}
 #[derive(Default)]
 pub struct InnerList {
-    pub(super) values: Values,
+    pub(super) values: Chunks,
     pub(super) maxes: Maxes,
     /// Equivalent to `idx` and `offset` attributes in the original `sortedcontainers` implementation.
     pub(super) lengths: Lengths,

@@ -1,9 +1,45 @@
 use std::vec::Drain;
 
-use derive_more::{Deref, IntoIterator};
+use derive_more::{Deref, DerefMut, From, IntoIterator};
 use pyo3::prelude::*;
 
 use crate::{bounds::Loc, types::VecPy};
+#[derive(Deref, DerefMut, From, Debug, Default, IntoIterator)]
+pub struct Chunks(Vec<SubList>);
+impl Chunks {
+    pub(super) fn clone_ref(&self, py: Python<'_>) -> Self {
+        self.iter_chunks()
+            .map(|chunk| chunk.clone_ref(py))
+            .collect::<Vec<_>>()
+            .into()
+    }
+    #[inline(always)]
+    pub(super) fn iter_owned(&self, py: Python<'_>) -> impl DoubleEndedIterator<Item = Py<PyAny>> {
+        self.iter().map(move |x| x.clone_ref(py))
+    }
+    #[inline(always)]
+    pub(super) fn iter(&self) -> impl DoubleEndedIterator<Item = &Py<PyAny>> + Clone {
+        self.0.iter().flatten()
+    }
+    pub(super) fn iter_chunks(&self) -> impl DoubleEndedIterator<Item = &SubList> {
+        self.0.iter()
+    }
+    pub(super) fn loc(&self, loc: &Loc) -> &Py<PyAny> {
+        &self[loc.pos][loc.idx]
+    }
+    pub(super) fn loc_insert(&mut self, loc: &Loc, value: Py<PyAny>) {
+        self[loc.pos].insert(loc.idx, value);
+    }
+    pub(super) fn loc_remove(&mut self, loc: &Loc) {
+        self[loc.pos].remove(loc.idx);
+    }
+    pub(super) fn loc_last(&self, loc: &Loc) -> &Py<PyAny> {
+        self[loc.pos].last()
+    }
+    pub(super) fn loc_len(&self, loc: &Loc) -> usize {
+        self[loc.pos].len()
+    }
+}
 
 /// A sublist of a sorted list. Never empty.\
 /// Only gives access to its items as a slice, so its length can only change through the methods below,

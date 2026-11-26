@@ -1,7 +1,4 @@
-use crate::{
-    inner::{InnerList, Values},
-    prelude::*,
-};
+use crate::{inner::InnerList, prelude::*, sublist::Chunks};
 use derive_more::{AsMut, AsRef, Constructor, Deref, DerefMut};
 use derive_new::new;
 use pyo3::prelude::*;
@@ -18,7 +15,7 @@ pub struct KeyList {
     #[new(default)]
     pub(super) inner: InnerList,
     #[new(default)]
-    pub keys: Values,
+    pub keys: Chunks,
     pub(super) func: Py<PyAny>,
 }
 impl KeyList {

@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 use tap::prelude::*;
 
-use crate::{bounds::Loc, inner::Values, traits::ListsMethods};
+use crate::{bounds::Loc, sublist::Chunks, traits::ListsMethods};
 
 pub enum Strategy {
     LenSupToMin,
@@ -74,7 +74,7 @@ impl Merge {
     /// Removes the item at `loc`, and merges its sublist with a neighbor as `merge` says.\
     /// Returns the position of the merged sublist. The other one is removed, and was right after it.
     #[inline]
-    pub(super) fn remove(self, values: &mut Values, loc: Loc) -> usize {
+    pub(super) fn remove(self, values: &mut Chunks, loc: Loc) -> usize {
         match self {
             Self::IntoPrev => {
                 let mut rest = values.remove(loc.pos).into_vec();

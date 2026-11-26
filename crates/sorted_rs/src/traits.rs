@@ -4,7 +4,7 @@ use crate::{
     bounds::{Bounds, Loc, RawIrangeSpecs},
     delete, errors,
     get_item::Index,
-    inner::{InnerList, Values},
+    inner::InnerList,
     item::{Item, ItemRef},
     iter::{IrangeBounds, builder::RawRangeIdxs},
     list_update::IntoList,
@@ -12,6 +12,7 @@ use crate::{
     repeat::Repeated,
     reprs::PyRepr,
     sort::{Chunk, KeyFn},
+    sublist::Chunks,
     types::{IndexOut, IntoIndex},
 };
 use itertools::Itertools;
@@ -28,8 +29,8 @@ pub trait ListsMethods:
     /// Returns a reference to the "keys" of the collection.\
     /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
     /// For collections sorted by *key*, this is equivalent to `KeysListsData::1`.
-    fn keys(&self) -> &Values;
-    fn keys_mut(&mut self) -> &mut Values;
+    fn keys(&self) -> &Chunks;
+    fn keys_mut(&mut self) -> &mut Chunks;
     fn key_func<'py>(&self, py: Python<'py>) -> Self::Key<'py>;
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     #[must_use]

@@ -2,13 +2,12 @@ use crate::{
     KeyList,
     bounds::{Bounds, Loc, RawIrangeSpecs},
     delete,
-    inner::Values,
     item::ItemRef,
     iter::IrangeBounds,
     ops,
     search::Search,
     sort::{Chunk, ChunkKey, WithKey},
-    sublist::SubList,
+    sublist::{Chunks, SubList},
     traits::ListsMethods,
 };
 use pyo3::prelude::*;
@@ -20,10 +19,10 @@ impl ListsMethods for KeyList {
     fn key_func<'py>(&self, py: Python<'py>) -> Self::Key<'py> {
         self.func.clone_ref(py).into_bound(py).pipe(WithKey)
     }
-    fn keys(&self) -> &Values {
+    fn keys(&self) -> &Chunks {
         &self.keys
     }
-    fn keys_mut(&mut self) -> &mut Values {
+    fn keys_mut(&mut self) -> &mut Chunks {
         &mut self.keys
     }
     fn new_empty(&self, py: Python<'_>) -> Self {

@@ -1,6 +1,9 @@
 use tap::prelude::*;
 
-use crate::{bounds::Loc, inner::Values, sublist::SubList};
+use crate::{
+    bounds::Loc,
+    sublist::{Chunks, SubList},
+};
 /// Quoting Grant Jenks:
 /// > "a tree of pair-wise sums of the lengths of the lists. The tree is maintained as a dense binary tree."
 ///
@@ -51,7 +54,7 @@ impl Lengths {
         .unwrap()
         .pipe(|(pos, index)| Loc::new(pos - self.offset, index))
     }
-    pub fn build(&mut self, values: &Values) {
+    pub fn build(&mut self, values: &Chunks) {
         debug_assert!(self.is_not_built());
         let levels = values.len().next_power_of_two().ilog2();
         self.offset = 2_usize.pow(levels) - 1;

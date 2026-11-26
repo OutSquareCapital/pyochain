@@ -1,8 +1,8 @@
 use crate::{
     bounds::Loc,
-    inner::Values,
     item::{Item, ItemRef},
     sort::IntoChunked,
+    sublist::Chunks,
     traits::ListsMethods,
 };
 use derive_more::Constructor;
@@ -84,7 +84,7 @@ impl<L: ListsMethods> Iterator for Groups<'_, '_, L> {
 }
 impl<L: ListsMethods> ExactSizeIterator for Groups<'_, '_, L> {}
 impl Loc {
-    fn next(self, keys: &Values) -> Self {
+    fn next(self, keys: &Chunks) -> Self {
         if self.idx + 1 < keys.loc_len(&self) {
             Self::new(self.pos, self.idx + 1)
         } else {
