@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path  # ruff: ignore[typing-only-standard-library-import]
 from typing import Annotated
 
 import typer as tp
@@ -25,6 +26,20 @@ def profile() -> None:
     from .profiler import profiler
 
     profiler()
+
+
+@app.command()
+def show(
+    path: Annotated[Path, tp.Argument(help="Profile recorded by `samply`")],
+    top: Annotated[int, tp.Option(help="Number of functions to show")] = 40,
+) -> None:
+    """Show the self and inclusive time of the functions in a `samply` profile.
+
+    The native frames are symbolicated with the local server of `samply load`.
+    """
+    from .profiler import show
+
+    show(path, top)
 
 
 @app.command()
