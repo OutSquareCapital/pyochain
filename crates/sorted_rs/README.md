@@ -182,6 +182,7 @@ Notation:
 
 - Invariant: `pos < maxes.len()` and `idx <= keys[pos].len()`.
 - `idx == len` is only valid as an end sentinel (`last_sublist` and `islice_bounds` in `iter/builder.rs`) or as an insertion position (`Loc::next_sorted` in `sort/chunk.rs`), never as an element access.
+- `pos == maxes.len()` (with `idx == 0`) is only valid as the end sentinel of `Groups` in `repeat.rs` (`Loc::next` past the last item, `group_end` of the last group), never as an element access.
 
 #### 9. Bisect results
 

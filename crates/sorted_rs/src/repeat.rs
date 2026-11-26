@@ -1,4 +1,6 @@
 use crate::{
+    bounds::Loc,
+    inner::Values,
     item::{Item, ItemRef},
     sort::IntoChunked,
     traits::ListsMethods,
@@ -7,10 +9,7 @@ use derive_more::Constructor;
 use derive_new::new;
 use itertools::Itertools;
 use pyo3::prelude::*;
-use std::{
-    cmp::Ordering,
-    iter::{Flatten, RepeatN, Take},
-};
+use std_tools::prelude::*;
 use tap::Pipe;
 #[derive(Constructor, Clone, Copy)]
 pub(crate) struct Repeated(usize);
@@ -18,78 +17,78 @@ impl Repeated {
     pub fn extend_into<L: ListsMethods>(self, py: Python<'_>, list: &L) -> PyResult<L> {
         let mut new_inst = list.new_empty(py);
         new_inst.load = list.load;
-        list.iter_keys()
-            .pipe(|items| Groups::new(py, items, self.0, list.len * self.0))
+        Groups::new(py, list, self.0, list.len * self.0)
             .into_chunked()
             .try_extend_into(py, &mut new_inst)
             .map(|()| new_inst)
     }
 }
 #[derive(new)]
-struct Groups<'py, I: Iterator + Clone> {
+struct Groups<'py, 'l, L: ListsMethods> {
     py: Python<'py>,
-    items: I,
+    list: &'l L,
     #[new(default)]
-    copies: Option<Flatten<RepeatN<Take<I>>>>,
+    copies: usize,
+    #[new(default)]
+    start: Loc,
+    #[new(default)]
+    end: Loc,
+    #[new(default)]
+    cur: Loc,
     num: usize,
     len: usize,
 }
-impl<I> Groups<'_, I>
-where
-    I: Iterator + Clone,
-    I::Item: ItemRef,
-{
-    fn refresh(&mut self, len: usize) -> Option<PyResult<<I::Item as ItemRef>::Owned>> {
-        self.copies = self
-            .items
-            .clone()
-            .take(len)
-            .pipe(|it| std::iter::repeat_n(it, self.num))
-            .flatten()
-            .pipe(Some);
-        self.items.nth(len - 1);
-        self.next()
+impl<L: ListsMethods> Groups<'_, '_, L> {
+    fn group_end(&self, start: Loc) -> PyResult<Loc> {
+        let keys = self.list.keys();
+        std::iter::successors(Some(start), |loc| {
+            let next = loc.next(keys);
+            (next.pos < keys.len()).then_some(next)
+        })
+        .tuple_windows()
+        .try_find_map(|(a, b)| {
+            self.list
+                .loc_item(&a)
+                .cmp(&self.list.loc_item(&b))?
+                .is_lt()
+                .then_some(b)
+                .pipe(PyResult::Ok)
+        })?
+        .unwrap_or(Loc::with_pos(keys.len()))
+        .pipe(Ok)
     }
 }
-impl<I> Iterator for Groups<'_, I>
-where
-    I: Iterator + Clone,
-    I::Item: ItemRef,
-{
-    type Item = PyResult<<I::Item as ItemRef>::Owned>;
+impl<L: ListsMethods> Iterator for Groups<'_, '_, L> {
+    type Item = PyResult<L::Item>;
     fn next(&mut self) -> Option<Self::Item> {
-        use std::ops::ControlFlow as CF;
-        self.copies
-            .as_mut()
-            .and_then(Iterator::next)
-            .inspect(|_| self.len -= 1)
-            .map(|item| Ok(item.owned(self.py)))
-            .or_else(|| {
-                (self.len > 0)
-                    .then(|| self.items.clone())
-                    .and_then(|items| {
-                        items
-                            .tuple_windows()
-                            .try_fold(1, |len, (a, b)| match a.cmp(&b) {
-                                Ok(Ordering::Less) => CF::Break(Ok(len)),
-                                Ok(_) => CF::Continue(len + 1),
-                                Err(e) => CF::Break(Err(e)),
-                            })
-                            .pipe(|res| match res {
-                                CF::Continue(len) | CF::Break(Ok(len)) => self.refresh(len),
-                                CF::Break(Err(e)) => Some(Err(e)),
-                            })
-                    })
-            })
+        (self.len > 0).then(|| {
+            if self.cur == self.end {
+                if self.copies == 0 {
+                    self.start = self.end;
+                    self.end = self.group_end(self.start)?;
+                    self.copies = self.num;
+                }
+                self.copies -= 1;
+                self.cur = self.start;
+            }
+            let item = self.list.loc_item(&self.cur).owned(self.py);
+            self.cur = self.cur.next(self.list.keys());
+            self.len -= 1;
+            Ok(item)
+        })
     }
     #[inline(always)]
     fn size_hint(&self) -> (usize, Option<usize>) {
         (self.len, Some(self.len))
     }
 }
-impl<I> ExactSizeIterator for Groups<'_, I>
-where
-    I: Iterator + Clone,
-    I::Item: ItemRef,
-{
+impl<L: ListsMethods> ExactSizeIterator for Groups<'_, '_, L> {}
+impl Loc {
+    fn next(self, keys: &Values) -> Self {
+        if self.idx + 1 < keys.loc_len(&self) {
+            Self::new(self.pos, self.idx + 1)
+        } else {
+            Self::with_pos(self.pos + 1)
+        }
+    }
 }

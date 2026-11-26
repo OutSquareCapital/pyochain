@@ -43,8 +43,8 @@ impl ListsMethods for List {
     fn insert_at(&mut self, loc: &Loc, item: Self::Item) {
         self.keys_mut().loc_insert(loc, item);
     }
-    fn iter_keys(&self) -> impl Iterator<Item = impl ItemRef<Owned = Self::Item>> + Clone {
-        self.keys().iter()
+    fn loc_item(&self, loc: &Loc) -> impl ItemRef<Owned = Self::Item> {
+        self.values.loc(loc)
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();

@@ -47,7 +47,7 @@ pub trait ListsMethods:
     fn split_values(&mut self, pos: usize, load: usize);
     /// Inserts `item` into the list at `loc`.
     fn insert_at(&mut self, loc: &Loc, item: Self::Item);
-    fn iter_keys(&self) -> impl Iterator<Item = impl ItemRef<Owned = Self::Item>> + Clone;
+    fn loc_item(&self, loc: &Loc) -> impl ItemRef<Owned = Self::Item>;
     fn irange<'py>(
         &self,
         py: Python<'py>,
