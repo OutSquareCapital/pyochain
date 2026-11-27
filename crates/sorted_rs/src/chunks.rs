@@ -17,13 +17,11 @@ pub trait ChunksMethods {
     /// For collections sorted by *values*, this is equivalent to `InnerData::values`.\
     /// For collections sorted by *key*, this is equivalent to `KeysListsData::1`.
     fn keys(&self) -> &Chunks;
-    fn keys_mut(&mut self) -> &mut Chunks;
     fn clone_ref(&self, py: Python<'_>) -> Self;
     fn values(&self) -> &Chunks;
     /// Moves the last `run.len()` items of the chunk into the sublist of the run,
     /// each item at the matching location of `run`.
     fn drain_from(&mut self, chunk: &mut Self::IntoChunk, idxs: &[Loc]);
-    fn values_mut(&mut self) -> &mut Chunks;
     fn remove_in_chunk(&mut self, loc: Loc);
     fn remove_chunk(&mut self, pos: usize);
     fn split(&mut self, py: Python<'_>, pos: usize, load: usize) -> Py<PyAny>;
@@ -55,14 +53,8 @@ impl ChunksMethods for ChunksWithKeys {
     fn keys(&self) -> &Chunks {
         &self.keys
     }
-    fn keys_mut(&mut self) -> &mut Chunks {
-        &mut self.keys
-    }
     fn values(&self) -> &Chunks {
         &self.values
-    }
-    fn values_mut(&mut self) -> &mut Chunks {
-        &mut self.values
     }
     fn clear(&mut self) {
         self.keys.clear();
@@ -72,7 +64,7 @@ impl ChunksMethods for ChunksWithKeys {
         Self::new(self.keys.clone_ref(py), self.values.clone_ref(py))
     }
     fn loc_item(&self, loc: Loc) -> impl ItemRef<Owned = Self::Item> {
-        (self.keys().get_at(loc), self.values().get_at(loc))
+        (self.keys.get_at(loc), self.values.get_at(loc))
     }
     fn split(&mut self, py: Python<'_>, pos: usize, load: usize) -> Py<PyAny> {
         let max = self.keys.split(py, pos, load);
@@ -89,17 +81,17 @@ impl ChunksMethods for ChunksWithKeys {
         self.values.remove_chunk(pos);
     }
     fn insert_in_chunk(&mut self, loc: Loc, (key, value): Self::Item) {
-        self.keys_mut().insert_in_chunk(loc, key);
-        self.values_mut().insert_in_chunk(loc, value);
+        self.keys.insert_in_chunk(loc, key);
+        self.values.insert_in_chunk(loc, value);
     }
     fn remove_in_chunk(&mut self, loc: Loc) {
-        self.keys_mut().remove_in_chunk(loc);
-        self.values_mut().remove_in_chunk(loc);
+        self.keys.remove_in_chunk(loc);
+        self.values.remove_in_chunk(loc);
     }
     fn drain_from(&mut self, chunk: &mut Self::IntoChunk, idxs: &[Loc]) {
         self.keys.drain_from(&mut chunk.keys, idxs);
         let start = chunk.values.len() - idxs.len();
-        self.values_mut()[idxs[0].pos].insert_many(idxs, chunk.values.drain(start..));
+        self.values[idxs[0].pos].insert_many(idxs, chunk.values.drain(start..));
     }
     fn push_chunk(&mut self, py: Python<'_>, chunk: Self::IntoChunk) -> Py<PyAny> {
         let max = self.keys.push_chunk(py, chunk.keys);
@@ -121,13 +113,7 @@ impl ChunksMethods for Chunks {
     fn values(&self) -> &Chunks {
         self
     }
-    fn values_mut(&mut self) -> &mut Chunks {
-        self
-    }
     fn keys(&self) -> &Chunks {
-        self
-    }
-    fn keys_mut(&mut self) -> &mut Chunks {
         self
     }
     fn clear(&mut self) {
@@ -168,7 +154,7 @@ impl ChunksMethods for Chunks {
     }
     fn drain_from(&mut self, chunk: &mut Self::IntoChunk, idxs: &[Loc]) {
         let start = chunk.len() - idxs.len();
-        self.keys_mut()[idxs[0].pos].insert_many(idxs, chunk.drain(start..));
+        self.0[idxs[0].pos].insert_many(idxs, chunk.drain(start..));
     }
     fn push_chunk(&mut self, py: Python<'_>, chunk: Self::IntoChunk) -> Py<PyAny> {
         let chunk = Chunk::from(chunk);
