@@ -21,9 +21,6 @@ impl Lengths {
     pub fn delete_at(&mut self, pos: usize) {
         Self::path_to_root(self.offset + pos).for_each(|c| self.inner[c] -= 1);
     }
-    pub fn expand_at(&mut self, pos: usize) {
-        self.add_at(pos, 1);
-    }
     /// Accounts for `count` items added to the sublist at `pos`.
     pub fn add_at(&mut self, pos: usize, count: usize) {
         Self::path_to_root(self.offset + pos).for_each(|c| self.inner[c] += count);

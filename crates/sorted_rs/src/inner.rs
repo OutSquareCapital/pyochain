@@ -95,7 +95,7 @@ impl<C: ChunksMethods> InnerList<C> {
                 self.refresh_max(py, pos);
                 self.lengths.inner.clear();
             }
-            ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
+            ops::Expand::IdxBuilt => self.lengths.add_at(pos, 1),
             ops::Expand::NoOp => (),
         }
     }
