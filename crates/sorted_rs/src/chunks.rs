@@ -8,7 +8,7 @@ use crate::{
     bounds::Loc,
     delete,
     item::{Item, ItemRef},
-    types::VecPy,
+    types::{Pair, VecPy},
 };
 pub trait ChunksMethods {
     type Item: Item;
@@ -50,7 +50,7 @@ pub struct ChunksWithKeys {
 #[derive(Deref, DerefMut, From, Debug, Default, IntoIterator)]
 pub struct Chunks(Vec<Chunk>);
 impl ChunksMethods for ChunksWithKeys {
-    type Item = (Py<PyAny>, Py<PyAny>);
+    type Item = Pair<Py<PyAny>>;
     type IntoChunk = ChunkKey;
     fn keys(&self) -> &Chunks {
         &self.keys
@@ -211,19 +211,19 @@ pub struct ChunkKey {
     keys: VecPy,
     values: VecPy,
 }
-impl FromIterator<(Py<PyAny>, Py<PyAny>)> for ChunkKey {
-    fn from_iter<I: IntoIterator<Item = (Py<PyAny>, Py<PyAny>)>>(iter: I) -> Self {
-        iter.into_iter().collect::<(Vec<_>, Vec<_>)>().into()
+impl FromIterator<Pair<Py<PyAny>>> for ChunkKey {
+    fn from_iter<I: IntoIterator<Item = Pair<Py<PyAny>>>>(iter: I) -> Self {
+        iter.into_iter().collect::<Pair<Vec<_>>>().into()
     }
 }
-impl WithCapacity<(Py<PyAny>, Py<PyAny>)> for ChunkKey {
+impl WithCapacity<Pair<Py<PyAny>>> for ChunkKey {
     fn with_capacity(capacity: usize) -> Self {
         Self {
             keys: Vec::with_capacity(capacity),
             values: Vec::with_capacity(capacity),
         }
     }
-    fn push(&mut self, (key, value): (Py<PyAny>, Py<PyAny>)) {
+    fn push(&mut self, (key, value): Pair<Py<PyAny>>) {
         self.keys.push(key);
         self.values.push(value);
     }

@@ -8,7 +8,13 @@ use pyo3_ext::types::DictItem;
 use pyochain_macros::{try_cast, try_cast_into};
 use tap::prelude::*;
 
-use crate::{List, chunks::ChunksMethods, list_update::IntoList, prelude::*, types::Dict};
+use crate::{
+    List,
+    chunks::ChunksMethods,
+    list_update::IntoList,
+    prelude::*,
+    types::{Dict, Pair},
+};
 
 impl Dict<List> {
     #[must_use]
@@ -82,7 +88,7 @@ impl<T: ListsMethods> Dict<T> {
         &mut self,
         py: Python<'py>,
         index: isize,
-    ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
+    ) -> PyResult<Pair<Bound<'py, PyAny>>> {
         let key = self.list.get_item(py, index)?;
         self.get_item(&key).map(|value| (key, value))
     }
@@ -135,7 +141,7 @@ impl<T: ListsMethods> Dict<T> {
         &mut self,
         py: Python<'py>,
         index: isize,
-    ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
+    ) -> PyResult<Pair<Bound<'py, PyAny>>> {
         let dict = self.data.bind(py);
         if dict.is_empty() {
             let msg = "popitem(): dictionary is empty";

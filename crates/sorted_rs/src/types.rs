@@ -10,7 +10,8 @@ use crate::Collection;
 
 /// A `Vec` which contains python objects.
 pub type VecPy = Vec<Py<PyAny>>;
-
+/// A pair of items of the same type.
+pub type Pair<T> = (T, T);
 // Either types for various Python objects.
 type AnyOr<'py, T> = Either<Bound<'py, T>, Bound<'py, PyAny>>;
 pub type SeqOrAny<'py> = AnyOr<'py, PySequence>;

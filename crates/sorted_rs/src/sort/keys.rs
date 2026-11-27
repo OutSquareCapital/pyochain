@@ -15,10 +15,9 @@ use tap::Pipe;
 use crate::{
     item::Item,
     sort::sorted::{SortedByKeys, SortedVec},
-    types::VecPy,
+    types::{Pair, VecPy},
 };
 
-type Pair<T> = (T, T);
 /// Strategy for ordering and storing the elements added to a sorted list.\
 /// [`Identity`] sorts by value, [`WithKey`] sorts by the result of a Python callable.
 pub trait KeyFn<'py> {
