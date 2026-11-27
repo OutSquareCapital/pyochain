@@ -95,7 +95,7 @@ impl<C: ChunksMethods> Batch<C> {
                     list.expand(py, last);
                     last += 1;
                 }
-                list.maxes[last] = list.chunks.keys()[last].last().clone_ref(py);
+                list.refresh_max(py, last);
             });
         Ok(())
     }

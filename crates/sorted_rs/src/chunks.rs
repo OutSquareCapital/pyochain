@@ -184,9 +184,6 @@ impl Chunks {
     pub(super) fn get_at(&self, loc: Loc) -> &Py<PyAny> {
         &self[loc.pos][loc.idx]
     }
-    pub(super) fn last_in_chunk(&self, loc: &Loc) -> &Py<PyAny> {
-        self[loc.pos].last()
-    }
     pub(super) fn len_of_chunk(&self, loc: &Loc) -> usize {
         self[loc.pos].len()
     }

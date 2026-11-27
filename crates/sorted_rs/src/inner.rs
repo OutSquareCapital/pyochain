@@ -92,7 +92,7 @@ impl<C: ChunksMethods> InnerList<C> {
                 let load = *self.load;
                 let last_max = self.chunks.split(py, pos, load);
                 self.maxes.insert(pos + 1, last_max);
-                self.maxes[pos] = self.chunks.keys()[pos].last().clone_ref(py);
+                self.refresh_max(py, pos);
                 self.lengths.inner.clear();
             }
             ops::Expand::IdxBuilt => self.lengths.expand_at(pos),
@@ -118,6 +118,14 @@ impl<C: ChunksMethods> InnerList<C> {
     pub(super) fn insert_in_chunk(&mut self, py: Python<'_>, loc: Loc, item: C::Item) {
         self.chunks.insert_in_chunk(loc, item);
         self.expand(py, loc.pos);
+    }
+    pub(super) fn remove_in_chunk(&mut self, py: Python<'_>, loc: Loc) {
+        self.chunks.remove_in_chunk(loc);
+        self.refresh_max(py, loc.pos);
+    }
+    #[inline]
+    pub(super) fn refresh_max(&mut self, py: Python<'_>, pos: usize) {
+        self.maxes[pos] = self.chunks.keys()[pos].last().clone_ref(py);
     }
     #[inline]
     fn index_to_loc(&mut self, index: isize) -> PyResult<Loc> {

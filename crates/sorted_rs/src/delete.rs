@@ -37,8 +37,7 @@ impl Strategy {
     pub fn dispatch<C: ChunksMethods>(self, py: Python<'_>, list: &mut InnerList<C>, loc: Loc) {
         match self {
             Self::LenSupToMin => {
-                list.chunks.remove_in_chunk(loc);
-                list.maxes[loc.pos] = list.chunks.keys().last_in_chunk(&loc).clone_ref(py);
+                list.remove_in_chunk(py, loc);
                 if list.lengths.is_built() {
                     list.lengths.delete_at(loc.pos);
                 }
@@ -47,13 +46,10 @@ impl Strategy {
                 let prev = list.chunks.merge(loc, merge);
                 list.maxes.remove(prev + 1);
                 list.lengths.inner.clear();
-                list.maxes[prev] = list.chunks.keys()[prev].last().clone_ref(py);
+                list.refresh_max(py, prev);
                 list.expand(py, prev);
             }
-            Self::NonEmpty => {
-                list.chunks.remove_in_chunk(loc);
-                list.maxes[loc.pos] = list.chunks.keys().last_in_chunk(&loc).clone_ref(py);
-            }
+            Self::NonEmpty => list.remove_in_chunk(py, loc),
             Self::Empty => {
                 list.maxes.remove(loc.pos);
                 list.lengths.inner.clear();
