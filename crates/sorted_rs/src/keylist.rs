@@ -9,6 +9,7 @@ use crate::{
     traits::ListsMethods,
 };
 use pyo3::prelude::*;
+use pyo3_ext::args::BoundedEnum;
 use tap::prelude::*;
 impl ListsMethods for KeyList {
     type Chunks = ChunksWithKeys;
@@ -25,11 +26,8 @@ impl ListsMethods for KeyList {
             func: self.func.clone_ref(py),
         }
     }
-    fn irange<'py>(
-        &self,
-        py: Python<'py>,
-        specs: RawIrangeSpecs<'py>,
-    ) -> PyResult<IrangeBounds<'py>> {
+    fn irange<'py>(&self, specs: RawIrangeSpecs<'py>) -> PyResult<IrangeBounds<'py>> {
+        let py = specs.0.py();
         IrangeBounds::with_keys(specs, self.func.bind(py))
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {

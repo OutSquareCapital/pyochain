@@ -1,4 +1,4 @@
-pub use super::args::CallConcat;
+pub use super::args::{BoundedEnum, CallConcat};
 pub use super::conversions::{Abc, Init, IntoPyIterator, IntoSequence, TryFromPy, TryIntoPy};
 pub use super::ext_methods::{
     ABCMethods, CompareOpExtMethods, PyDictExtConstructors, PyDictExtMethods, PyIteratorExtMethods,

@@ -22,7 +22,7 @@ where
 {
     type List: ListsMethods;
     type Mapping: PyFrozenClass + Deref<Target = RwLock<Dict<Self::List>>>;
-    fn get_item<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>>;
+    fn get_item<'py>(&self, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>>;
     fn mapping(&self) -> RwLockReadGuard<'_, Dict<Self::List>> {
         self.get().deref().read()
     }
@@ -37,8 +37,8 @@ where
         let values = self.mapping().repr::<Self::Mapping>(py)?;
         Ok(format!("{name}({values})"))
     }
-    fn del_item<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> PyResult<()> {
-        Index::new(py, index).del_from_view(self)
+    fn del_item(&self, index: IntoIndex<'_>) -> PyResult<()> {
+        Index::new(index).del_from_view(self)
     }
 }
 impl<M> ViewMethods for OnKeys<M>
@@ -47,8 +47,8 @@ where
 {
     type List = M::L;
     type Mapping = M;
-    fn get_item<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>> {
-        self.mapping_mut().list.get_item_or_slice(py, index)
+    fn get_item<'py>(&self, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>> {
+        self.mapping_mut().list.get_item_or_slice(index)
     }
 }
 
@@ -58,8 +58,8 @@ where
 {
     type List = M::L;
     type Mapping = M;
-    fn get_item<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>> {
-        Index::new(py, index).get_from_values_view(self)
+    fn get_item<'py>(&self, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>> {
+        Index::new(index).get_from_values_view(self)
     }
 }
 
@@ -69,7 +69,7 @@ where
 {
     type List = M::L;
     type Mapping = M;
-    fn get_item<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>> {
-        Index::new(py, index).get_from_items_view(self)
+    fn get_item<'py>(&self, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>> {
+        Index::new(index).get_from_items_view(self)
     }
 }

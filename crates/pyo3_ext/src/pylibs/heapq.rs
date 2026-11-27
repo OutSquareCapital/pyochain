@@ -5,14 +5,14 @@ use pyo3::{
     types::{PyDict, PyIterator, PyList},
 };
 
-use crate::pylibs::registery::heapq;
+use crate::{args::BoundedEnum, pylibs::registery::heapq};
 #[inline(always)]
 pub fn merge<'py, A: PyCallArgs<'py>>(
-    py: Python<'py>,
     iterables: A,
     key: Option<Bound<'py, PyAny>>,
     reverse: bool,
 ) -> PyResult<Bound<'py, PyIterator>> {
+    let py = key.py();
     let kwargs = PyDict::new(py);
     kwargs.set_item(intern!(py, "key"), key)?;
     kwargs.set_item(intern!(py, "reverse"), reverse)?;

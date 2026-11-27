@@ -228,7 +228,7 @@ impl<C: ChunksMethods> InnerList<C> {
     }
     #[inline]
     fn inner_cmp<'py>(&self, other: SeqOrAny<'py>, op: CompareOp) -> PyCmpOut<'py, bool> {
-        let py = either::for_both!(&other, x => x.py());
+        let py = other.py();
         other
             .map_left(|seq| {
                 let mut it = self

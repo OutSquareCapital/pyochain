@@ -169,10 +169,10 @@ impl<T: ListsMethods> Dict<T> {
     #[inline]
     pub fn update(
         &mut self,
-        py: Python<'_>,
         m: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
+        let py = m.py();
         let inner = self.data.bind(py);
         if inner.is_empty() {
             try_cast! {

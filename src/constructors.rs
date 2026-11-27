@@ -54,13 +54,12 @@ pub trait FromPyKwargs: PyClass + FromPyIter {
     #[pyo3(signature = (iterable = None,/, **kwargs))]
     #[new]
     fn new(
-        py: Python<'_>,
         iterable: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>>;
     #[staticmethod]
     #[pyo3(signature = (**kwargs))]
-    fn of<'py>(py: Python<'py>, kwargs: Option<Bound<'py, PyDict>>) -> PyResult<Bound<'py, Self>>;
+    fn of(kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Bound<'_, Self>>;
 }
 macro_rules! impl_from_py_iter {
     ($($wrapped:ty => $T:ty),* $(,)?) => {
@@ -91,10 +90,10 @@ impl FromPyIter for collections::StableSet {
 }
 impl FromPyKwargs for Dict {
     fn new(
-        py: Python<'_>,
         iterable: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>> {
+        let py = iterable.py();
         match (iterable, kwargs) {
             (None, None) => PyDict::new(py),
             (None, Some(kw)) => kw,
@@ -109,7 +108,8 @@ impl FromPyKwargs for Dict {
         .pipe(Ok)
     }
 
-    fn of<'py>(py: Python<'py>, kwargs: Option<Bound<'py, PyDict>>) -> PyResult<Bound<'py, Self>> {
+    fn of(kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Bound<'_, Self>> {
+        let py = kwargs.py();
         kwargs.unwrap_or_else(|| PyDict::new(py)).try_into_py()
     }
 }

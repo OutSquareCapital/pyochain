@@ -24,11 +24,7 @@ impl ListsMethods for List {
     fn key_func<'py>(&self, py: Python<'py>) -> Self::Key<'py> {
         Identity(py)
     }
-    fn irange<'py>(
-        &self,
-        _py: Python<'py>,
-        specs: RawIrangeSpecs<'py>,
-    ) -> PyResult<IrangeBounds<'py>> {
+    fn irange<'py>(&self, specs: RawIrangeSpecs<'py>) -> PyResult<IrangeBounds<'py>> {
         specs.conv::<IrangeBounds>().pipe(Ok)
     }
     fn append(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {

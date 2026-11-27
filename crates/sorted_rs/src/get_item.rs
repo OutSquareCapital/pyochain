@@ -10,15 +10,12 @@ use crate::{
     views::ViewMethods,
 };
 #[derive(Constructor)]
-pub struct Index<'py> {
-    py: Python<'py>,
-    index: IntoIndex<'py>,
-}
+pub struct Index<'py>(IntoIndex<'py>);
 impl<'py> Index<'py> {
     #[inline]
     pub fn get_from_list<T: ListsMethods>(self, list: &mut T) -> PyResult<IndexOut<'py>> {
-        let py = self.py;
-        match self.index {
+        let py = self.0.py();
+        match self.0 {
             Either::Left(slice) => SliceIdxs::new(&slice, list.len())?
                 .extract_from(py, list)?
                 .iter()
@@ -29,10 +26,10 @@ impl<'py> Index<'py> {
     }
     #[inline]
     pub fn get_from_values_view(self, view: &impl ViewMethods) -> PyResult<IndexOut<'py>> {
-        let py = self.py;
+        let py = self.0.py();
         let mut mapping = view.mapping_mut();
         let dict = mapping.data.clone_ref(py).into_bound(py).into_any();
-        match self.index {
+        match self.0 {
             Either::Left(slice) => SliceIdxs::new(&slice, mapping.len())?
                 .extract_from(py, &mut mapping.list)?
                 .iter()
@@ -46,10 +43,10 @@ impl<'py> Index<'py> {
     }
     #[inline]
     pub fn get_from_items_view(self, view: &impl ViewMethods) -> PyResult<IndexOut<'py>> {
-        let py = self.py;
+        let py = self.0.py();
         let mut mapping = view.mapping_mut();
         let dict = mapping.data.clone_ref(py).into_bound(py).into_any();
-        match self.index {
+        match self.0 {
             Either::Left(slice) => SliceIdxs::new(&slice, mapping.len())?
                 .extract_from(py, &mut mapping.list)?
                 .iter()
@@ -65,16 +62,16 @@ impl<'py> Index<'py> {
     }
     #[inline]
     pub fn del_from_list<T: ListsMethods>(self, list: &mut T) -> PyResult<()> {
-        let py = self.py;
-        match self.index {
+        let py = self.0.py();
+        match self.0 {
             Either::Left(slice) => SliceIdxs::new(&slice, list.len())?.delete_from(py, list),
             Either::Right(index) => list.del_item(py, index),
         }
     }
     #[inline]
     pub fn del_from_set<T: ListsMethods>(self, set: &mut Set<T>) -> PyResult<()> {
-        let py = self.py;
-        match self.index {
+        let py = self.0.py();
+        match self.0 {
             Either::Left(pyslice) => {
                 let slice = SliceIdxs::new(&pyslice, set.len())?;
                 let values = slice
@@ -93,10 +90,10 @@ impl<'py> Index<'py> {
     }
     #[inline]
     pub fn del_from_view<T: ViewMethods>(self, view: &T) -> PyResult<()> {
-        let py = self.py;
+        let py = self.0.py();
         let mut mapping = view.mapping_mut();
         let dict = mapping.data.clone_ref(py).into_bound(py);
-        match self.index {
+        match self.0 {
             Either::Left(pyslice) => {
                 let slice = SliceIdxs::new(&pyslice, mapping.len())?;
                 let keys = slice.extract_from(py, &mut mapping.list)?;

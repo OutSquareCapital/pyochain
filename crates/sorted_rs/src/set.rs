@@ -80,30 +80,26 @@ pub trait PySetDataRef:
     }
 }
 impl Set<List> {
-    pub fn build(py: Python<'_>, iterable: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
-        Self::build_inner(py, List::default(), iterable)
+    pub fn build(iterable: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
+        Self::build_inner(List::default(), iterable)
     }
 }
 impl TryFrom<Bound<'_, PyAny>> for Set<List> {
     type Error = PyErr;
     fn try_from(iterable: Bound<'_, PyAny>) -> PyResult<Self> {
-        Self::build_inner(iterable.py(), List::default(), Some(iterable))
+        Self::build_inner(List::default(), Some(iterable))
     }
 }
 impl Set<KeyList> {
     pub fn build(key: Bound<'_, PyAny>, iterable: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
-        let py = key.py();
         let list = KeyList::new(key.unbind());
-        Self::build_inner(py, list, iterable)
+        Self::build_inner(list, iterable)
     }
 }
 impl<T: ListsMethods> Set<T> {
     #[inline(always)]
-    fn build_inner(
-        py: Python<'_>,
-        mut list: T,
-        iterable: Option<Bound<'_, PyAny>>,
-    ) -> PyResult<Self> {
+    fn build_inner(mut list: T, iterable: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
+        let py = iterable.py();
         let set = PySet::empty(py)?;
         if let Some(it) = iterable {
             it.try_iter()?
@@ -131,8 +127,8 @@ impl<T: ListsMethods> Set<T> {
     pub fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         try_add(&mut self.list, self.data.bind(value.py()), value)
     }
-    pub fn del_item_or_slice(&mut self, py: Python<'_>, index: IntoIndex<'_>) -> PyResult<()> {
-        Index::new(py, index).del_from_set(self)
+    pub fn del_item_or_slice(&mut self, index: IntoIndex<'_>) -> PyResult<()> {
+        Index::new(index).del_from_set(self)
     }
     pub fn discard(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let set = self.data.bind(value.py());

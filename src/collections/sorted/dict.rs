@@ -27,12 +27,11 @@ impl SortedDict {
     #[new]
     #[pyo3(signature = (iterable=None, **kwargs))]
     fn py_new(
-        py: Python<'_>,
         iterable: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let mut dict = types::Dict::<List>::empty(py);
-        dict.update(py, iterable, kwargs)?;
+        let mut dict = types::Dict::<List>::empty(iterable.py());
+        dict.update(iterable, kwargs)?;
         dict.conv::<Self>().init().pipe(Ok)
     }
 }
@@ -58,7 +57,7 @@ impl SortedKeyDict {
         let py = key.py();
         let list = KeyList::new(key.unbind());
         let mut dict = types::Dict::new(list, PyDict::new(py).unbind());
-        dict.update(py, iterable, kwargs)?;
+        dict.update(iterable, kwargs)?;
         dict.conv::<Self>().init().pipe(Ok)
     }
 }
@@ -113,7 +112,7 @@ pub(super) trait SortedDictMethods:
         self.copy(py)
     }
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.update(other.py(), Some(other), None)
+        self.update(Some(other), None)
     }
     fn __or__<'py>(&self, value: &Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         self.read().or(value)?.conv::<Self>().into_bound(value.py())
@@ -170,10 +169,9 @@ pub(super) trait SortedDictMethods:
     #[pyo3(signature = (m = None, /, **kwargs))]
     fn update(
         &self,
-        py: Python<'_>,
         m: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        self.write().update(py, m, kwargs)
+        self.write().update(m, kwargs)
     }
 }

@@ -22,11 +22,8 @@ pub struct SortedSet(pub(super) RwLock<types::Set<List>>);
 impl SortedSet {
     #[new]
     #[pyo3(signature = (iterable = None, /))]
-    pub fn py_new(
-        py: Python<'_>,
-        iterable: Option<Bound<'_, PyAny>>,
-    ) -> PyResult<PyClassInitializer<Self>> {
-        types::Set::<List>::build(py, iterable)?
+    pub fn py_new(iterable: Option<Bound<'_, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+        types::Set::<List>::build(iterable)?
             .conv::<Self>()
             .init()
             .pipe(Ok)
@@ -66,14 +63,14 @@ pub(super) trait SortedSetMethods:
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.get_set(value.py()).contains(value)
     }
-    fn __getitem__<'py>(&self, py: Python<'py>, index: IntoIndex<'py>) -> ObjOrVec<'py> {
+    fn __getitem__<'py>(&self, index: IntoIndex<'py>) -> ObjOrVec<'py> {
         self.write()
             .list
-            .get_item_or_slice(py, index)
+            .get_item_or_slice(index)
             .and_then_left(Bound::try_into_py)
     }
-    fn __delitem__(&self, py: Python<'_>, index: IntoIndex<'_>) -> PyResult<()> {
-        self.write().del_item_or_slice(py, index)
+    fn __delitem__(&self, index: IntoIndex<'_>) -> PyResult<()> {
+        self.write().del_item_or_slice(index)
     }
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         self.comp(other, CompareOp::Eq)

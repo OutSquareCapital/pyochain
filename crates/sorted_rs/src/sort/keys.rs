@@ -47,7 +47,7 @@ impl<'py> KeyFn<'py> for Identity<'py> {
     }
 }
 impl<'py> KeyFn<'py> for WithKey<'py> {
-    type Item = (Py<PyAny>, Py<PyAny>);
+    type Item = Pair<Py<PyAny>>;
     type Error = PyErr;
     fn py(&self) -> Python<'py> {
         self.0.py()

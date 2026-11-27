@@ -1,3 +1,4 @@
+use either::Either;
 use pyo3::{
     ffi,
     prelude::*,
@@ -8,6 +9,20 @@ use std::mem::MaybeUninit;
 use std::ptr;
 type Kwargs<'a, 'py> = Option<&'a Bound<'py, PyDict>>;
 type CallResult<'py> = PyResult<Bound<'py, PyAny>>;
+/// Convenience trait for enums with a lifetime bounded to the python interpreter.
+///
+/// # Safety
+/// Types like `Option<Bound<'py, T>>` with one variant who's by definition bounded to the python lifetime,
+/// makes the enum itself bounded to it as well.\
+/// This means that getting a python token bounded to the same lifetime is safe.
+pub unsafe trait BoundedEnum<'py> {
+    fn py(&self) -> Python<'py> {
+        unsafe { Python::assume_attached() }
+    }
+}
+unsafe impl<'py, T> BoundedEnum<'py> for Option<Bound<'py, T>> {}
+unsafe impl<'py, T, E> BoundedEnum<'py> for Result<Bound<'py, T>, E> {}
+unsafe impl<'py, T, U> BoundedEnum<'py> for Either<Bound<'py, T>, U> {}
 pub trait CallConcat<'py> {
     fn call_concat<A: IntoArgs<'py>>(self, args: A, kwargs: Kwargs<'_, 'py>) -> CallResult<'py>;
     fn call_concat1<A: IntoArgs<'py>>(self, args: A) -> CallResult<'py>;

@@ -36,11 +36,7 @@ pub trait ListsMethods:
     fn bisect<const LEFT: bool>(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     fn find(&self, value: &Bound<'_, PyAny>) -> PyResult<Option<Loc>>;
     fn index_inner(&mut self, value: &Bound<'_, PyAny>, indices: Bounds<usize>) -> PyResult<usize>;
-    fn irange<'py>(
-        &self,
-        py: Python<'py>,
-        specs: RawIrangeSpecs<'py>,
-    ) -> PyResult<IrangeBounds<'py>>;
+    fn irange<'py>(&self, specs: RawIrangeSpecs<'py>) -> PyResult<IrangeBounds<'py>>;
     fn count(&mut self, value: &Bound<'_, PyAny>) -> PyResult<usize>;
     #[inline]
     fn contains(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -52,15 +48,11 @@ pub trait ListsMethods:
     fn extend(&mut self, py: Python<'_>, values: IntoList) -> PyResult<()> {
         values.extend_into(py, self)
     }
-    fn get_item_or_slice<'py>(
-        &mut self,
-        py: Python<'py>,
-        index: IntoIndex<'py>,
-    ) -> PyResult<IndexOut<'py>> {
-        Index::new(py, index).get_from_list(self)
+    fn get_item_or_slice<'py>(&mut self, index: IntoIndex<'py>) -> PyResult<IndexOut<'py>> {
+        Index::new(index).get_from_list(self)
     }
-    fn del_item_or_slice(&mut self, py: Python<'_>, index: IntoIndex<'_>) -> PyResult<()> {
-        Index::new(py, index).del_from_list(self)
+    fn del_item_or_slice(&mut self, index: IntoIndex<'_>) -> PyResult<()> {
+        Index::new(index).del_from_list(self)
     }
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
         match self.find(&value) {

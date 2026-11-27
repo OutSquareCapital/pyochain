@@ -56,9 +56,8 @@ trait FromIterable {
 pub trait PySortedViewMethods:
     PyClass<BaseType = abc::PyoSequence> + Deref<Target: ViewMethods>
 {
-    fn __getitem__<'py>(&self, py: Python<'py>, index: types::IntoIndex<'py>) -> ObjOrVec<'py> {
-        self.get_item(py, index)
-            .and_then_left(TryIntoPy::try_into_py)
+    fn __getitem__<'py>(&self, index: types::IntoIndex<'py>) -> ObjOrVec<'py> {
+        self.get_item(index).and_then_left(TryIntoPy::try_into_py)
     }
     fn __len__(&self) -> usize {
         self.deref().length()
@@ -66,7 +65,7 @@ pub trait PySortedViewMethods:
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         self.deref().repr_from::<Self>(py)
     }
-    fn __delitem__(&self, py: Python<'_>, index: types::IntoIndex<'_>) -> PyResult<()> {
-        self.del_item(py, index)
+    fn __delitem__(&self, index: types::IntoIndex<'_>) -> PyResult<()> {
+        self.del_item(index)
     }
 }

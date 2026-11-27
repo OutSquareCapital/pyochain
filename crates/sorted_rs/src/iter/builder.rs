@@ -5,12 +5,13 @@ use crate::{
     iter::{BoundedFwd, IterMethods, PySortedIter, core::InnerRef, cursor::Cursor},
     ops,
     traits::ListsMethods,
+    types::Pair,
 };
 use pyo3::prelude::*;
 use tap::prelude::*;
 
-pub type RawRangeIdxs = (Option<isize>, Option<isize>);
-type IterBounds = Option<PyResult<(Loc, Loc)>>;
+pub type RawRangeIdxs = Pair<Option<isize>>;
+type IterBounds = Option<PyResult<Pair<Loc>>>;
 
 #[derive(Debug)]
 pub struct Builder<'a, 'py, T: ListGetter> {
@@ -49,7 +50,7 @@ where
         let bounds = if BY_KEY {
             specs.conv::<IrangeBounds>()
         } else {
-            guard.as_ref().irange(self.pyref.py(), specs)?
+            guard.as_ref().irange(specs)?
         };
         self.bounds = irange_bounds(guard.as_ref(), bounds);
         Ok(self)

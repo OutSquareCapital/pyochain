@@ -59,7 +59,6 @@ convention = "google"
   "unnecessary-dunder-call",  # Dunders calls are more convenients in tests
 ]
 "t.py" = [
-  "missing-return-type-undocumented-public-function",
   "undocumented-magic-method",
   "undocumented-public-class",
   "undocumented-public-function",
