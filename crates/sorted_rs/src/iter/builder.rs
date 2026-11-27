@@ -2,6 +2,7 @@ use crate::{
     ListGetter,
     bounds::{Bounds, Loc, RawIrangeSpecs},
     chunks::ChunksMethods,
+    inner::InnerList,
     iter::{BoundedFwd, IterMethods, PySortedIter, core::InnerRef, cursor::Cursor},
     ops,
     traits::ListsMethods,
@@ -42,7 +43,11 @@ where
     }
     #[must_use]
     pub fn islice(mut self, specs: RawRangeIdxs) -> Self {
-        self.bounds = islice_bounds(self.inner.write().as_mut(), specs.conv::<Bounds<_>>());
+        self.bounds = self
+            .inner
+            .write()
+            .as_mut()
+            .islice_bounds(specs.conv::<Bounds<_>>());
         self
     }
     pub fn irange<const BY_KEY: bool>(mut self, specs: RawIrangeSpecs) -> PyResult<Self> {
@@ -52,73 +57,68 @@ where
         } else {
             guard.as_ref().irange(specs)?
         };
-        self.bounds = irange_bounds(guard.as_ref(), bounds);
+        self.bounds = guard.as_ref().irange_bounds(bounds);
         Ok(self)
     }
 }
-
-fn irange_bounds<T>(list: &T, specs: IrangeBounds<'_>) -> IterBounds
-where
-    T: ListsMethods,
-{
-    if list.is_empty() {
-        None
-    } else {
-        let min = match specs.start {
-            None => Ok(Loc::default()),
-            Some(BoundKind::Inclusive(m)) => get_bound::<true, false, T>(list, &m)?,
-            Some(BoundKind::Exclusive(m)) => get_bound::<false, false, T>(list, &m)?,
-        };
-        let max = match specs.stop {
-            None => Ok(last_sublist(list)),
-            Some(BoundKind::Inclusive(m)) => get_bound::<false, true, T>(list, &m)?,
-            Some(BoundKind::Exclusive(m)) => get_bound::<true, true, T>(list, &m)?,
+impl<C: ChunksMethods> InnerList<C> {
+    fn irange_bounds(&self, specs: IrangeBounds<'_>) -> IterBounds {
+        if self.is_empty() {
+            None
+        } else {
+            let min = match specs.start {
+                None => Ok(Loc::default()),
+                Some(BoundKind::Inclusive(m)) => self.get_bound::<true, false>(&m)?,
+                Some(BoundKind::Exclusive(m)) => self.get_bound::<false, false>(&m)?,
+            };
+            let max = match specs.stop {
+                None => Ok(self.last_sublist()),
+                Some(BoundKind::Inclusive(m)) => self.get_bound::<false, true>(&m)?,
+                Some(BoundKind::Exclusive(m)) => self.get_bound::<true, true>(&m)?,
+            };
+            match (min, max) {
+                (_, Err(e)) | (Err(e), _) => Some(Err(e)),
+                (Ok(min), Ok(max))
+                    if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) =>
+                {
+                    None
+                }
+                (Ok(min), Ok(max)) => Some(Ok((min, max))),
+            }
+        }
+    }
+    fn islice_bounds(&mut self, specs: Bounds<Option<isize>>) -> IterBounds {
+        let bounds = specs.try_normalize(self)?;
+        let min = self.set_pos_usize(bounds.start);
+        let max = if bounds.stop == self.len() {
+            let pos = self.chunks.values().len() - 1;
+            let idx = self.chunks.values()[pos].len();
+            Ok(Loc::new(pos, idx))
+        } else {
+            self.set_pos_usize(bounds.stop)
         };
         match (min, max) {
-            (_, Err(e)) | (Err(e), _) => Some(Err(e)),
-            (Ok(min), Ok(max))
-                if min.pos > max.pos || (min.pos == max.pos && min.idx >= max.idx) =>
-            {
-                None
-            }
+            (Err(e), _) | (_, Err(e)) => Some(Err(e)),
             (Ok(min), Ok(max)) => Some(Ok((min, max))),
         }
     }
-}
-fn islice_bounds<L: ListsMethods>(list: &mut L, specs: Bounds<Option<isize>>) -> IterBounds {
-    let bounds = specs.try_normalize(list)?;
-    let min = list.set_pos_usize(bounds.start);
-    let max = if bounds.stop == list.len() {
-        let pos = list.chunks.values().len() - 1;
-        let idx = list.chunks.values()[pos].len();
-        Ok(Loc::new(pos, idx))
-    } else {
-        list.set_pos_usize(bounds.stop)
-    };
-    match (min, max) {
-        (Err(e), _) | (_, Err(e)) => Some(Err(e)),
-        (Ok(min), Ok(max)) => Some(Ok((min, max))),
+    fn get_bound<const LEFT: bool, const MAX: bool>(
+        &self,
+        value: &Bound<'_, PyAny>,
+    ) -> Option<PyResult<Loc>> {
+        match self.try_bisect::<LEFT>(value) {
+            Err(e) => Some(Err(e)),
+            Ok(ops::Bisect::MaxesLen(_)) if MAX => Some(Ok(self.last_sublist())),
+            Ok(ops::Bisect::Empty | ops::Bisect::MaxesLen(_)) => None,
+            Ok(ops::Bisect::AtLoc(loc)) => Some(Ok(loc)),
+        }
     }
-}
-fn get_bound<const LEFT: bool, const MAX: bool, T>(
-    list: &T,
-    value: &Bound<'_, PyAny>,
-) -> Option<PyResult<Loc>>
-where
-    T: ListsMethods,
-{
-    match list.try_bisect::<LEFT>(value) {
-        Err(e) => Some(Err(e)),
-        Ok(ops::Bisect::MaxesLen(_)) if MAX => Some(Ok(last_sublist(list))),
-        Ok(ops::Bisect::Empty | ops::Bisect::MaxesLen(_)) => None,
-        Ok(ops::Bisect::AtLoc(loc)) => Some(Ok(loc)),
+    #[inline]
+    fn last_sublist(&self) -> Loc {
+        let pos = self.maxes.len() - 1;
+        let idx = self.chunks.keys()[pos].len();
+        Loc::new(pos, idx)
     }
-}
-#[inline]
-fn last_sublist<T: ListsMethods>(list: &T) -> Loc {
-    let pos = list.maxes.len() - 1;
-    let idx = list.chunks.keys()[pos].len();
-    Loc::new(pos, idx)
 }
 pub type IrangeBounds<'py> = Bounds<Option<BoundKind<'py>>>;
 impl<'py> From<RawIrangeSpecs<'py>> for IrangeBounds<'py> {

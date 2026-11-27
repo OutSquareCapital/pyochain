@@ -1,7 +1,7 @@
 use derive_more::{Constructor, From};
 use pyo3::{prelude::*, types::slice::PySliceIndices};
 
-use crate::{chunks::ChunksMethods, inner::InnerList, traits::ListsMethods};
+use crate::{chunks::ChunksMethods, inner::InnerList};
 
 pub type RawIrangeSpecs<'py> = (
     Option<Bound<'py, PyAny>>,
@@ -33,7 +33,7 @@ impl IntoIterator for Bounds<usize> {
 }
 impl Bounds<Option<isize>> {
     #[must_use]
-    pub fn try_normalize(self, list: &impl ListsMethods) -> Option<Bounds<usize>> {
+    pub fn try_normalize<C: ChunksMethods>(self, list: &InnerList<C>) -> Option<Bounds<usize>> {
         if list.is_empty() {
             None
         } else {
