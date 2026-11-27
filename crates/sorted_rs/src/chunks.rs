@@ -228,9 +228,6 @@ impl Chunk {
     pub fn new(first: Py<PyAny>) -> Self {
         Self(vec![first])
     }
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
     pub fn iter(&self) -> std::slice::Iter<'_, Py<PyAny>> {
         self.0.iter()
     }

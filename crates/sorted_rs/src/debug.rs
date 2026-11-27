@@ -1,7 +1,7 @@
 //! Invariants checks ported from the original `sortedcontainers` test suite.
 use crate::{
     KeyList,
-    chunks::{Chunk, ChunksMethods},
+    chunks::ChunksMethods,
     inner::InnerList,
     prelude::*,
     types::{Dict, Set},
@@ -88,7 +88,7 @@ fn check_sublists<T: ListsMethods>(py: Python<'_>, slf: &T) -> PyResult<()> {
                 .chunks
                 .values()
                 .iter_chunks()
-                .map(Chunk::len)
+                .map(|x| x.len())
                 .sum::<usize>()
     )?;
     // Check all sublists are sorted.

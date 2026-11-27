@@ -1,9 +1,6 @@
 use tap::prelude::*;
 
-use crate::{
-    bounds::Loc,
-    chunks::{Chunk, Chunks},
-};
+use crate::{bounds::Loc, chunks::Chunks};
 /// Quoting Grant Jenks:
 /// > "a tree of pair-wise sums of the lengths of the lists. The tree is maintained as a dense binary tree."
 ///
@@ -59,7 +56,7 @@ impl Lengths {
         let levels = values.len().next_power_of_two().ilog2();
         self.offset = 2_usize.pow(levels) - 1;
         self.inner.resize(self.offset, 0);
-        self.inner.extend(values.iter_chunks().map(Chunk::len));
+        self.inner.extend(values.iter_chunks().map(|x| x.len()));
         (0..levels)
             .rev()
             .map(|level| 2_usize.pow(level))
