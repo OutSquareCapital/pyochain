@@ -143,7 +143,7 @@ trait HeapType: PyWrapper<Wrapped = PyList> {
             .collect::<Vec<_>>()
             .into_iter()
             .collect_bound(py)?;
-        pylibs::heapq::merge(py, args, key, reverse)?.try_into_py()
+        pylibs::heapq::merge(args, key, reverse)?.try_into_py()
     }
     #[pyo3(signature = (n, key=None))]
     fn n_smallest<'py>(
